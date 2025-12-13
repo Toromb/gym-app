@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
-import '../../models/plan_model.dart';
+import '../../models/plan_model.dart'; // Keep for Plan refs if needed
+import '../../models/student_assignment_model.dart';
 import 'package:intl/intl.dart';
 import '../shared/plan_details_screen.dart';
 
@@ -14,7 +15,7 @@ class StudentPlansListScreen extends StatefulWidget {
 
 class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
   bool _isLoading = true;
-  List<dynamic> _assignments = [];
+  List<StudentAssignment> _assignments = [];
 
   @override
   void initState() {
@@ -45,11 +46,10 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
                   itemCount: _assignments.length,
                   itemBuilder: (context, index) {
                     final assignment = _assignments[index];
-                    final planJson = assignment['plan'];
-                    final plan = Plan.fromJson(planJson);
-                    final isActive = assignment['isActive'] == true;
-                    final assignedDate = assignment['assignedAt'] != null
-                        ? DateFormat('MMM d, yyyy').format(DateTime.parse(assignment['assignedAt']))
+                    final plan = assignment.plan;
+                    final isActive = assignment.isActive;
+                    final assignedDate = assignment.assignedAt != null
+                        ? DateFormat('MMM d, yyyy').format(DateTime.parse(assignment.assignedAt!))
                         : 'Unknown Date';
 
                     return Card(
@@ -64,9 +64,13 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => PlanDetailsScreen(plan: plan, canEdit: false),
+                              builder: (context) => PlanDetailsScreen(
+                                  plan: plan, 
+                                  canEdit: false,
+                                  assignment: assignment, // Pass assignment for tracking
+                              ),
                             ),
-                          );
+                          ).then((_) => _loadHistory()); // Refresh when back
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(20.0),

@@ -217,6 +217,40 @@ let PlansService = class PlansService {
         }
         await this.plansRepository.remove(plan);
     }
+    async updateProgress(studentPlanId, userId, payload) {
+        const studentPlan = await this.studentPlanRepository.findOne({
+            where: { id: studentPlanId },
+            relations: ['student']
+        });
+        if (!studentPlan)
+            throw new common_1.NotFoundException('Assignment not found');
+        if (studentPlan.student.id !== userId)
+            throw new common_1.ForbiddenException('Access denied');
+        if (!studentPlan.progress)
+            studentPlan.progress = { exercises: {}, days: {} };
+        if (!studentPlan.progress.exercises)
+            studentPlan.progress.exercises = {};
+        if (!studentPlan.progress.days)
+            studentPlan.progress.days = {};
+        if (payload.type === 'exercise') {
+            if (payload.completed) {
+                studentPlan.progress.exercises[payload.id] = true;
+            }
+            else {
+                delete studentPlan.progress.exercises[payload.id];
+            }
+        }
+        else if (payload.type === 'day') {
+            if (payload.completed) {
+                studentPlan.progress.days[payload.id] = { completed: true, date: payload.date || new Date().toISOString() };
+            }
+            else {
+                delete studentPlan.progress.days[payload.id];
+            }
+        }
+        const updated = await this.studentPlanRepository.save(studentPlan);
+        return updated;
+    }
 };
 exports.PlansService = PlansService;
 exports.PlansService = PlansService = __decorate([

@@ -19,4 +19,10 @@ export declare class PlansService {
     findStudentAssignments(studentId: string): Promise<StudentPlan[]>;
     removeAssignment(assignmentId: string, user: User): Promise<void>;
     remove(id: string, user: User): Promise<void>;
+    updateProgress(studentPlanId: string, userId: string, payload: {
+        type: 'exercise' | 'day';
+        id: string;
+        completed: boolean;
+        date?: string;
+    }): Promise<StudentPlan>;
 }

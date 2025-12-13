@@ -2,17 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/plan_model.dart';
 
-class DayDetailScreen extends StatelessWidget {
+class DayDetailScreen extends StatefulWidget {
   final PlanDay day;
+  // Optional tracking parameters
+  final bool isTracking;
+  final Map<String, bool>? completedExercises;
+  final Function(String exerciseId, bool isCompleted)? onToggleExercise;
 
-  const DayDetailScreen({super.key, required this.day});
+  const DayDetailScreen({
+    super.key, 
+    required this.day,
+    this.isTracking = false,
+    this.completedExercises,
+    this.onToggleExercise,
+  });
+
+  @override
+  State<DayDetailScreen> createState() => _DayDetailScreenState();
+}
+
+class _DayDetailScreenState extends State<DayDetailScreen> {
+  late Map<String, bool> _localCompletedExercises;
+
+  @override
+  void initState() {
+    super.initState();
+    _localCompletedExercises = Map.from(widget.completedExercises ?? {});
+  }
+
+  @override
+  void didUpdateWidget(DayDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.completedExercises != oldWidget.completedExercises) {
+       _localCompletedExercises = Map.from(widget.completedExercises ?? {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text(day.title ?? 'Day ${day.dayOfWeek}'),
+        title: Text(widget.day.title ?? 'Day ${widget.day.dayOfWeek}'),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -26,11 +57,11 @@ class DayDetailScreen extends StatelessWidget {
             ),
              const SizedBox(height: 8),
             Text(
-              '${day.exercises.length} Exercises to complete',
+              '${widget.day.exercises.length} Exercises to complete',
               style: TextStyle(color: Colors.grey[600]),
             ),
             const SizedBox(height: 24),
-            ...day.exercises.asMap().entries.map((entry) {
+            ...widget.day.exercises.asMap().entries.map((entry) {
               final index = entry.key;
               final exercise = entry.value;
               return _buildExerciseCard(context, exercise, index + 1);
@@ -42,10 +73,19 @@ class DayDetailScreen extends StatelessWidget {
   }
 
   Widget _buildExerciseCard(BuildContext context, dynamic exercise, int index) {
+    bool isCompleted = false;
+    if (widget.isTracking && exercise.id != null) {
+      isCompleted = _localCompletedExercises[exercise.id] == true;
+    }
+
     return Card(
-      elevation: 4,
+      elevation: isCompleted ? 1 : 4, // Flatten if done
       margin: const EdgeInsets.only(bottom: 20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      color: isCompleted ? Colors.green[50] : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: isCompleted ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -57,13 +97,13 @@ class DayDetailScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    color: isCompleted ? Colors.green.withOpacity(0.2) : Theme.of(context).primaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '#$index',
                     style: TextStyle(
-                      color: Theme.of(context).primaryColor,
+                      color: isCompleted ? Colors.green : Theme.of(context).primaryColor,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -76,7 +116,12 @@ class DayDetailScreen extends StatelessWidget {
                     children: [
                       Text(
                         exercise.exercise?.name ?? 'Unknown Exercise',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 18, 
+                          fontWeight: FontWeight.bold,
+                          decoration: isCompleted ? TextDecoration.lineThrough : null,
+                          color: isCompleted ? Colors.green[900] : Colors.black,
+                        ),
                       ),
                       const SizedBox(height: 4),
                        // Placeholder for muscle group if we had it
@@ -84,19 +129,56 @@ class DayDetailScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty)
-                   ElevatedButton.icon(
-                    onPressed: () => _launchVideo(context, exercise.videoUrl!),
-                    icon: const Icon(Icons.play_circle_outline, color: Colors.white),
-                    label: const Text('Video instructivo', style: TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    ),
+                // Tracking Checkbox
+                if (widget.isTracking)
+                  Checkbox(
+                    value: isCompleted,
+                    activeColor: Colors.green,
+                    onChanged: (val) {
+                      if (exercise.id != null) {
+                        setState(() {
+                          if (val == true) {
+                            _localCompletedExercises[exercise.id!] = true;
+                          } else {
+                            _localCompletedExercises.remove(exercise.id!);
+                          }
+                        });
+                        
+                        if (widget.onToggleExercise != null) {
+                          widget.onToggleExercise!(exercise.id!, val == true);
+                        }
+                      }
+                    },
                   ),
+
+                if (exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty && !widget.isTracking)
+                   // Keep video button if strictly viewing, or maybe beside checkbox?
+                   // Space is tight. Let's move video button to bottom if tracking.
+                   Container(), 
               ],
             ),
-            const SizedBox(height: 20),
+            // Video Button (Row separate if tracking enabled)
+             if (exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                       child: ElevatedButton.icon(
+                        onPressed: () => _launchVideo(context, exercise.videoUrl!),
+                        icon: const Icon(Icons.play_circle_outline, color: Colors.white, size: 16),
+                        label: const Text('Instruction Video', style: TextStyle(color: Colors.white, fontSize: 12)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          minimumSize: Size.zero, 
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ),
+                  ),
+
+            const SizedBox(height: 12),
             
             // Metrics Grid
             Container(

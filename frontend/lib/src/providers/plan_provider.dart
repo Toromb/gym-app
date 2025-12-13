@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/plan_model.dart';
+import '../models/student_assignment_model.dart';
 import '../services/plan_service.dart';
 
 class PlanProvider with ChangeNotifier {
@@ -51,7 +52,6 @@ class PlanProvider with ChangeNotifier {
     try {
       final success = await _planService.updatePlan(id, plan);
       if (success) {
-        // Refresh plans
         await fetchPlans(); // Or manually update the item in list
         return true;
       }
@@ -78,12 +78,22 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-  Future<List<dynamic>> fetchMyHistory() async {
+  // Changed to return typed list
+  Future<List<StudentAssignment>> fetchMyHistory() async {
     try {
       return await _planService.getMyHistory();
     } catch (e) {
       print('Error fetching my history: $e');
       return [];
+    }
+  }
+
+  Future<bool> updateProgress(String studentPlanId, String type, String id, bool completed, {String? date}) async {
+    try {
+        return await _planService.updateProgress(studentPlanId, type, id, completed, date: date);
+    } catch (e) {
+        print('Error updating progress: $e');
+        return false;
     }
   }
 

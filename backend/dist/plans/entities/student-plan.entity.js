@@ -21,6 +21,7 @@ let StudentPlan = class StudentPlan {
     startDate;
     endDate;
     isActive;
+    progress;
     createdAt;
     updatedAt;
 };
@@ -53,6 +54,10 @@ __decorate([
     (0, typeorm_1.Column)({ default: true }),
     __metadata("design:type", Boolean)
 ], StudentPlan.prototype, "isActive", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', default: {} }),
+    __metadata("design:type", Object)
+], StudentPlan.prototype, "progress", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

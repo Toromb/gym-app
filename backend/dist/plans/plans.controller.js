@@ -73,6 +73,9 @@ let PlansController = class PlansController {
     remove(id, req) {
         return this.plansService.remove(id, req.user);
     }
+    updateProgress(body, req) {
+        return this.plansService.updateProgress(body.studentPlanId, req.user.id, body);
+    }
 };
 exports.PlansController = PlansController;
 __decorate([
@@ -152,6 +155,14 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], PlansController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Patch)('student/progress'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], PlansController.prototype, "updateProgress", null);
 exports.PlansController = PlansController = __decorate([
     (0, common_1.Controller)('plans'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),

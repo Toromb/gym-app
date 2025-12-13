@@ -259,5 +259,39 @@ export class PlansService {
 
         await this.plansRepository.remove(plan);
     }
+
+    async updateProgress(studentPlanId: string, userId: string, payload: { type: 'exercise' | 'day', id: string, completed: boolean, date?: string }): Promise<StudentPlan> {
+        const studentPlan = await this.studentPlanRepository.findOne({
+            where: { id: studentPlanId },
+            relations: ['student']
+        });
+
+        if (!studentPlan) throw new NotFoundException('Assignment not found');
+        if (studentPlan.student.id !== userId) throw new ForbiddenException('Access denied');
+
+        // Initialize progress structure if needed
+        if (!studentPlan.progress) studentPlan.progress = { exercises: {}, days: {} };
+        if (!studentPlan.progress.exercises) studentPlan.progress.exercises = {};
+        if (!studentPlan.progress.days) studentPlan.progress.days = {};
+
+        if (payload.type === 'exercise') {
+            if (payload.completed) {
+                studentPlan.progress.exercises[payload.id] = true;
+            } else {
+                delete studentPlan.progress.exercises[payload.id];
+            }
+        } else if (payload.type === 'day') {
+            if (payload.completed) {
+                studentPlan.progress.days[payload.id] = { completed: true, date: payload.date || new Date().toISOString() };
+            } else {
+                delete studentPlan.progress.days[payload.id];
+            }
+        }
+
+        // Force update 
+        const updated = await this.studentPlanRepository.save(studentPlan);
+        return updated;
+    }
 }
+
 

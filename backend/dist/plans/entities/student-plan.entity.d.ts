@@ -8,6 +8,7 @@ export declare class StudentPlan {
     startDate: string;
     endDate: string;
     isActive: boolean;
+    progress: any;
     createdAt: Date;
     updatedAt: Date;
 }

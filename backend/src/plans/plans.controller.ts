@@ -92,5 +92,10 @@ export class PlansController {
     remove(@Param('id') id: string, @Request() req: any) {
         return this.plansService.remove(id, req.user);
     }
+
+    @Patch('student/progress')
+    updateProgress(@Body() body: { studentPlanId: string, type: 'exercise' | 'day', id: string, completed: boolean, date?: string }, @Request() req: any) {
+        return this.plansService.updateProgress(body.studentPlanId, req.user.id, body);
+    }
 }
 

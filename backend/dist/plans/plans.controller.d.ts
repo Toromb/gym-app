@@ -17,4 +17,11 @@ export declare class PlansController {
     getStudentAssignments(studentId: string, req: any): Promise<import("./entities/student-plan.entity").StudentPlan[]>;
     deleteAssignment(id: string, req: any): Promise<void>;
     remove(id: string, req: any): Promise<void>;
+    updateProgress(body: {
+        studentPlanId: string;
+        type: 'exercise' | 'day';
+        id: string;
+        completed: boolean;
+        date?: string;
+    }, req: any): Promise<import("./entities/student-plan.entity").StudentPlan>;
 }
