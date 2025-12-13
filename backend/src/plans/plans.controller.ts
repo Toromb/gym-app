@@ -24,9 +24,18 @@ export class PlansController {
 
     @Get()
     findAll(@Request() req: any) {
-        // Teacher and Admin see ALL plans (Global Library)
-        if (req.user.role === UserRole.PROFE || req.user.role === UserRole.ADMIN) {
+        // Super Admin sees all
+        if (req.user.role === UserRole.SUPER_ADMIN) {
             return this.plansService.findAll();
+        }
+
+        // Admin and Profe see only their gym's plans
+        if (req.user.role === UserRole.PROFE || req.user.role === UserRole.ADMIN) {
+            const gymId = req.user.gym?.id;
+            if (!gymId) {
+                return []; // No gym assigned, return empty to prevent global leak
+            }
+            return this.plansService.findAll(gymId);
         }
 
         return [];

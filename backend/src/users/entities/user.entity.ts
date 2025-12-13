@@ -1,11 +1,13 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne } from 'typeorm';
 import { StudentPlan } from '../../plans/entities/student-plan.entity';
+import { Gym } from '../../gyms/entities/gym.entity';
 
 
 export enum UserRole {
     ADMIN = 'admin',
     PROFE = 'profe',
     ALUMNO = 'alumno',
+    SUPER_ADMIN = 'super_admin',
 }
 
 export enum PaymentStatus {
@@ -116,5 +118,8 @@ export class User {
 
     @OneToMany(() => User, (user) => user.professor)
     students: User[];
+
+    @ManyToOne(() => Gym, (gym) => gym.users, { nullable: true, onDelete: 'SET NULL' })
+    gym: Gym;
 }
 

@@ -12,6 +12,7 @@ import { PlansModule } from './plans/plans.module';
 import { PaymentsModule } from './payments/payments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { GymScheduleModule } from './gym-schedule/gym-schedule.module';
+import { GymsModule } from './gyms/gyms.module';
 
 
 @Module({
@@ -42,6 +43,7 @@ import { GymScheduleModule } from './gym-schedule/gym-schedule.module';
     PaymentsModule,
     NotificationsModule,
     GymScheduleModule,
+    GymsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

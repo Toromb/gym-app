@@ -58,8 +58,13 @@ export class PlansService {
         return this.findOne(saved.id) as Promise<Plan>;
     }
 
-    async findAll(): Promise<Plan[]> {
+    async findAll(gymId?: string): Promise<Plan[]> {
+        const where: any = {};
+        if (gymId) {
+            where.teacher = { gym: { id: gymId } };
+        }
         return this.plansRepository.find({
+            where,
             relations: ['weeks', 'weeks.days', 'weeks.days.exercises', 'weeks.days.exercises.exercise', 'teacher']
         });
     }

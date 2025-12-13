@@ -5,6 +5,7 @@ import 'src/providers/user_provider.dart';
 import 'src/providers/plan_provider.dart';
 import 'src/providers/exercise_provider.dart';
 import 'src/providers/gym_schedule_provider.dart';
+import 'src/providers/gyms_provider.dart';
 import 'src/screens/login_screen.dart';
 import 'src/screens/home_screen.dart';
 
@@ -17,6 +18,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => PlanProvider()),
         ChangeNotifierProvider(create: (_) => ExerciseProvider()),
         ChangeNotifierProvider(create: (context) => GymScheduleProvider(context.read<AuthProvider>().token)),
+        ChangeNotifierProvider(create: (_) => GymsProvider()),
       ],
       child: const MyApp(),
     ),

@@ -7,43 +7,52 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 
 
+import { GymsService } from '../gyms/gyms.service';
+
 @Injectable()
 export class UsersService {
     constructor(
         @InjectRepository(User)
         private usersRepository: Repository<User>,
+        private gymsService: GymsService,
     ) { }
 
-    async create(createUserDto: CreateUserDto, professor?: User): Promise<User> {
-        const { password, ...rest } = createUserDto;
+    async create(createUserDto: CreateUserDto, creator?: User): Promise<User> {
+        const { password, gymId, ...rest } = createUserDto;
         const passwordToHash = password || '123456'; // Default password
         const passwordHash = await bcrypt.hash(passwordToHash, 10);
+
+        let gym = null;
+        if (gymId) {
+            gym = await this.gymsService.findOne(gymId);
+        } else if (creator && creator.gym) {
+            gym = creator.gym;
+        }
+
         const user = this.usersRepository.create({
             ...rest,
             passwordHash,
-            professor: professor, // Assign professor if provided
+            professor: (creator && creator.role === UserRole.PROFE) ? creator : undefined,
+            gym: gym || undefined,
         });
         return this.usersRepository.save(user);
     }
 
-    async findAllStudents(professorId?: string, roleFilter?: string): Promise<User[]> {
+    async findAllStudents(professorId?: string, roleFilter?: string, gymId?: string): Promise<User[]> {
         const where: any = {};
-
-        // If a specific role is requested, filter by it. Cannot filter if restricting to students of a professor (unless logic demands).
-        // Actually, if professorId is present, they ARE students (role=ALUMNO). 
-        // But for Admin, they might want to filter 'profe', 'admin', 'alumno'.
 
         if (roleFilter) {
             where.role = roleFilter;
         } else if (professorId) {
-            // If professor is asking, and didn't specify, default to only showing ALUMNO? 
-            // Or maybe they can see other things? 
-            // Requirement: "Profe: solo ve sus alumnos".
             where.role = UserRole.ALUMNO;
         }
 
         if (professorId) {
             where.professor = { id: professorId };
+        }
+
+        if (gymId) {
+            where.gym = { id: gymId };
         }
 
         return this.usersRepository.find({
@@ -58,7 +67,10 @@ export class UsersService {
     }
 
     async findOne(id: string): Promise<User | null> {
-        return this.usersRepository.findOne({ where: { id } });
+        return this.usersRepository.findOne({
+            where: { id },
+            relations: ['gym', 'professor'], // Load helpful relations
+        });
     }
 
     async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {

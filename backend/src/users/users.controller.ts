@@ -14,36 +14,52 @@ export class UsersController {
     create(@Body() createUserDto: CreateUserDto, @Request() req: any) {
         const creator = req.user;
 
-        // Admin can create any role
+        // Super Admin can create any role
+        if (creator.role === UserRole.SUPER_ADMIN) {
+            // If creating Admin or other roles, gymId must be handled by Service (from DTO)
+            // SA can basically do anything.
+            return this.usersService.create(createUserDto, undefined); // No creator to inherit from, explicity gymId expected in DTO if needed
+        }
+
+        // Admin can create any role (except SA/Admin generally? Logic says Admin creates Profe/Alumno)
         if (creator.role === UserRole.ADMIN) {
             // Allow setting role from DTO, default to ALUMNO if not set
             if (!createUserDto.role) {
                 createUserDto.role = UserRole.ALUMNO;
             }
-            return this.usersService.create(createUserDto);
+            if (createUserDto.role === UserRole.SUPER_ADMIN) {
+                throw new ForbiddenException('Admin cannot create Super Admin');
+            }
+            return this.usersService.create(createUserDto, creator);
         }
 
         // Professor can only create Alumno
         if (creator.role === UserRole.PROFE) {
             createUserDto.role = UserRole.ALUMNO; // Force role
-            return this.usersService.create(createUserDto, creator); // Assign professor
+            return this.usersService.create(createUserDto, creator); // Assign professor and inherit gym
         }
 
-        // Alumno cannot create users (should be handled by Guard, but safety check)
         throw new ForbiddenException('You do not have permission to create users');
     }
 
     @Get()
-    findAll(@Request() req: any, @Query('role') role?: string) {
+    findAll(@Request() req: any, @Query('role') role?: string, @Query('gymId') gymId?: string) {
         const user = req.user;
-        if (user.role === UserRole.ADMIN) {
-            return this.usersService.findAllStudents(undefined, role); // Admin sees all, optional role filter
+
+        if (user.role === UserRole.SUPER_ADMIN) {
+            // SA can see all, or filter by gymId if provided
+            return this.usersService.findAllStudents(undefined, role, gymId);
         }
+
+        if (user.role === UserRole.ADMIN) {
+            // Admin only sees their gym users
+            return this.usersService.findAllStudents(undefined, role, user.gym?.id);
+        }
+
         if (user.role === UserRole.PROFE) {
             // Professor sees only their students. 
-            // If they ask for 'admin' or 'profe', they get nothing or error. 
-            // For now, let's just ignore the role param or enforce it must be 'student' effectively.
-            return this.usersService.findAllStudents(user.id, role);
+            // Also restrict to their gym just in case (though service does professor filter)
+            return this.usersService.findAllStudents(user.id, role, user.gym?.id);
         }
         throw new ForbiddenException('You do not have permission to view users');
     }
@@ -98,6 +114,35 @@ export class UsersController {
         return this.usersService.update(userId, filteredDto);
     }
 
+    private async validateAccess(user: any, requestor: any, action: 'view' | 'update' | 'delete') {
+        if (requestor.role === UserRole.SUPER_ADMIN) return true;
+
+        // Check Tenancy (Admin/Profe/Student must match Gym)
+        if (user.gym?.id !== requestor.gym?.id) {
+            // Exception: maybe User has no gym (system)? 
+            // But for now, strict isolation.
+            throw new ForbiddenException('Access denied (Different Gym)');
+        }
+
+        if (requestor.role === UserRole.ADMIN) return true; // Admin manages all in their gym
+
+        if (requestor.role === UserRole.PROFE) {
+            // Profe sees own students
+            // Self access?
+            if (action === 'view' && user.id === requestor.id) return true;
+
+            if (user.professor?.id === requestor.id) return true;
+            throw new ForbiddenException('You can only access your own students');
+        }
+
+        if (requestor.role === UserRole.ALUMNO) {
+            // Alumno only self
+            if (user.id === requestor.id) return true;
+        }
+
+        throw new ForbiddenException('Access denied');
+    }
+
     @Get(':id')
     async findOne(@Param('id') id: string, @Request() req: any) {
         const user = await this.usersService.findOne(id);
@@ -105,39 +150,21 @@ export class UsersController {
 
         if (!user) throw new NotFoundException('User not found');
 
-        if (requestor.role === UserRole.ADMIN) return user;
-        if (requestor.role === UserRole.PROFE) {
-            // Check if student belongs to professor
-            if (user.professor?.id === requestor.id || user.id === requestor.id) {
-                return user;
-            }
-            throw new ForbiddenException('You can only view your own students');
-        }
-        if (requestor.id === user.id) return user; // Users can view themselves
-
-        throw new ForbiddenException('Access denied');
+        await this.validateAccess(user, requestor, 'view');
+        return user;
     }
 
     @Patch(':id')
     async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Request() req: any) {
         const requestor = req.user;
+        const userToUpdate = await this.usersService.findOne(id); // Fetch first to check gym
+        if (!userToUpdate) throw new NotFoundException('User not found');
 
-        // Admin can update anyone
-        if (requestor.role === UserRole.ADMIN) {
-            return this.usersService.update(id, updateUserDto);
-        }
+        await this.validateAccess(userToUpdate, requestor, 'update');
 
-        // Professor can update specific fields of their students
+        // Field restrictions logic
         if (requestor.role === UserRole.PROFE) {
-            const userToUpdate = await this.usersService.findOne(id);
-            if (!userToUpdate) throw new NotFoundException('User not found');
-
-            if (userToUpdate.professor?.id !== requestor.id) {
-                throw new ForbiddenException('You can only edit your own students');
-            }
-
             // Professors can likely edit typical student management fields
-            // "Objetivo general", "Observaciones del profesor"
             const allowedStudentFields = ['trainingGoal', 'professorObservations', 'notes'];
             const filteredDto: UpdateUserDto = {};
             for (const key of Object.keys(updateUserDto)) {
@@ -148,33 +175,21 @@ export class UsersController {
             if (Object.keys(filteredDto).length === 0) {
                 return userToUpdate;
             }
-
             return this.usersService.update(id, filteredDto);
         }
 
-        throw new ForbiddenException('Permission denied');
+        // Admin/SA Update
+        return this.usersService.update(id, updateUserDto);
     }
 
     @Delete(':id')
     async remove(@Param('id') id: string, @Request() req: any) {
         const requestor = req.user;
+        const userToDelete = await this.usersService.findOne(id); // Fetch to check gym
+        if (!userToDelete) throw new NotFoundException('User not found');
 
-        // Admin can delete anyone
-        if (requestor.role === UserRole.ADMIN) {
-            return this.usersService.remove(id);
-        }
+        await this.validateAccess(userToDelete, requestor, 'delete');
 
-        // Professor can only delete their students
-        if (requestor.role === UserRole.PROFE) {
-            const userToDelete = await this.usersService.findOne(id);
-            if (!userToDelete) throw new NotFoundException('User not found');
-
-            if (userToDelete.professor?.id !== requestor.id) {
-                throw new ForbiddenException('You can only delete your own students');
-            }
-            return this.usersService.remove(id);
-        }
-
-        throw new ForbiddenException('Permission denied');
+        return this.usersService.remove(id);
     }
 }

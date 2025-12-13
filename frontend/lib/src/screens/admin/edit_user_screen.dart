@@ -21,6 +21,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   late TextEditingController _ageController;
   late TextEditingController _notesController;
   late TextEditingController _lastPaymentDateController;
+  late TextEditingController _passwordController;
   
   late String _selectedRole;
   late String _selectedGender;
@@ -38,10 +39,23 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _ageController = TextEditingController(text: widget.user.age?.toString() ?? '');
     _notesController = TextEditingController(text: widget.user.notes ?? '');
     _lastPaymentDateController = TextEditingController(text: widget.user.lastPaymentDate ?? '');
+    _passwordController = TextEditingController(); // Empty default
     
     _selectedRole = widget.user.role;
+    
+    // Validate Gender
+    const validGenders = ['M', 'F', 'O'];
     _selectedGender = widget.user.gender ?? 'M';
+    if (!validGenders.contains(_selectedGender)) {
+        _selectedGender = 'M';
+    }
+
+    // Validate Payment Status
+    const validPaymentStatuses = ['pending', 'paid', 'overdue'];
     _paymentStatus = widget.user.paymentStatus ?? 'pending';
+    if (!validPaymentStatuses.contains(_paymentStatus)) {
+        _paymentStatus = 'pending';
+    }
   }
 
   @override
@@ -53,6 +67,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _ageController.dispose();
     _notesController.dispose();
     _lastPaymentDateController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -94,6 +109,15 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   decoration: const InputDecoration(labelText: 'Email'),
                   validator: (value) => value!.isEmpty ? 'Required' : null,
                 ),
+                // Password Field - One instance only
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(
+                    labelText: 'New Password (Optional)',
+                    helperText: 'Leave empty to keep current password',
+                  ),
+                  obscureText: true,
+                ),
                 TextFormField(
                   controller: _phoneController,
                   decoration: const InputDecoration(labelText: 'Phone'),
@@ -104,7 +128,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   keyboardType: TextInputType.number,
                 ),
                 DropdownButtonFormField<String>(
-                  value: _selectedGender,
+                  value: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
                   decoration: const InputDecoration(labelText: 'Gender'),
                   items: const [
                     DropdownMenuItem(value: 'M', child: Text('Male')),
@@ -114,7 +138,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   onChanged: (value) => setState(() => _selectedGender = value!),
                 ),
                  DropdownButtonFormField<String>(
-                  value: _paymentStatus,
+                  value: ['pending', 'paid', 'overdue'].contains(_paymentStatus) ? _paymentStatus : 'pending',
                   decoration: const InputDecoration(labelText: 'Payment Status'),
                   items: const [
                     DropdownMenuItem(value: 'pending', child: Text('Pending')),
@@ -173,8 +197,11 @@ class _EditUserScreenState extends State<EditUserScreen> {
                               'notes': _notesController.text,
                               'paymentStatus': _paymentStatus,
                               'lastPaymentDate': _lastPaymentDateController.text.isEmpty ? null : _lastPaymentDateController.text,
-                              // role not sent
                             };
+                            
+                            if (_passwordController.text.isNotEmpty) {
+                                updateData['password'] = _passwordController.text;
+                            }
 
                             final success = await context.read<UserProvider>().updateUser(
                                   widget.user.id,

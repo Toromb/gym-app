@@ -10,11 +10,11 @@ class UserProvider with ChangeNotifier {
   List<User> get students => _students;
   bool get isLoading => _isLoading;
 
-  Future<void> fetchUsers() async {
+  Future<void> fetchUsers({String? role, String? gymId}) async {
     _isLoading = true;
     notifyListeners();
     try {
-      _students = await _userService.getUsers();
+      _students = await _userService.getUsers(role: role, gymId: gymId);
     } catch (e) {
       print('Error fetching users: $e');
     } finally {
@@ -36,6 +36,7 @@ class UserProvider with ChangeNotifier {
     String? gender,
     String? notes,
     required String role,
+    String? gymId,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -50,6 +51,7 @@ class UserProvider with ChangeNotifier {
         gender: gender,
         notes: notes,
         role: role,
+        gymId: gymId,
       );
       if (newUser != null) {
         _students.add(newUser);

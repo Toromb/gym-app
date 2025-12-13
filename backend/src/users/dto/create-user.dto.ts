@@ -101,5 +101,9 @@ export class CreateUserDto {
     @IsOptional()
     @IsDateString()
     lastPaymentDate?: string; // string 'YYYY-MM-DD'
+
+    @IsOptional()
+    @IsString()
+    gymId?: string;
 }
 
