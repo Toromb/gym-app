@@ -442,7 +442,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
               setState(() => _isLoading = false);
               
               if (success && mounted) {
-                Navigator.pop(context);
+                Navigator.pop(context, true);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(widget.planToEdit != null ? 'Plan updated' : 'Plan created')),
                 );

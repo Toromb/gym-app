@@ -15,6 +15,8 @@
 - [x] Plan Entity Structure (Plan -> Weeks -> Days -> Exercises)
 - [x] Create Plan API (`POST /plans`)
 - [x] List Plans API (`GET /plans`)
+- [x] Fix Video URL Persistence
+
 
 ## Student View (Backend)
 - [x] Get My Plan API (`GET /plans/student/my-plan`)
@@ -30,3 +32,5 @@
     - [x] Weekly Structure Builder
 - [x] Student App View
     - [x] My Plan Display
+    - [x] Progress Tracking (Checkboxes & Completion logic)
+

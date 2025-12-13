@@ -25,10 +25,12 @@ class PlanDetailsScreen extends StatefulWidget {
 
 class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
   late StudentAssignment? _currentAssignment;
+  late Plan _plan;
 
   @override
   void initState() {
     super.initState();
+    _plan = widget.plan;
     _currentAssignment = widget.assignment;
   }
 
@@ -100,16 +102,23 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
     // However, widget.assignment is the source of truth for tracking.
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.plan.name),
+        title: Text(_plan.name),
         actions: [
           if (widget.canEdit)
             IconButton(
               icon: const Icon(Icons.edit),
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final result = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CreatePlanScreen(planToEdit: widget.plan)),
+                  MaterialPageRoute(builder: (context) => CreatePlanScreen(planToEdit: _plan)),
                 );
+                if (result == true && mounted) {
+                   // Refresh plan from provider (which should have been updated by CreatePlanScreen)
+                   final updatedPlan = context.read<PlanProvider>().plans.firstWhere((p) => p.id == _plan.id, orElse: () => _plan);
+                   setState(() {
+                     _plan = updatedPlan;
+                   });
+                }
               },
             ),
         ],
@@ -119,11 +128,11 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildPlanSummaryCard(context, widget.plan),
+            _buildPlanSummaryCard(context, _plan),
             const SizedBox(height: 24),
             const Text('Weekly Schedule', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            ...widget.plan.weeks.map((week) => _buildWeekCard(context, week)),
+            ..._plan.weeks.map((week) => _buildWeekCard(context, week)),
           ],
         ),
       ),
