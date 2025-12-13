@@ -48,6 +48,43 @@ let UsersController = class UsersController {
         }
         throw new common_1.ForbiddenException('You do not have permission to view users');
     }
+    async getProfile(req) {
+        const userId = req.user.id;
+        const user = await this.usersService.findOne(userId);
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        return user;
+    }
+    async updateProfile(updateUserDto, req) {
+        const userId = req.user.id;
+        const userRole = req.user.role;
+        const user = await this.usersService.findOne(userId);
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        const allowedFields = ['phone', 'age', 'gender', 'height'];
+        if (userRole === user_entity_1.UserRole.ALUMNO) {
+            allowedFields.push('currentWeight', 'personalComment');
+            if (updateUserDto.currentWeight) {
+                updateUserDto.weightUpdateDate = new Date();
+            }
+        }
+        else if (userRole === user_entity_1.UserRole.PROFE) {
+            allowedFields.push('specialty', 'internalNotes');
+        }
+        else if (userRole === user_entity_1.UserRole.ADMIN) {
+            allowedFields.push('adminNotes');
+        }
+        const filteredDto = {};
+        for (const key of Object.keys(updateUserDto)) {
+            if (allowedFields.includes(key)) {
+                filteredDto[key] = updateUserDto[key];
+            }
+        }
+        if (Object.keys(filteredDto).length === 0) {
+            return user;
+        }
+        return this.usersService.update(userId, filteredDto);
+    }
     async findOne(id, req) {
         const user = await this.usersService.findOne(id);
         const requestor = req.user;
@@ -77,7 +114,17 @@ let UsersController = class UsersController {
             if (userToUpdate.professor?.id !== requestor.id) {
                 throw new common_1.ForbiddenException('You can only edit your own students');
             }
-            return this.usersService.update(id, updateUserDto);
+            const allowedStudentFields = ['trainingGoal', 'professorObservations', 'notes'];
+            const filteredDto = {};
+            for (const key of Object.keys(updateUserDto)) {
+                if (allowedStudentFields.includes(key)) {
+                    filteredDto[key] = updateUserDto[key];
+                }
+            }
+            if (Object.keys(filteredDto).length === 0) {
+                return userToUpdate;
+            }
+            return this.usersService.update(id, filteredDto);
         }
         throw new common_1.ForbiddenException('Permission denied');
     }
@@ -115,6 +162,21 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('profile'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.Patch)('profile'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [update_user_dto_1.UpdateUserDto, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "updateProfile", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),

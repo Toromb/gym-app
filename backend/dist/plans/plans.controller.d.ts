@@ -7,6 +7,7 @@ export declare class PlansController {
     create(createPlanDto: CreatePlanDto, req: any): Promise<import("./entities/plan.entity").Plan>;
     findAll(req: any): Promise<import("./entities/plan.entity").Plan[]> | never[];
     getMyPlan(req: any): Promise<import("./entities/plan.entity").Plan>;
+    getMyHistory(req: any): Promise<import("./entities/student-plan.entity").StudentPlan[]>;
     findOne(id: string): Promise<import("./entities/plan.entity").Plan | null>;
     update(id: string, updatePlanDto: UpdatePlanDto, req: any): Promise<import("./entities/plan.entity").Plan>;
     assignPlan(body: {

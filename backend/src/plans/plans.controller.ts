@@ -41,6 +41,12 @@ export class PlansController {
         return plan;
     }
 
+    @Get('student/history')
+    async getMyHistory(@Request() req: any) {
+        // Allow student to see their own history
+        return this.plansService.findStudentAssignments(req.user.id);
+    }
+
     @Get(':id')
     findOne(@Param('id') id: string) {
         return this.plansService.findOne(id);

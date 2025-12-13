@@ -108,7 +108,6 @@ let PlansService = class PlansService {
             startDate: new Date().toISOString(),
             isActive: true,
         });
-        await this.studentPlanRepository.update({ student: { id: studentId }, isActive: true }, { isActive: false });
         return this.studentPlanRepository.save(studentPlan);
     }
     async update(id, updatePlanDto, user) {
@@ -179,6 +178,13 @@ let PlansService = class PlansService {
         return this.studentPlanRepository.find({
             where: { student: { id: studentId } },
             relations: ['plan'],
+            order: { assignedAt: 'DESC' }
+        });
+    }
+    async findStudentAssignments(studentId) {
+        return this.studentPlanRepository.find({
+            where: { student: { id: studentId } },
+            relations: ['plan', 'plan.weeks', 'plan.weeks.days', 'plan.weeks.days.exercises', 'plan.weeks.days.exercises.exercise'],
             order: { assignedAt: 'DESC' }
         });
     }

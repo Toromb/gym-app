@@ -5,6 +5,7 @@ import 'manage_students_screen.dart';
 import 'create_plan_screen.dart';
 import '../shared/plans_list_screen.dart';
 import '../shared/gym_schedule_screen.dart';
+import '../profile_screen.dart';
 
 class TeacherDashboardScreen extends StatelessWidget {
   const TeacherDashboardScreen({super.key});
@@ -43,6 +44,18 @@ class TeacherDashboardScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const ManageStudentsScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+             _buildDashboardCard(
+              context,
+              title: 'My Profile',
+              icon: Icons.person,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
                 );
               },
             ),

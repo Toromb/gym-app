@@ -16,6 +16,7 @@ export declare class PlansService {
     update(id: string, updatePlanDto: UpdatePlanDto, user: User): Promise<Plan>;
     findStudentPlan(studentId: string): Promise<Plan | null>;
     findAllAssignmentsByStudent(studentId: string): Promise<StudentPlan[]>;
+    findStudentAssignments(studentId: string): Promise<StudentPlan[]>;
     removeAssignment(assignmentId: string, user: User): Promise<void>;
     remove(id: string, user: User): Promise<void>;
 }

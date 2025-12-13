@@ -78,6 +78,15 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
+  Future<List<dynamic>> fetchMyHistory() async {
+    try {
+      return await _planService.getMyHistory();
+    } catch (e) {
+      print('Error fetching my history: $e');
+      return [];
+    }
+  }
+
   Future<bool> assignPlan(String planId, String studentId) async {
     _isLoading = true;
     notifyListeners();

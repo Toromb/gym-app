@@ -82,6 +82,23 @@ class PlanService {
     return null;
   }
 
+  // Method to get student's plan history
+  Future<List<dynamic>> getMyHistory() async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/plans/student/history'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body); // Returns list of StudentPlan objects
+    } else {
+      throw Exception('Failed to load plan history');
+    }
+  }
+
   Future<bool> assignPlan(String planId, String studentId) async {
     final token = await _getToken();
     final response = await http.post(

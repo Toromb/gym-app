@@ -118,8 +118,8 @@ export class PlansService {
             isActive: true,
         });
 
-        // Deactivate other active plans for this student
-        await this.studentPlanRepository.update({ student: { id: studentId } as any, isActive: true }, { isActive: false });
+        // Deactivate other active plans for this student -> REMOVED per requirement (multiple active plans allowed)
+        // await this.studentPlanRepository.update({ student: { id: studentId } as any, isActive: true }, { isActive: false });
 
         return this.studentPlanRepository.save(studentPlan);
     }
@@ -209,6 +209,14 @@ export class PlansService {
         return this.studentPlanRepository.find({
             where: { student: { id: studentId } },
             relations: ['plan'],
+            order: { assignedAt: 'DESC' }
+        });
+    }
+
+    async findStudentAssignments(studentId: string): Promise<StudentPlan[]> {
+        return this.studentPlanRepository.find({
+            where: { student: { id: studentId } },
+            relations: ['plan', 'plan.weeks', 'plan.weeks.days', 'plan.weeks.days.exercises', 'plan.weeks.days.exercises.exercise'],
             order: { assignedAt: 'DESC' }
         });
     }

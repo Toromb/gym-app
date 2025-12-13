@@ -172,7 +172,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                               'gender': _selectedGender,
                               'notes': _notesController.text,
                               'paymentStatus': _paymentStatus,
-                              'lastPaymentDate': _lastPaymentDateController.text,
+                              'lastPaymentDate': _lastPaymentDateController.text.isEmpty ? null : _lastPaymentDateController.text,
                               // role not sent
                             };
 

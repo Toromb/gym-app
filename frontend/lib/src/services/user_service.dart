@@ -113,4 +113,32 @@ class UserService {
     );
     return response.statusCode == 200;
   }
+  Future<User?> getProfile() async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/profile'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return User.fromJson(jsonDecode(response.body));
+    } else {
+      return null;
+    }
+  }
+
+  Future<bool> updateProfile(Map<String, dynamic> data) async {
+    final token = await _getToken();
+    final response = await http.patch(
+      Uri.parse('$baseUrl/users/profile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(data),
+    );
+    return response.statusCode == 200;
+  }
 }

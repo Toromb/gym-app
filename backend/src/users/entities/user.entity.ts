@@ -43,6 +43,48 @@ export class User {
     @Column({ type: 'text', nullable: true })
     notes: string;
 
+    @Column({ type: 'float', nullable: true })
+    height: number;
+
+    // Student Specific
+    @Column({ nullable: true })
+    trainingGoal: string;
+
+    @Column({ type: 'text', nullable: true })
+    professorObservations: string;
+
+    @Column({ type: 'float', nullable: true })
+    initialWeight: number;
+
+    @Column({ type: 'float', nullable: true })
+    currentWeight: number;
+
+    @Column({ type: 'date', nullable: true })
+    weightUpdateDate: Date;
+
+    @Column({ type: 'text', nullable: true })
+    personalComment: string;
+
+    @Column({ default: true })
+    isActive: boolean;
+
+    @Column({ type: 'date', nullable: true })
+    membershipStartDate: Date;
+
+    @Column({ type: 'date', nullable: true })
+    membershipExpirationDate: Date;
+
+    // Professor Specific
+    @Column({ nullable: true })
+    specialty: string;
+
+    @Column({ type: 'text', nullable: true })
+    internalNotes: string;
+
+    // Admin Specific
+    @Column({ type: 'text', nullable: true })
+    adminNotes: string;
+
     @Column({
         type: 'enum',
         enum: UserRole,

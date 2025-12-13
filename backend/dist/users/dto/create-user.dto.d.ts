@@ -1,4 +1,4 @@
-import { UserRole } from '../entities/user.entity';
+import { UserRole, PaymentStatus } from '../entities/user.entity';
 export declare class CreateUserDto {
     firstName: string;
     lastName: string;
@@ -9,4 +9,19 @@ export declare class CreateUserDto {
     gender?: string;
     notes?: string;
     role?: UserRole;
+    height?: number;
+    trainingGoal?: string;
+    professorObservations?: string;
+    initialWeight?: number;
+    currentWeight?: number;
+    weightUpdateDate?: Date;
+    personalComment?: string;
+    isActive?: boolean;
+    membershipStartDate?: Date;
+    membershipExpirationDate?: Date;
+    specialty?: string;
+    internalNotes?: string;
+    adminNotes?: string;
+    paymentStatus?: PaymentStatus;
+    lastPaymentDate?: string;
 }

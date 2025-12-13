@@ -48,6 +48,56 @@ export class UsersController {
         throw new ForbiddenException('You do not have permission to view users');
     }
 
+    @Get('profile')
+    async getProfile(@Request() req: any) {
+        const userId = req.user.id;
+        const user = await this.usersService.findOne(userId);
+        if (!user) throw new NotFoundException('User not found');
+        return user;
+    }
+
+    @Patch('profile')
+    async updateProfile(@Body() updateUserDto: UpdateUserDto, @Request() req: any) {
+        const userId = req.user.id;
+        const userRole = req.user.role;
+        const user = await this.usersService.findOne(userId);
+
+        if (!user) throw new NotFoundException('User not found');
+
+        // Define allowed fields per role
+        const allowedFields: string[] = ['phone', 'age', 'gender', 'height'];
+
+        if (userRole === UserRole.ALUMNO) {
+            allowedFields.push('currentWeight', 'personalComment');
+            // If currentWeight is updated, update the date
+            if (updateUserDto.currentWeight) {
+                updateUserDto.weightUpdateDate = new Date();
+            }
+        } else if (userRole === UserRole.PROFE) {
+            allowedFields.push('specialty', 'internalNotes');
+        } else if (userRole === UserRole.ADMIN) {
+            // Admin can edit everything in their own profile?
+            // "Acceso total al sistema" usually implies they can edit their profile freely.
+            // But let's stick to the common editable ones + admin notes?
+            // "Notas administrativas (opcional)"
+            allowedFields.push('adminNotes');
+        }
+
+        // Filter the DTO
+        const filteredDto: UpdateUserDto = {};
+        for (const key of Object.keys(updateUserDto)) {
+            if (allowedFields.includes(key)) {
+                (filteredDto as any)[key] = (updateUserDto as any)[key];
+            }
+        }
+
+        if (Object.keys(filteredDto).length === 0) {
+            return user; // Nothing to update
+        }
+
+        return this.usersService.update(userId, filteredDto);
+    }
+
     @Get(':id')
     async findOne(@Param('id') id: string, @Request() req: any) {
         const user = await this.usersService.findOne(id);
@@ -77,7 +127,7 @@ export class UsersController {
             return this.usersService.update(id, updateUserDto);
         }
 
-        // Professor can only update their students
+        // Professor can update specific fields of their students
         if (requestor.role === UserRole.PROFE) {
             const userToUpdate = await this.usersService.findOne(id);
             if (!userToUpdate) throw new NotFoundException('User not found');
@@ -85,7 +135,21 @@ export class UsersController {
             if (userToUpdate.professor?.id !== requestor.id) {
                 throw new ForbiddenException('You can only edit your own students');
             }
-            return this.usersService.update(id, updateUserDto);
+
+            // Professors can likely edit typical student management fields
+            // "Objetivo general", "Observaciones del profesor"
+            const allowedStudentFields = ['trainingGoal', 'professorObservations', 'notes'];
+            const filteredDto: UpdateUserDto = {};
+            for (const key of Object.keys(updateUserDto)) {
+                if (allowedStudentFields.includes(key)) {
+                    (filteredDto as any)[key] = (updateUserDto as any)[key];
+                }
+            }
+            if (Object.keys(filteredDto).length === 0) {
+                return userToUpdate;
+            }
+
+            return this.usersService.update(id, filteredDto);
         }
 
         throw new ForbiddenException('Permission denied');

@@ -42,6 +42,9 @@ let PlansController = class PlansController {
         }
         return plan;
     }
+    async getMyHistory(req) {
+        return this.plansService.findStudentAssignments(req.user.id);
+    }
     findOne(id) {
         return this.plansService.findOne(id);
     }
@@ -94,6 +97,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], PlansController.prototype, "getMyPlan", null);
+__decorate([
+    (0, common_1.Get)('student/history'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PlansController.prototype, "getMyHistory", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
