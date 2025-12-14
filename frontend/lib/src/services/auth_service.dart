@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -29,7 +30,7 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('Login error: $e');
+      debugPrint('Login error: $e');
       return null;
     }
   }

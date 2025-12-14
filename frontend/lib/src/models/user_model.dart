@@ -29,6 +29,9 @@ class User {
 
   // Admin Specific
   final String? adminNotes;
+  
+  // Gym Info
+  final String? gymName;
 
   User({
     required this.id,
@@ -55,6 +58,7 @@ class User {
     this.specialty,
     this.internalNotes,
     this.adminNotes,
+    this.gymName,
   });
 
   String get name => '$firstName $lastName';
@@ -85,6 +89,7 @@ class User {
       specialty: json['specialty'],
       internalNotes: json['internalNotes'],
       adminNotes: json['adminNotes'],
+      gymName: json['gym'] != null ? json['gym']['businessName'] : null,
     );
   }
 

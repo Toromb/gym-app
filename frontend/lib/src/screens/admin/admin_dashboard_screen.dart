@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'manage_users_screen.dart';
 import '../shared/plans_list_screen.dart';
+import '../teacher/create_plan_screen.dart';
 import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
 
@@ -55,6 +56,18 @@ class AdminDashboardScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildDashboardCard(
+              context,
+              title: 'Create Plan',
+              icon: Icons.add_circle_outline,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CreatePlanScreen()),
                 );
               },
             ),

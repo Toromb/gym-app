@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/gyms_provider.dart';
 import '../../models/user_model.dart';
@@ -18,12 +19,13 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<GymsProvider>().fetchGyms(); // Ensure gyms are loaded for filter
       _fetchAdmins();
     });
   }
 
   void _fetchAdmins() {
-     context.read<UserProvider>().fetchUsers(role: 'admin', gymId: _selectedGymId);
+     context.read<UserProvider>().fetchUsers(role: AppRoles.admin, gymId: _selectedGymId);
   }
 
   void _showAddAdminDialog() {
@@ -48,15 +50,42 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
       ),
       body: Column(
         children: [
-           // Filter Bar?
-           // For now just list
+          // Filter Bar
+          Consumer<GymsProvider>(
+            builder: (ctx, gymsProvider, _) {
+              final gyms = gymsProvider.gyms;
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: DropdownButtonFormField<String?>(
+                  decoration: const InputDecoration(
+                    labelText: 'Filter by Gym',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                  ),
+                  value: _selectedGymId,
+                  items: [
+                    const DropdownMenuItem<String?>(
+                        value: null, child: Text('All Gyms')),
+                    ...gyms.map((g) => DropdownMenuItem<String?>(
+                        value: g.id, child: Text(g.businessName)))
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedGymId = value;
+                    });
+                    _fetchAdmins();
+                  },
+                ),
+              );
+            },
+          ),
            Expanded(
                child: Consumer<UserProvider>(
                    builder: (context, provider, child) {
                        if (provider.isLoading) return const Center(child: CircularProgressIndicator());
                        
                        // Filter to show only admins? fetchUsers(role: 'admin') should handle it.
-                       final admins = provider.students.where((u) => u.role == 'admin').toList();
+                       final admins = provider.students.where((u) => u.role == AppRoles.admin).toList();
 
                        return ListView.builder(
                            itemCount: admins.length,
@@ -64,7 +93,7 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
                                final admin = admins[index];
                                return ListTile(
                                    title: Text(admin.name),
-                                   subtitle: Text(admin.email),
+                                   subtitle: Text('${admin.email}\nGym: ${admin.gymName ?? "N/A"}'),
                                    trailing: IconButton(
                                        icon: const Icon(Icons.delete, color: Colors.red),
                                        onPressed: () async {
@@ -136,7 +165,7 @@ class _AddAdminDialogState extends State<_AddAdminDialog> {
                             password: _passCtrl.text,
                             firstName: _firstCtrl.text,
                             lastName: _lastCtrl.text,
-                            role: 'admin',
+                            role: AppRoles.admin,
                             gymId: _gymId,
                         );
 

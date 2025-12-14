@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../constants/app_constants.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
 
@@ -91,7 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     };
     
     // Add role specific fields
-    if (_user!.role == 'alumno') {
+    if (_user!.role == AppRoles.alumno) {
       data['currentWeight'] = double.tryParse(_currentWeightController.text);
       data['personalComment'] = _personalCommentController.text;
     } else if (_user!.role == 'profe') {
@@ -144,9 +145,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const Divider(),
             _buildCommonSection(),
             const Divider(),
-            if (_user!.role == 'alumno') _buildStudentSection(),
-            if (_user!.role == 'profe') _buildProfessorSection(),
-            if (_user!.role == 'admin') _buildAdminSection(),
+            if (_user!.role == AppRoles.alumno) _buildStudentSection(),
+            if (_user!.role == AppRoles.profe) _buildProfessorSection(),
+            if (_user!.role == AppRoles.admin) _buildAdminSection(),
           ],
         ),
       ),

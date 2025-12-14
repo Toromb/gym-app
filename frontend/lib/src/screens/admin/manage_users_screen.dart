@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_constants.dart';
+import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
@@ -8,6 +10,7 @@ import '../../models/user_model.dart'; // Import User model for type checking
 import 'add_user_screen.dart';
 import 'edit_user_screen.dart';
 import '../teacher/student_plans_screen.dart';
+import '../../widgets/payment_status_badge.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   const ManageUsersScreen({super.key});
@@ -28,7 +31,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
   @override
   Widget build(BuildContext context) {
     final userRole = context.read<AuthProvider>().role;
-    final isAdmin = userRole == 'admin';
+    final isAdmin = userRole == AppRoles.admin;
 
     return Scaffold(
       appBar: AppBar(
@@ -75,7 +78,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
             );
           } else {
             // Profe View: Show only Alumnos
-            final students = users.where((u) => u.role == 'alumno').toList();
+            final students = users.where((u) => u.role == AppRoles.alumno).toList();
             return Column(
               children: [
                 _buildSectionHeader(context, 'Alumnos', students.length),
@@ -116,11 +119,27 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
       return ListTile(
         leading: CircleAvatar(child: Text(user.firstName.isNotEmpty ? user.firstName[0] : '?')),
         title: Text('${user.firstName} ${user.lastName}'),
-        subtitle: Text('${user.email} - ${user.role.toUpperCase()}'),
+        subtitle: Text('${user.email} - ${user.role}'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (isProfeView && user.role == 'alumno') ...[
+            // Payment Status (Only for Students/Profes and Admin view)
+            if (isAdmin && (user.role == 'alumno' || user.role == 'profe')) 
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: PaymentStatusBadge(
+                  status: user.paymentStatus,
+                  isEditable: true,
+                  onMarkAsPaid: () async {
+                       final success = await context.read<UserProvider>().markUserAsPaid(user.id);
+                       if (context.mounted) {
+                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success ? 'Payment updated' : 'Failed to update')));
+                       }
+                  },
+                ),
+              ),
+
+            if ((isProfeView || isAdmin) && user.role == 'alumno') ...[
               IconButton(
                 icon: const Icon(Icons.assignment),
                 tooltip: 'Assign Plan',

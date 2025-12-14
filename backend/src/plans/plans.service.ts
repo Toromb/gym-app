@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Plan, PlanDay, PlanExercise } from './entities/plan.entity';
@@ -10,6 +10,8 @@ import { UpdatePlanDto } from './dto/update-plan.dto';
 
 @Injectable()
 export class PlansService {
+    private readonly logger = new Logger(PlansService.name);
+
     constructor(
         @InjectRepository(Plan)
         private plansRepository: Repository<Plan>,
@@ -171,7 +173,7 @@ export class PlansService {
                         exercise.notes = e.notes;
                         exercise.videoUrl = e.videoUrl;
                         exercise.order = e.order;
-                        console.log('Mapping Exercise (Update):', { id: e.exerciseId, video: e.videoUrl, result: exercise.videoUrl });
+                        this.logger.log(`Mapping Exercise (Update): id=${e.exerciseId}`);
                         exercise.exercise = { id: e.exerciseId } as any;
                         exercise.day = day;
                         return exercise;

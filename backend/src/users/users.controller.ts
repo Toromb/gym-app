@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request, ForbiddenException, Delete, Query, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -11,7 +12,7 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
     @Post()
-    create(@Body() createUserDto: CreateUserDto, @Request() req: any) {
+    create(@Body() createUserDto: CreateUserDto, @Request() req: RequestWithUser) {
         const creator = req.user;
 
         // Super Admin can create any role
@@ -43,7 +44,7 @@ export class UsersController {
     }
 
     @Get()
-    findAll(@Request() req: any, @Query('role') role?: string, @Query('gymId') gymId?: string) {
+    findAll(@Request() req: RequestWithUser, @Query('role') role?: string, @Query('gymId') gymId?: string) {
         const user = req.user;
 
         if (user.role === UserRole.SUPER_ADMIN) {
@@ -65,7 +66,7 @@ export class UsersController {
     }
 
     @Get('profile')
-    async getProfile(@Request() req: any) {
+    async getProfile(@Request() req: RequestWithUser) {
         const userId = req.user.id;
         const user = await this.usersService.findOne(userId);
         if (!user) throw new NotFoundException('User not found');
@@ -73,7 +74,7 @@ export class UsersController {
     }
 
     @Patch('profile')
-    async updateProfile(@Body() updateUserDto: UpdateUserDto, @Request() req: any) {
+    async updateProfile(@Body() updateUserDto: UpdateUserDto, @Request() req: RequestWithUser) {
         const userId = req.user.id;
         const userRole = req.user.role;
         const user = await this.usersService.findOne(userId);
@@ -144,7 +145,7 @@ export class UsersController {
     }
 
     @Get(':id')
-    async findOne(@Param('id') id: string, @Request() req: any) {
+    async findOne(@Param('id') id: string, @Request() req: RequestWithUser) {
         const user = await this.usersService.findOne(id);
         const requestor = req.user;
 
@@ -155,7 +156,7 @@ export class UsersController {
     }
 
     @Patch(':id')
-    async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Request() req: any) {
+    async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Request() req: RequestWithUser) {
         const requestor = req.user;
         const userToUpdate = await this.usersService.findOne(id); // Fetch first to check gym
         if (!userToUpdate) throw new NotFoundException('User not found');
@@ -182,8 +183,24 @@ export class UsersController {
         return this.usersService.update(id, updateUserDto);
     }
 
+    @Patch(':id/payment-status')
+    async updatePaymentStatus(@Param('id') id: string, @Request() req: RequestWithUser) {
+        const requestor = req.user;
+        // Only Admin/SuperAdmin can mark as paid
+        if (requestor.role !== UserRole.ADMIN && requestor.role !== UserRole.SUPER_ADMIN) {
+            throw new ForbiddenException('Only Admins can update payment status');
+        }
+
+        const user = await this.usersService.findOne(id);
+        if (!user) throw new NotFoundException('User not found');
+
+        await this.validateAccess(user, requestor, 'update');
+
+        return this.usersService.markAsPaid(id);
+    }
+
     @Delete(':id')
-    async remove(@Param('id') id: string, @Request() req: any) {
+    async remove(@Param('id') id: string, @Request() req: RequestWithUser) {
         const requestor = req.user;
         const userToDelete = await this.usersService.findOne(id); // Fetch to check gym
         if (!userToDelete) throw new NotFoundException('User not found');

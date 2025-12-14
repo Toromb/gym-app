@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../models/plan_model.dart';
 import '../models/student_assignment_model.dart';
 import '../services/plan_service.dart';
@@ -19,7 +20,7 @@ class PlanProvider with ChangeNotifier {
     try {
       _plans = await _planService.getPlans();
     } catch (e) {
-      print('Error fetching plans: $e');
+    debugPrint('Error fetching plans: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -38,7 +39,7 @@ class PlanProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      print('Error creating plan: $e');
+    debugPrint('Error creating plan: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -57,7 +58,7 @@ class PlanProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      print('Error updating plan: $e');
+    debugPrint('Error updating plan: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -71,7 +72,7 @@ class PlanProvider with ChangeNotifier {
     try {
       _myPlan = await _planService.getMyPlan();
     } catch (e) {
-      print('Error fetching my plan: $e');
+    debugPrint('Error fetching my plan: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -83,7 +84,7 @@ class PlanProvider with ChangeNotifier {
     try {
       return await _planService.getMyHistory();
     } catch (e) {
-      print('Error fetching my history: $e');
+    debugPrint('Error fetching my history: $e');
       return [];
     }
   }
@@ -92,7 +93,7 @@ class PlanProvider with ChangeNotifier {
     try {
         return await _planService.updateProgress(studentPlanId, type, id, completed, date: date);
     } catch (e) {
-        print('Error updating progress: $e');
+        debugPrint('Error updating progress: $e');
         return false;
     }
   }
@@ -103,7 +104,7 @@ class PlanProvider with ChangeNotifier {
     try {
       return await _planService.assignPlan(planId, studentId);
     } catch (e) {
-      print('Error assigning plan: $e');
+    debugPrint('Error assigning plan: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -115,7 +116,7 @@ class PlanProvider with ChangeNotifier {
     try {
       return await _planService.getStudentAssignments(studentId);
     } catch (e) {
-      print('Error fetching assignments: $e');
+    debugPrint('Error fetching assignments: $e');
       return [];
     }
   }
@@ -126,7 +127,7 @@ class PlanProvider with ChangeNotifier {
     try {
       return await _planService.deleteAssignment(assignmentId);
     } catch (e) {
-      print('Error deleting assignment: $e');
+    debugPrint('Error deleting assignment: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -145,7 +146,7 @@ class PlanProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      print('Error deleting plan: $e');
+    debugPrint('Error deleting plan: $e');
       return false;
     } finally {
       _isLoading = false;

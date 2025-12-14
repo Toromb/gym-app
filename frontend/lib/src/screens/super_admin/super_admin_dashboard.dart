@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'gyms_list_screen.dart';
 import 'gym_admins_screen.dart';
+import 'platform_stats_screen.dart';
 
 class SuperAdminDashboardScreen extends StatelessWidget {
   const SuperAdminDashboardScreen({super.key});
@@ -52,7 +53,10 @@ class SuperAdminDashboardScreen extends StatelessWidget {
             icon: Icons.analytics,
             title: 'Platform Stats',
              onTap: () {
-              // Stats
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PlatformStatsScreen()),
+              );
             },
           ),
         ],

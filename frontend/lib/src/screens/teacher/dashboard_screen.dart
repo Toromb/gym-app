@@ -5,7 +5,9 @@ import 'manage_students_screen.dart';
 import 'create_plan_screen.dart';
 import '../shared/plans_list_screen.dart';
 import '../shared/gym_schedule_screen.dart';
+import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
+import '../../widgets/payment_status_badge.dart';
 
 class TeacherDashboardScreen extends StatelessWidget {
   const TeacherDashboardScreen({super.key});
@@ -35,6 +37,8 @@ class TeacherDashboardScreen extends StatelessWidget {
               'Welcome, ${user?.firstName ?? "Teacher"}!',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+            const SizedBox(height: 8),
+            PaymentStatusBadge(status: user?.paymentStatus, isEditable: false),
             const SizedBox(height: 20),
             _buildDashboardCard(
               context,

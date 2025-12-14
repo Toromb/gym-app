@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Gym } from './entities/gym.entity';
+import { Gym, GymStatus } from './entities/gym.entity';
 import { CreateGymDto } from './dto/create-gym.dto';
 import { UpdateGymDto } from './dto/update-gym.dto';
 
@@ -33,5 +33,13 @@ export class GymsService {
         // We are not allowing delete, just suspend? But for scaffolding adding it.
         // Logic: Do not delete if users exist.
         return this.gymsRepository.delete(id);
+    }
+
+    countAll() {
+        return this.gymsRepository.count();
+    }
+
+    countActive() {
+        return this.gymsRepository.count({ where: { status: GymStatus.ACTIVE } });
     }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
@@ -27,7 +28,7 @@ class _GymScheduleScreenState extends State<GymScheduleScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final scheduleProvider = context.watch<GymScheduleProvider>();
-    final isAdmin = authProvider.user?.role == 'admin';
+    final isAdmin = authProvider.user?.role == AppRoles.admin;
 
     return Scaffold(
       appBar: AppBar(

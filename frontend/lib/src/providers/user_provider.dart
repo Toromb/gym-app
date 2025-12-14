@@ -16,7 +16,7 @@ class UserProvider with ChangeNotifier {
     try {
       _students = await _userService.getUsers(role: role, gymId: gymId);
     } catch (e) {
-      print('Error fetching users: $e');
+        print('Error fetching users: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -88,7 +88,7 @@ class UserProvider with ChangeNotifier {
       age: age,
       gender: gender,
       notes: notes,
-      role: 'alumno',
+      role: AppRoles.alumno,
     );
   }
 
@@ -125,6 +125,28 @@ class UserProvider with ChangeNotifier {
       return false;
     } catch (e) {
       print('Error deleting user: $e');
+      return false;
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> markUserAsPaid(String userId) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final success = await _userService.markAsPaid(userId);
+      if (success) {
+        // Refresh the list to get updated dates/status
+        await fetchUsers(role: null); // Or pass current filter if you had it. 
+        // Ideally we just update the specific user in the list, but full refresh ensures consistency with calculation logic on backend
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error marking as paid: $e');
       return false;
     } finally {
       _isLoading = false;

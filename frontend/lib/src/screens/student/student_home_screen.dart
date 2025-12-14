@@ -7,6 +7,7 @@ import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
 // import 'student_plan_screen.dart'; // No longer direct nav
 import 'student_plans_list_screen.dart';
+import '../../widgets/payment_status_badge.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -101,6 +102,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           children: [
             Text('Welcome back,', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey)),
             Text(user?.firstName ?? "Student", style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            PaymentStatusBadge(status: user?.paymentStatus, isEditable: false),
           ],
         ),
       ],
