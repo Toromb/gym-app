@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../models/plan_model.dart';
 import '../services/exercise_service.dart';
 
@@ -16,7 +17,7 @@ class ExerciseProvider with ChangeNotifier {
     try {
       _exercises = await _exerciseService.getExercises();
     } catch (e) {
-      print('Error fetching exercises: $e');
+      debugPrint('Error fetching exercises: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

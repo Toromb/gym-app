@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Plan, PlanDay, PlanExercise } from './entities/plan.entity';
@@ -10,6 +10,8 @@ import { UpdatePlanDto } from './dto/update-plan.dto';
 
 @Injectable()
 export class PlansService {
+    private readonly logger = new Logger(PlansService.name);
+
     constructor(
         @InjectRepository(Plan)
         private plansRepository: Repository<Plan>,
@@ -58,8 +60,13 @@ export class PlansService {
         return this.findOne(saved.id) as Promise<Plan>;
     }
 
-    async findAll(): Promise<Plan[]> {
+    async findAll(gymId?: string): Promise<Plan[]> {
+        const where: any = {};
+        if (gymId) {
+            where.teacher = { gym: { id: gymId } };
+        }
         return this.plansRepository.find({
+            where,
             relations: ['weeks', 'weeks.days', 'weeks.days.exercises', 'weeks.days.exercises.exercise', 'teacher']
         });
     }
@@ -118,8 +125,8 @@ export class PlansService {
             isActive: true,
         });
 
-        // Deactivate other active plans for this student
-        await this.studentPlanRepository.update({ student: { id: studentId } as any, isActive: true }, { isActive: false });
+        // Deactivate other active plans for this student -> REMOVED per requirement (multiple active plans allowed)
+        // await this.studentPlanRepository.update({ student: { id: studentId } as any, isActive: true }, { isActive: false });
 
         return this.studentPlanRepository.save(studentPlan);
     }
@@ -166,7 +173,7 @@ export class PlansService {
                         exercise.notes = e.notes;
                         exercise.videoUrl = e.videoUrl;
                         exercise.order = e.order;
-                        console.log('Mapping Exercise (Update):', { id: e.exerciseId, video: e.videoUrl, result: exercise.videoUrl });
+                        this.logger.log(`Mapping Exercise (Update): id=${e.exerciseId}`);
                         exercise.exercise = { id: e.exerciseId } as any;
                         exercise.day = day;
                         return exercise;
@@ -213,6 +220,14 @@ export class PlansService {
         });
     }
 
+    async findStudentAssignments(studentId: string): Promise<StudentPlan[]> {
+        return this.studentPlanRepository.find({
+            where: { student: { id: studentId } },
+            relations: ['plan', 'plan.weeks', 'plan.weeks.days', 'plan.weeks.days.exercises', 'plan.weeks.days.exercises.exercise'],
+            order: { assignedAt: 'DESC' }
+        });
+    }
+
     async removeAssignment(assignmentId: string, user: User): Promise<void> {
         const assignment = await this.studentPlanRepository.findOne({
             where: { id: assignmentId },
@@ -251,5 +266,39 @@ export class PlansService {
 
         await this.plansRepository.remove(plan);
     }
+
+    async updateProgress(studentPlanId: string, userId: string, payload: { type: 'exercise' | 'day', id: string, completed: boolean, date?: string }): Promise<StudentPlan> {
+        const studentPlan = await this.studentPlanRepository.findOne({
+            where: { id: studentPlanId },
+            relations: ['student']
+        });
+
+        if (!studentPlan) throw new NotFoundException('Assignment not found');
+        if (studentPlan.student.id !== userId) throw new ForbiddenException('Access denied');
+
+        // Initialize progress structure if needed
+        if (!studentPlan.progress) studentPlan.progress = { exercises: {}, days: {} };
+        if (!studentPlan.progress.exercises) studentPlan.progress.exercises = {};
+        if (!studentPlan.progress.days) studentPlan.progress.days = {};
+
+        if (payload.type === 'exercise') {
+            if (payload.completed) {
+                studentPlan.progress.exercises[payload.id] = true;
+            } else {
+                delete studentPlan.progress.exercises[payload.id];
+            }
+        } else if (payload.type === 'day') {
+            if (payload.completed) {
+                studentPlan.progress.days[payload.id] = { completed: true, date: payload.date || new Date().toISOString() };
+            } else {
+                delete studentPlan.progress.days[payload.id];
+            }
+        }
+
+        // Force update 
+        const updated = await this.studentPlanRepository.save(studentPlan);
+        return updated;
+    }
 }
+
 

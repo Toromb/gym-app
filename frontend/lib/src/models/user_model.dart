@@ -10,6 +10,28 @@ class User {
   final String? notes;
   final String? paymentStatus;
   final String? lastPaymentDate;
+  final double? height;
+
+  // Student Specific
+  final String? trainingGoal;
+  final String? professorObservations;
+  final double? initialWeight;
+  final double? currentWeight;
+  final String? weightUpdateDate;
+  final String? personalComment;
+  final bool? isActive;
+  final String? membershipStartDate;
+  final String? membershipExpirationDate;
+
+  // Professor Specific
+  final String? specialty;
+  final String? internalNotes;
+
+  // Admin Specific
+  final String? adminNotes;
+  
+  // Gym Info
+  final String? gymName;
 
   User({
     required this.id,
@@ -23,6 +45,20 @@ class User {
     this.notes,
     this.paymentStatus,
     this.lastPaymentDate,
+    this.height,
+    this.trainingGoal,
+    this.professorObservations,
+    this.initialWeight,
+    this.currentWeight,
+    this.weightUpdateDate,
+    this.personalComment,
+    this.isActive,
+    this.membershipStartDate,
+    this.membershipExpirationDate,
+    this.specialty,
+    this.internalNotes,
+    this.adminNotes,
+    this.gymName,
   });
 
   String get name => '$firstName $lastName';
@@ -40,6 +76,20 @@ class User {
       notes: json['notes'],
       paymentStatus: json['paymentStatus'],
       lastPaymentDate: json['lastPaymentDate'],
+      height: json['height'] != null ? (json['height'] as num).toDouble() : null,
+      trainingGoal: json['trainingGoal'],
+      professorObservations: json['professorObservations'],
+      initialWeight: json['initialWeight'] != null ? (json['initialWeight'] as num).toDouble() : null,
+      currentWeight: json['currentWeight'] != null ? (json['currentWeight'] as num).toDouble() : null,
+      weightUpdateDate: json['weightUpdateDate'],
+      personalComment: json['personalComment'],
+      isActive: json['isActive'],
+      membershipStartDate: json['membershipStartDate'],
+      membershipExpirationDate: json['membershipExpirationDate'],
+      specialty: json['specialty'],
+      internalNotes: json['internalNotes'],
+      adminNotes: json['adminNotes'],
+      gymName: json['gym'] != null ? json['gym']['businessName'] : null,
     );
   }
 
@@ -56,6 +106,19 @@ class User {
       'notes': notes,
       'paymentStatus': paymentStatus,
       'lastPaymentDate': lastPaymentDate,
+      'height': height,
+      'trainingGoal': trainingGoal,
+      'professorObservations': professorObservations,
+      'initialWeight': initialWeight,
+      'currentWeight': currentWeight,
+      'weightUpdateDate': weightUpdateDate,
+      'personalComment': personalComment,
+      'isActive': isActive,
+      'membershipStartDate': membershipStartDate,
+      'membershipExpirationDate': membershipExpirationDate,
+      'specialty': specialty,
+      'internalNotes': internalNotes,
+      'adminNotes': adminNotes,
     };
   }
 }

@@ -28,7 +28,14 @@ android/app/build/
 # Artifacts/Temporary
 brain/
 scratch/
-# Backend build output
+# Artifacts / Temporary
+brain/
+scratch/
+
+# Backend build artifacts
 backend/dist/
+
 # Local logs
 backend/*.log
+backend/**/*.log
+

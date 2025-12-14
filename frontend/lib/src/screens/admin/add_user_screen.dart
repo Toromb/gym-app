@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
 
@@ -20,7 +21,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
   final _ageController = TextEditingController();
   final _notesController = TextEditingController();
   
-  String _selectedRole = 'alumno';
+  String _selectedRole = AppRoles.alumno;
   String _selectedGender = 'M';
 
   bool _isLoading = false;
@@ -60,14 +61,14 @@ class _AddUserScreenState extends State<AddUserScreen> {
                 // Wait, requirements said: "Profe, al crear Alumno, asignar auto". Backend handles assignment.
                 // Frontend: "If Profe, can only create Alumno".
                 
-                if (context.read<AuthProvider>().role != 'profe')
+                if (context.read<AuthProvider>().role != AppRoles.profe)
                   DropdownButtonFormField<String>(
                     value: _selectedRole,
                     decoration: const InputDecoration(labelText: 'Role'),
                     items: const [
-                      DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                      DropdownMenuItem(value: 'profe', child: Text('Professor')),
-                      DropdownMenuItem(value: 'alumno', child: Text('Student')),
+                      DropdownMenuItem(value: AppRoles.admin, child: Text('Admin')),
+                      DropdownMenuItem(value: AppRoles.profe, child: Text('Professor')),
+                      DropdownMenuItem(value: AppRoles.alumno, child: Text('Student')),
                     ],
                     onChanged: (value) => setState(() => _selectedRole = value!),
                   )

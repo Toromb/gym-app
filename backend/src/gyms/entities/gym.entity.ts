@@ -1,0 +1,63 @@
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { User } from '../../users/entities/user.entity';
+
+export enum GymPlan {
+    BASIC = 'basic', // 0-50
+    PRO = 'pro',     // 50-200
+    PREMIUM = 'premium', // 200-1000
+}
+
+export enum GymStatus {
+    ACTIVE = 'active',
+    SUSPENDED = 'suspended',
+}
+
+@Entity('gyms')
+export class Gym {
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
+
+    @Column({ unique: true })
+    businessName: string;
+
+    @Column()
+    address: string;
+
+    @Column({ nullable: true })
+    phone: string;
+
+    @Column({ nullable: true })
+    email: string;
+
+    @Column({
+        type: 'enum',
+        enum: GymStatus,
+        default: GymStatus.ACTIVE,
+    })
+    status: GymStatus;
+
+    @Column({ type: 'text', nullable: true })
+    suspensionReason: string;
+
+    @Column({
+        type: 'enum',
+        enum: GymPlan,
+        default: GymPlan.BASIC,
+    })
+    subscriptionPlan: GymPlan;
+
+    @Column({ type: 'date', nullable: true })
+    expirationDate: Date;
+
+    @Column({ type: 'int', default: 50 }) // Default to Basic limit
+    maxProfiles: number;
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
+
+    @OneToMany(() => User, (user) => user.gym)
+    users: User[];
+}

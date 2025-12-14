@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request } from '@nestjs/common';
 import { ExercisesService } from './exercises.service';
+import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { UserRole } from '../users/entities/user.entity';
@@ -10,7 +11,7 @@ export class ExercisesController {
     constructor(private readonly exercisesService: ExercisesService) { }
 
     @Post()
-    create(@Body() createExerciseDto: CreateExerciseDto, @Request() req: any) {
+    create(@Body() createExerciseDto: CreateExerciseDto, @Request() req: RequestWithUser) {
         // Check if user is PROFE or ADMIN (can be done with a custom decorator/guard)
         // For MVP, assuming any authenticated user can create for now, or check role here
         if (req.user.role === UserRole.ALUMNO) {

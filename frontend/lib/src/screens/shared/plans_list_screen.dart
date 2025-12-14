@@ -4,6 +4,7 @@ import '../../providers/plan_provider.dart';
 import '../../models/plan_model.dart';
 import 'package:intl/intl.dart';
 import '../teacher/create_plan_screen.dart';
+import 'plan_details_screen.dart';
 
 class PlansListScreen extends StatefulWidget {
   const PlansListScreen({super.key});
@@ -139,76 +140,10 @@ class _PlansListScreenState extends State<PlansListScreen> {
   }
 
   void _showPlanDetails(BuildContext context, Plan plan) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Container(
-          width: double.maxFinite,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(plan.name, style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 16),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: plan.weeks.map((week) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Week ${week.weekNumber}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          ...week.days.map((day) {
-                            return Padding(
-                              padding: const EdgeInsets.only(left: 16.0, top: 4),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(day.title ?? 'Day ${day.dayOfWeek}'),
-                                  ...day.exercises.map((ex) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(left: 16.0),
-                                      child: Text('- ${ex.exercise?.name ?? 'Exercise'}: ${ex.sets}x${ex.reps}'),
-                                    );
-                                  }),
-                                ],
-                              ),
-                            );
-                          }),
-                          const Divider(),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Row(
-                   mainAxisSize: MainAxisSize.min,
-                   children: [
-                      TextButton(
-                        onPressed: () {
-                           Navigator.pop(context);
-                           Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => CreatePlanScreen(planToEdit: plan)),
-                           );
-                        },
-                        child: const Text('Edit Plan'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Close'),
-                      ),
-                   ],
-                ),
-              ),
-            ],
-          ),
-        ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PlanDetailsScreen(plan: plan),
       ),
     );
   }

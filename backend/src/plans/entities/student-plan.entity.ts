@@ -25,6 +25,9 @@ export class StudentPlan {
     @Column({ default: true })
     isActive: boolean;
 
+    @Column({ type: 'json', default: {} })
+    progress: any;
+
     @CreateDateColumn()
     createdAt: Date;
 

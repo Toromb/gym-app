@@ -12,6 +12,8 @@ import { PlansModule } from './plans/plans.module';
 import { PaymentsModule } from './payments/payments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { GymScheduleModule } from './gym-schedule/gym-schedule.module';
+import { GymsModule } from './gyms/gyms.module';
+import { StatsModule } from './stats/stats.module';
 
 
 @Module({
@@ -42,6 +44,8 @@ import { GymScheduleModule } from './gym-schedule/gym-schedule.module';
     PaymentsModule,
     NotificationsModule,
     GymScheduleModule,
+    GymsModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

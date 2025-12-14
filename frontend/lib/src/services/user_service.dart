@@ -18,10 +18,17 @@ class UserService {
     return await _storage.read(key: 'jwt');
   }
 
-  Future<List<User>> getUsers() async {
+  Future<List<User>> getUsers({String? role, String? gymId}) async {
     final token = await _getToken();
+    
+    String queryString = '';
+    List<String> params = [];
+    if (role != null) params.add('role=$role');
+    if (gymId != null) params.add('gymId=$gymId');
+    if (params.isNotEmpty) queryString = '?${params.join('&')}';
+
     final response = await http.get(
-      Uri.parse('$baseUrl/users'),
+      Uri.parse('$baseUrl/users$queryString'),
       headers: {
         'Authorization': 'Bearer $token',
       },
@@ -45,15 +52,10 @@ class UserService {
     String? gender,
     String? notes,
     required String role,
+    String? gymId,
   }) async {
     final token = await _getToken();
-    final response = await http.post(
-      Uri.parse('$baseUrl/users'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    final bodyData = {
         'email': email,
         'password': password,
         'firstName': firstName,
@@ -63,7 +65,16 @@ class UserService {
         'gender': gender,
         'notes': notes,
         'role': role,
-      }),
+        if (gymId != null) 'gymId': gymId,
+    };
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/users'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(bodyData),
     );
 
     if (response.statusCode == 201) {
@@ -112,5 +123,44 @@ class UserService {
       body: jsonEncode(data),
     );
     return response.statusCode == 200;
+  }
+  Future<User?> getProfile() async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/profile'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return User.fromJson(jsonDecode(response.body));
+    } else {
+      return null;
+    }
+  }
+
+  Future<bool> updateProfile(Map<String, dynamic> data) async {
+    final token = await _getToken();
+    final response = await http.patch(
+      Uri.parse('$baseUrl/users/profile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(data),
+    );
+    return response.statusCode == 200;
+  }
+
+  Future<bool> markAsPaid(String userId) async {
+    final token = await _getToken();
+    final response = await http.patch(
+      Uri.parse('$baseUrl/users/$userId/payment-status'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    return response.statusCode == 200 || response.statusCode == 201;
   }
 }

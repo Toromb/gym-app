@@ -1,11 +1,13 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne } from 'typeorm';
 import { StudentPlan } from '../../plans/entities/student-plan.entity';
+import { Gym } from '../../gyms/entities/gym.entity';
 
 
 export enum UserRole {
     ADMIN = 'admin',
     PROFE = 'profe',
     ALUMNO = 'alumno',
+    SUPER_ADMIN = 'super_admin',
 }
 
 export enum PaymentStatus {
@@ -43,6 +45,48 @@ export class User {
     @Column({ type: 'text', nullable: true })
     notes: string;
 
+    @Column({ type: 'float', nullable: true })
+    height: number;
+
+    // Student Specific
+    @Column({ nullable: true })
+    trainingGoal: string;
+
+    @Column({ type: 'text', nullable: true })
+    professorObservations: string;
+
+    @Column({ type: 'float', nullable: true })
+    initialWeight: number;
+
+    @Column({ type: 'float', nullable: true })
+    currentWeight: number;
+
+    @Column({ type: 'date', nullable: true })
+    weightUpdateDate: Date;
+
+    @Column({ type: 'text', nullable: true })
+    personalComment: string;
+
+    @Column({ default: true })
+    isActive: boolean;
+
+    @Column({ type: 'date', nullable: true })
+    membershipStartDate: Date;
+
+    @Column({ type: 'date', nullable: true })
+    membershipExpirationDate: Date;
+
+    // Professor Specific
+    @Column({ nullable: true })
+    specialty: string;
+
+    @Column({ type: 'text', nullable: true })
+    internalNotes: string;
+
+    // Admin Specific
+    @Column({ type: 'text', nullable: true })
+    adminNotes: string;
+
     @Column({
         type: 'enum',
         enum: UserRole,
@@ -74,5 +118,8 @@ export class User {
 
     @OneToMany(() => User, (user) => user.professor)
     students: User[];
+
+    @ManyToOne(() => Gym, (gym) => gym.users, { nullable: true, onDelete: 'SET NULL' })
+    gym: Gym;
 }
 
