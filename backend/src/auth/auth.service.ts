@@ -16,6 +16,17 @@ export class AuthService {
     async validateUser(email: string, pass: string): Promise<any> {
         const user = await this.usersService.findOneByEmail(email);
         if (user && (await bcrypt.compare(pass, user.passwordHash))) {
+
+            // Suspended Gym Check
+            if (user.gym && user.gym.status === 'suspended') {
+                // Check if user is Super Admin (exempt?)
+                // Assuming Super Admin role is 'super_admin' or similar, OR they don't have a gym assigned (gym is null).
+                // If they have a gym and it is suspended, they are blocked. 
+                // Unless we explicitly exempt 'admin' role? NO, user request said "dichas cuentas vinculadas... no deberian tener acceso".
+                // So even the Gym Admin should be blocked if Gym is suspended.
+                throw new UnauthorizedException('CUENTA/GYM SUSPENDIDO/A');
+            }
+
             const { passwordHash, ...result } = user;
             return result;
         }

@@ -1,13 +1,13 @@
 
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { UsersService } from './users/users.service';
-import { UserRole } from './users/entities/user.entity';
+import { AppModule } from '../app.module';
+import { UsersService } from '../users/users.service';
+import { UserRole } from '../users/entities/user.entity';
 
 async function bootstrap() {
     const app = await NestFactory.createApplicationContext(AppModule);
     const { getRepositoryToken } = require('@nestjs/typeorm');
-    const { User } = require('./users/entities/user.entity');
+    const { User } = require('../users/entities/user.entity');
     const userRepository = app.get(getRepositoryToken(User));
 
     console.log('🌱 Seeding Payment Statuses...');

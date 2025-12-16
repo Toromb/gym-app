@@ -18,31 +18,31 @@ export class GymsController {
     }
 
     @Post()
-    create(@Body() createGymDto: CreateGymDto, @Request() req: RequestWithUser) {
+    create(@Body() createGymDto: CreateGymDto, @Request() req: any) {
         this.checkSuperAdmin(req.user);
         return this.gymsService.create(createGymDto);
     }
 
     @Get()
-    findAll(@Request() req: RequestWithUser) {
+    findAll(@Request() req: any) {
         this.checkSuperAdmin(req.user);
         return this.gymsService.findAll();
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string, @Request() req: RequestWithUser) {
+    findOne(@Param('id') id: string, @Request() req: any) {
         this.checkSuperAdmin(req.user);
         return this.gymsService.findOne(id);
     }
 
     @Patch(':id')
-    update(@Param('id') id: string, @Body() updateGymDto: UpdateGymDto, @Request() req: RequestWithUser) {
+    update(@Param('id') id: string, @Body() updateGymDto: UpdateGymDto, @Request() req: any) {
         this.checkSuperAdmin(req.user);
         return this.gymsService.update(id, updateGymDto);
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string, @Request() req: RequestWithUser) {
+    remove(@Param('id') id: string, @Request() req: any) {
         this.checkSuperAdmin(req.user);
         // Maybe check if gym has users before delete? 
         // Service handles delete, but we should be careful.

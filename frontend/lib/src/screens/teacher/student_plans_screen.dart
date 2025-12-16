@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
 import '../../models/user_model.dart';
+import '../../models/plan_model.dart';
+import '../../models/student_assignment_model.dart';
+import '../shared/plan_details_screen.dart';
 import 'package:intl/intl.dart';
 
 class StudentPlansScreen extends StatefulWidget {
@@ -62,11 +65,11 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Plans: ${widget.student.firstName}')),
+      appBar: AppBar(title: Text('Planes: ${widget.student.firstName}')),
       body: _isLoading 
           ? const Center(child: CircularProgressIndicator())
           : _assignments == null || _assignments!.isEmpty
-              ? const Center(child: Text('No plans assigned.'))
+              ? const Center(child: Text('No hay planes asignados.'))
               : ListView.builder(
                   itemCount: _assignments!.length,
                   itemBuilder: (context, index) {
@@ -79,11 +82,41 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
                       margin: const EdgeInsets.all(8.0),
                       child: ListTile(
                         leading: Icon(Icons.assignment, color: isActive ? Colors.green : Colors.grey),
-                        title: Text(plan['name'] ?? 'Unnamed Plan'),
-                        subtitle: Text('Assigned: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(assignedAt))}\nStatus: ${isActive ? "Active" : "Inactive"}'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _confirmDelete(assignment['id']),
+                        title: Text(plan['name'] ?? 'Plan sin nombre'),
+                        subtitle: Text('Asignado: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(assignedAt))}\nEstado: ${isActive ? "Activo" : "Inactivo"}'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.visibility, color: Colors.blue),
+                              onPressed: () async {
+                                 // Fetch full plan details
+                                 final planId = plan['id'];
+                                 final fullPlan = await context.read<PlanProvider>().getPlanById(planId);
+                                 
+                                 if (fullPlan != null && context.mounted) {
+                                   Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => PlanDetailsScreen(
+                                          plan: fullPlan, 
+                                          readOnly: true,
+                                          canEdit: false,
+                                          assignment: StudentAssignment.fromJson(assignment), 
+                                          studentId: widget.student.id, // Use widget.student.id (robust)
+                                        ),
+                                      ),
+                                   );
+                                 } else if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error cargando detalles del plan')));
+                                 }
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _confirmDelete(assignment['id']),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -96,12 +129,12 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove Assignment'),
-        content: const Text('Are you sure you want to remove this plan from the student? This will not delete the plan itself.'),
+        title: const Text('Eliminar Asignación'),
+        content: const Text('¿Estás seguro de que quieres eliminar este plan del alumno? Esto no eliminará el plan en sí.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () async {
@@ -111,16 +144,16 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
               if (success) {
                 _fetchAssignments(); // Refresh
                 if (mounted) {
-                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Assignment removed')));
+                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Asignación eliminada')));
                 }
               } else {
                 setState(() => _isLoading = false);
                 if (mounted) {
-                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to remove')));
+                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al eliminar')));
                 }
               }
             },
-            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

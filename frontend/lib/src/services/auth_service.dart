@@ -15,7 +15,7 @@ class AuthService {
     return 'http://localhost:3000';
   }
 
-  Future<Map<String, dynamic>?> login(String email, String password) async {
+  Future<dynamic> login(String email, String password) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/login'),
@@ -23,15 +23,18 @@ class AuthService {
         body: jsonEncode({'email': email, 'password': password}),
       );
 
+      final data = jsonDecode(response.body);
+
       if (response.statusCode == 201 || response.statusCode == 200) {
-        final data = jsonDecode(response.body);
         await _storage.write(key: 'jwt', value: data['access_token']);
-        return data;
+        return data; // Success Map
       }
-      return null;
+      
+      // Return error message if available
+      return data['message'] ?? 'Login failed'; 
     } catch (e) {
       debugPrint('Login error: $e');
-      return null;
+      return 'Connection error';
     }
   }
 

@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/user_service.dart';
+import '../../models/user_model.dart';
 
 class AddUserScreen extends StatefulWidget {
   const AddUserScreen({super.key});
@@ -14,40 +16,67 @@ class AddUserScreen extends StatefulWidget {
 class _AddUserScreenState extends State<AddUserScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController(); // Optional, generated if empty?
+  final _passwordController = TextEditingController(); 
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _ageController = TextEditingController();
   final _notesController = TextEditingController();
+  final _membershipDateController = TextEditingController();
   
   String _selectedRole = AppRoles.alumno;
   String _selectedGender = 'M';
 
+  // For Professor Assignment
+  String? _selectedProfessorId;
+  List<User> _professors = [];
+  bool _isLoadingProfessors = false;
+
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    if (_selectedRole == AppRoles.alumno) {
+      _fetchProfessors();
+    }
+  }
+
+    Future<void> _fetchProfessors() async {
+      setState(() => _isLoadingProfessors = true);
+      try {
+          // Use UserService directly
+          final professors = await UserService().getUsers(role: UserRoles.profe);
+          if (mounted) {
+              setState(() {
+                  _professors = professors;
+                  _isLoadingProfessors = false;
+              });
+          }
+      } catch (e) {
+          if (mounted) setState(() => _isLoadingProfessors = false);
+          print("Error fetching professors: $e");
+      }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      setState(() {
+        _membershipDateController.text = picked.toIso8601String().split('T')[0];
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // final currentUser = context.read<AuthProvider>().user; // Unused 
-    // Wait, UserProvider might not expose currentUser easily if not implemented.
-    // Let's assume UserProvider has it or we can get it.
-    // If not valid, we default to showing everything (Admin assumption) or handle logic.
-    // But better: context.watch<AuthProvider>()? 
-    // The previous prompt showed UserProvider. Let's assume we can get it.
-    // Based on previous files, I don't see AuthProvider or UserProvider.currentUser explicit in the snippet (it was hidden).
-    // Let's assume we can hide the dropdown if we know we are a professor.
-    
-    // Actually, let's verify if we have access to the current role.
-    // Using a simpler approach: Pass the role into the screen or let the logic handle it.
-    // For now, let's add logic to disable if not Admin.
-    
-    // Correction: I don't see where current user is stored. Checking UserProvider...
-    // I haven't read UserProvider. Let's assume I can't easily check 'currentUser.role'.
-    // BUT! I can check the functionality.
-    
-    // I will read UserProvider first to be safe.
     return Scaffold(
-      appBar: AppBar(title: const Text('Add User')),
+      appBar: AppBar(title: const Text('Agregar Usuario')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -55,75 +84,115 @@ class _AddUserScreenState extends State<AddUserScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                // Only show role dropdown if we are essentially NOT restricted?
-                // Or just show it but if Profe, hardcode it?
-                // Let's rely on the user manually selecting for now unless I read the provider.
-                // Wait, requirements said: "Profe, al crear Alumno, asignar auto". Backend handles assignment.
-                // Frontend: "If Profe, can only create Alumno".
-                
                 if (context.read<AuthProvider>().role != AppRoles.profe)
                   DropdownButtonFormField<String>(
                     value: _selectedRole,
-                    decoration: const InputDecoration(labelText: 'Role'),
+                    decoration: const InputDecoration(labelText: 'Rol'),
                     items: const [
                       DropdownMenuItem(value: AppRoles.admin, child: Text('Admin')),
-                      DropdownMenuItem(value: AppRoles.profe, child: Text('Professor')),
-                      DropdownMenuItem(value: AppRoles.alumno, child: Text('Student')),
+                      DropdownMenuItem(value: AppRoles.profe, child: Text('Profesor')),
+                      DropdownMenuItem(value: AppRoles.alumno, child: Text('Alumno')),
                     ],
-                    onChanged: (value) => setState(() => _selectedRole = value!),
+                    onChanged: (value) {
+                         setState(() {
+                             _selectedRole = value!;
+                             if (_selectedRole == AppRoles.alumno) {
+                                  _fetchProfessors();
+                             } else {
+                                  _selectedProfessorId = null;
+                             }
+                         });
+                    },
                   )
                 else
-                  // For Profe, visual indication only, role is fixed to 'alumno' logic-side (and initialized as such)
                    Padding(
                      padding: const EdgeInsets.symmetric(vertical: 16.0),
                      child: TextFormField(
-                       initialValue: 'Student', // Visual only
+                       initialValue: 'Alumno', 
                        readOnly: true,
-                       decoration: const InputDecoration(labelText: 'Role'),
+                       decoration: const InputDecoration(labelText: 'Rol'),
                      ),
                    ),
+
+                 // Assign Professor Dropdown (Visible only if Student)
+                 if (_selectedRole == AppRoles.alumno) ...[
+                     const SizedBox(height: 16),
+                     if (_isLoadingProfessors)
+                         const LinearProgressIndicator()
+                     else
+                         DropdownButtonFormField<String>(
+                             value: _selectedProfessorId,
+                             decoration: const InputDecoration(
+                                 labelText: 'Profesor Asignado',
+                                 helperText: 'Selecciona un profesor para supervisar a este alumno',
+                             ),
+                             items: [
+                                 const DropdownMenuItem<String>(
+                                     value: null,
+                                     child: Text('Sin Profesor'),
+                                 ),
+                                 ..._professors.map((p) => DropdownMenuItem(
+                                     value: p.id,
+                                     child: Text(p.name),
+                                 )),
+                             ],
+                             onChanged: (val) => setState(() => _selectedProfessorId = val),
+                         ),
+                         const SizedBox(height: 16),
+                         TextFormField(
+                           controller: _membershipDateController,
+                           decoration: const InputDecoration(
+                             labelText: 'Fecha Inicio Membresía (YYYY-MM-DD)',
+                             hintText: 'Selecciona la fecha',
+                             suffixIcon: Icon(Icons.calendar_today),
+                           ),
+                           readOnly: true,
+                           onTap: () => _selectDate(context),
+                         ),
+                     const SizedBox(height: 16),
+                 ],
+
                 TextFormField(
                   controller: _firstNameController,
-                  decoration: const InputDecoration(labelText: 'First Name'),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  decoration: const InputDecoration(labelText: 'Nombre'),
+                  validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
                 TextFormField(
                   controller: _lastNameController,
-                  decoration: const InputDecoration(labelText: 'Last Name'),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  decoration: const InputDecoration(labelText: 'Apellido'),
+                  validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Email'),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Password (Optional)'),
-                  // If empty, backend uses default or we generate one
+                  decoration: const InputDecoration(labelText: 'Contraseña (Opcional)'),
                 ),
                 TextFormField(
                   controller: _phoneController,
-                  decoration: const InputDecoration(labelText: 'Phone'),
+                  decoration: const InputDecoration(labelText: 'Teléfono'),
                 ),
                 TextFormField(
                   controller: _ageController,
-                  decoration: const InputDecoration(labelText: 'Age'),
+                  decoration: const InputDecoration(labelText: 'Edad'),
                   keyboardType: TextInputType.number,
                 ),
                 DropdownButtonFormField<String>(
                   value: _selectedGender,
-                  decoration: const InputDecoration(labelText: 'Gender'),
+                  decoration: const InputDecoration(labelText: 'Sexo'),
                   items: const [
-                    DropdownMenuItem(value: 'M', child: Text('Male')),
-                    DropdownMenuItem(value: 'F', child: Text('Female')),
-                    DropdownMenuItem(value: 'O', child: Text('Other')),
+                    DropdownMenuItem(value: 'M', child: Text('Masculino')),
+                    DropdownMenuItem(value: 'F', child: Text('Femenino')),
+                    DropdownMenuItem(value: 'O', child: Text('Otro')),
                   ],
                   onChanged: (value) => setState(() => _selectedGender = value!),
                 ),
                 TextFormField(
                   controller: _notesController,
-                  decoration: const InputDecoration(labelText: 'Notes'),
+                  decoration: const InputDecoration(labelText: 'Notas'),
                   maxLines: 3,
                 ),
                 const SizedBox(height: 20),
@@ -143,17 +212,19 @@ class _AddUserScreenState extends State<AddUserScreen> {
                                   gender: _selectedGender,
                                   notes: _notesController.text,
                                   role: _selectedRole,
+                                  professorId: _selectedProfessorId,
+                                  membershipStartDate: _membershipDateController.text.isNotEmpty ? _membershipDateController.text : null,
                                 );
                             setState(() => _isLoading = false);
                             if (success && mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('User added successfully')),
+                                const SnackBar(content: Text('Usuario agregado exitosamente')),
                               );
                             }
                           }
                         },
-                  child: _isLoading ? const CircularProgressIndicator() : const Text('Create User'),
+                  child: _isLoading ? const CircularProgressIndicator() : const Text('Crear Usuario'),
                 ),
               ],
             ),

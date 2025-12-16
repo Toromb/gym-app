@@ -14,7 +14,7 @@ export class PlansController {
     constructor(private readonly plansService: PlansService) { }
 
     @Post()
-    create(@Body() createPlanDto: CreatePlanDto, @Request() req: RequestWithUser) {
+    create(@Body() createPlanDto: CreatePlanDto, @Request() req: any) {
         // Only Teacher/Admin can create plans
         // Ideally use a custom Guard or check role here
         if (req.user.role === UserRole.ALUMNO) {
@@ -24,7 +24,7 @@ export class PlansController {
     }
 
     @Get()
-    findAll(@Request() req: RequestWithUser) {
+    findAll(@Request() req: any) {
         // Super Admin sees all
         if (req.user.role === UserRole.SUPER_ADMIN) {
             return this.plansService.findAll();
@@ -43,7 +43,7 @@ export class PlansController {
     }
 
     @Get('student/my-plan')
-    async getMyPlan(@Request() req: RequestWithUser) {
+    async getMyPlan(@Request() req: any) {
         const plan = await this.plansService.findStudentPlan(req.user.id);
         if (!plan) {
             throw new NotFoundException('No active plan found');
@@ -52,7 +52,7 @@ export class PlansController {
     }
 
     @Get('student/history')
-    async getMyHistory(@Request() req: RequestWithUser) {
+    async getMyHistory(@Request() req: any) {
         // Allow student to see their own history
         return this.plansService.findStudentAssignments(req.user.id);
     }
@@ -63,7 +63,7 @@ export class PlansController {
     }
 
     @Patch(':id')
-    update(@Param('id') id: string, @Body() updatePlanDto: UpdatePlanDto, @Request() req: RequestWithUser) {
+    update(@Param('id') id: string, @Body() updatePlanDto: UpdatePlanDto, @Request() req: any) {
         // Allow Admin or Profe (any Profe can edit any plan per requirements)
         if (req.user.role !== UserRole.ADMIN && req.user.role !== UserRole.PROFE) {
             throw new ForbiddenException('Only admins and professors can edit plans');
@@ -73,7 +73,7 @@ export class PlansController {
     }
 
     @Post('assign')
-    assignPlan(@Body() body: { planId: string; studentId: string }, @Request() req: RequestWithUser) {
+    assignPlan(@Body() body: { planId: string; studentId: string }, @Request() req: any) {
         if (req.user.role !== UserRole.PROFE && req.user.role !== UserRole.ADMIN) {
             throw new ForbiddenException('Only professors and admins can assign plans');
         }
@@ -81,7 +81,7 @@ export class PlansController {
     }
 
     @Get('assignments/student/:studentId')
-    getStudentAssignments(@Param('studentId') studentId: string, @Request() req: RequestWithUser) {
+    getStudentAssignments(@Param('studentId') studentId: string, @Request() req: any) {
         // Teacher/Admin can view.
         // Permission check is implicit in Service (if we move logic there) or here.
         // For 'Profe' role, ideally verify that the student belongs to them.
@@ -94,18 +94,23 @@ export class PlansController {
     }
 
     @Delete('assignments/:id')
-    deleteAssignment(@Param('id') id: string, @Request() req: RequestWithUser) {
+    deleteAssignment(@Param('id') id: string, @Request() req: any) {
         return this.plansService.removeAssignment(id, req.user);
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string, @Request() req: RequestWithUser) {
+    remove(@Param('id') id: string, @Request() req: any) {
         return this.plansService.remove(id, req.user);
     }
 
     @Patch('student/progress')
-    updateProgress(@Body() body: { studentPlanId: string, type: 'exercise' | 'day', id: string, completed: boolean, date?: string }, @Request() req: RequestWithUser) {
+    updateProgress(@Body() body: { studentPlanId: string, type: 'exercise' | 'day', id: string, completed: boolean, date?: string }, @Request() req: any) {
         return this.plansService.updateProgress(body.studentPlanId, req.user.id, body);
+    }
+
+    @Post('student/restart/:assignmentId')
+    restartAssignment(@Param('assignmentId') assignmentId: string, @Request() req: any) {
+        return this.plansService.restartAssignment(assignmentId, req.user.id);
     }
 }
 

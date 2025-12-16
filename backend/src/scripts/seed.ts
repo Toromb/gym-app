@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { UsersService } from './users/users.service';
-import { GymsService } from './gyms/gyms.service';
-import { UserRole } from './users/entities/user.entity';
+import { AppModule } from '../app.module';
+import { UsersService } from '../users/users.service';
+import { GymsService } from '../gyms/gyms.service';
+import { UserRole } from '../users/entities/user.entity';
 
 async function bootstrap() {
     const app = await NestFactory.createApplicationContext(AppModule);

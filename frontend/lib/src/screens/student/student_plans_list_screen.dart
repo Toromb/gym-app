@@ -4,7 +4,9 @@ import '../../providers/plan_provider.dart';
 import '../../models/plan_model.dart'; // Keep for Plan refs if needed
 import '../../models/student_assignment_model.dart';
 import 'package:intl/intl.dart';
+import '../../localization/app_localizations.dart';
 import '../shared/plan_details_screen.dart';
+import '../shared/day_detail_screen.dart';
 
 class StudentPlansListScreen extends StatefulWidget {
   const StudentPlansListScreen({super.key});
@@ -27,7 +29,7 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
     final history = await context.read<PlanProvider>().fetchMyHistory();
     if (mounted) {
       setState(() {
-        _assignments = history;
+        _assignments = history.where((a) => a.isActive).toList();
         _isLoading = false;
       });
     }
@@ -36,11 +38,11 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Plans')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.get('navPlans'))),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _assignments.isEmpty
-              ? const Center(child: Text('No plans assigned yet.'))
+              ? Center(child: Text(AppLocalizations.of(context)!.get('noPlans')))
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: _assignments.length,
@@ -49,7 +51,7 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
                     final plan = assignment.plan;
                     final isActive = assignment.isActive;
                     final assignedDate = assignment.assignedAt != null
-                        ? DateFormat('MMM d, yyyy').format(DateTime.parse(assignment.assignedAt!))
+                        ? DateFormat.yMMMd(AppLocalizations.of(context)!.locale.languageCode).format(DateTime.parse(assignment.assignedAt!))
                         : 'Unknown Date';
 
                     return Card(
@@ -61,6 +63,7 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
                         onTap: () {
+                          // Default: Go to Plan Overview
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -95,19 +98,19 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
                                        color: Colors.green[100],
                                        borderRadius: BorderRadius.circular(12),
                                      ),
-                                     child: const Text('ACTIVE', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 10)),
+                                     child: Text(AppLocalizations.of(context)!.get('statusActive'), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 10)),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
                               if (plan.objective != null)
-                                Text('Objective: ${plan.objective}', style: TextStyle(color: Colors.grey[700])),
+                                Text('${AppLocalizations.of(context)!.get('objective')} ${plan.objective}', style: TextStyle(color: Colors.grey[700])),
                               const SizedBox(height: 12),
                               Row(
                                 children: [
                                   Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
                                   const SizedBox(width: 6),
-                                  Text('Assigned on: $assignedDate', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                                  Text('${AppLocalizations.of(context)!.get('assignedOn')} $assignedDate', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
                                 ],
                               ),
                             ],

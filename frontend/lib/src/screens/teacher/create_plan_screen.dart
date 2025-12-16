@@ -90,7 +90,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
         dayOfWeek: _weeks[weekIndex].days.length + 1,
         order: _weeks[weekIndex].days.length + 1,
         exercises: [],
-        title: 'Day ${_weeks[weekIndex].days.length + 1}',
+        title: 'Día ${_weeks[weekIndex].days.length + 1}',
       ));
     });
   }
@@ -132,7 +132,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
 
     if (exercises.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No exercises available. Create some first.')),
+        const SnackBar(content: Text('No hay ejercicios disponibles. Crea algunos primero.')),
       );
       return;
     }
@@ -162,13 +162,13 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
       builder: (context) => StatefulBuilder( // Use StatefulBuilder to update dropdown in Dialog if needed, though usually not for just selection
         builder: (context, setStateDialog) {
           return AlertDialog(
-            title: Text(existingExercise == null ? 'Add Exercise' : 'Edit Exercise'),
+            title: Text(existingExercise == null ? 'Agregar Ejercicio' : 'Editar Ejercicio'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<Exercise>(
-                    decoration: const InputDecoration(labelText: 'Exercise'),
+                    decoration: const InputDecoration(labelText: 'Ejercicio'),
                     value: selectedExercise,
                     items: exercises.map((e) => DropdownMenuItem(value: e, child: Text(e.name))).toList(),
                     onChanged: (value) {
@@ -176,19 +176,19 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                          selectedExercise = value;
                        });
                     },
-                    validator: (value) => value == null ? 'Required' : null,
+                    validator: (value) => value == null ? 'Requerido' : null,
                   ),
-                  TextField(controller: setsController, decoration: const InputDecoration(labelText: 'Sets'), keyboardType: TextInputType.number),
-                  TextField(controller: repsController, decoration: const InputDecoration(labelText: 'Reps')),
-                  TextField(controller: loadController, decoration: const InputDecoration(labelText: 'Weight (kg)')),
-                  TextField(controller: restController, decoration: const InputDecoration(labelText: 'Rest Time (sec)')),
-                  TextField(controller: videoUrlController, decoration: const InputDecoration(labelText: 'Video URL', hintText: 'https://youtube.com/...')),
-                  TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notes')),
+                  TextField(controller: setsController, decoration: const InputDecoration(labelText: 'Series'), keyboardType: TextInputType.number),
+                  TextField(controller: repsController, decoration: const InputDecoration(labelText: 'Repeticiones')),
+                  TextField(controller: loadController, decoration: const InputDecoration(labelText: 'Peso (kg)')),
+                  TextField(controller: restController, decoration: const InputDecoration(labelText: 'Descanso (seg)')),
+                  TextField(controller: videoUrlController, decoration: const InputDecoration(labelText: 'URL de Video', hintText: 'https://youtube.com/...')),
+                  TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notas')),
                 ],
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
               TextButton(
                 onPressed: () {
                   if (selectedExercise != null) {
@@ -217,7 +217,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                     Navigator.pop(context);
                   }
                 },
-                child: Text(existingExercise == null ? 'Add' : 'Update'),
+                child: Text(existingExercise == null ? 'Agregar' : 'Actualizar'),
               ),
             ],
           );
@@ -231,7 +231,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.planToEdit == null ? 'Create Plan' : 'Edit Plan')),
+      appBar: AppBar(title: Text(widget.planToEdit == null ? 'Crear Plan' : 'Editar Plan')),
       body: Form(
         key: _formKey,
         child: Stepper(
@@ -252,7 +252,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                    children: [
                      ElevatedButton(
                        onPressed: details.onStepContinue,
-                       child: const Text('Next'),
+                        child: const Text('Siguiente'),
                      ),
                    ],
                  ),
@@ -263,26 +263,26 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
           },
           steps: [
             Step(
-              title: const Text('General Info'),
+              title: const Text('Información General'),
               content: Column(
                 children: [
                   TextFormField(
                     controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Plan Name'),
-                    validator: (value) => value!.isEmpty ? 'Required' : null,
+                    decoration: const InputDecoration(labelText: 'Nombre del Plan'),
+                    validator: (value) => value!.isEmpty ? 'Requerido' : null,
                   ),
                   TextFormField(
                     controller: _objectiveController,
-                    decoration: const InputDecoration(labelText: 'Objective'),
+                    decoration: const InputDecoration(labelText: 'Objetivo'),
                   ),
                   TextFormField(
                     controller: _durationController,
-                    decoration: const InputDecoration(labelText: 'Duration (Weeks)'),
+                    decoration: const InputDecoration(labelText: 'Duración (Semanas)'),
                     keyboardType: TextInputType.number,
                   ),
                   TextFormField(
                     controller: _notesController,
-                    decoration: const InputDecoration(labelText: 'General Notes'),
+                    decoration: const InputDecoration(labelText: 'Notas Generales'),
                     maxLines: 3,
                   ),
                 ],
@@ -291,7 +291,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
               state: _currentStep > 0 ? StepState.complete : StepState.editing,
             ),
             Step(
-              title: const Text('Structure'),
+              title: const Text('Estructura'),
               content: Column(
                 children: [
                   ..._weeks.asMap().entries.map((entry) {
@@ -308,11 +308,11 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Week ${week.weekNumber}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                Text('Semana ${week.weekNumber}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                                   onPressed: () => _removeWeek(weekIndex),
-                                  tooltip: 'Delete Week',
+                                  tooltip: 'Eliminar Semana',
                                 ),
                               ],
                             ),
@@ -324,19 +324,19 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   ListTile(
-                                    title: Text(day.title ?? 'Day ${day.dayOfWeek}'),
+                                    title: Text(day.title ?? 'Día ${day.dayOfWeek}'),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         IconButton(
                                           icon: const Icon(Icons.add_circle, color: Colors.blue),
                                           onPressed: () => _addOrEditExercise(weekIndex, dayIndex),
-                                          tooltip: 'Add Exercise',
+                                          tooltip: 'Agregar Ejercicio',
                                         ),
                                         IconButton(
                                           icon: const Icon(Icons.delete, color: Colors.redAccent),
                                           onPressed: () => _removeDay(weekIndex, dayIndex),
-                                          tooltip: 'Delete Day',
+                                          tooltip: 'Eliminar Día',
                                         ),
                                       ],
                                     ),
@@ -363,14 +363,14 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                                                   if (ex.videoUrl != null && ex.videoUrl!.isNotEmpty)
                                                     IconButton(
                                                       icon: const Icon(Icons.play_circle_fill, size: 24, color: Colors.red),
-                                                      tooltip: 'Watch Video',
+                                                      tooltip: 'Ver Video',
                                                       onPressed: () async {
                                                         final url = Uri.parse(ex.videoUrl!);
                                                         if (await canLaunchUrl(url)) {
                                                           await launchUrl(url);
                                                         } else {
                                                           ScaffoldMessenger.of(context).showSnackBar(
-                                                            const SnackBar(content: Text('Could not launch video URL')),
+                                                            const SnackBar(content: Text('No se pudo abrir la URL del video')),
                                                           );
                                                         }
                                                       },
@@ -395,7 +395,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                             }),
                             TextButton.icon(
                               icon: const Icon(Icons.add),
-                              label: const Text('Add Day'),
+                              label: const Text('Agregar Día'),
                               onPressed: () => _addDay(weekIndex),
                             ),
                           ],
@@ -407,7 +407,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                   ElevatedButton.icon(
                     onPressed: _addWeek,
                     icon: const Icon(Icons.add),
-                    label: const Text('Add Week'),
+                    label: const Text('Agregar Semana'),
                   ),
                 ],
               ),
@@ -444,14 +444,14 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
               if (success && mounted) {
                 Navigator.pop(context, true);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(widget.planToEdit != null ? 'Plan updated' : 'Plan created')),
+                  SnackBar(content: Text(widget.planToEdit != null ? 'Plan actualizado' : 'Plan creado')),
                 );
               }
             }
           },
           child: _isLoading 
             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
-            : Text(widget.planToEdit != null ? 'Update Plan' : 'Create Plan', style: const TextStyle(fontSize: 18)),
+            : Text(widget.planToEdit != null ? 'Actualizar Plan' : 'Crear Plan', style: const TextStyle(fontSize: 18)),
         ),
       ),
     );

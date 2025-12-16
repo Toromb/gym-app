@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 import '../../models/plan_model.dart';
+import '../../providers/plan_provider.dart';
+import '../../models/execution_model.dart'; // Import Execution Model
+import '../../localization/app_localizations.dart';
+import 'exercise_execution_card.dart';
 
 class DayDetailScreen extends StatefulWidget {
   final PlanDay day;
-  // Optional tracking parameters
-  final bool isTracking;
-  final Map<String, bool>? completedExercises;
-  final Function(String exerciseId, bool isCompleted)? onToggleExercise;
+  final String planId;
+  final int weekNumber;
+  final bool readOnly; 
+  final String? studentId;
+  final String? assignedAt;
 
   const DayDetailScreen({
     super.key, 
     required this.day,
-    this.isTracking = false,
-    this.completedExercises,
-    this.onToggleExercise,
+    required this.planId,
+    required this.weekNumber,
+    this.readOnly = false,
+    this.studentId,
+    this.assignedAt,
   });
 
   @override
@@ -22,211 +31,211 @@ class DayDetailScreen extends StatefulWidget {
 }
 
 class _DayDetailScreenState extends State<DayDetailScreen> {
-  late Map<String, bool> _localCompletedExercises;
+  bool _isInit = true;
+  bool _isLoadingReadOnly = false;
+  PlanExecution? _readOnlyExecution; 
 
   @override
-  void initState() {
-    super.initState();
-    _localCompletedExercises = Map.from(widget.completedExercises ?? {});
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_isInit) {
+      if (!widget.readOnly) {
+         WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.read<PlanProvider>().startExecution(
+            widget.planId, 
+            widget.weekNumber, 
+            widget.day.order
+          );
+        });
+      } else if (widget.readOnly && widget.studentId != null) {
+          debugPrint('DayDetailScreen: Fetching execution for student ${widget.studentId}, Plan ${widget.planId}, W${widget.weekNumber} D${widget.day.order}');
+          // Fetch specific student execution for Teacher View
+          setState(() => _isLoadingReadOnly = true);
+          context.read<PlanProvider>().fetchStudentExecution(
+            studentId: widget.studentId!,
+            planId: widget.planId,
+            week: widget.weekNumber,
+            day: widget.day.order,
+            startDate: widget.assignedAt,
+          ).then((execution) {
+             debugPrint('DayDetailScreen: Fetched execution: ${execution?.id ?? "NULL"}');
+             if (mounted) {
+               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                 content: Text('DEBUG: Fetched? ${execution != null ? "YES" : "NO"} FirstExReps: ${execution?.exercises.first.repsDone} / ${execution?.exercises.first.targetRepsSnapshot}'),
+                 duration: const Duration(seconds: 8),
+               ));
+               setState(() {
+                 _readOnlyExecution = execution;
+                 _isLoadingReadOnly = false;
+               });
+             }
+          });
+      }
+      _isInit = false;
+    }
   }
 
-  @override
-  void didUpdateWidget(DayDetailScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.completedExercises != oldWidget.completedExercises) {
-       _localCompletedExercises = Map.from(widget.completedExercises ?? {});
+  Future<void> _handleFinishWorkout() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      helpText: AppLocalizations.of(context)!.get('confirmCompletion'),
+    );
+
+    if (picked != null && mounted) {
+      final dateStr = DateFormat('yyyy-MM-dd').format(picked);
+      try {
+        await context.read<PlanProvider>().completeExecution(dateStr);
+        if (mounted) {
+           Navigator.pop(context, true); // Return success
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text(AppLocalizations.of(context)!.get('workoutFinished'), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.green),
+           );
+        }
+      } catch (e) {
+        if (mounted) {
+          // Check for conflict message (naive string check, ideally parse error object)
+          String msg = AppLocalizations.of(context)!.get('errorFinish');
+          if (e.toString().contains('Conflict')) {
+            msg = 'Date already has a completed workout!';
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          );
+        }
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    print('DayDetailScreen BUILD: readOnly=${widget.readOnly}, studentId=${widget.studentId}'); // DEBUG
+
+    if (_isLoadingReadOnly) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    List<ExerciseExecution> exercisesToRender = [];
+    String status = 'READ_ONLY';
+
+    if (widget.readOnly) {
+        if (_readOnlyExecution != null) {
+            // Case 1: Professor viewing student's actual execution
+            exercisesToRender = _readOnlyExecution!.exercises;
+            status = 'ALUMNO REGISTRO: ${_readOnlyExecution!.status}'; // Or just show completion label
+        } else {
+            // Case 2: No execution recorded yet -> Show Plan Definition (clean slate)
+            exercisesToRender = widget.day.exercises.map((pe) => ExerciseExecution.fromPlanExercise(pe)).toList();
+            status = 'SIN DATOS';
+        }
+    } else {
+        // Student Mode (Standard)
+        final execution = context.watch<PlanProvider>().currentExecution;
+        if (execution == null) {
+            if (context.read<PlanProvider>().isLoading) {
+                 return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            }
+             return Scaffold(
+                 appBar: AppBar(title: Text(widget.day.title ?? 'Día ${widget.day.dayOfWeek}')),
+                 body: Center(
+                   child: Column(
+                     mainAxisAlignment: MainAxisAlignment.center,
+                     children: [
+                       Text(AppLocalizations.of(context)!.get('errorLoadExecution')),
+                       ElevatedButton(
+                         onPressed: () {
+                            context.read<PlanProvider>().startExecution(
+                              widget.planId, 
+                              widget.weekNumber, 
+                              widget.day.order
+                            );
+                         }, 
+                         child: const Text('Retry')
+                       )
+                     ],
+                   ),
+                 ),
+            );
+        }
+        exercisesToRender = execution.exercises;
+        status = execution.status;
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text(widget.day.title ?? 'Day ${widget.day.dayOfWeek}'),
+        title: Text(widget.day.title ?? 'Día ${widget.day.dayOfWeek}'),
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Training Session',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-             const SizedBox(height: 8),
-            Text(
-              '${widget.day.exercises.length} Exercises to complete',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 24),
-            ...widget.day.exercises.asMap().entries.map((entry) {
-              final index = entry.key;
-              final exercise = entry.value;
-              return _buildExerciseCard(context, exercise, index + 1);
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExerciseCard(BuildContext context, dynamic exercise, int index) {
-    bool isCompleted = false;
-    if (widget.isTracking && exercise.id != null) {
-      isCompleted = _localCompletedExercises[exercise.id] == true;
-    }
-
-    return Card(
-      elevation: isCompleted ? 1 : 4, // Flatten if done
-      margin: const EdgeInsets.only(bottom: 20),
-      color: isCompleted ? Colors.green[50] : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: isCompleted ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isCompleted ? Colors.green.withOpacity(0.2) : Theme.of(context).primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '#$index',
-                    style: TextStyle(
-                      color: isCompleted ? Colors.green : Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        exercise.exercise?.name ?? 'Unknown Exercise',
-                        style: TextStyle(
-                          fontSize: 18, 
-                          fontWeight: FontWeight.bold,
-                          decoration: isCompleted ? TextDecoration.lineThrough : null,
-                          color: isCompleted ? Colors.green[900] : Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                       // Placeholder for muscle group if we had it
-                      Text('Target Muscle', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
-                    ],
-                  ),
-                ),
-                // Tracking Checkbox
-                if (widget.isTracking)
-                  Checkbox(
-                    value: isCompleted,
-                    activeColor: Colors.green,
-                    onChanged: (val) {
-                      if (exercise.id != null) {
-                        setState(() {
-                          if (val == true) {
-                            _localCompletedExercises[exercise.id!] = true;
-                          } else {
-                            _localCompletedExercises.remove(exercise.id!);
-                          }
-                        });
-                        
-                        if (widget.onToggleExercise != null) {
-                          widget.onToggleExercise!(exercise.id!, val == true);
-                        }
-                      }
-                    },
-                  ),
-
-                if (exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty && !widget.isTracking)
-                   // Keep video button if strictly viewing, or maybe beside checkbox?
-                   // Space is tight. Let's move video button to bottom if tracking.
-                   Container(), 
-              ],
-            ),
-            // Video Button (Row separate if tracking enabled)
-             if (exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                       child: ElevatedButton.icon(
-                        onPressed: () => _launchVideo(context, exercise.videoUrl!),
-                        icon: const Icon(Icons.play_circle_outline, color: Colors.white, size: 16),
-                        label: const Text('Instruction Video', style: TextStyle(color: Colors.white, fontSize: 12)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          minimumSize: Size.zero, 
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-                    ),
-                  ),
-
-            const SizedBox(height: 12),
-            
-            // Metrics Grid
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                   _buildMetric(context, Icons.repeat, '${exercise.sets}', 'Sets'),
-                   _buildMetric(context, Icons.refresh, '${exercise.reps}', 'Reps'), // Using refresh as reps icon
-                   if (exercise.suggestedLoad != null && exercise.suggestedLoad!.isNotEmpty)
-                     _buildMetric(context, Icons.fitness_center, exercise.suggestedLoad!, 'Load (Kg)'),
-                    if (exercise.rest != null && exercise.rest!.isNotEmpty)
-                     _buildMetric(context, Icons.timer, exercise.rest!, 'Rest'),
-                ],
-              ),
-            ),
-            
-            if (exercise.notes != null && exercise.notes!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.amber[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.amber[100]!),
-                ),
-                child: Row(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(Icons.lightbulb_outline, color: Colors.amber, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
+                    Text(
+                      AppLocalizations.of(context)!.get('trainingSession'),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    if (!widget.readOnly)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: status == 'COMPLETED' ? Colors.green[100] : Colors.blue[100],
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: Text(
-                        exercise.notes!,
-                        style: TextStyle(color: Colors.amber[900], fontStyle: FontStyle.italic),
+                        status,
+                        style: TextStyle(
+                          color: status == 'COMPLETED' ? Colors.green[900] : Colors.blue[900],
+                          fontWeight: FontWeight.bold
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ],
-        ),
+                const SizedBox(height: 8),
+                Text(
+                  '${exercisesToRender.length} ${AppLocalizations.of(context)!.get('exercisesToComplete')}',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 24),
+                ...exercisesToRender.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final exExec = entry.value;
+                  // If readOnly, we might should treat it differently in the Card?
+                  // passing readOnly (pointer-events: none) or making the card readonly?
+                  // For now, let's just make the card ignores input if we passed a dummy.
+                  // But `ExerciseExecutionCard` has local state and calls provider.
+                  // We should wrap it in IgnorePointer if readOnly.
+                  return _buildExerciseCard(context, exExec, index + 1, widget.readOnly);
+                }),
+                const SizedBox(height: 80), // Space for FAB
+              ],
+            ),
+          ),
+      floatingActionButton: !widget.readOnly 
+        ? FloatingActionButton.extended(
+            onPressed: _handleFinishWorkout,
+            label: Text(AppLocalizations.of(context)!.get('finishWorkout')),
+            icon: const Icon(Icons.check_circle),
+            backgroundColor: Colors.green,
+          )
+        : null,
+    );
+  }
+
+  Widget _buildExerciseCard(BuildContext context, ExerciseExecution exExec, int index, bool readOnly) {
+    return IgnorePointer(
+      ignoring: readOnly,
+      child: ExerciseExecutionCard(
+        key: ValueKey(exExec.id),
+        execution: exExec, 
+        index: index
       ),
     );
   }
@@ -249,7 +258,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     } else {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not launch video URL')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.get('errorVideo'))),
         );
       }
     }

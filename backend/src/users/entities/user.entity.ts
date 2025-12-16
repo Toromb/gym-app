@@ -30,7 +30,7 @@ export class User {
     @Column({ unique: true })
     email: string;
 
-    @Column()
+    @Column({ select: false })
     passwordHash: string;
 
     @Column({ nullable: true })
@@ -114,7 +114,7 @@ export class User {
     studentPlans: StudentPlan[];
 
     @ManyToOne(() => User, (user) => user.students, { nullable: true, onDelete: 'SET NULL' })
-    professor: User;
+    professor: User | null;
 
     @OneToMany(() => User, (user) => user.professor)
     students: User[];

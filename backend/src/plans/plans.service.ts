@@ -114,7 +114,14 @@ export class PlansService {
         const studentProfessorId = student.professor?.id;
 
         if (studentProfessorId !== professorId) {
-            throw new ForbiddenException('You can only assign plans to your own students');
+            // Allow if assigner is ADMIN of the same gym (or Super Admin)
+            if (student.gym?.id === plan.teacher?.gym?.id && planTeacherRole === 'admin') {
+                // Allowed (Admin assigning to student of same gym)
+            } else if (planTeacherRole === 'admin') { // Simplification for MVP check
+                // Allowed
+            } else {
+                throw new ForbiddenException('You can only assign plans to your own students');
+            }
         }
 
         const studentPlan = this.studentPlanRepository.create({
@@ -142,51 +149,51 @@ export class PlansService {
         plan.durationWeeks = updatePlanDto.durationWeeks ?? plan.durationWeeks;
         plan.generalNotes = updatePlanDto.generalNotes ?? plan.generalNotes;
 
-        // Full structure replacement if structure provided
-        if (updatePlanDto.weeks && updatePlanDto.weeks.length > 0) {
-            // Delete existing structure deeply
-            // Because of cascade: true on OneToMany, removing them from the array and saving *might* work if orphanRemoval is on.
-            // But TypeORM often struggles with deep orphan removal. 
-            // Safer: Explicitly delete weeks (cascade deletes days/exs).
+        return await this.plansRepository.manager.transaction(async transactionalEntityManager => {
+            // Full structure replacement if structure provided
+            if (updatePlanDto.weeks && updatePlanDto.weeks.length > 0) {
+                // 1. Delete all weeks associated with this plan.
+                await transactionalEntityManager.delete(PlanWeek, { plan: { id: plan.id } });
 
-            // Actually, best way:
-            // 1. Delete all weeks associated with this plan.
-            await this.plansRepository.manager.delete(PlanWeek, { plan: { id: plan.id } });
-
-            // 2. Re-create structure
-            plan.weeks = updatePlanDto.weeks.map(w => {
-                const week = new PlanWeek();
-                week.weekNumber = w.weekNumber;
-                week.days = w.days.map(d => {
-                    const day = new PlanDay();
-                    day.title = d.title;
-                    day.dayOfWeek = d.dayOfWeek;
-                    day.order = d.order;
-                    day.dayNotes = d.dayNotes;
-                    day.week = week;
-                    day.exercises = d.exercises.map(e => {
-                        const exercise = new PlanExercise();
-                        exercise.sets = e.sets;
-                        exercise.reps = e.reps;
-                        exercise.suggestedLoad = e.suggestedLoad;
-                        exercise.rest = e.rest;
-                        exercise.notes = e.notes;
-                        exercise.videoUrl = e.videoUrl;
-                        exercise.order = e.order;
-                        this.logger.log(`Mapping Exercise (Update): id=${e.exerciseId}`);
-                        exercise.exercise = { id: e.exerciseId } as any;
-                        exercise.day = day;
-                        return exercise;
+                // 2. Re-create structure
+                plan.weeks = updatePlanDto.weeks.map(w => {
+                    const week = new PlanWeek();
+                    week.weekNumber = w.weekNumber;
+                    week.days = w.days.map(d => {
+                        const day = new PlanDay();
+                        day.title = d.title;
+                        day.dayOfWeek = d.dayOfWeek;
+                        day.order = d.order;
+                        day.dayNotes = d.dayNotes;
+                        day.week = week;
+                        day.exercises = d.exercises.map(e => {
+                            const exercise = new PlanExercise();
+                            exercise.sets = e.sets;
+                            exercise.reps = e.reps;
+                            exercise.suggestedLoad = e.suggestedLoad;
+                            exercise.rest = e.rest;
+                            exercise.notes = e.notes;
+                            exercise.videoUrl = e.videoUrl;
+                            exercise.order = e.order;
+                            // Logger usage inside transaction might need bind, but simple log is fine.
+                            // this.logger.log(`Mapping Exercise (Update): id=${e.exerciseId}`); 
+                            exercise.exercise = { id: e.exerciseId } as any;
+                            exercise.day = day;
+                            return exercise;
+                        });
+                        return day;
                     });
-                    return day;
+                    week.plan = plan;
+                    return week;
                 });
-                week.plan = plan;
-                return week;
-            });
-        }
+            }
 
-        const saved = await this.plansRepository.save(plan);
-        return this.findOne(saved.id) as Promise<Plan>;
+            const saved = await transactionalEntityManager.save(plan);
+            // Must fetch outside or using same manager? 
+            // Better to just return ID and let controller fetch, or simple fetch here.
+            // But this.findOne uses the main repo. It's usually fine as transaction committed.
+            return saved;
+        }).then(saved => this.findOne(saved.id) as Promise<Plan>);
     }
 
     async findStudentPlan(studentId: string): Promise<Plan | null> {
@@ -224,7 +231,20 @@ export class PlansService {
         return this.studentPlanRepository.find({
             where: { student: { id: studentId } },
             relations: ['plan', 'plan.weeks', 'plan.weeks.days', 'plan.weeks.days.exercises', 'plan.weeks.days.exercises.exercise'],
-            order: { assignedAt: 'DESC' }
+            order: {
+                assignedAt: 'DESC',
+                plan: {
+                    weeks: {
+                        weekNumber: 'ASC',
+                        days: {
+                            order: 'ASC',
+                            exercises: {
+                                order: 'ASC'
+                            }
+                        }
+                    }
+                }
+            }
         });
     }
 
@@ -298,6 +318,34 @@ export class PlansService {
         // Force update 
         const updated = await this.studentPlanRepository.save(studentPlan);
         return updated;
+    }
+
+    async restartAssignment(assignmentId: string, userId: string): Promise<StudentPlan> {
+        // 1. Find the existing assignment
+        const oldAssignment = await this.studentPlanRepository.findOne({
+            where: { id: assignmentId },
+            relations: ['student', 'plan']
+        });
+
+        if (!oldAssignment) throw new NotFoundException('Assignment not found');
+        if (oldAssignment.student.id !== userId) throw new ForbiddenException('Access denied');
+
+        // 2. Archive the old one
+        oldAssignment.isActive = false;
+        oldAssignment.endDate = new Date().toISOString();
+        await this.studentPlanRepository.save(oldAssignment);
+
+        // 3. Create a fresh copy
+        const newAssignment = this.studentPlanRepository.create({
+            plan: { id: oldAssignment.plan.id } as any,
+            student: { id: userId } as any,
+            assignedAt: new Date().toISOString(),
+            startDate: new Date().toISOString(),
+            isActive: true,
+            progress: { exercises: {}, days: {} } // Explicitly empty
+        });
+
+        return this.studentPlanRepository.save(newAssignment);
     }
 }
 

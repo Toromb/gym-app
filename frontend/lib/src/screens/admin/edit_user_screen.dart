@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../models/user_model.dart';
+import '../../services/user_service.dart';
 
 class EditUserScreen extends StatefulWidget {
   final User user;
@@ -26,6 +27,10 @@ class _EditUserScreenState extends State<EditUserScreen> {
   late String _selectedRole;
   late String _selectedGender;
   late String _paymentStatus;
+  
+  String? _selectedProfessorId;
+  List<User> _professors = [];
+  bool _isLoadingProfessors = false;
 
   bool _isLoading = false;
 
@@ -42,6 +47,9 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _passwordController = TextEditingController(); // Empty default
     
     _selectedRole = widget.user.role;
+    _selectedProfessorId = widget.user.professorId;
+    
+    print("DEBUG: EditUserScreen role='$_selectedRole'");
     
     // Validate Gender
     const validGenders = ['M', 'F', 'O'];
@@ -56,6 +64,31 @@ class _EditUserScreenState extends State<EditUserScreen> {
     if (!validPaymentStatuses.contains(_paymentStatus)) {
         _paymentStatus = 'pending';
     }
+
+    // Case-insensitive check just to be safe
+    if (_selectedRole.toLowerCase() == UserRoles.alumno.toLowerCase()) {
+        print("DEBUG: Fetching professors for student");
+        _fetchProfessors();
+    } else {
+        print("DEBUG: Role $_selectedRole is not student");
+    }
+  }
+
+  Future<void> _fetchProfessors() async {
+      setState(() => _isLoadingProfessors = true);
+      try {
+          // Use UserService directly to avoid overwriting UserProvider state
+          final professors = await UserService().getUsers(role: UserRoles.profe);
+          if (mounted) {
+              setState(() {
+                  _professors = professors;
+                  _isLoadingProfessors = false;
+              });
+          }
+      } catch (e) {
+          if (mounted) setState(() => _isLoadingProfessors = false);
+          print("Error fetching professors: $e");
+      }
   }
 
   @override
@@ -74,7 +107,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit User')),
+      appBar: AppBar(title: const Text('Editar Usuario')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -91,66 +124,93 @@ class _EditUserScreenState extends State<EditUserScreen> {
                    child: TextFormField(
                      initialValue: _selectedRole.toUpperCase(),
                      readOnly: true,
-                     decoration: const InputDecoration(labelText: 'Role'),
+                     decoration: const InputDecoration(labelText: 'Rol'),
                    ),
                  ),
+                 
+                 // Assign Professor Dropdown (Visible only if Student)
+                 if (_selectedRole.toLowerCase() == UserRoles.alumno.toLowerCase()) ...[
+                     if (_isLoadingProfessors)
+                         const LinearProgressIndicator()
+                     else
+                         DropdownButtonFormField<String>(
+                             value: _professors.any((p) => p.id == _selectedProfessorId) ? _selectedProfessorId : null,
+                             decoration: const InputDecoration(
+                                 labelText: 'Profesor Asignado',
+                                 helperText: 'Selecciona un profesor para supervisar a este alumno',
+                             ),
+                             items: [
+                                 const DropdownMenuItem<String>(
+                                     value: null,
+                                     child: Text('Sin Profesor'),
+                                 ),
+                                 ..._professors.map((p) => DropdownMenuItem(
+                                     value: p.id,
+                                     child: Text(p.name),
+                                 )),
+                             ],
+                             onChanged: (val) => setState(() => _selectedProfessorId = val),
+                         ),
+                     const SizedBox(height: 16),
+                 ],
+
                 TextFormField(
                   controller: _firstNameController,
-                  decoration: const InputDecoration(labelText: 'First Name'),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  decoration: const InputDecoration(labelText: 'Nombre'),
+                  validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
                 TextFormField(
                   controller: _lastNameController,
-                  decoration: const InputDecoration(labelText: 'Last Name'),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  decoration: const InputDecoration(labelText: 'Apellido'),
+                  validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Email'),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
                 // Password Field - One instance only
                 TextFormField(
                   controller: _passwordController,
                   decoration: const InputDecoration(
-                    labelText: 'New Password (Optional)',
-                    helperText: 'Leave empty to keep current password',
+                    labelText: 'Nueva Contraseña (Opcional)',
+                    helperText: 'Dejar vacío para mantener la actual',
                   ),
                   obscureText: true,
                 ),
                 TextFormField(
                   controller: _phoneController,
-                  decoration: const InputDecoration(labelText: 'Phone'),
+                  decoration: const InputDecoration(labelText: 'Teléfono'),
                 ),
                 TextFormField(
                   controller: _ageController,
-                  decoration: const InputDecoration(labelText: 'Age'),
+                  decoration: const InputDecoration(labelText: 'Edad'),
                   keyboardType: TextInputType.number,
                 ),
                 DropdownButtonFormField<String>(
                   value: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
-                  decoration: const InputDecoration(labelText: 'Gender'),
+                  decoration: const InputDecoration(labelText: 'Sexo'),
                   items: const [
-                    DropdownMenuItem(value: 'M', child: Text('Male')),
-                    DropdownMenuItem(value: 'F', child: Text('Female')),
-                    DropdownMenuItem(value: 'O', child: Text('Other')),
+                    DropdownMenuItem(value: 'M', child: Text('Masculino')),
+                    DropdownMenuItem(value: 'F', child: Text('Femenino')),
+                    DropdownMenuItem(value: 'O', child: Text('Otro')),
                   ],
                   onChanged: (value) => setState(() => _selectedGender = value!),
                 ),
                  DropdownButtonFormField<String>(
                   value: ['pending', 'paid', 'overdue'].contains(_paymentStatus) ? _paymentStatus : 'pending',
-                  decoration: const InputDecoration(labelText: 'Payment Status'),
+                  decoration: const InputDecoration(labelText: 'Estado de Pago'),
                   items: const [
-                    DropdownMenuItem(value: 'pending', child: Text('Pending')),
-                    DropdownMenuItem(value: 'paid', child: Text('Paid')),
-                    DropdownMenuItem(value: 'overdue', child: Text('Overdue')),
+                    DropdownMenuItem(value: 'pending', child: Text('Pendiente')),
+                    DropdownMenuItem(value: 'paid', child: Text('Pagado')),
+                    DropdownMenuItem(value: 'overdue', child: Text('Vencido')),
                   ],
                   onChanged: (value) => setState(() => _paymentStatus = value!),
                 ),
                 TextFormField(
                   controller: _lastPaymentDateController,
                   decoration: const InputDecoration(
-                    labelText: 'Last Payment Date (YYYY-MM-DD)',
+                    labelText: 'Última Fecha de Pago (YYYY-MM-DD)',
                     hintText: '2024-01-01',
                   ),
                   onTap: () async {
@@ -176,7 +236,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                 ),
                 TextFormField(
                   controller: _notesController,
-                  decoration: const InputDecoration(labelText: 'Notes'),
+                  decoration: const InputDecoration(labelText: 'Notas'),
                   maxLines: 3,
                 ),
                 const SizedBox(height: 20),
@@ -197,6 +257,8 @@ class _EditUserScreenState extends State<EditUserScreen> {
                               'notes': _notesController.text,
                               'paymentStatus': _paymentStatus,
                               'lastPaymentDate': _lastPaymentDateController.text.isEmpty ? null : _lastPaymentDateController.text,
+                              // Send professorId (null if explicitly unassigned)
+                              'professorId': _selectedProfessorId, 
                             };
                             
                             if (_passwordController.text.isNotEmpty) {
@@ -211,18 +273,18 @@ class _EditUserScreenState extends State<EditUserScreen> {
                             if (success && mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('User updated successfully')),
+                                const SnackBar(content: Text('Usuario actualizado exitosamente')),
                               );
                               // Refresh list
                               context.read<UserProvider>().fetchUsers();
                             } else if (mounted) {
                                ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Failed to update user')),
+                                const SnackBar(content: Text('Error al actualizar usuario')),
                               );
                             }
                           }
                         },
-                  child: _isLoading ? const CircularProgressIndicator() : const Text('Save Changes'),
+                  child: _isLoading ? const CircularProgressIndicator() : const Text('Guardar Cambios'),
                 ),
               ],
             ),

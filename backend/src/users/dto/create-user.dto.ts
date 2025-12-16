@@ -105,5 +105,9 @@ export class CreateUserDto {
     @IsOptional()
     @IsString()
     gymId?: string;
+
+    @IsOptional()
+    @IsString()
+    professorId?: string;
 }
 

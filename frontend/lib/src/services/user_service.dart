@@ -53,6 +53,8 @@ class UserService {
     String? notes,
     required String role,
     String? gymId,
+    String? professorId,
+    String? membershipStartDate,
   }) async {
     final token = await _getToken();
     final bodyData = {
@@ -66,6 +68,8 @@ class UserService {
         'notes': notes,
         'role': role,
         if (gymId != null) 'gymId': gymId,
+        if (professorId != null) 'professorId': professorId,
+        if (membershipStartDate != null) 'membershipStartDate': membershipStartDate,
     };
 
     final response = await http.post(

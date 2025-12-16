@@ -15,7 +15,7 @@ export class StatsController {
     ) { }
 
     @Get()
-    async getPlatformStats(@Request() req: RequestWithUser) {
+    async getPlatformStats(@Request() req: any) {
         const user = req.user;
         if (user.role !== UserRole.SUPER_ADMIN) {
             throw new ForbiddenException('Only Super Admin can access platform stats');

@@ -12,7 +12,7 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
     @Post()
-    create(@Body() createUserDto: CreateUserDto, @Request() req: RequestWithUser) {
+    create(@Body() createUserDto: CreateUserDto, @Request() req: any) {
         const creator = req.user;
 
         // Super Admin can create any role
@@ -44,7 +44,7 @@ export class UsersController {
     }
 
     @Get()
-    findAll(@Request() req: RequestWithUser, @Query('role') role?: string, @Query('gymId') gymId?: string) {
+    findAll(@Request() req: any, @Query('role') role?: string, @Query('gymId') gymId?: string) {
         const user = req.user;
 
         if (user.role === UserRole.SUPER_ADMIN) {
@@ -66,7 +66,7 @@ export class UsersController {
     }
 
     @Get('profile')
-    async getProfile(@Request() req: RequestWithUser) {
+    async getProfile(@Request() req: any) {
         const userId = req.user.id;
         const user = await this.usersService.findOne(userId);
         if (!user) throw new NotFoundException('User not found');
@@ -74,7 +74,7 @@ export class UsersController {
     }
 
     @Patch('profile')
-    async updateProfile(@Body() updateUserDto: UpdateUserDto, @Request() req: RequestWithUser) {
+    async updateProfile(@Body() updateUserDto: UpdateUserDto, @Request() req: any) {
         const userId = req.user.id;
         const userRole = req.user.role;
         const user = await this.usersService.findOne(userId);
@@ -145,7 +145,7 @@ export class UsersController {
     }
 
     @Get(':id')
-    async findOne(@Param('id') id: string, @Request() req: RequestWithUser) {
+    async findOne(@Param('id') id: string, @Request() req: any) {
         const user = await this.usersService.findOne(id);
         const requestor = req.user;
 
@@ -156,7 +156,7 @@ export class UsersController {
     }
 
     @Patch(':id')
-    async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Request() req: RequestWithUser) {
+    async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Request() req: any) {
         const requestor = req.user;
         const userToUpdate = await this.usersService.findOne(id); // Fetch first to check gym
         if (!userToUpdate) throw new NotFoundException('User not found');
@@ -184,7 +184,7 @@ export class UsersController {
     }
 
     @Patch(':id/payment-status')
-    async updatePaymentStatus(@Param('id') id: string, @Request() req: RequestWithUser) {
+    async updatePaymentStatus(@Param('id') id: string, @Request() req: any) {
         const requestor = req.user;
         // Only Admin/SuperAdmin can mark as paid
         if (requestor.role !== UserRole.ADMIN && requestor.role !== UserRole.SUPER_ADMIN) {
@@ -200,7 +200,7 @@ export class UsersController {
     }
 
     @Delete(':id')
-    async remove(@Param('id') id: string, @Request() req: RequestWithUser) {
+    async remove(@Param('id') id: string, @Request() req: any) {
         const requestor = req.user;
         const userToDelete = await this.usersService.findOne(id); // Fetch to check gym
         if (!userToDelete) throw new NotFoundException('User not found');

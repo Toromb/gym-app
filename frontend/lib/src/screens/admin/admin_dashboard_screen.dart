@@ -16,7 +16,7 @@ class AdminDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
+        title: const Text('Panel de Administración'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -32,13 +32,13 @@ class AdminDashboardScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Welcome, ${user?.firstName}!',
+              'Bienvenido, ${user?.firstName}!',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 20),
             _buildDashboardCard(
               context,
-              title: 'Manage Users',
+              title: 'Gestionar Usuarios',
               icon: Icons.people,
               onTap: () {
                 Navigator.push(
@@ -48,21 +48,10 @@ class AdminDashboardScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 16),
-             _buildDashboardCard(
-              context,
-              title: 'My Profile',
-              icon: Icons.person,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
+
             _buildDashboardCard(
               context,
-              title: 'Create Plan',
+              title: 'Crear Plan',
               icon: Icons.add_circle_outline,
               onTap: () {
                 Navigator.push(
@@ -74,7 +63,7 @@ class AdminDashboardScreen extends StatelessWidget {
             const SizedBox(height: 16),
             _buildDashboardCard(
               context,
-              title: 'Plans Library',
+              title: 'Biblioteca de Planes',
               icon: Icons.library_books,
               onTap: () {
                 Navigator.push(
@@ -86,12 +75,24 @@ class AdminDashboardScreen extends StatelessWidget {
             const SizedBox(height: 16),
             _buildDashboardCard(
               context,
-              title: 'Gym Schedule',
+              title: 'Horarios del Gimnasio',
               icon: Icons.access_time, // Replaced calendar_today with access_time as it fits better for schedule
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const GymScheduleScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+             _buildDashboardCard(
+              context,
+              title: 'Mi Perfil',
+              icon: Icons.person,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
                 );
               },
             ),

@@ -11,7 +11,7 @@ export class ExercisesController {
     constructor(private readonly exercisesService: ExercisesService) { }
 
     @Post()
-    create(@Body() createExerciseDto: CreateExerciseDto, @Request() req: RequestWithUser) {
+    create(@Body() createExerciseDto: CreateExerciseDto, @Request() req: any) {
         // Check if user is PROFE or ADMIN (can be done with a custom decorator/guard)
         // For MVP, assuming any authenticated user can create for now, or check role here
         if (req.user.role === UserRole.ALUMNO) {

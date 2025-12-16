@@ -26,7 +26,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Manage Students')),
+      appBar: AppBar(title: const Text('Gestionar Alumnos')),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
@@ -42,7 +42,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (userProvider.students.isEmpty) {
-            return const Center(child: Text('No students found.'));
+            return const Center(child: Text('No hay alumnos encontrados.'));
           }
           return ListView.builder(
             itemCount: userProvider.students.length,
@@ -62,7 +62,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                         children: [
                           ActionChip(
                             avatar: const Icon(Icons.person),
-                            label: const Text('Profile'),
+                            label: const Text('Perfil'),
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -74,7 +74,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                           ),
                           ActionChip(
                             avatar: const Icon(Icons.add_chart),
-                            label: const Text('Create Plan'),
+                            label: const Text('Crear Plan'),
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -84,7 +84,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                           ),
                           ActionChip(
                             avatar: const Icon(Icons.assignment_ind),
-                            label: const Text('Assign Plan'),
+                            label: const Text('Asignar Plan'),
                             onPressed: () {
                               showDialog(
                                 context: context,
@@ -94,7 +94,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                           ),
                           ActionChip(
                             avatar: const Icon(Icons.list_alt),
-                            label: const Text('Manage Plans'),
+                            label: const Text('Gestionar Planes'),
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -106,21 +106,21 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                           ),
                           ActionChip(
                             avatar: const Icon(Icons.delete, color: Colors.red),
-                            label: const Text('Delete', style: TextStyle(color: Colors.red)),
+                            label: const Text('Eliminar', style: TextStyle(color: Colors.red)),
                             onPressed: () async {
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                  title: const Text('Delete Student'),
-                                  content: Text('Are you sure you want to delete ${student.name}?'),
+                                  title: const Text('Eliminar Alumno'),
+                                  content: Text('¿Estás seguro de que quieres eliminar a ${student.name}?'),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(context, false),
-                                      child: const Text('Cancel'),
+                                      child: const Text('Cancelar'),
                                     ),
                                     TextButton(
                                       onPressed: () => Navigator.pop(context, true),
-                                      child: const Text('Delete'),
+                                      child: const Text('Eliminar'),
                                     ),
                                   ],
                                 ),
@@ -130,11 +130,11 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                                 final success = await context.read<UserProvider>().deleteUser(student.id);
                                 if (success && mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Student deleted')),
+                                    const SnackBar(content: Text('Alumno eliminado')),
                                   );
                                 } else if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Failed to delete student')),
+                                    const SnackBar(content: Text('Error al eliminar alumno')),
                                   );
                                 }
                               }

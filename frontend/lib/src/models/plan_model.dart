@@ -153,8 +153,8 @@ class PlanWeek {
     };
   }
 
-  // Helper to get name (e.g. "Week 1")
-  String get name => 'Week $weekNumber';
+  // Helper to get name (e.g. "Semana 1")
+  String get name => 'Semana $weekNumber';
 }
 
 class Plan {

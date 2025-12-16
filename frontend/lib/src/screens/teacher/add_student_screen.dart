@@ -19,12 +19,27 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   final _ageController = TextEditingController();
   final _genderController = TextEditingController();
   final _notesController = TextEditingController();
+  final _membershipDateController = TextEditingController();
   bool _isLoading = false;
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      setState(() {
+        _membershipDateController.text = picked.toIso8601String().split('T')[0];
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Student')),
+      appBar: AppBar(title: const Text('Agregar Alumno')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -37,16 +52,16 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: _firstNameController,
-                        decoration: const InputDecoration(labelText: 'First Name'),
-                        validator: (value) => value!.isEmpty ? 'Required' : null,
+                        decoration: const InputDecoration(labelText: 'Nombre'),
+                        validator: (value) => value!.isEmpty ? 'Requerido' : null,
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: TextFormField(
                         controller: _lastNameController,
-                        decoration: const InputDecoration(labelText: 'Last Name'),
-                        validator: (value) => value!.isEmpty ? 'Required' : null,
+                        decoration: const InputDecoration(labelText: 'Apellido'),
+                        validator: (value) => value!.isEmpty ? 'Requerido' : null,
                       ),
                     ),
                   ],
@@ -54,20 +69,20 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Email'),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Password'),
+                  decoration: const InputDecoration(labelText: 'Contraseña'),
                   obscureText: true,
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
                 Row(
                   children: [
                     Expanded(
                       child: TextFormField(
                         controller: _phoneController,
-                        decoration: const InputDecoration(labelText: 'Phone'),
+                        decoration: const InputDecoration(labelText: 'Teléfono'),
                         keyboardType: TextInputType.phone,
                       ),
                     ),
@@ -75,7 +90,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: _ageController,
-                        decoration: const InputDecoration(labelText: 'Age'),
+                        decoration: const InputDecoration(labelText: 'Edad'),
                         keyboardType: TextInputType.number,
                       ),
                     ),
@@ -83,11 +98,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                 ),
                 DropdownButtonFormField<String>(
                   value: _genderController.text.isNotEmpty ? _genderController.text : null,
-                  decoration: const InputDecoration(labelText: 'Gender'),
+                  decoration: const InputDecoration(labelText: 'Sexo'),
                   items: const [
-                    DropdownMenuItem(value: 'M', child: Text('Male')),
-                    DropdownMenuItem(value: 'F', child: Text('Female')),
-                    DropdownMenuItem(value: 'O', child: Text('Other')),
+                    DropdownMenuItem(value: 'M', child: Text('Masculino')),
+                    DropdownMenuItem(value: 'F', child: Text('Femenino')),
+                    DropdownMenuItem(value: 'O', child: Text('Otro')),
                   ],
                   onChanged: (value) {
                     setState(() {
@@ -96,8 +111,17 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                   },
                 ),
                 TextFormField(
+                  controller: _membershipDateController,
+                  decoration: const InputDecoration(
+                    labelText: 'Fecha Inicio Membresía',
+                    suffixIcon: Icon(Icons.calendar_today),
+                  ),
+                  readOnly: true,
+                  onTap: () => _selectDate(context),
+                ),
+                TextFormField(
                   controller: _notesController,
-                  decoration: const InputDecoration(labelText: 'Notes'),
+                  decoration: const InputDecoration(labelText: 'Notas'),
                   maxLines: 3,
                 ),
                 const SizedBox(height: 20),
@@ -116,21 +140,22 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                                   age: int.tryParse(_ageController.text),
                                   gender: _genderController.text,
                                   notes: _notesController.text,
+                                  membershipStartDate: _membershipDateController.text.isNotEmpty ? _membershipDateController.text : null,
                                 );
                             setState(() => _isLoading = false);
                             if (success && mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Student added successfully')),
+                                const SnackBar(content: Text('Alumno agregado exitosamente')),
                               );
                             } else if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Failed to add student')),
+                                const SnackBar(content: Text('Error al agregar alumno')),
                               );
                             }
                           }
                         },
-                        child: const Text('Add Student'),
+                        child: const Text('Agregar Alumno'),
                       ),
               ],
             ),

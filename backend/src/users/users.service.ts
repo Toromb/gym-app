@@ -20,7 +20,7 @@ export class UsersService {
     ) { }
 
     async create(createUserDto: CreateUserDto, creator?: User): Promise<User> {
-        const { password, gymId, ...rest } = createUserDto;
+        const { password, gymId, professorId, ...rest } = createUserDto;
         const passwordToHash = password || '123456'; // Default password
         const passwordHash = await bcrypt.hash(passwordToHash, 10);
 
@@ -31,10 +31,15 @@ export class UsersService {
             gym = creator.gym;
         }
 
+        let professor: User | null | undefined = (creator && creator.role === UserRole.PROFE) ? creator : undefined;
+        if (professorId) {
+            professor = await this.usersRepository.findOne({ where: { id: professorId } });
+        }
+
         const user = this.usersRepository.create({
             ...rest,
             passwordHash,
-            professor: (creator && creator.role === UserRole.PROFE) ? creator : undefined,
+            professor: professor || undefined, // TypeORM create usually prefers undefined over null for "not set", but allows null for "empty relation"
             gym: gym || undefined,
         });
         return this.usersRepository.save(user);
@@ -76,7 +81,11 @@ export class UsersService {
 
 
     async findOneByEmail(email: string): Promise<User | null> {
-        const user = await this.usersRepository.findOne({ where: { email } });
+        const user = await this.usersRepository.createQueryBuilder('user')
+            .addSelect('user.passwordHash') // Explicitly select hidden column
+            .leftJoinAndSelect('user.gym', 'gym') // load relation
+            .where('user.email = :email', { email })
+            .getOne();
 
         if (user && user.membershipExpirationDate) {
             const status = this.calculatePaymentStatus(user.membershipExpirationDate);
@@ -106,9 +115,17 @@ export class UsersService {
             throw new Error('User not found');
         }
 
-        const { password, ...rest } = updateUserDto;
+        const { password, professorId, ...rest } = updateUserDto;
         if (password) {
             user.passwordHash = await bcrypt.hash(password, 10);
+        }
+
+        if (professorId !== undefined) {
+            if (professorId === null) {
+                user.professor = null;
+            } else {
+                user.professor = await this.usersRepository.findOne({ where: { id: professorId } });
+            }
         }
 
         Object.assign(user, rest);
