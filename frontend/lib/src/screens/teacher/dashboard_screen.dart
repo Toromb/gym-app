@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import 'manage_students_screen.dart';
 import 'create_plan_screen.dart';
 import '../shared/plans_list_screen.dart';
+import 'exercises_list_screen.dart'; // IMPORTED
 import '../shared/gym_schedule_screen.dart';
 import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
@@ -53,19 +54,6 @@ class TeacherDashboardScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 16),
-
-            _buildDashboardCard(
-              context,
-              title: AppLocalizations.of(context)!.get('createPlan'),
-              icon: Icons.add_circle_outline,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CreatePlanScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
             _buildDashboardCard(
               context,
               title: AppLocalizations.of(context)!.get('plansLibrary'),
@@ -74,6 +62,18 @@ class TeacherDashboardScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const PlansListScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+             _buildDashboardCard( // Added specific card for Exercise Library
+              context,
+              title: 'Biblioteca de Ejercicios', // TODO: Add to localization
+              icon: Icons.fitness_center,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ExercisesListScreen()),
                 );
               },
             ),

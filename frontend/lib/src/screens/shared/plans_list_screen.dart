@@ -70,6 +70,18 @@ class _PlansListScreenState extends State<PlansListScreen> {
           );
         },
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreatePlanScreen()),
+          );
+          if (result == true && context.mounted) {
+            context.read<PlanProvider>().fetchPlans();
+          }
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 

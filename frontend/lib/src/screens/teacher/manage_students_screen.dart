@@ -4,7 +4,7 @@ import '../../providers/user_provider.dart';
 import 'add_student_screen.dart';
 import 'assign_plan_modal.dart';
 import 'create_plan_screen.dart';
-import 'student_profile_screen.dart';
+import '../shared/user_detail_screen.dart';
 import 'student_plans_screen.dart';
 
 class ManageStudentsScreen extends StatefulWidget {
@@ -67,7 +67,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => StudentProfileScreen(student: student),
+                                  builder: (context) => UserDetailScreen(user: student),
                                 ),
                               );
                             },

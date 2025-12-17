@@ -11,6 +11,7 @@ import 'add_user_screen.dart';
 import 'edit_user_screen.dart';
 import '../teacher/student_plans_screen.dart';
 import '../../widgets/payment_status_badge.dart';
+import '../shared/user_detail_screen.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   const ManageUsersScreen({super.key});
@@ -228,6 +229,19 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                 },
               ),
             ],
+            // View Details Button for ALL users
+            IconButton(
+              icon: const Icon(Icons.visibility, color: Colors.blueGrey),
+              tooltip: 'Ver Detalles',
+              onPressed: () {
+                 Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UserDetailScreen(user: user),
+                    ),
+                  );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.edit),
               tooltip: 'Editar Usuario',

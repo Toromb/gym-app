@@ -179,6 +179,29 @@ class _GymScheduleScreenState extends State<GymScheduleScreen> {
                   ],
                 ),
                 if (!schedule.isClosed) ...[
+                  // Morning Section
+                  Row(
+                     children: [
+                       const Text('Mañana', style: TextStyle(fontWeight: FontWeight.bold)),
+                       const SizedBox(width: 8),
+                       Text(AppLocalizations.of(context)!.get('closed')),
+                       Checkbox(
+                          value: schedule.openTimeMorning == null && schedule.closeTimeMorning == null,
+                          onChanged: (val) {
+                             setState(() {
+                                if (val == true) {
+                                   schedule.openTimeMorning = null;
+                                   schedule.closeTimeMorning = null;
+                                } else {
+                                   schedule.openTimeMorning = '08:00';
+                                   schedule.closeTimeMorning = '12:00';
+                                }
+                             });
+                          },
+                       ),
+                     ],
+                  ),
+                  if (schedule.openTimeMorning != null || schedule.closeTimeMorning != null)
                   Row(
                     children: [
                       Expanded(
@@ -198,6 +221,30 @@ class _GymScheduleScreenState extends State<GymScheduleScreen> {
                       ),
                     ],
                   ),
+                  
+                  // Afternoon Section
+                   Row(
+                     children: [
+                       const Text('Tarde', style: TextStyle(fontWeight: FontWeight.bold)),
+                       const SizedBox(width: 24),
+                       Text(AppLocalizations.of(context)!.get('closed')),
+                       Checkbox(
+                          value: schedule.openTimeAfternoon == null && schedule.closeTimeAfternoon == null,
+                          onChanged: (val) {
+                             setState(() {
+                                if (val == true) {
+                                   schedule.openTimeAfternoon = null;
+                                   schedule.closeTimeAfternoon = null;
+                                } else {
+                                   schedule.openTimeAfternoon = '16:00';
+                                   schedule.closeTimeAfternoon = '21:00';
+                                }
+                             });
+                          },
+                       ),
+                     ],
+                  ),
+                  if (schedule.openTimeAfternoon != null || schedule.closeTimeAfternoon != null)
                   Row(
                     children: [
                       Expanded(

@@ -174,6 +174,14 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                     onChanged: (value) {
                        setStateDialog(() {
                          selectedExercise = value;
+                         if (value != null) {
+                           setsController.text = value.sets?.toString() ?? '3';
+                           repsController.text = value.reps ?? '10';
+                           loadController.text = value.load ?? '';
+                           restController.text = value.rest ?? '60s';
+                           videoUrlController.text = value.videoUrl ?? '';
+                           notesController.text = value.notes ?? '';
+                         }
                        });
                     },
                     validator: (value) => value == null ? 'Requerido' : null,

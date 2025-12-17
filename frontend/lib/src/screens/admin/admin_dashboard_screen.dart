@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import 'manage_users_screen.dart';
 import '../shared/plans_list_screen.dart';
 import '../teacher/create_plan_screen.dart';
+import '../teacher/exercises_list_screen.dart';
 import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
 
@@ -51,24 +52,24 @@ class AdminDashboardScreen extends StatelessWidget {
 
             _buildDashboardCard(
               context,
-              title: 'Crear Plan',
-              icon: Icons.add_circle_outline,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CreatePlanScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildDashboardCard(
-              context,
               title: 'Biblioteca de Planes',
               icon: Icons.library_books,
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const PlansListScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildDashboardCard(
+              context,
+              title: 'Biblioteca de Ejercicios',
+              icon: Icons.fitness_center,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ExercisesListScreen()),
                 );
               },
             ),

@@ -10,11 +10,22 @@ class UserProvider with ChangeNotifier {
   List<User> get students => _students;
   bool get isLoading => _isLoading;
 
-  Future<void> fetchUsers({String? role, String? gymId}) async {
+  Map<String, String?> _lastFetchArgs = {};
+  bool _isUsersLoaded = false;
+
+  Future<void> fetchUsers({String? role, String? gymId, bool forceRefresh = false}) async {
+    // Check if arguments changed
+    final currentArgs = {'role': role, 'gymId': gymId};
+    final argsChanged = _lastFetchArgs['role'] != role || _lastFetchArgs['gymId'] != gymId;
+
+    if (_isUsersLoaded && !forceRefresh && !argsChanged && _students.isNotEmpty) return;
+
     _isLoading = true;
     notifyListeners();
     try {
       _students = await _userService.getUsers(role: role, gymId: gymId);
+      _isUsersLoaded = true;
+      _lastFetchArgs = currentArgs;
     } catch (e) {
         print('Error fetching users: $e');
     } finally {
@@ -24,7 +35,7 @@ class UserProvider with ChangeNotifier {
   }
 
   // Alias for backward compatibility or clarity
-  Future<void> fetchStudents() => fetchUsers();
+  Future<void> fetchStudents({bool forceRefresh = false}) => fetchUsers(forceRefresh: forceRefresh);
 
   Future<bool> addUser({
     required String email,

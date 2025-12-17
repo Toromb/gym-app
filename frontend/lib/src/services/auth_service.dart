@@ -10,9 +10,12 @@ class AuthService {
   final _storage = const FlutterSecureStorage();
 
   String get baseUrl {
-    if (kIsWeb) return 'http://localhost:3000';
-    if (Platform.isAndroid) return 'http://10.0.2.2:3000';
-    return 'http://localhost:3000';
+    if (kIsWeb) {
+      if (kReleaseMode) return '/api';
+      return 'http://localhost:3000';
+    }
+    // Mobile/Simulator
+    return 'http://10.0.2.2:3000';
   }
 
   Future<dynamic> login(String email, String password) async {

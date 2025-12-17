@@ -81,13 +81,19 @@ class PlanProvider with ChangeNotifier {
     return {'finished': true, 'assignment': assignment};
   }
 
-  Future<void> fetchPlans() async {
+  bool _isPlansLoaded = false;
+  bool _isMyPlanLoaded = false;
+
+  Future<void> fetchPlans({bool forceRefresh = false}) async {
+    if (_isPlansLoaded && !forceRefresh) return;
+    
     _isLoading = true;
     notifyListeners();
     try {
       _plans = await _planService.getPlans();
+      _isPlansLoaded = true;
     } catch (e) {
-    debugPrint('Error fetching plans: $e');
+      debugPrint('Error fetching plans: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -120,12 +126,15 @@ class PlanProvider with ChangeNotifier {
     try {
       final success = await _planService.updatePlan(id, plan);
       if (success) {
-        await fetchPlans(); // Or manually update the item in list
+        // We could manually update the list item here to avoid full refetch
+        // But for safety/completeness we can force refresh specific item or just invalidate
+        _isPlansLoaded = false; // Invalidate cache to force refresh on next visit if needed, or:
+        await fetchPlans(forceRefresh: true); 
         return true;
       }
       return false;
     } catch (e) {
-    debugPrint('Error updating plan: $e');
+      debugPrint('Error updating plan: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -133,13 +142,16 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchMyPlan() async {
+  Future<void> fetchMyPlan({bool forceRefresh = false}) async {
+    if (_isMyPlanLoaded && !forceRefresh) return;
+
     _isLoading = true;
     notifyListeners();
     try {
       _myPlan = await _planService.getMyPlan();
+      _isMyPlanLoaded = true;
     } catch (e) {
-    debugPrint('Error fetching my plan: $e');
+      debugPrint('Error fetching my plan: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
