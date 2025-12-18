@@ -37,7 +37,7 @@ Run the following command to build and start the services.
 *Note: The first run will take a few minutes as it downloads the Flutter SDK and compiles the web application.*
 
 ```bash
-docker compose -f infra/docker-compose.prod.yml up -d --build
+docker compose --env-file .env.prod -f infra/docker-compose.prod.yml up -d --build
 ```
 
 ## 4. Verification
