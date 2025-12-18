@@ -6,7 +6,7 @@ export declare class GymScheduleService implements OnModuleInit {
     private readonly gymScheduleRepository;
     constructor(gymScheduleRepository: Repository<GymSchedule>);
     onModuleInit(): Promise<void>;
-    seedDefaults(): Promise<void>;
-    findAll(): Promise<GymSchedule[]>;
-    update(updateGymScheduleDtos: UpdateGymScheduleDto[]): Promise<GymSchedule[]>;
+    seedDefaultsForGym(gymId: string): Promise<void>;
+    findAll(gymId: string): Promise<GymSchedule[]>;
+    update(updateGymScheduleDtos: UpdateGymScheduleDto[], gymId: string): Promise<GymSchedule[]>;
 }

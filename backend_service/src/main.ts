@@ -10,7 +10,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
-  app.enableCors();
+  app.enableCors({
+    origin: process.env.NODE_ENV === 'production' ? (process.env.CORS_ORIGIN || '*') : '*',
+    credentials: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Gym App API')

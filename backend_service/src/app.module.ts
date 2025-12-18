@@ -31,7 +31,7 @@ import { StatsModule } from './stats/stats.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: true,
+        synchronize: process.env.NODE_ENV !== 'production',
         retryAttempts: 10,
         retryDelay: 3000,
       }),

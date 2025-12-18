@@ -24,14 +24,18 @@ let GymScheduleController = class GymScheduleController {
     constructor(gymScheduleService) {
         this.gymScheduleService = gymScheduleService;
     }
-    findAll() {
-        return this.gymScheduleService.findAll();
+    findAll(req) {
+        const gymId = req.user.gym?.id;
+        return this.gymScheduleService.findAll(gymId);
     }
     update(updateGymScheduleDtos, req) {
         if (req.user.role !== user_entity_1.UserRole.ADMIN) {
             throw new common_1.ForbiddenException('Only admin can update schedule');
         }
-        return this.gymScheduleService.update(updateGymScheduleDtos);
+        const gymId = req.user.gym?.id;
+        if (!gymId)
+            throw new common_1.ForbiddenException('No gym associated with admin');
+        return this.gymScheduleService.update(updateGymScheduleDtos, gymId);
     }
 };
 exports.GymScheduleController = GymScheduleController;
@@ -39,8 +43,9 @@ __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({ summary: 'Get gym schedule' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all gym schedules.' }),
+    __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GymScheduleController.prototype, "findAll", null);
 __decorate([

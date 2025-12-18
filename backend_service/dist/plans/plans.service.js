@@ -239,7 +239,7 @@ let PlansService = PlansService_1 = class PlansService {
         const plan = await this.findOne(id);
         if (!plan)
             throw new common_1.NotFoundException('Plan not found');
-        if (user.role !== 'admin' && plan.teacher.id !== user.id) {
+        if (user.role !== 'admin' && user.role !== 'super_admin' && plan.teacher?.id !== user.id) {
             throw new common_1.ForbiddenException('You can only delete your own plans');
         }
         await this.plansRepository.remove(plan);

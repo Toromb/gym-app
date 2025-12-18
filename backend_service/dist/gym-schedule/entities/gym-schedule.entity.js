@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GymSchedule = void 0;
 const typeorm_1 = require("typeorm");
 const swagger_1 = require("@nestjs/swagger");
+const gym_entity_1 = require("../../gyms/entities/gym.entity");
 let GymSchedule = class GymSchedule {
     id;
     dayOfWeek;
@@ -21,6 +22,7 @@ let GymSchedule = class GymSchedule {
     openTimeAfternoon;
     closeTimeAfternoon;
     notes;
+    gym;
 };
 exports.GymSchedule = GymSchedule;
 __decorate([
@@ -63,6 +65,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'text', nullable: true }),
     __metadata("design:type", Object)
 ], GymSchedule.prototype, "notes", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => gym_entity_1.Gym, { onDelete: 'CASCADE' }),
+    __metadata("design:type", gym_entity_1.Gym)
+], GymSchedule.prototype, "gym", void 0);
 exports.GymSchedule = GymSchedule = __decorate([
     (0, typeorm_1.Entity)('gym_schedule_v2')
 ], GymSchedule);

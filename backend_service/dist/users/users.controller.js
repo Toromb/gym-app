@@ -50,10 +50,16 @@ let UsersController = class UsersController {
             return this.usersService.findAllStudents(undefined, role, gymId);
         }
         if (user.role === user_entity_1.UserRole.ADMIN) {
-            return this.usersService.findAllStudents(undefined, role, user.gym?.id);
+            const gymId = user.gym?.id;
+            if (!gymId)
+                return [];
+            return this.usersService.findAllStudents(undefined, role, gymId);
         }
         if (user.role === user_entity_1.UserRole.PROFE) {
-            return this.usersService.findAllStudents(user.id, role, user.gym?.id);
+            const gymId = user.gym?.id;
+            if (!gymId)
+                return [];
+            return this.usersService.findAllStudents(user.id, role, gymId);
         }
         throw new common_1.ForbiddenException('You do not have permission to view users');
     }

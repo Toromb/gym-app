@@ -23,10 +23,11 @@ let GymScheduleService = class GymScheduleService {
         this.gymScheduleRepository = gymScheduleRepository;
     }
     async onModuleInit() {
-        await this.seedDefaults();
     }
-    async seedDefaults() {
-        const count = await this.gymScheduleRepository.count();
+    async seedDefaultsForGym(gymId) {
+        const count = await this.gymScheduleRepository.count({
+            where: { gym: { id: gymId } }
+        });
         if (count === 0) {
             const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
             const defaultSchedule = days.map(day => {
@@ -37,6 +38,7 @@ let GymScheduleService = class GymScheduleService {
                 schedule.closeTimeMorning = '12:00';
                 schedule.openTimeAfternoon = '16:00';
                 schedule.closeTimeAfternoon = '21:00';
+                schedule.gym = { id: gymId };
                 if (day === 'SUNDAY') {
                     schedule.isClosed = true;
                     schedule.openTimeMorning = null;
@@ -49,17 +51,27 @@ let GymScheduleService = class GymScheduleService {
             await this.gymScheduleRepository.save(defaultSchedule);
         }
     }
-    async findAll() {
+    async findAll(gymId) {
+        if (!gymId)
+            return [];
+        await this.seedDefaultsForGym(gymId);
         const daysOrder = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-        const schedules = await this.gymScheduleRepository.find();
+        const schedules = await this.gymScheduleRepository.find({
+            where: { gym: { id: gymId } }
+        });
         return schedules.sort((a, b) => {
             return daysOrder.indexOf(a.dayOfWeek) - daysOrder.indexOf(b.dayOfWeek);
         });
     }
-    async update(updateGymScheduleDtos) {
+    async update(updateGymScheduleDtos, gymId) {
         const updatedSchedules = [];
         for (const dto of updateGymScheduleDtos) {
-            let schedule = await this.gymScheduleRepository.findOne({ where: { dayOfWeek: dto.dayOfWeek } });
+            let schedule = await this.gymScheduleRepository.findOne({
+                where: {
+                    dayOfWeek: dto.dayOfWeek,
+                    gym: { id: gymId }
+                }
+            });
             if (schedule) {
                 if (dto.isClosed !== undefined)
                     schedule.isClosed = dto.isClosed;

@@ -5,7 +5,7 @@ export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
     create(createUserDto: CreateUserDto, req: any): Promise<import("./entities/user.entity").User>;
-    findAll(req: any, role?: string, gymId?: string): Promise<import("./entities/user.entity").User[]>;
+    findAll(req: any, role?: string, gymId?: string): Promise<import("./entities/user.entity").User[]> | never[];
     getProfile(req: any): Promise<import("./entities/user.entity").User>;
     updateProfile(updateUserDto: UpdateUserDto, req: any): Promise<import("./entities/user.entity").User>;
     private validateAccess;

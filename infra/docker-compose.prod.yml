@@ -13,9 +13,7 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - gym_prod_network
-    # In production, you typically don't expose DB port publicly, 
-    # but strictly required for internal backend connection.
-    # Exposing 5432 locally for debugging if needed:
+    # Database isolated in private network, only accessible by backend
     # ports:
     #   - "5432:5432"
 

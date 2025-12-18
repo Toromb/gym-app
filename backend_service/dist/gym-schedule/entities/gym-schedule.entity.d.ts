@@ -1,3 +1,4 @@
+import { Gym } from '../../gyms/entities/gym.entity';
 export declare class GymSchedule {
     id: number;
     dayOfWeek: string;
@@ -7,4 +8,5 @@ export declare class GymSchedule {
     openTimeAfternoon: string | null;
     closeTimeAfternoon: string | null;
     notes: string | null;
+    gym: Gym;
 }
