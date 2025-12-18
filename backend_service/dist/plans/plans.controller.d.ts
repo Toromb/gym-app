@@ -5,7 +5,7 @@ export declare class PlansController {
     private readonly plansService;
     constructor(plansService: PlansService);
     create(createPlanDto: CreatePlanDto, req: any): Promise<import("./entities/plan.entity").Plan>;
-    findAll(req: any): Promise<import("./entities/plan.entity").Plan[]> | never[];
+    findAll(req: any): never[] | Promise<import("./entities/plan.entity").Plan[]>;
     getMyPlan(req: any): Promise<import("./entities/plan.entity").Plan>;
     getMyHistory(req: any): Promise<import("./entities/student-plan.entity").StudentPlan[]>;
     findOne(id: string): Promise<import("./entities/plan.entity").Plan | null>;

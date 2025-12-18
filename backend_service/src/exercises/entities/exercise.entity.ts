@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Gym } from '../../gyms/entities/gym.entity';
 
 @Entity('exercises')
 export class Exercise {
@@ -18,7 +19,7 @@ export class Exercise {
     @Column({ nullable: true })
     imageUrl: string;
 
-    @Column()
+    @Column({ nullable: true })
     muscleGroup?: string;
 
     @Column({ nullable: true })
@@ -42,6 +43,9 @@ export class Exercise {
 
     @ManyToOne(() => User, { nullable: true })
     createdBy: User;
+
+    @ManyToOne(() => Gym, { nullable: true, onDelete: 'CASCADE' })
+    gym: Gym;
 
     @CreateDateColumn()
     createdAt: Date;

@@ -29,8 +29,14 @@ let ExercisesController = class ExercisesController {
         }
         return this.exercisesService.create(createExerciseDto, req.user);
     }
-    findAll() {
-        return this.exercisesService.findAll();
+    findAll(req) {
+        if (req.user.role === user_entity_1.UserRole.SUPER_ADMIN) {
+            return this.exercisesService.findAll();
+        }
+        const gymId = req.user.gym?.id;
+        if (!gymId)
+            return [];
+        return this.exercisesService.findAll(gymId);
     }
     findOne(id) {
         return this.exercisesService.findOne(id);
@@ -53,8 +59,9 @@ __decorate([
 ], ExercisesController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], ExercisesController.prototype, "findAll", null);
 __decorate([

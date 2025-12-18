@@ -18,6 +18,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   final _phoneController = TextEditingController();
   final _ageController = TextEditingController();
   final _genderController = TextEditingController();
+  final _weightController = TextEditingController();
   final _notesController = TextEditingController();
   final _membershipDateController = TextEditingController();
   bool _isLoading = false;
@@ -96,19 +97,33 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     ),
                   ],
                 ),
-                DropdownButtonFormField<String>(
-                  value: _genderController.text.isNotEmpty ? _genderController.text : null,
-                  decoration: const InputDecoration(labelText: 'Sexo'),
-                  items: const [
-                    DropdownMenuItem(value: 'M', child: Text('Masculino')),
-                    DropdownMenuItem(value: 'F', child: Text('Femenino')),
-                    DropdownMenuItem(value: 'O', child: Text('Otro')),
+                Row(
+                  children: [
+                    Expanded(
+                        child: TextFormField(
+                        controller: _weightController,
+                        decoration: const InputDecoration(labelText: 'Peso Inicial (kg)'),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                       child: DropdownButtonFormField<String>(
+                        value: _genderController.text.isNotEmpty ? _genderController.text : null,
+                        decoration: const InputDecoration(labelText: 'Sexo'),
+                        items: const [
+                          DropdownMenuItem(value: 'M', child: Text('Masculino')),
+                          DropdownMenuItem(value: 'F', child: Text('Femenino')),
+                          DropdownMenuItem(value: 'O', child: Text('Otro')),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _genderController.text = value!;
+                          });
+                        },
+                      ),
+                    ),
                   ],
-                  onChanged: (value) {
-                    setState(() {
-                      _genderController.text = value!;
-                    });
-                  },
                 ),
                 TextFormField(
                   controller: _membershipDateController,
@@ -140,6 +155,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                                   age: int.tryParse(_ageController.text),
                                   gender: _genderController.text,
                                   notes: _notesController.text,
+                                  initialWeight: double.tryParse(_weightController.text), // Add initial weight
                                   membershipStartDate: _membershipDateController.text.isNotEmpty ? _membershipDateController.text : null,
                                 );
                             setState(() => _isLoading = false);

@@ -12,11 +12,14 @@ export class GymScheduleService implements OnModuleInit {
     ) { }
 
     async onModuleInit() {
-        await this.seedDefaults();
+        // No global seed anymore
     }
 
-    async seedDefaults() {
-        const count = await this.gymScheduleRepository.count();
+    async seedDefaultsForGym(gymId: string) {
+        const count = await this.gymScheduleRepository.count({
+            where: { gym: { id: gymId } }
+        });
+
         if (count === 0) {
             const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
             const defaultSchedule = days.map(day => {
@@ -27,6 +30,8 @@ export class GymScheduleService implements OnModuleInit {
                 schedule.closeTimeMorning = '12:00';
                 schedule.openTimeAfternoon = '16:00';
                 schedule.closeTimeAfternoon = '21:00';
+                schedule.gym = { id: gymId } as any; // Associate with Gym
+
                 if (day === 'SUNDAY') {
                     schedule.isClosed = true;
                     schedule.openTimeMorning = null;
@@ -40,9 +45,16 @@ export class GymScheduleService implements OnModuleInit {
         }
     }
 
-    async findAll(): Promise<GymSchedule[]> {
+    async findAll(gymId: string): Promise<GymSchedule[]> {
+        if (!gymId) return [];
+
+        // Ensure defaults exist for this gym
+        await this.seedDefaultsForGym(gymId);
+
         const daysOrder = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-        const schedules = await this.gymScheduleRepository.find();
+        const schedules = await this.gymScheduleRepository.find({
+            where: { gym: { id: gymId } }
+        });
 
         // Sort by custom day order
         return schedules.sort((a, b) => {
@@ -50,10 +62,18 @@ export class GymScheduleService implements OnModuleInit {
         });
     }
 
-    async update(updateGymScheduleDtos: UpdateGymScheduleDto[]): Promise<GymSchedule[]> {
+    async update(updateGymScheduleDtos: UpdateGymScheduleDto[], gymId: string): Promise<GymSchedule[]> {
         const updatedSchedules = [];
         for (const dto of updateGymScheduleDtos) {
-            let schedule = await this.gymScheduleRepository.findOne({ where: { dayOfWeek: dto.dayOfWeek } });
+            let schedule = await this.gymScheduleRepository.findOne({
+                where: {
+                    dayOfWeek: dto.dayOfWeek,
+                    gym: { id: gymId }
+                }
+            });
+
+            // If strictly missing (logic gap), rely on findAll seeding or create missing on fly?
+            // Safer to just update existing. findAll ensures they exist.
             if (schedule) {
                 if (dto.isClosed !== undefined) schedule.isClosed = dto.isClosed;
 

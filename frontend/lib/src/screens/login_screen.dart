@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../localization/app_localizations.dart';
+import '../providers/user_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -67,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: _isLoading
                         ? const Center(child: CircularProgressIndicator())
                         : ElevatedButton(
-                            onPressed: () async {
+                          onPressed: () async {
                               setState(() => _isLoading = true);
                               final errorMsg = await context.read<AuthProvider>().login(
                                     _emailController.text,
@@ -75,11 +76,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                   );
                               setState(() => _isLoading = false);
                               if (errorMsg == null && mounted) {
+                                // Clear stale data from previous users (e.g. Admin -> Profe)
+                                context.read<UserProvider>().clear();
+                                // context.read<PlanProvider>().clear(); // PlanProvider doesn't have clear yet, mainly UserProvider is the issue.
+                                // Ideal: Add proper clear to all, but UserProvider is critical for the reported bug.
+                                
                                 // Success - Logic handled by AuthWrapper
                               } else if (mounted) {
+                                  final isInvalidCreds = errorMsg == 'invalidCredentials';
+                                  final displayMsg = isInvalidCreds 
+                                      ? AppLocalizations.of(context)!.invalidCredentials
+                                      : (errorMsg ?? '${AppLocalizations.of(context)!.error}: ${AppLocalizations.of(context)!.invalidEmail}');
+
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(errorMsg ?? '${AppLocalizations.of(context)!.error}: ${AppLocalizations.of(context)!.invalidEmail}'),
+                                      content: Text(displayMsg),
                                       backgroundColor: Colors.red,
                                     ),
                                   );

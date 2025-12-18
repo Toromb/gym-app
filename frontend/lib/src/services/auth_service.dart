@@ -33,6 +33,10 @@ class AuthService {
         return data; // Success Map
       }
       
+      if (response.statusCode == 401) {
+        return 'invalidCredentials';
+      }
+      
       // Return error message if available
       return data['message'] ?? 'Login failed'; 
     } catch (e) {

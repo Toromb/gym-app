@@ -151,6 +151,7 @@ class AppLocalizations {
       // --- Placeholders / Errors ---
       'fieldRequired': 'Campo requerido',
       'invalidEmail': 'Email inválido',
+      'invalidCredentials': 'Email o contraseña incorrecta',
     },
     'en': {
       // English Fallback
@@ -172,6 +173,7 @@ class AppLocalizations {
   String get welcome => get('welcome');
   String get error => get('error');
   String get invalidEmail => get('invalidEmail');
+  String get invalidCredentials => get('invalidCredentials');
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

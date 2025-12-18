@@ -22,8 +22,13 @@ export class ExercisesController {
     }
 
     @Get()
-    findAll() {
-        return this.exercisesService.findAll();
+    findAll(@Request() req: any) {
+        if (req.user.role === UserRole.SUPER_ADMIN) {
+            return this.exercisesService.findAll();
+        }
+        const gymId = req.user.gym?.id;
+        if (!gymId) return [];
+        return this.exercisesService.findAll(gymId);
     }
 
     @Get(':id')

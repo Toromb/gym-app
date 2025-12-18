@@ -26,10 +26,14 @@ let ExercisesService = class ExercisesService {
         const exercise = this.exercisesRepository.create({
             ...createExerciseDto,
             createdBy: user,
+            gym: user.gym,
         });
         return this.exercisesRepository.save(exercise);
     }
-    async findAll() {
+    async findAll(gymId) {
+        if (gymId) {
+            return this.exercisesRepository.find({ where: { gym: { id: gymId } } });
+        }
         return this.exercisesRepository.find();
     }
     async findOne(id) {

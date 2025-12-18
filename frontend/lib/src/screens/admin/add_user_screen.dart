@@ -23,6 +23,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
   final _ageController = TextEditingController();
   final _notesController = TextEditingController();
   final _membershipDateController = TextEditingController();
+  final _weightController = TextEditingController();
   
   String _selectedRole = AppRoles.alumno;
   String _selectedGender = 'M';
@@ -180,6 +181,12 @@ class _AddUserScreenState extends State<AddUserScreen> {
                   decoration: const InputDecoration(labelText: 'Edad'),
                   keyboardType: TextInputType.number,
                 ),
+                if (_selectedRole == AppRoles.alumno)
+                  TextFormField(
+                    controller: _weightController,
+                    decoration: const InputDecoration(labelText: 'Peso Inicial (kg)'),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  ),
                 DropdownButtonFormField<String>(
                   value: _selectedGender,
                   decoration: const InputDecoration(labelText: 'Sexo'),
@@ -213,6 +220,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                                   notes: _notesController.text,
                                   role: _selectedRole,
                                   professorId: _selectedProfessorId,
+                                  initialWeight: double.tryParse(_weightController.text),
                                   membershipStartDate: _membershipDateController.text.isNotEmpty ? _membershipDateController.text : null,
                                 );
                             setState(() => _isLoading = false);

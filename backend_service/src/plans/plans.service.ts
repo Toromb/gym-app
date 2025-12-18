@@ -279,8 +279,8 @@ export class PlansService {
         const plan = await this.findOne(id);
         if (!plan) throw new NotFoundException('Plan not found');
 
-        // Permission: Admin or Plan Owner
-        if (user.role !== 'admin' && plan.teacher.id !== user.id) {
+        // Permission: Admin, Super Admin or Plan Owner
+        if (user.role !== 'admin' && user.role !== 'super_admin' && plan.teacher?.id !== user.id) {
             throw new ForbiddenException('You can only delete your own plans');
         }
 

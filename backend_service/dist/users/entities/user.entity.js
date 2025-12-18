@@ -191,7 +191,7 @@ __decorate([
     __metadata("design:type", Array)
 ], User.prototype, "students", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => gym_entity_1.Gym, (gym) => gym.users, { nullable: true, onDelete: 'SET NULL' }),
+    (0, typeorm_1.ManyToOne)(() => gym_entity_1.Gym, (gym) => gym.users, { nullable: true, onDelete: 'CASCADE' }),
     __metadata("design:type", gym_entity_1.Gym)
 ], User.prototype, "gym", void 0);
 exports.User = User = __decorate([

@@ -53,14 +53,17 @@ export class UsersController {
         }
 
         if (user.role === UserRole.ADMIN) {
-            // Admin only sees their gym users
-            return this.usersService.findAllStudents(undefined, role, user.gym?.id);
+            const gymId = user.gym?.id;
+            if (!gymId) return []; // Safety: If no gym assigned, show nothing instead of everything
+            return this.usersService.findAllStudents(undefined, role, gymId);
         }
 
         if (user.role === UserRole.PROFE) {
+            const gymId = user.gym?.id;
             // Professor sees only their students. 
-            // Also restrict to their gym just in case (though service does professor filter)
-            return this.usersService.findAllStudents(user.id, role, user.gym?.id);
+            // Also restrict to their gym just in case
+            if (!gymId) return []; // Safety
+            return this.usersService.findAllStudents(user.id, role, gymId);
         }
         throw new ForbiddenException('You do not have permission to view users');
     }

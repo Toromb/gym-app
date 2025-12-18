@@ -55,6 +55,7 @@ class UserService {
     String? gymId,
     String? professorId,
     String? membershipStartDate,
+    double? initialWeight,
   }) async {
     final token = await _getToken();
     final bodyData = {
@@ -70,6 +71,7 @@ class UserService {
         if (gymId != null) 'gymId': gymId,
         if (professorId != null) 'professorId': professorId,
         if (membershipStartDate != null) 'membershipStartDate': membershipStartDate,
+        if (initialWeight != null) 'initialWeight': initialWeight,
     };
 
     final response = await http.post(

@@ -121,7 +121,7 @@ export class User {
     @OneToMany(() => User, (user) => user.professor)
     students: User[];
 
-    @ManyToOne(() => Gym, (gym) => gym.users, { nullable: true, onDelete: 'SET NULL' })
+    @ManyToOne(() => Gym, (gym) => gym.users, { nullable: true, onDelete: 'CASCADE' })
     gym: Gym;
 }
 

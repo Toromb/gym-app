@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { Gym } from '../../gyms/entities/gym.entity';
 
 @Entity('gym_schedule_v2')
 export class GymSchedule {
@@ -34,4 +35,7 @@ export class GymSchedule {
     @ApiProperty({ example: 'Maintenance day', description: 'Additional notes', required: false, nullable: true })
     @Column({ type: 'text', nullable: true })
     notes: string | null;
+
+    @ManyToOne(() => Gym, { onDelete: 'CASCADE' })
+    gym: Gym;
 }

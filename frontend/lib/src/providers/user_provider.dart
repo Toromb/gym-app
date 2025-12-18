@@ -50,6 +50,7 @@ class UserProvider with ChangeNotifier {
     String? gymId,
     String? professorId,
     String? membershipStartDate,
+    double? initialWeight,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -67,6 +68,7 @@ class UserProvider with ChangeNotifier {
         gymId: gymId,
         professorId: professorId,
         membershipStartDate: membershipStartDate,
+        initialWeight: initialWeight,
       );
       if (newUser != null) {
         _students.add(newUser); // This list might be misnamed if it holds all users, but legacy variable name
@@ -94,6 +96,7 @@ class UserProvider with ChangeNotifier {
     String? gender,
     String? notes,
     String? membershipStartDate,
+    double? initialWeight,
   }) {
     return addUser(
       email: email,
@@ -106,6 +109,7 @@ class UserProvider with ChangeNotifier {
       notes: notes,
       membershipStartDate: membershipStartDate,
       role: UserRoles.alumno,
+      initialWeight: initialWeight,
     );
   }
 
@@ -169,5 +173,12 @@ class UserProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+  void clear() {
+    _students = [];
+    _isLoading = false;
+    _isUsersLoaded = false;
+    _lastFetchArgs = {};
+    notifyListeners();
   }
 }
