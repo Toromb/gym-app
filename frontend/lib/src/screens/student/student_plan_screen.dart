@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/plan_provider.dart';
 import '../shared/day_detail_screen.dart';
+import '../../localization/app_localizations.dart';
 
 class StudentPlanScreen extends StatefulWidget {
   const StudentPlanScreen({super.key});
@@ -26,7 +27,7 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Current Plan'),
+        title: const Text('Mi Plan Actual'),
       ),
       body: Consumer<PlanProvider>(
         builder: (context, planProvider, _) {
@@ -36,7 +37,7 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
           final plan = planProvider.myPlan;
           
           if (plan == null) {
-            return const Center(child: Text('No plan assigned.'));
+            return const Center(child: Text('No hay plan asignado.'));
           }
 
           return SingleChildScrollView(
@@ -46,9 +47,9 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
               children: [
                 _buildPlanSummaryCard(context, plan),
                 const SizedBox(height: 24),
-                const Text('Weekly Schedule', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('Cronograma Semanal', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
-                ...plan.weeks.map((week) => _buildWeekCard(context, week)),
+                ...plan.weeks.map((week) => _buildWeekCard(context, week, plan.id!)),
               ],
             ),
           );
@@ -76,7 +77,7 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Current Plan',
+            'Plan Actual',
             style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
           ),
           const SizedBox(height: 8),
@@ -99,21 +100,21 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
     );
   }
 
-  Widget _buildWeekCard(BuildContext context, dynamic week) {
+  Widget _buildWeekCard(BuildContext context, dynamic week, String planId) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Text(week.name.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Colors.grey)),
+          child: Text('${AppLocalizations.of(context)!.get('week').toUpperCase()} ${week.weekNumber}', style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Colors.grey)),
         ),
-        ...week.days.map<Widget>((day) => _buildDayCard(context, day)).toList(),
+        ...week.days.map<Widget>((day) => _buildDayCard(context, day, planId, week.weekNumber)).toList(),
         const SizedBox(height: 16),
       ],
     );
   }
 
-  Widget _buildDayCard(BuildContext context, dynamic day) {
+  Widget _buildDayCard(BuildContext context, dynamic day, String planId, int weekNumber) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
@@ -124,7 +125,11 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => DayDetailScreen(day: day),
+              builder: (context) => DayDetailScreen(
+                day: day, 
+                planId: planId,
+                weekNumber: weekNumber,
+              ),
             ),
           );
         },
@@ -147,12 +152,12 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      day.title ?? 'Day ${day.dayOfWeek}',
+                      day.title ?? 'Día ${day.dayOfWeek}',
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${day.exercises.length} Exercises',
+                      '${day.exercises.length} Ejercicios',
                       style: TextStyle(color: Colors.grey[600], fontSize: 13),
                     ),
                   ],

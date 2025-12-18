@@ -10,12 +10,15 @@ class AuthService {
   final _storage = const FlutterSecureStorage();
 
   String get baseUrl {
-    if (kIsWeb) return 'http://localhost:3000';
-    if (Platform.isAndroid) return 'http://10.0.2.2:3000';
-    return 'http://localhost:3000';
+    if (kIsWeb) {
+      if (kReleaseMode) return '/api';
+      return 'http://localhost:3000';
+    }
+    // Mobile/Simulator
+    return 'http://10.0.2.2:3000';
   }
 
-  Future<Map<String, dynamic>?> login(String email, String password) async {
+  Future<dynamic> login(String email, String password) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/login'),
@@ -23,15 +26,22 @@ class AuthService {
         body: jsonEncode({'email': email, 'password': password}),
       );
 
+      final data = jsonDecode(response.body);
+
       if (response.statusCode == 201 || response.statusCode == 200) {
-        final data = jsonDecode(response.body);
         await _storage.write(key: 'jwt', value: data['access_token']);
-        return data;
+        return data; // Success Map
       }
-      return null;
+      
+      if (response.statusCode == 401) {
+        return 'invalidCredentials';
+      }
+      
+      // Return error message if available
+      return data['message'] ?? 'Login failed'; 
     } catch (e) {
       debugPrint('Login error: $e');
-      return null;
+      return 'Connection error';
     }
   }
 

@@ -5,14 +5,18 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/plan_model.dart';
 import '../models/student_assignment_model.dart';
+import '../models/execution_model.dart';
 
 class PlanService {
   final _storage = const FlutterSecureStorage();
 
   String get baseUrl {
-    if (kIsWeb) return 'http://localhost:3000';
-    if (Platform.isAndroid) return 'http://10.0.2.2:3000';
-    return 'http://localhost:3000';
+    if (kIsWeb) {
+      if (kReleaseMode) return '/api';
+      return 'http://localhost:3000';
+    }
+    // Mobile/Simulator
+    return 'http://10.0.2.2:3000';
   }
 
   Future<String?> _getToken() async {
@@ -35,6 +39,21 @@ class PlanService {
     } else {
       throw Exception('Failed to load plans');
     }
+  }
+
+  Future<Plan?> getPlan(String id) async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/plans/$id'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return Plan.fromJson(jsonDecode(response.body));
+    }
+    return null;
   }
 
   Future<Plan?> createPlan(Plan plan) async {
@@ -178,5 +197,120 @@ class PlanService {
     );
 
     return response.statusCode == 200;
+  }
+
+  Future<bool> restartPlan(String assignmentId) async {
+    final token = await _getToken();
+    final response = await http.post(
+      Uri.parse('$baseUrl/plans/student/restart/$assignmentId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    return response.statusCode == 201 || response.statusCode == 200;
+  }
+
+  // --- EXECUTION ENGINE API ---
+
+  Future<PlanExecution?> startExecution(String planId, int weekNumber, int dayOrder, {String? date}) async {
+    final token = await _getToken();
+    final response = await http.post(
+      Uri.parse('$baseUrl/executions/start'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'planId': planId,
+        'weekNumber': weekNumber,
+        'dayOrder': dayOrder,
+        'date': date,
+      }),
+    );
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      return PlanExecution.fromJson(jsonDecode(response.body));
+    }
+    return null;
+  }
+
+  Future<bool> updateExerciseExecution(String exerciseExecId, Map<String, dynamic> updates) async {
+    final token = await _getToken();
+    final response = await http.patch(
+      Uri.parse('$baseUrl/executions/exercises/$exerciseExecId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(updates),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  Future<void> completeExecution(String executionId, String date) async {
+    final token = await _getToken();
+    final response = await http.patch(
+      Uri.parse('$baseUrl/executions/$executionId/complete'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'date': date,
+      }),
+    );
+
+    if (response.statusCode == 409) {
+      throw Exception('Conflict: Workout already exists on this date');
+    }
+    
+    if (response.statusCode != 200) {
+      throw Exception('Failed to complete execution');
+    }
+  }
+
+  Future<List<PlanExecution>> getCalendarHistory(String from, String to) async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/executions/calendar?from=$from&to=$to'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body); // Restored
+      return data.map((json) => PlanExecution.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load calendar');
+    }
+  }
+
+  Future<PlanExecution?> getStudentExecution({
+    required String studentId,
+    required String planId,
+    required int week,
+    required int day,
+    String? startDate,
+  }) async {
+    final token = await _getToken();
+    String url = '$baseUrl/executions/history/structure?studentId=$studentId&planId=$planId&week=$week&day=$day';
+    if (startDate != null) {
+      url += '&startDate=$startDate';
+    }
+
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200 && response.body.isNotEmpty) {
+      return PlanExecution.fromJson(jsonDecode(response.body));
+    }
+    return null;
   }
 }

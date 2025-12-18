@@ -9,6 +9,9 @@ import 'src/providers/gyms_provider.dart';
 import 'src/providers/stats_provider.dart';
 import 'src/screens/login_screen.dart';
 import 'src/screens/home_screen.dart';
+import 'src/utils/app_colors.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'src/localization/app_localizations.dart';
 
 void main() {
   runApp(
@@ -18,7 +21,10 @@ void main() {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => PlanProvider()),
         ChangeNotifierProvider(create: (_) => ExerciseProvider()),
-        ChangeNotifierProvider(create: (context) => GymScheduleProvider(context.read<AuthProvider>().token)),
+        ChangeNotifierProxyProvider<AuthProvider, GymScheduleProvider>(
+          create: (_) => GymScheduleProvider(null),
+          update: (_, auth, prev) => prev!..update(auth.token),
+        ),
         ChangeNotifierProvider(create: (_) => GymsProvider()),
         ChangeNotifierProvider(create: (_) => StatsProvider()),
       ],
@@ -33,11 +39,37 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Gym App',
+      title: 'GymFlow', // Updated Name
       theme: ThemeData(
-        primarySwatch: Colors.blue,
         useMaterial3: true,
+        colorScheme: AppColors.lightScheme,
+        scaffoldBackgroundColor: AppColors.background,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.textMain,
+          elevation: 0,
+        ),
+        cardTheme: const CardThemeData(
+          color: AppColors.surface,
+          elevation: 2,
+        ),
+        textTheme: const TextTheme(
+           bodyMedium: TextStyle(color: AppColors.textMain),
+           bodySmall: TextStyle(color: AppColors.textSoft),
+        ),
+
       ),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('es', ''), // Spanish, no country code
+        Locale('en', ''), // English
+      ],
+      locale: const Locale('es', ''), // Force Spanish for now
       home: Consumer<AuthProvider>(
         builder: (context, auth, _) {
           return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();

@@ -4,19 +4,24 @@ import 'package:intl/intl.dart';
 import '../../models/plan_model.dart';
 import '../../models/student_assignment_model.dart';
 import '../../providers/plan_provider.dart';
+import '../../localization/app_localizations.dart';
 import 'day_detail_screen.dart';
 import '../teacher/create_plan_screen.dart';
 
 class PlanDetailsScreen extends StatefulWidget {
   final Plan plan;
   final bool canEdit;
+  final bool readOnly;
   final StudentAssignment? assignment;
+  final String? studentId;
 
   const PlanDetailsScreen({
     super.key, 
     required this.plan, 
     this.canEdit = true,
+    this.readOnly = false,
     this.assignment,
+    this.studentId,
   });
 
   @override
@@ -73,7 +78,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
     if (!success) {
       if (mounted) {
         // Revert (could just reload from server or use simple toggle back logic)
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update progress')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.get('errorUpdateProgress'))));
         // Ideally revert state here, but for MVP keep it simple
       }
     }
@@ -86,7 +91,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
         initialDate: DateTime.now(),
         firstDate: DateTime(2020),
         lastDate: DateTime(2030),
-        helpText: 'Select Completion Date',
+        helpText: AppLocalizations.of(context)!.get('selectDate'),
       );
       if (picked != null) {
         _handleProgressUpdate('day', dayId, true, date: DateFormat('yyyy-MM-dd').format(picked));
@@ -130,7 +135,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
           children: [
             _buildPlanSummaryCard(context, _plan),
             const SizedBox(height: 24),
-            const Text('Weekly Schedule', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.get('weeklySchedule'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             ..._plan.weeks.map((week) => _buildWeekCard(context, week)),
           ],
@@ -158,7 +163,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Plan Overview',
+            AppLocalizations.of(context)!.get('planOverview'),
             style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
           ),
           const SizedBox(height: 8),
@@ -178,7 +183,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
           if (plan.durationWeeks > 0) ...[
              const SizedBox(height: 8),
              Text(
-               'Duration: ${plan.durationWeeks} Weeks',
+               AppLocalizations.of(context)!.get('durationWeeks').replaceAll('{weeks}', '${plan.durationWeeks}'),
                style: const TextStyle(color: Colors.white70),
              ),
           ]
@@ -193,15 +198,15 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Text(week.name.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Colors.grey)),
+          child: Text('${AppLocalizations.of(context)!.get('week').toUpperCase()} ${week.weekNumber}', style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Colors.grey)),
         ),
-        ...week.days.map<Widget>((day) => _buildDayCard(context, day)).toList(),
+        ...week.days.map<Widget>((day) => _buildDayCard(context, day, week.weekNumber)).toList(),
         const SizedBox(height: 16),
       ],
     );
   }
 
-  Widget _buildDayCard(BuildContext context, dynamic day) {
+  Widget _buildDayCard(BuildContext context, dynamic day, int weekNumber) {
     bool isCompleted = false;
     if (_currentAssignment != null && day.id != null) {
       isCompleted = _currentAssignment!.isDayCompleted(day.id!);
@@ -217,30 +222,50 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          // Prepare progress for DayDetail
-          Map<String, bool> exerciseProgress = {};
-          if (_currentAssignment != null && _currentAssignment!.progress['exercises'] != null) {
-            _currentAssignment!.progress['exercises'].forEach((k, v) {
-              if (v == true) exerciseProgress[k] = true;
-            });
-          }
-
-          Navigator.push(
+        onTap: () async {
+          if (_plan.id == null) return;
+          
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => DayDetailScreen(
                 day: day,
-                isTracking: _currentAssignment != null,
-                completedExercises: exerciseProgress,
-                onToggleExercise: (exId, val) {
-                   _handleProgressUpdate('exercise', exId, val);
-                },
+                planId: _plan.id!,
+                weekNumber: weekNumber,
+                readOnly: widget.readOnly,
+                studentId: widget.studentId, 
+                assignedAt: widget.assignment?.assignedAt,
               ),
             ),
-          ).then((_) {
-            setState(() {}); // Refresh if returned (though Provider update propagates via _handle, setState ensures simple refresh)
-          });
+          );
+
+          if (result == true && !widget.readOnly && mounted) {
+             // User finished workout. 
+             // 1. Refresh global history so Dashboard updates (Quick Workout button etc)
+             await context.read<PlanProvider>().fetchMyHistory();
+             // 2. Pop to Dashboard (Root of the authenticated stack)
+             if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+          } else if (!widget.readOnly && mounted) {
+             // Just refresh local state if they returned without finishing (but maybe updated something?)
+             context.read<PlanProvider>().fetchMyHistory().then((assignments) {
+                   if (mounted) {
+                       // Find the updated assignment matching current plan
+                       try {
+                           StudentAssignment updated;
+                           if (_currentAssignment?.id != null) {
+                             updated = assignments.firstWhere((a) => a.id == _currentAssignment!.id);
+                           } else {
+                             updated = assignments.firstWhere((a) => a.plan.id == _plan.id);
+                           }
+                           setState(() {
+                               _currentAssignment = updated;
+                           });
+                       } catch (e) {
+                           // Plan might have ended or error finding it
+                       }
+                   }
+             });
+          }
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -261,32 +286,27 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      day.title ?? 'Day ${day.dayOfWeek}',
+                      day.title ?? '${AppLocalizations.of(context)!.get('day')} ${day.dayOfWeek}',
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${day.exercises.length} Exercises',
+                      '${day.exercises.length} ${AppLocalizations.of(context)!.get('exercisesCount')}',
                       style: TextStyle(color: Colors.grey[600], fontSize: 13),
                     ),
                     if (isCompleted && day.id != null && _currentAssignment!.progress['days'][day.id]['date'] != null)
                       Text(
-                         'Completed: ${_currentAssignment!.progress['days'][day.id]['date']}',
+                         '${AppLocalizations.of(context)!.get('completedOn')} ${_currentAssignment!.progress['days'][day.id]['date']}',
                          style: TextStyle(color: Colors.green[800], fontSize: 12, fontWeight: FontWeight.bold),
                       )
                   ],
                 ),
               ),
-              if (_currentAssignment != null && day.id != null)
-                 Transform.scale(
-                   scale: 1.2,
-                   child: Checkbox(
-                     value: isCompleted,
-                     activeColor: Colors.green,
-                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                     onChanged: (val) => _onDayCheckboxChanged(val, day.id!),
-                   ),
-                 )
+              // We remove the legacy checkbox here to avoid confusion? 
+              // Or keep it read-only? 
+              // Let's keep the tick icon but not the interactable checkbox for now, as logic is moving to DayScreen "Finish".
+              if (isCompleted)
+                 const Icon(Icons.check_circle, color: Colors.green)
               else
                  const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
             ],

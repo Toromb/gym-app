@@ -13,9 +13,13 @@ class GymScheduleProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  final String? _authToken;
+  String? _authToken;
 
   GymScheduleProvider(this._authToken);
+
+  void update(String? token) {
+    _authToken = token;
+  }
 
   Future<void> fetchSchedule() async {
     _isLoading = true;
@@ -23,6 +27,7 @@ class GymScheduleProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      print('Fetching schedule from: $baseUrl/gym-schedule');
       final response = await http.get(
         Uri.parse('$baseUrl/gym-schedule'),
         headers: {
@@ -30,15 +35,19 @@ class GymScheduleProvider with ChangeNotifier {
           'Content-Type': 'application/json',
         },
       );
+      print('Schedule response: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         _schedules = data.map((json) => GymSchedule.fromJson(json)).toList();
+        print('Parsed ${_schedules.length} schedules');
       } else {
         _error = 'Failed to load schedule: ${response.statusCode}';
+        print(_error);
       }
     } catch (e) {
       _error = 'Error loading schedule: $e';
+      print(_error);
     } finally {
       _isLoading = false;
       notifyListeners();

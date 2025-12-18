@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../localization/app_localizations.dart';
+import '../providers/user_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,19 +34,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   Icon(Icons.fitness_center, size: 64, color: Theme.of(context).primaryColor),
                   const SizedBox(height: 16),
                   Text(
-                    'Welcome Back',
+                    AppLocalizations.of(context)!.welcome,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
                   ),
                   const SizedBox(height: 8),
-                  const Text('Sign in to continue', style: TextStyle(color: Colors.grey)),
+                  Text(AppLocalizations.of(context)!.loginTitle, style: const TextStyle(color: Colors.grey)), // 'Sign in to continue' -> 'Iniciar Sesión' text below welcome
                   const SizedBox(height: 32),
                   TextField(
                     controller: _emailController,
                     decoration: InputDecoration(
-                      labelText: 'Email',
+                      labelText: AppLocalizations.of(context)!.emailLabel,
                       prefixIcon: const Icon(Icons.email_outlined),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -53,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextField(
                     controller: _passwordController,
                     decoration: InputDecoration(
-                      labelText: 'Password',
+                      labelText: AppLocalizations.of(context)!.passwordLabel,
                       prefixIcon: const Icon(Icons.lock_outline),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -66,22 +68,32 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: _isLoading
                         ? const Center(child: CircularProgressIndicator())
                         : ElevatedButton(
-                            onPressed: () async {
+                          onPressed: () async {
                               setState(() => _isLoading = true);
-                              final success = await context.read<AuthProvider>().login(
+                              final errorMsg = await context.read<AuthProvider>().login(
                                     _emailController.text,
                                     _passwordController.text,
                                   );
                               setState(() => _isLoading = false);
-                              if (success && mounted) {
-                                // Logic handled by AuthWrapper usually
+                              if (errorMsg == null && mounted) {
+                                // Clear stale data from previous users (e.g. Admin -> Profe)
+                                context.read<UserProvider>().clear();
+                                // context.read<PlanProvider>().clear(); // PlanProvider doesn't have clear yet, mainly UserProvider is the issue.
+                                // Ideal: Add proper clear to all, but UserProvider is critical for the reported bug.
+                                
+                                // Success - Logic handled by AuthWrapper
                               } else if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Login failed'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
+                                  final isInvalidCreds = errorMsg == 'invalidCredentials';
+                                  final displayMsg = isInvalidCreds 
+                                      ? AppLocalizations.of(context)!.invalidCredentials
+                                      : (errorMsg ?? '${AppLocalizations.of(context)!.error}: ${AppLocalizations.of(context)!.invalidEmail}');
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(displayMsg),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -90,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               elevation: 2,
                             ),
-                            child: const Text('Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            child: Text(AppLocalizations.of(context)!.loginButton, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                           ),
                   ),
                 ],

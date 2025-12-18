@@ -34,4 +34,49 @@ class ExerciseService {
       throw Exception('Failed to load exercises');
     }
   }
+  Future<void> createExercise(Map<String, dynamic> exerciseData) async {
+    final token = await _getToken();
+    final response = await http.post(
+      Uri.parse('$baseUrl/exercises'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(exerciseData),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to create exercise: ${response.body}');
+    }
+  }
+
+  Future<void> updateExercise(String id, Map<String, dynamic> exerciseData) async {
+    final token = await _getToken();
+    final response = await http.patch(
+      Uri.parse('$baseUrl/exercises/$id'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(exerciseData),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update exercise: ${response.body}');
+    }
+  }
+
+  Future<void> deleteExercise(String id) async {
+    final token = await _getToken();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/exercises/$id'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete exercise: ${response.body}');
+    }
+  }
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../localization/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'manage_students_screen.dart';
 import 'create_plan_screen.dart';
 import '../shared/plans_list_screen.dart';
+import 'exercises_list_screen.dart'; // IMPORTED
 import '../shared/gym_schedule_screen.dart';
 import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
@@ -18,7 +20,7 @@ class TeacherDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Teacher Dashboard'),
+        title: Text(AppLocalizations.of(context)!.get('dashboardTitleProfe')),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -34,7 +36,7 @@ class TeacherDashboardScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
              Text(
-              'Welcome, ${user?.firstName ?? "Teacher"}!',
+              '${AppLocalizations.of(context)!.welcome}, ${user?.firstName ?? user?.email ?? "Profesor"}!',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
@@ -42,7 +44,7 @@ class TeacherDashboardScreen extends StatelessWidget {
             const SizedBox(height: 20),
             _buildDashboardCard(
               context,
-              title: 'Manage Students',
+              title: AppLocalizations.of(context)!.get('manageStudents'),
               icon: Icons.people,
               onTap: () {
                 Navigator.push(
@@ -52,33 +54,9 @@ class TeacherDashboardScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 16),
-             _buildDashboardCard(
-              context,
-              title: 'My Profile',
-              icon: Icons.person,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
             _buildDashboardCard(
               context,
-              title: 'Create Plan',
-              icon: Icons.add_circle_outline,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CreatePlanScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildDashboardCard(
-              context,
-              title: 'Plans Library',
+              title: AppLocalizations.of(context)!.get('plansLibrary'),
               icon: Icons.library_books,
               onTap: () {
                 Navigator.push(
@@ -88,14 +66,38 @@ class TeacherDashboardScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 16),
+             _buildDashboardCard( // Added specific card for Exercise Library
+              context,
+              title: 'Biblioteca de Ejercicios', // TODO: Add to localization
+              icon: Icons.fitness_center,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ExercisesListScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
             _buildDashboardCard(
               context,
-              title: 'Gym Schedule',
+              title: AppLocalizations.of(context)!.get('gymSchedule'),
               icon: Icons.access_time,
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const GymScheduleScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+             _buildDashboardCard(
+              context,
+              title: AppLocalizations.of(context)!.get('profileTitle'),
+              icon: Icons.person,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
                 );
               },
             ),

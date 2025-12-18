@@ -32,7 +32,7 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Assign Plan'),
+      title: const Text('Asignar Plan'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -41,7 +41,7 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
               builder: (context, userProvider, _) {
                 if (userProvider.isLoading) return const CircularProgressIndicator();
                 return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Select Student'),
+                  decoration: const InputDecoration(labelText: 'Seleccionar Alumno'),
                   value: _selectedStudentId,
                   items: userProvider.students
                       .map((s) => DropdownMenuItem(value: s.id, child: Text(s.name)))
@@ -57,7 +57,7 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
               builder: (context, planProvider, _) {
                 if (planProvider.isLoading) return const CircularProgressIndicator();
                 return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Select Plan'),
+                  decoration: const InputDecoration(labelText: 'Seleccionar Plan'),
                   value: _selectedPlanId,
                   items: planProvider.plans
                       .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name)))
@@ -72,7 +72,7 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const Text('Cancelar'),
         ),
         ElevatedButton(
           onPressed: _isLoading
@@ -88,16 +88,16 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
                     if (success && mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Plan assigned successfully')),
+                        const SnackBar(content: Text('Plan asignado exitosamente')),
                       );
                     } else if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Failed to assign plan')),
+                        const SnackBar(content: Text('Error al asignar plan')),
                       );
                     }
                   }
                 },
-          child: _isLoading ? const CircularProgressIndicator() : const Text('Assign'),
+          child: _isLoading ? const CircularProgressIndicator() : const Text('Asignar'),
         ),
       ],
     );

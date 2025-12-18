@@ -13,18 +13,20 @@ class AuthProvider with ChangeNotifier {
   User? get user => _user;
   String? get role => _user?.role;
 
-  Future<bool> login(String email, String password) async {
-    final data = await _authService.login(email, password);
-    if (data != null) {
-      _token = data['access_token'];
-      if (data['user'] != null) {
-        _user = User.fromJson(data['user']);
+  Future<String?> login(String email, String password) async {
+    final result = await _authService.login(email, password);
+    
+    if (result is Map<String, dynamic>) {
+      _token = result['access_token'];
+      if (result['user'] != null) {
+        _user = User.fromJson(result['user']);
       }
       _isAuthenticated = true;
       notifyListeners();
-      return true;
+      return null; // Success (no error)
+    } else {
+       return result.toString(); // Error message
     }
-    return false;
   }
 
   Future<void> logout() async {

@@ -10,11 +10,22 @@ class UserProvider with ChangeNotifier {
   List<User> get students => _students;
   bool get isLoading => _isLoading;
 
-  Future<void> fetchUsers({String? role, String? gymId}) async {
+  Map<String, String?> _lastFetchArgs = {};
+  bool _isUsersLoaded = false;
+
+  Future<void> fetchUsers({String? role, String? gymId, bool forceRefresh = false}) async {
+    // Check if arguments changed
+    final currentArgs = {'role': role, 'gymId': gymId};
+    final argsChanged = _lastFetchArgs['role'] != role || _lastFetchArgs['gymId'] != gymId;
+
+    if (_isUsersLoaded && !forceRefresh && !argsChanged && _students.isNotEmpty) return;
+
     _isLoading = true;
     notifyListeners();
     try {
       _students = await _userService.getUsers(role: role, gymId: gymId);
+      _isUsersLoaded = true;
+      _lastFetchArgs = currentArgs;
     } catch (e) {
         print('Error fetching users: $e');
     } finally {
@@ -24,7 +35,7 @@ class UserProvider with ChangeNotifier {
   }
 
   // Alias for backward compatibility or clarity
-  Future<void> fetchStudents() => fetchUsers();
+  Future<void> fetchStudents({bool forceRefresh = false}) => fetchUsers(forceRefresh: forceRefresh);
 
   Future<bool> addUser({
     required String email,
@@ -37,6 +48,9 @@ class UserProvider with ChangeNotifier {
     String? notes,
     required String role,
     String? gymId,
+    String? professorId,
+    String? membershipStartDate,
+    double? initialWeight,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -52,9 +66,12 @@ class UserProvider with ChangeNotifier {
         notes: notes,
         role: role,
         gymId: gymId,
+        professorId: professorId,
+        membershipStartDate: membershipStartDate,
+        initialWeight: initialWeight,
       );
       if (newUser != null) {
-        _students.add(newUser);
+        _students.add(newUser); // This list might be misnamed if it holds all users, but legacy variable name
         notifyListeners();
         return true;
       }
@@ -78,6 +95,8 @@ class UserProvider with ChangeNotifier {
     int? age,
     String? gender,
     String? notes,
+    String? membershipStartDate,
+    double? initialWeight,
   }) {
     return addUser(
       email: email,
@@ -88,7 +107,9 @@ class UserProvider with ChangeNotifier {
       age: age,
       gender: gender,
       notes: notes,
-      role: AppRoles.alumno,
+      membershipStartDate: membershipStartDate,
+      role: UserRoles.alumno,
+      initialWeight: initialWeight,
     );
   }
 
@@ -152,5 +173,12 @@ class UserProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+  void clear() {
+    _students = [];
+    _isLoading = false;
+    _isUsersLoaded = false;
+    _lastFetchArgs = {};
+    notifyListeners();
   }
 }

@@ -5,12 +5,30 @@ class Exercise {
   final String name;
   final String? description;
   final String? videoUrl;
+  final String? imageUrl;
+  final String muscleGroup;
+  final String? type;
+  
+  // Defaults
+  final int? sets;
+  final String? reps;
+  final String? rest;
+  final String? load;
+  final String? notes;
 
   Exercise({
     required this.id,
     required this.name,
     this.description,
     this.videoUrl,
+    this.imageUrl,
+    required this.muscleGroup,
+    this.type,
+    this.sets,
+    this.reps,
+    this.rest,
+    this.load,
+    this.notes,
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
@@ -19,6 +37,14 @@ class Exercise {
       name: json['name'],
       description: json['description'],
       videoUrl: json['videoUrl'],
+      imageUrl: json['imageUrl'],
+      muscleGroup: json['muscleGroup'] ?? 'General',
+      type: json['type'],
+      sets: json['sets'],
+      reps: json['reps'],
+      rest: json['rest'],
+      load: json['load'],
+      notes: json['notes'],
     );
   }
 }
@@ -153,8 +179,8 @@ class PlanWeek {
     };
   }
 
-  // Helper to get name (e.g. "Week 1")
-  String get name => 'Week $weekNumber';
+  // Helper to get name (e.g. "Semana 1")
+  String get name => 'Semana $weekNumber';
 }
 
 class Plan {

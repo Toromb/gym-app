@@ -151,4 +151,28 @@ class GymsProvider with ChangeNotifier {
           notifyListeners();
       }
   }
+  Future<void> deleteGym(String id) async {
+       _isLoading = true;
+      notifyListeners();
+      try {
+          final token = await _getToken();
+          if (token == null) throw Exception('No authentication token found');
+
+          final response = await http.delete(
+              Uri.parse('$_baseUrl/gyms/$id'),
+              headers: {
+                  'Authorization': 'Bearer $token',
+                  'Content-Type': 'application/json'
+              },
+          );
+          if (response.statusCode == 200 || response.statusCode == 204) {
+              await fetchGyms(); // Refresh
+          } else {
+              throw Exception('Failed to delete gym: ${response.body}');
+          }
+      } finally {
+          _isLoading = false;
+          notifyListeners();
+      }
+  }
 }

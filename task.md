@@ -51,3 +51,16 @@
     - [x] Super Admin Dashboard (Widgets)
     - [x] Gym Management (List, Create, Edit)
     - [x] Admin Management (List, Create with Gym selection)
+
+## Workout History & Calendar (Advanced)
+    - [x] Create `PlanExecution` entity (OneToMany with ExerciseExecution)
+    - [x] Create `ExerciseExecution` entity (Snapshots + Real Data)
+    - [x] Register in `PlansModule`
+    - [x] Create `ExecutionsService` (start, complete, conflict checks)
+    - [x] Create `ExecutionsController` (API endpoints)
+    - [x] Verification: Create and run `verify_executions_strict.ts` (Idempotency, Conflicts, Snapshots)
+    - [x] API: Get Calendar History
+- [x] **Frontend: Advanced Student View**
+    - [x] Service Layer: Adapt to Execution API
+    - [x] Day Detail: Integrate Execution (Live metrics, snapshots)
+    - [x] Calendar Screen: Monthly view + Daily history

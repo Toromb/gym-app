@@ -1,3 +1,10 @@
+class UserRoles {
+  static const String superAdmin = 'super_admin';
+  static const String admin = 'admin';
+  static const String profe = 'profe';
+  static const String alumno = 'alumno';
+}
+
 class User {
   final String id;
   final String email;
@@ -32,6 +39,10 @@ class User {
   
   // Gym Info
   final String? gymName;
+  
+  // Professor Info (for students)
+  final String? professorId;
+  final String? professorName;
 
   User({
     required this.id,
@@ -59,6 +70,8 @@ class User {
     this.internalNotes,
     this.adminNotes,
     this.gymName,
+    this.professorId,
+    this.professorName,
   });
 
   String get name => '$firstName $lastName';
@@ -90,6 +103,8 @@ class User {
       internalNotes: json['internalNotes'],
       adminNotes: json['adminNotes'],
       gymName: json['gym'] != null ? json['gym']['businessName'] : null,
+      professorId: json['professor'] != null ? json['professor']['id'] : null,
+      professorName: json['professor'] != null ? "${json['professor']['firstName']} ${json['professor']['lastName']}" : null,
     );
   }
 

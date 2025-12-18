@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../localization/app_localizations.dart';
 import '../../providers/plan_provider.dart';
 import '../../models/plan_model.dart';
 import 'package:intl/intl.dart';
@@ -25,7 +26,7 @@ class _PlansListScreenState extends State<PlansListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Plans Library')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.get('plansLibrary'))),
       body: Consumer<PlanProvider>(
         builder: (context, planProvider, _) {
           if (planProvider.isLoading) {
@@ -33,7 +34,7 @@ class _PlansListScreenState extends State<PlansListScreen> {
           }
 
           if (planProvider.plans.isEmpty) {
-            return const Center(child: Text('No plans found.'));
+            return Center(child: Text(AppLocalizations.of(context)!.get('noPlansFound')));
           }
 
           // Group plans by creator
@@ -42,7 +43,7 @@ class _PlansListScreenState extends State<PlansListScreen> {
           for (var plan in planProvider.plans) {
             final creatorName = plan.teacher != null 
                 ? '${plan.teacher!.firstName} ${plan.teacher!.lastName}' 
-                : 'Sin Autor'; // Or "Unknown"
+                : AppLocalizations.of(context)!.get('withoutAuthor');
             
             if (!groupedPlans.containsKey(creatorName)) {
               groupedPlans[creatorName] = [];
@@ -50,8 +51,6 @@ class _PlansListScreenState extends State<PlansListScreen> {
             groupedPlans[creatorName]!.add(plan);
           }
           
-          // Sort keys (Creators) potentially? Or keep order of appearance? 
-          // Let's sort alphabetically for cleanliness
           final sortedKeys = groupedPlans.keys.toList()..sort();
 
           return ListView.builder(
@@ -70,6 +69,18 @@ class _PlansListScreenState extends State<PlansListScreen> {
             },
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreatePlanScreen()),
+          );
+          if (result == true && context.mounted) {
+            context.read<PlanProvider>().fetchPlans();
+          }
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -92,10 +103,6 @@ class _PlansListScreenState extends State<PlansListScreen> {
         ? DateFormat('yyyy-MM-dd').format(DateTime.parse(plan.createdAt!))
         : 'N/A';
     
-    // We don't need to show "By: Creator" inside the card anymore since it's grouped header, 
-    // but maybe keep it? Requirement implies separation is key. I'll remove redundancy if implied.
-    // Keeping it doesn't hurt.
-    
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
@@ -107,14 +114,13 @@ class _PlansListScreenState extends State<PlansListScreen> {
             if (plan.objective != null)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Text('Objective: ${plan.objective}', style: Theme.of(context).textTheme.bodyMedium),
+                child: Text('${AppLocalizations.of(context)!.get('objective')} ${plan.objective}', style: Theme.of(context).textTheme.bodyMedium),
               ),
             const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Text('By: $creator', style: Theme.of(context).textTheme.bodySmall), // Redundant?
-                Text('Created: $date', style: Theme.of(context).textTheme.bodySmall),
+                Text('${AppLocalizations.of(context)!.get('created')} $date', style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
             const SizedBox(height: 10),
@@ -124,12 +130,12 @@ class _PlansListScreenState extends State<PlansListScreen> {
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () => _confirmDeletePlan(context, plan),
-                  tooltip: 'Delete Plan',
+                  tooltip: AppLocalizations.of(context)!.get('deletePlanTitle'),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () => _showPlanDetails(context, plan),
-                  child: const Text('View Details'),
+                  child: Text(AppLocalizations.of(context)!.get('viewDetails')),
                 ),
               ],
             ),
@@ -151,12 +157,12 @@ class _PlansListScreenState extends State<PlansListScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Plan'),
-        content: Text('Are you sure you want to delete "${plan.name}"? This action cannot be undone.'),
+        title: Text(AppLocalizations.of(context)!.get('deletePlanTitle')),
+        content: Text(AppLocalizations.of(context)!.get('deletePlanConfirm')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.get('cancel')),
           ),
           TextButton(
             onPressed: () async {
@@ -164,11 +170,11 @@ class _PlansListScreenState extends State<PlansListScreen> {
               final success = await context.read<PlanProvider>().deletePlan(plan.id!);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(success ? 'Plan deleted' : 'Failed to delete plan. You may only delete your own plans.')),
+                  SnackBar(content: Text(success ? AppLocalizations.of(context)!.get('deletePlanSuccess') : AppLocalizations.of(context)!.get('deletePlanError'))),
                 );
               }
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(AppLocalizations.of(context)!.get('delete'), style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),

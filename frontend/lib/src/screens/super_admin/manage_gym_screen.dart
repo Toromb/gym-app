@@ -107,10 +107,54 @@ class _ManageGymScreenState extends State<ManageGymScreen> {
                 onPressed: _save,
                 child: const Text('Save'),
               ),
+              if (widget.gym != null) ...[
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: _delete,
+                  child: const Text('Delete Gym'),
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _delete() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Gym?'),
+        content: const Text(
+          'WARNING: This will permanently delete the gym and ALL associated data (Users, Plans, Exercises). This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await context.read<GymsProvider>().deleteGym(widget.gym!.id);
+        if (mounted) Navigator.pop(context);
+      } catch (e) {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error deleting gym: $e')));
+        }
+      }
+    }
   }
 }
