@@ -13,8 +13,10 @@ class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
   @override
+  @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -33,14 +35,80 @@ class AdminDashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Bienvenido, ${user?.firstName}!',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 20),
+             // Header Section
+             Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                   // User Info - Flex 3
+                   Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                             Text(
+                               'Bienvenido,', 
+                               style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: Colors.grey)
+                             ),
+                             Text(
+                               user?.firstName ?? 'Admin',
+                               style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                             ),
+                        ],
+                      ),
+                   ),
+
+                   // Logo (Center) - Flex 2
+                   Expanded(
+                     flex: 2,
+                     child: Center(
+                       child: user?.gym?.logoUrl != null
+                           ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                      user!.gym!.logoUrl!.startsWith('http') 
+                                          ? user!.gym!.logoUrl! 
+                                          : 'http://localhost:3000${user!.gym!.logoUrl}',
+                                      height: 80, 
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (c,e,s) => const SizedBox.shrink(),
+                                   ),
+                             )
+                           : const SizedBox.shrink(),
+                     ),
+                   ),
+
+                   // Gym Info (Right) - Flex 3
+                   Expanded(
+                      flex: 3,
+                      child: user?.gym != null 
+                        ? Container(
+                         margin: const EdgeInsets.only(left: 4),
+                         child: Column(
+                           crossAxisAlignment: CrossAxisAlignment.end,
+                           children: [
+                               Text(
+                                   user!.gym!.businessName, 
+                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colorScheme.primary), 
+                                   textAlign: TextAlign.end,
+                                   overflow: TextOverflow.ellipsis,
+                                   maxLines: 2,
+                               ),
+                               const SizedBox(height: 2),
+                               if (user!.gym!.address != null && user!.gym!.address!.isNotEmpty)
+                                   Text(user!.gym!.address!, style: TextStyle(fontSize: 11, color: colorScheme.secondary), textAlign: TextAlign.end), 
+                           ],
+                         ),
+                      )
+                      : const SizedBox.shrink()
+                   )
+                ],
+             ),
+            const SizedBox(height: 32),
+            
             _buildDashboardCard(
               context,
               title: 'Gestionar Usuarios',
+              subtitle: 'Altas, bajas y modificaciones',
               icon: Icons.people,
               onTap: () {
                 Navigator.push(
@@ -54,6 +122,7 @@ class AdminDashboardScreen extends StatelessWidget {
             _buildDashboardCard(
               context,
               title: 'Biblioteca de Planes',
+              subtitle: 'Crear y editar planes base',
               icon: Icons.library_books,
               onTap: () {
                 Navigator.push(
@@ -66,6 +135,7 @@ class AdminDashboardScreen extends StatelessWidget {
             _buildDashboardCard(
               context,
               title: 'Biblioteca de Ejercicios',
+              subtitle: 'Gestionar ejercicios disponibles',
               icon: Icons.fitness_center,
               onTap: () {
                 Navigator.push(
@@ -78,7 +148,8 @@ class AdminDashboardScreen extends StatelessWidget {
             _buildDashboardCard(
               context,
               title: 'Horarios del Gimnasio',
-              icon: Icons.access_time, // Replaced calendar_today with access_time as it fits better for schedule
+              subtitle: 'Configurar horarios de apertura',
+              icon: Icons.access_time, 
               onTap: () {
                 Navigator.push(
                   context,
@@ -90,6 +161,7 @@ class AdminDashboardScreen extends StatelessWidget {
             _buildDashboardCard(
               context,
               title: 'Configuración del Gym',
+              subtitle: 'Logo, nombre y mensajes',
               icon: Icons.settings,
               onTap: () {
                 Navigator.push(
@@ -102,6 +174,7 @@ class AdminDashboardScreen extends StatelessWidget {
              _buildDashboardCard(
               context,
               title: 'Mi Perfil',
+              subtitle: 'Tus datos personales',
               icon: Icons.person,
               onTap: () {
                 Navigator.push(
@@ -118,22 +191,39 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildDashboardCard(BuildContext context,
-      {required String title, required IconData icon, required VoidCallback onTap}) {
+      {required String title, String? subtitle, required IconData icon, required VoidCallback onTap}) {
     
-    final iconColor = Theme.of(context).primaryColor;
-    final titleColor = Theme.of(context).colorScheme.secondary;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
-      elevation: 4,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(24.0),
           child: Row(
             children: [
-              Icon(icon, size: 40, color: iconColor),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, size: 32, color: colorScheme.onPrimaryContainer),
+              ),
               const SizedBox(width: 20),
-              Text(title, style: TextStyle(fontSize: 20, color: titleColor)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 4),
+                       Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                    ]
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.outline),
             ],
           ),
         ),

@@ -16,6 +16,7 @@ class TeacherDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -34,6 +35,7 @@ class TeacherDashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+             // Header Section
              Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -45,11 +47,11 @@ class TeacherDashboardScreen extends StatelessWidget {
                         children: [
                              Text(
                                '${AppLocalizations.of(context)!.welcome},', 
-                               style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: Colors.grey) // Increased
+                               style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: Colors.grey)
                              ),
                              Text(
                                '${user?.firstName ?? user?.email ?? "Profesor"}!',
-                               style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 16), // Increased
+                               style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                              ),
                              const SizedBox(height: 2),
                              PaymentStatusBadge(status: user?.paymentStatus, isEditable: false),
@@ -68,7 +70,7 @@ class TeacherDashboardScreen extends StatelessWidget {
                                       user!.gym!.logoUrl!.startsWith('http') 
                                           ? user!.gym!.logoUrl! 
                                           : 'http://localhost:3000${user!.gym!.logoUrl}',
-                                      height: 100, // Increased
+                                      height: 80, 
                                       fit: BoxFit.contain,
                                       errorBuilder: (c,e,s) => const SizedBox.shrink(),
                                    ),
@@ -88,18 +90,14 @@ class TeacherDashboardScreen extends StatelessWidget {
                            children: [
                                Text(
                                    user!.gym!.businessName, 
-                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor), // Increased
+                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colorScheme.primary), 
                                    textAlign: TextAlign.end,
                                    overflow: TextOverflow.ellipsis,
                                    maxLines: 2,
                                ),
                                const SizedBox(height: 2),
                                if (user!.gym!.phone != null && user!.gym!.phone!.isNotEmpty)
-                                   Text(user!.gym!.phone!, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.secondary), textAlign: TextAlign.end), 
-                               if (user!.gym!.email != null && user!.gym!.email!.isNotEmpty)
-                                   Text(user!.gym!.email!, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.secondary), textAlign: TextAlign.end), 
-                               if (user!.gym!.address != null && user!.gym!.address!.isNotEmpty)
-                                   Text(user!.gym!.address!, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.secondary), textAlign: TextAlign.end), 
+                                   Text(user!.gym!.phone!, style: TextStyle(fontSize: 11, color: colorScheme.secondary), textAlign: TextAlign.end), 
                            ],
                          ),
                       )
@@ -107,13 +105,12 @@ class TeacherDashboardScreen extends StatelessWidget {
                    )
                 ],
              ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 32),
             
-
-
             _buildDashboardCard(
               context,
               title: AppLocalizations.of(context)!.get('manageStudents'),
+              subtitle: 'Ver progresos y asignar planes',
               icon: Icons.people,
               onTap: () {
                 Navigator.push(
@@ -123,9 +120,10 @@ class TeacherDashboardScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 16),
-            _buildDashboardCard(
+             _buildDashboardCard(
               context,
               title: AppLocalizations.of(context)!.get('plansLibrary'),
+              subtitle: 'Tus plantillas de entrenamiento',
               icon: Icons.library_books,
               onTap: () {
                 Navigator.push(
@@ -138,6 +136,7 @@ class TeacherDashboardScreen extends StatelessWidget {
              _buildDashboardCard(
               context,
               title: 'Biblioteca de Ejercicios',
+              subtitle: 'Catálogo global del gimnasio',
               icon: Icons.fitness_center,
               onTap: () {
                 Navigator.push(
@@ -150,6 +149,7 @@ class TeacherDashboardScreen extends StatelessWidget {
             _buildDashboardCard(
               context,
               title: AppLocalizations.of(context)!.get('gymSchedule'),
+              subtitle: 'Horarios de atención',
               icon: Icons.access_time,
               onTap: () {
                 Navigator.push(
@@ -162,6 +162,7 @@ class TeacherDashboardScreen extends StatelessWidget {
              _buildDashboardCard(
               context,
               title: AppLocalizations.of(context)!.get('profileTitle'),
+              subtitle: 'Tus datos personales',
               icon: Icons.person,
               onTap: () {
                 Navigator.push(
@@ -177,22 +178,39 @@ class TeacherDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildDashboardCard(BuildContext context,
-      {required String title, required IconData icon, required VoidCallback onTap}) {
+      {required String title, String? subtitle, required IconData icon, required VoidCallback onTap}) {
     
-    final iconColor = Theme.of(context).primaryColor;
-    final titleColor = Theme.of(context).colorScheme.secondary;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
-      elevation: 4,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(24.0),
           child: Row(
             children: [
-              Icon(icon, size: 40, color: iconColor),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, size: 32, color: colorScheme.onPrimaryContainer),
+              ),
               const SizedBox(width: 20),
-              Text(title, style: TextStyle(fontSize: 20, color: titleColor)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 4),
+                       Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                    ]
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.outline),
             ],
           ),
         ),

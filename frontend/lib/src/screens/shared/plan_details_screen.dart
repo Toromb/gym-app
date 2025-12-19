@@ -5,6 +5,7 @@ import '../../models/plan_model.dart';
 import '../../models/student_assignment_model.dart';
 import '../../providers/plan_provider.dart';
 import '../../localization/app_localizations.dart';
+import '../../utils/app_colors.dart'; // Added
 import 'day_detail_screen.dart';
 import '../teacher/create_plan_screen.dart';
 
@@ -149,15 +150,18 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
   }
 
   Widget _buildPlanSummaryCard(BuildContext context, Plan plan) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor,
+        color: colorScheme.primary,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            color: colorScheme.primary.withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -168,27 +172,32 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
         children: [
           Text(
             AppLocalizations.of(context)!.get('planOverview'),
-            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
+            style: textTheme.labelLarge?.copyWith(color: colorScheme.onPrimary.withOpacity(0.8)),
           ),
           const SizedBox(height: 8),
           Text(
             plan.name,
-            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            style: textTheme.headlineMedium?.copyWith(color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
           ),
           if (plan.objective != null) ...[
-            const SizedBox(height: 8),
-             Chip(
-               label: Text(plan.objective!),
-               backgroundColor: Colors.white,
-               labelStyle: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
-               side: BorderSide.none,
+            const SizedBox(height: 12),
+             Container(
+               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+               decoration: BoxDecoration(
+                 color: colorScheme.onPrimary,
+                 borderRadius: BorderRadius.circular(20),
+               ),
+               child: Text(
+                 plan.objective!,
+                 style: textTheme.labelMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.bold),
+               ),
              ),
           ],
           if (plan.durationWeeks > 0) ...[
-             const SizedBox(height: 8),
+             const SizedBox(height: 12),
              Text(
                AppLocalizations.of(context)!.get('durationWeeks').replaceAll('{weeks}', '${plan.durationWeeks}'),
-               style: const TextStyle(color: Colors.white70),
+               style: textTheme.bodyMedium?.copyWith(color: colorScheme.onPrimary.withOpacity(0.9)),
              ),
           ]
         ],
@@ -216,13 +225,15 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
       isCompleted = _currentAssignment!.isDayCompleted(day.id!);
     }
 
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Card(
-      elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
-      color: isCompleted ? Colors.green[50] : Colors.white,
+      color: isCompleted ? AppColors.success.withOpacity(0.05) : null, // Subtle green tint if completed
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: isCompleted ? const BorderSide(color: Colors.green, width: 1.5) : BorderSide.none,
+        side: isCompleted ? BorderSide(color: AppColors.success.withOpacity(0.5), width: 1) : BorderSide.none,
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -245,15 +256,12 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
 
           if (result == true && !widget.readOnly && mounted) {
              // User finished workout. 
-             // 1. Refresh global history so Dashboard updates (Quick Workout button etc)
              await context.read<PlanProvider>().fetchMyHistory();
-             // 2. Pop to Dashboard (Root of the authenticated stack)
              if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
           } else if (!widget.readOnly && mounted) {
-             // Just refresh local state if they returned without finishing (but maybe updated something?)
+             // Refresh
              context.read<PlanProvider>().fetchMyHistory().then((assignments) {
                    if (mounted) {
-                       // Find the updated assignment matching current plan
                        try {
                            StudentAssignment updated;
                            if (_currentAssignment?.id != null) {
@@ -265,7 +273,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                                _currentAssignment = updated;
                            });
                        } catch (e) {
-                           // Plan might have ended or error finding it
+                           // Plan mismatch
                        }
                    }
              });
@@ -279,10 +287,13 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: isCompleted ? Colors.green.withOpacity(0.2) : Colors.blue[50],
+                  color: isCompleted ? AppColors.success : colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.calendar_today, color: isCompleted ? Colors.green : Colors.blue),
+                child: Icon(
+                  Icons.calendar_today, 
+                  color: isCompleted ? Colors.white : colorScheme.primary
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -291,17 +302,17 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                   children: [
                     Text(
                       day.title ?? '${AppLocalizations.of(context)!.get('day')} ${day.dayOfWeek}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${day.exercises.length} ${AppLocalizations.of(context)!.get('exercisesCount')}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                     if (isCompleted && day.id != null && _currentAssignment!.progress['days'][day.id]['date'] != null)
                       Text(
                          '${AppLocalizations.of(context)!.get('completedOn')} ${_currentAssignment!.progress['days'][day.id]['date']}',
-                         style: TextStyle(color: Colors.green[800], fontSize: 12, fontWeight: FontWeight.bold),
+                         style: textTheme.labelSmall?.copyWith(color: AppColors.success, fontWeight: FontWeight.bold),
                       )
                   ],
                 ),
@@ -310,9 +321,9 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
               // Or keep it read-only? 
               // Let's keep the tick icon but not the interactable checkbox for now, as logic is moving to DayScreen "Finish".
               if (isCompleted)
-                 const Icon(Icons.check_circle, color: Colors.green)
+                 const Icon(Icons.check_circle, color: AppColors.success)
               else
-                 const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                 Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.onSurfaceVariant),
             ],
           ),
         ),

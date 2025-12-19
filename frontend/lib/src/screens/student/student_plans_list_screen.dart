@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
 import '../../models/plan_model.dart'; // Keep for Plan refs if needed
 import '../../models/student_assignment_model.dart';
+import '../../utils/app_colors.dart'; // Corrected path
 import 'package:intl/intl.dart';
 import '../../localization/app_localizations.dart';
 import '../shared/plan_details_screen.dart';
@@ -54,29 +55,27 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
                         ? DateFormat.yMMMd(AppLocalizations.of(context)!.locale.languageCode).format(DateTime.parse(assignment.assignedAt!))
                         : 'Unknown Date';
 
+                    final colorScheme = Theme.of(context).colorScheme;
+                    final textTheme = Theme.of(context).textTheme;
+
                     return Card(
-                      elevation: 2,
                       margin: const EdgeInsets.only(bottom: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
                       child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                         onTap: () {
-                          // Default: Go to Plan Overview
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => PlanDetailsScreen(
                                   plan: plan, 
                                   canEdit: false,
-                                  assignment: assignment, // Pass assignment for tracking
+                                  assignment: assignment, 
                               ),
                             ),
-                          ).then((_) => _loadHistory()); // Refresh when back
+                          ).then((_) => _loadHistory()); 
                         },
                         child: Padding(
-                          padding: const EdgeInsets.all(20.0),
+                          padding: const EdgeInsets.all(24.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -86,31 +85,38 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
                                   Expanded(
                                     child: Text(
                                       plan.name,
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                                     ),
                                   ),
                                   Container(
-                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                      decoration: BoxDecoration(
-                                       color: Colors.green[100],
-                                       borderRadius: BorderRadius.circular(12),
+                                       color: AppColors.success.withOpacity(0.1), 
+                                       borderRadius: BorderRadius.circular(20),
+                                       border: Border.all(color: AppColors.success.withOpacity(0.2)),
                                      ),
-                                     child: Text(AppLocalizations.of(context)!.get('statusActive'), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 10)),
+                                     child: Text(
+                                       AppLocalizations.of(context)!.get('statusActive'), 
+                                       style: textTheme.labelSmall?.copyWith(color: AppColors.success, fontWeight: FontWeight.bold)
+                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
                               if (plan.objective != null)
-                                Text('${AppLocalizations.of(context)!.get('objective')} ${plan.objective}', style: TextStyle(color: Colors.grey[700])),
-                              const SizedBox(height: 12),
+                                Text(
+                                  '${AppLocalizations.of(context)!.get('objective')} ${plan.objective}', 
+                                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)
+                                ),
+                              const SizedBox(height: 16),
                               Row(
                                 children: [
-                                  Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
-                                  const SizedBox(width: 6),
-                                  Text('${AppLocalizations.of(context)!.get('assignedOn')} $assignedDate', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                                  Icon(Icons.calendar_today, size: 16, color: colorScheme.onSurfaceVariant),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${AppLocalizations.of(context)!.get('assignedOn')} $assignedDate', 
+                                    style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)
+                                  ),
                                 ],
                               ),
                             ],

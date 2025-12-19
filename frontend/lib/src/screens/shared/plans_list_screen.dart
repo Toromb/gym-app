@@ -103,39 +103,62 @@ class _PlansListScreenState extends State<PlansListScreen> {
         ? DateFormat('yyyy-MM-dd').format(DateTime.parse(plan.createdAt!))
         : 'N/A';
     
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+         borderRadius: BorderRadius.circular(12),
+         side: BorderSide(color: colorScheme.outlineVariant),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(plan.name, style: Theme.of(context).textTheme.titleLarge),
-            if (plan.objective != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text('${AppLocalizations.of(context)!.get('objective')} ${plan.objective}', style: Theme.of(context).textTheme.bodyMedium),
-              ),
-            const Divider(),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${AppLocalizations.of(context)!.get('created')} $date', style: Theme.of(context).textTheme.bodySmall),
+                Expanded(
+                  child: Text(plan.name, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                ),
+                if (plan.objective != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      plan.objective ?? 'General',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colorScheme.onSecondaryContainer),
+                    ),
+                  ),
               ],
             ),
-            const SizedBox(height: 10),
+             const SizedBox(height: 8),
+             Text(
+                '${AppLocalizations.of(context)!.get('created')} $date', 
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)
+             ),
+             const SizedBox(height: 12),
+            const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _confirmDeletePlan(context, plan),
-                  tooltip: AppLocalizations.of(context)!.get('deletePlanTitle'),
+                OutlinedButton.icon(
+                  onPressed: () => _showPlanDetails(context, plan),
+                  icon: const Icon(Icons.visibility, size: 18),
+                  label: Text(AppLocalizations.of(context)!.get('viewDetails')),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
                 ),
                 const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () => _showPlanDetails(context, plan),
-                  child: Text(AppLocalizations.of(context)!.get('viewDetails')),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  onPressed: () => _confirmDeletePlan(context, plan),
+                  tooltip: AppLocalizations.of(context)!.get('deletePlanTitle'),
                 ),
               ],
             ),

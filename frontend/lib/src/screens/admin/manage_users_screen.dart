@@ -116,6 +116,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
   }
 
   Widget _buildSearchAndFilter() {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -123,9 +125,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           TextField(
             decoration: InputDecoration(
               hintText: 'Buscar por nombre o email...',
-              prefixIcon: const Icon(Icons.search),
+              prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
             ),
             onChanged: (val) {
               setState(() {
@@ -140,6 +144,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
               labelText: 'Estado de Cuota',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
             ),
             items: const [
               DropdownMenuItem(value: 'all', child: Text('Todos')),
@@ -163,12 +169,28 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
   Widget _buildSectionHeader(BuildContext context, String title, int count) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: Text(
-        '$title ($count)',
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.primary,
-        ),
+      child: Row(
+        children: [
+           Container(
+             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+             decoration: BoxDecoration(
+               color: Theme.of(context).colorScheme.primaryContainer,
+               borderRadius: BorderRadius.circular(8),
+             ),
+             child: Text(
+               count.toString(), 
+               style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onPrimaryContainer)
+             ),
+           ),
+           const SizedBox(width: 12),
+           Text(
+             title,
+             style: Theme.of(context).textTheme.titleLarge?.copyWith(
+               fontWeight: FontWeight.bold,
+               color: Theme.of(context).colorScheme.onSurface,
+             ),
+           ),
+        ],
       ),
     );
   }
@@ -177,126 +199,177 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     if (users.isEmpty) {
       return [const Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.0),
-        child: Text('No users found in this category.', style: TextStyle(fontStyle: FontStyle.italic)),
+        child: Text('No se encontraron usuarios.', style: TextStyle(fontStyle: FontStyle.italic)),
       )];
     }
+    
+    final colorScheme = Theme.of(context).colorScheme;
+
     return users.map((user) {
-      return ListTile(
-        leading: CircleAvatar(child: Text(user.firstName.isNotEmpty ? user.firstName[0] : '?')),
-        title: Text('${user.firstName} ${user.lastName}'),
-        subtitle: Text.rich(
-          TextSpan(
+      return Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+           borderRadius: BorderRadius.circular(12),
+           side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
             children: [
-              TextSpan(text: '${user.email} - ${user.role}'),
-              if (user.professorName != null)
-                TextSpan(
-                  text: '\nProfe: ${user.professorName}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey),
-                ),
+               Row(
+                 children: [
+                    CircleAvatar(
+                      backgroundColor: colorScheme.primary,
+                      radius: 24,
+                      child: Text(
+                        user.firstName.isNotEmpty ? user.firstName[0].toUpperCase() : '?',
+                        style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                           Text(
+                             '${user.firstName} ${user.lastName}',
+                             style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                           ),
+                           Text(
+                             user.email,
+                             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                           ),
+                        ],
+                      ),
+                    ),
+                    if (isAdmin && (user.role == 'alumno' || user.role == 'profe')) 
+                      PaymentStatusBadge(
+                        status: user.paymentStatus,
+                        isEditable: true,
+                        onMarkAsPaid: () async {
+                             final success = await context.read<UserProvider>().markUserAsPaid(user.id);
+                             if (context.mounted) {
+                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                   content: Text(success ? 'Pago actualizado' : 'Error al actualizar'),
+                                   backgroundColor: success ? Colors.green : Colors.red,
+                                 ));
+                             }
+                        },
+                      ),
+                 ],
+               ),
+               if (user.professorName != null) ...[
+                 const SizedBox(height: 12),
+                 Container(
+                   padding: const EdgeInsets.all(8),
+                   decoration: BoxDecoration(
+                     color: colorScheme.secondaryContainer.withOpacity(0.3),
+                     borderRadius: BorderRadius.circular(8),
+                   ),
+                   child: Row(
+                     children: [
+                        Icon(Icons.person_outline, size: 16, color: colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 8),
+                        Text('Profe: ${user.professorName}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
+                     ],
+                   ),
+                 ),
+               ],
+               const SizedBox(height: 12),
+               const Divider(),
+               Row(
+                 mainAxisAlignment: MainAxisAlignment.end,
+                 children: [
+                     // View Details
+                     IconButton(
+                        icon: const Icon(Icons.visibility_outlined),
+                        tooltip: 'Ver Detalles',
+                        onPressed: () {
+                           Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => UserDetailScreen(user: user),
+                              ),
+                            );
+                        },
+                      ),
+                     
+                     if ((isProfeView || isAdmin) && user.role == 'alumno') ...[
+                        if (isAdmin) 
+                         IconButton(
+                           icon: const Icon(Icons.person_add_alt),
+                           tooltip: 'Asignar Profesor',
+                           onPressed: () => _showAssignProfessorDialog(context, user),
+                         ),
+                        IconButton(
+                          icon: const Icon(Icons.assignment_add),
+                          tooltip: 'Asignar Plan',
+                          onPressed: () => _showAssignPlanDialog(context, user.id),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.list_alt),
+                          tooltip: 'Gestionar Planes',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => StudentPlansScreen(student: user),
+                              ),
+                            );
+                          },
+                        ),
+                     ],
+                     
+                     IconButton(
+                       icon: const Icon(Icons.edit_outlined),
+                       tooltip: 'Editar',
+                       onPressed: () {
+                         Navigator.push(
+                           context,
+                           MaterialPageRoute(
+                             builder: (context) => EditUserScreen(user: user),
+                           ),
+                         );
+                       },
+                     ),
+                     
+                      IconButton(
+                       icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                       tooltip: 'Eliminar',
+                       onPressed: () async {
+                         final confirm = await showDialog<bool>(
+                           context: context,
+                           builder: (ctx) => AlertDialog(
+                             title: const Text('¿Eliminar Usuario?'),
+                             content: const Text('Esta acción no se puede deshacer.'),
+                             actions: [
+                               TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+                               FilledButton(
+                                 style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
+                                 onPressed: () => Navigator.of(ctx).pop(true), 
+                                 child: const Text('Eliminar')
+                               ),
+                             ],
+                           ),
+                         );
+                         
+                         if (confirm == true && context.mounted) {
+                           context.read<UserProvider>().deleteUser(user.id);
+                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usuario eliminado')));
+                         }
+                       },
+                     ),
+                 ],
+               )
             ],
           ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Payment Status (Only for Students/Profes and Admin view)
-            if (isAdmin && (user.role == 'alumno' || user.role == 'profe')) 
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: PaymentStatusBadge(
-                  status: user.paymentStatus,
-                  isEditable: true,
-                  onMarkAsPaid: () async {
-                       final success = await context.read<UserProvider>().markUserAsPaid(user.id);
-                       if (context.mounted) {
-                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success ? 'Payment updated' : 'Failed to update')));
-                       }
-                  },
-                ),
-              ),
-
-            if ((isProfeView || isAdmin) && user.role == 'alumno') ...[
-              if (isAdmin) 
-               IconButton(
-                 icon: const Icon(Icons.assignment_ind),
-                 tooltip: 'Asignar Profesor',
-                 onPressed: () => _showAssignProfessorDialog(context, user),
-               ),
-              IconButton(
-                icon: const Icon(Icons.assignment),
-                tooltip: 'Asignar Plan',
-                onPressed: () => _showAssignPlanDialog(context, user.id),
-              ),
-              IconButton(
-                icon: const Icon(Icons.list_alt),
-                tooltip: 'Gestionar Planes',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => StudentPlansScreen(student: user),
-                    ),
-                  );
-                },
-              ),
-            ],
-            // View Details Button for ALL users
-            IconButton(
-              icon: const Icon(Icons.visibility, color: Colors.blueGrey),
-              tooltip: 'Ver Detalles',
-              onPressed: () {
-                 Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => UserDetailScreen(user: user),
-                    ),
-                  );
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.edit),
-              tooltip: 'Editar Usuario',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditUserScreen(user: user),
-                  ),
-                );
-              },
-            ),
-             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              tooltip: 'Eliminar Usuario',
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('¿Estás seguro?'),
-                    content: const Text('¿Quieres eliminar este usuario?'),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('No')),
-                      TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Sí')),
-                    ],
-                  ),
-                );
-                
-                if (confirm == true && context.mounted) {
-                  context.read<UserProvider>().deleteUser(user.id);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usuario eliminado')));
-                }
-              },
-            ),
-          ],
         ),
       );
     }).toList();
   }
 
   void _showAssignProfessorDialog(BuildContext context, User student) async {
-      // We can use a StatefulBuilder to handle local loading state inside dialog
-      // Or fetch before showing. Let's fetch insde dialog for better UX (loading indicator).
-      
       showDialog(
           context: context,
           builder: (context) {

@@ -10,6 +10,8 @@ import 'src/providers/stats_provider.dart';
 import 'src/screens/login_screen.dart';
 import 'src/screens/home_screen.dart';
 import 'src/utils/app_colors.dart';
+import 'src/theme/app_theme.dart';
+
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'src/localization/app_localizations.dart';
 
@@ -41,8 +43,8 @@ class MyApp extends StatelessWidget {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
         // Resolve colors dynamically
-        Color primaryColor = AppColors.lightScheme.primary;
-        Color secondaryColor = AppColors.lightScheme.secondary;
+        Color primaryColor = AppColors.primary;
+        Color secondaryColor = AppColors.primary; // Default to primary if not set
 
         if (auth.user?.gym?.primaryColor != null) {
            try {
@@ -62,27 +64,9 @@ class MyApp extends StatelessWidget {
 
         return MaterialApp(
           title: 'GymFlow',
-          theme: ThemeData(
-            useMaterial3: true,
-            colorScheme: ColorScheme.fromSeed(
-                seedColor: primaryColor, 
-                primary: primaryColor, 
-                secondary: secondaryColor,
-            ),
-            scaffoldBackgroundColor: AppColors.background,
-            appBarTheme: AppBarTheme(
-              backgroundColor: primaryColor, // Use Gym Primary
-              foregroundColor: Colors.white, // Ensure visibility
-              elevation: 0,
-            ),
-            cardTheme: const CardThemeData(
-              color: AppColors.surface,
-              elevation: 2,
-            ),
-            textTheme: const TextTheme(
-               bodyMedium: TextStyle(color: AppColors.textMain),
-               bodySmall: TextStyle(color: AppColors.textSoft),
-            ),
+          theme: AppTheme.createTheme(
+            primaryColor: primaryColor,
+            secondaryColor: secondaryColor,
           ),
           localizationsDelegates: const [
             AppLocalizations.delegate,
