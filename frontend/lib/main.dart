@@ -38,43 +38,66 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'GymFlow', // Updated Name
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: AppColors.lightScheme,
-        scaffoldBackgroundColor: AppColors.background,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.surface,
-          foregroundColor: AppColors.textMain,
-          elevation: 0,
-        ),
-        cardTheme: const CardThemeData(
-          color: AppColors.surface,
-          elevation: 2,
-        ),
-        textTheme: const TextTheme(
-           bodyMedium: TextStyle(color: AppColors.textMain),
-           bodySmall: TextStyle(color: AppColors.textSoft),
-        ),
+    return Consumer<AuthProvider>(
+      builder: (context, auth, _) {
+        // Resolve colors dynamically
+        Color primaryColor = AppColors.lightScheme.primary;
+        Color secondaryColor = AppColors.lightScheme.secondary;
 
-      ),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('es', ''), // Spanish, no country code
-        Locale('en', ''), // English
-      ],
-      locale: const Locale('es', ''), // Force Spanish for now
-      home: Consumer<AuthProvider>(
-        builder: (context, auth, _) {
-          return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
-        },
-      ),
+        if (auth.user?.gym?.primaryColor != null) {
+           try {
+             String hex = auth.user!.gym!.primaryColor!.replaceAll('#', '');
+             if (hex.length == 6) hex = 'FF$hex';
+             primaryColor = Color(int.parse(hex, radix: 16));
+           } catch (_) {}
+        }
+        
+         if (auth.user?.gym?.secondaryColor != null) {
+           try {
+             String hex = auth.user!.gym!.secondaryColor!.replaceAll('#', '');
+             if (hex.length == 6) hex = 'FF$hex';
+             secondaryColor = Color(int.parse(hex, radix: 16));
+           } catch (_) {}
+        }
+
+        return MaterialApp(
+          title: 'GymFlow',
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+                seedColor: primaryColor, 
+                primary: primaryColor, 
+                secondary: secondaryColor,
+            ),
+            scaffoldBackgroundColor: AppColors.background,
+            appBarTheme: AppBarTheme(
+              backgroundColor: primaryColor, // Use Gym Primary
+              foregroundColor: Colors.white, // Ensure visibility
+              elevation: 0,
+            ),
+            cardTheme: const CardThemeData(
+              color: AppColors.surface,
+              elevation: 2,
+            ),
+            textTheme: const TextTheme(
+               bodyMedium: TextStyle(color: AppColors.textMain),
+               bodySmall: TextStyle(color: AppColors.textSoft),
+            ),
+          ),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('es', ''),
+            Locale('en', ''),
+          ],
+          locale: const Locale('es', ''),
+          home: auth.isAuthenticated ? const HomeScreen() : const LoginScreen(),
+        );
+      },
     );
   }
 }

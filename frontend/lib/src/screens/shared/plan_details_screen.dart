@@ -118,11 +118,15 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                   MaterialPageRoute(builder: (context) => CreatePlanScreen(planToEdit: _plan)),
                 );
                 if (result == true && mounted) {
-                   // Refresh plan from provider (which should have been updated by CreatePlanScreen)
-                   final updatedPlan = context.read<PlanProvider>().plans.firstWhere((p) => p.id == _plan.id, orElse: () => _plan);
-                   setState(() {
-                     _plan = updatedPlan;
-                   });
+                   // Refresh plan specifically from server to ensure fresh data
+                   if (_plan.id != null) {
+                       final updatedPlan = await context.read<PlanProvider>().getPlanById(_plan.id!);
+                       if (updatedPlan != null) {
+                         setState(() {
+                           _plan = updatedPlan;
+                         });
+                       }
+                   }
                 }
               },
             ),

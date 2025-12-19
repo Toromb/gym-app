@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/constants.dart';
 import '../models/gym_model.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 
 class GymsProvider with ChangeNotifier {
   List<Gym> _gyms = [];
@@ -59,6 +61,35 @@ class GymsProvider with ChangeNotifier {
     }
   }
 
+  Future<Gym?> fetchGym(String id) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final token = await _getToken();
+      if (token == null) throw Exception('No authentication token found');
+
+      final response = await http.get(
+        Uri.parse('$_baseUrl/gyms/$id'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return Gym.fromJson(json.decode(response.body));
+      } else {
+        throw Exception('Failed to load gym: ${response.body}');
+      }
+    } catch (e) {
+      _error = 'Error fetching gym: $e';
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> createGym(Gym gym) async {
       _isLoading = true;
       notifyListeners();
@@ -81,7 +112,7 @@ class GymsProvider with ChangeNotifier {
               })
           );
           if (response.statusCode == 201) {
-              await fetchGyms(); // Refresh
+              // await fetchGyms(); // Only for SuperAdmin
           } else {
               throw Exception('Failed to create gym: ${response.body}');
           }
@@ -91,7 +122,7 @@ class GymsProvider with ChangeNotifier {
       }
   }
 
-  Future<void> updateGym(String id, Gym gym) async {
+  Future<Gym?> updateGym(String id, Gym gym) async {
        _isLoading = true;
       notifyListeners();
       try {
@@ -107,6 +138,7 @@ class GymsProvider with ChangeNotifier {
               body: json.encode({
                   'businessName': gym.businessName,
                   'address': gym.address,
+                  'phone': gym.phone, // Added missing phone field
                   'email': gym.email,
                   'maxProfiles': gym.maxProfiles,
                   'status': gym.status,
@@ -115,10 +147,16 @@ class GymsProvider with ChangeNotifier {
                   'welcomeMessage': gym.welcomeMessage,
                   'openingHours': gym.openingHours,
                   'logoUrl': gym.logoUrl,
+                  'paymentAlias': gym.paymentAlias,
+                  'paymentCbu': gym.paymentCbu,
+                  'paymentAccountName': gym.paymentAccountName,
+                  'paymentBankName': gym.paymentBankName,
+                  'paymentNotes': gym.paymentNotes,
               })
           );
           if (response.statusCode == 200) {
-              await fetchGyms(); // Refresh
+              final updatedGym = Gym.fromJson(json.decode(response.body));
+              return updatedGym;
           } else {
               throw Exception('Failed to update gym: ${response.body}');
           }
@@ -142,7 +180,7 @@ class GymsProvider with ChangeNotifier {
               },
           );
           if (response.statusCode == 200 || response.statusCode == 204) {
-              await fetchGyms(); // Refresh
+              // await fetchGyms(); // Only for SuperAdmin
           } else {
               throw Exception('Failed to delete gym: ${response.body}');
           }
@@ -150,7 +188,6 @@ class GymsProvider with ChangeNotifier {
           _isLoading = false;
           notifyListeners();
       }
-  }
   }
 
   Future<String?> uploadLogo(String gymId, XFile file) async {
@@ -163,12 +200,18 @@ class GymsProvider with ChangeNotifier {
       var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/gyms/$gymId/logo'));
       request.headers['Authorization'] = 'Bearer $token';
 
+      final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
+      final mediaType = MediaType.parse(mimeType);
+
       if (kIsWeb) {
         request.files.add(http.MultipartFile.fromBytes(
             'file', await file.readAsBytes(),
-            filename: file.name));
+            filename: file.name,
+            contentType: mediaType));
       } else {
-        request.files.add(await http.MultipartFile.fromPath('file', file.path));
+        request.files.add(await http.MultipartFile.fromPath(
+            'file', file.path,
+            contentType: mediaType));
       }
 
       var streamedResponse = await request.send();
@@ -176,7 +219,7 @@ class GymsProvider with ChangeNotifier {
 
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
-        await fetchGyms(); // Refresh
+        // await fetchGyms(); // Only for SuperAdmin
         return data['logoUrl'];
       } else {
         throw Exception('Failed to upload logo: ${response.body}');

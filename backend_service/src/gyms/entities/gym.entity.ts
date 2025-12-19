@@ -67,6 +67,21 @@ export class Gym {
     @Column({ nullable: true })
     openingHours: string;
 
+    @Column({ nullable: true })
+    paymentAlias: string;
+
+    @Column({ nullable: true })
+    paymentCbu: string;
+
+    @Column({ nullable: true })
+    paymentAccountName: string;
+
+    @Column({ nullable: true })
+    paymentBankName: string;
+
+    @Column({ type: 'text', nullable: true })
+    paymentNotes: string;
+
     @CreateDateColumn()
     createdAt: Date;
 

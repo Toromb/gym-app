@@ -120,7 +120,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, childAspectRatio: 1.3),
                 itemCount: daysInMonth + (startingWeekday - 1),
                 itemBuilder: (context, index) {
                   if (index < startingWeekday - 1) return const SizedBox();

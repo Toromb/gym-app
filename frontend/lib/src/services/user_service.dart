@@ -158,7 +158,7 @@ class UserService {
     return response.statusCode == 200;
   }
 
-  Future<bool> markAsPaid(String userId) async {
+  Future<User?> markAsPaid(String userId) async {
     final token = await _getToken();
     final response = await http.patch(
       Uri.parse('$baseUrl/users/$userId/payment-status'),
@@ -166,6 +166,9 @@ class UserService {
         'Authorization': 'Bearer $token',
       },
     );
-    return response.statusCode == 200 || response.statusCode == 201;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+       return User.fromJson(jsonDecode(response.body));
+    }
+    return null;
   }
 }

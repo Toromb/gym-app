@@ -78,11 +78,11 @@ export class ExecutionsService {
                     // Proceed to create (fall through)
                 } else {
                     // It's valid for current cycle.
-                    return this._syncVideoUrls(existing);
+                    return this._syncSnapshots(existing);
                 }
             } else {
                 // No active assignment? Odd, but just return existing or sync.
-                return this._syncVideoUrls(existing);
+                return this._syncSnapshots(existing);
             }
         }
 
@@ -147,8 +147,8 @@ export class ExecutionsService {
 
         // Auto-fill actuals from targets if completing and not provided
         if (updateData.isCompleted === true) {
-            if (exExecution.setsDone === undefined || exExecution.setsDone === null || exExecution.setsDone === 0) {
-                exExecution.setsDone = exExecution.targetSetsSnapshot ?? 0;
+            if (!exExecution.setsDone || exExecution.setsDone === '0') {
+                exExecution.setsDone = (exExecution.targetSetsSnapshot ?? 0).toString();
             }
             if (!exExecution.repsDone) {
                 exExecution.repsDone = exExecution.targetRepsSnapshot ?? '';
@@ -325,7 +325,7 @@ export class ExecutionsService {
         });
 
         if (!execution) return null;
-        return this._syncVideoUrls(execution);
+        return this._syncSnapshots(execution);
     }
 
     async findExecutionByStructure(
@@ -347,32 +347,63 @@ export class ExecutionsService {
             whereClause.date = MoreThanOrEqual(startDate);
         }
 
-        return this.executionRepo.findOne({
+        const execution = await this.executionRepo.findOne({
             where: whereClause,
             order: { createdAt: 'DESC' }, // Get latest if multiple exist (re-do)
             relations: ['exercises', 'exercises.exercise']
         });
+
+        if (!execution) return null;
+        return this._syncSnapshots(execution);
     }
 
-    private async _syncVideoUrls(execution: PlanExecution): Promise<PlanExecution> {
-        // "Heal" / Sync missing video URLs from the Plan Definition (Override) if partial missing
-        // This handles case where Professor adds video later to the Plan, but Execution snapshot is old.
+    private async _syncSnapshots(execution: PlanExecution): Promise<PlanExecution> {
+        // "Heal" / Sync missing video URLs AND update snapshots if execution is clean (not started)
         let updatesNeeded = false;
 
         for (const exExec of execution.exercises) {
-            // Check if we miss videoUrl AND we have a link to the original plan exercise
-            if (!exExec.videoUrl && exExec.planExerciseId) {
+            if (exExec.planExerciseId) {
                 const planEx = await this.planExerciseRepo.findOne({
                     where: { id: exExec.planExerciseId }
                 });
 
-                if (planEx && planEx.videoUrl) {
-                    exExec.videoUrl = planEx.videoUrl;
-                    await this.exerciseRepo.save(exExec);
-                    updatesNeeded = true;
+                if (planEx) {
+                    // 1. Sync Video
+                    if (!exExec.videoUrl && planEx.videoUrl) {
+                        exExec.videoUrl = planEx.videoUrl;
+                        updatesNeeded = true;
+                    }
+
+                    // 2. Sync Snapshots (Target Values)
+                    // New Rule: Always sync snapshots if execution is NOT COMPLETED.
+                    // This ensures active workouts always reflect the latest plan instructions.
+                    // History is preserved only after completion.
+
+                    if (execution.status !== ExecutionStatus.COMPLETED) {
+                        // Check for drifts and update
+                        if (exExec.targetSetsSnapshot !== planEx.sets ||
+                            exExec.targetRepsSnapshot !== planEx.reps ||
+                            exExec.targetWeightSnapshot !== planEx.suggestedLoad) {
+
+                            console.log(`[SyncSnapshots] UPDATING SNAPSHOTS for ${exExec.id} (Status: ${execution.status})`);
+                            exExec.targetSetsSnapshot = planEx.sets;
+                            exExec.targetRepsSnapshot = planEx.reps;
+                            exExec.targetWeightSnapshot = planEx.suggestedLoad;
+
+                            updatesNeeded = true;
+                        }
+                    }
                 }
             }
         }
+
+        if (updatesNeeded) {
+            // Return re-fetched to ensure clean state or save individually?
+            // Since we modified objects in the array, saving them individually is fine.
+            // But we need to await all saves.
+            await Promise.all(execution.exercises.map(e => this.exerciseRepo.save(e)));
+        }
+
         return execution;
     }
 }

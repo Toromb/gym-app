@@ -119,6 +119,10 @@ class AdminDashboardScreen extends StatelessWidget {
 
   Widget _buildDashboardCard(BuildContext context,
       {required String title, required IconData icon, required VoidCallback onTap}) {
+    
+    final iconColor = Theme.of(context).primaryColor;
+    final titleColor = Theme.of(context).colorScheme.secondary;
+
     return Card(
       elevation: 4,
       child: InkWell(
@@ -127,9 +131,9 @@ class AdminDashboardScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20.0),
           child: Row(
             children: [
-              Icon(icon, size: 40, color: Theme.of(context).primaryColor),
+              Icon(icon, size: 40, color: iconColor),
               const SizedBox(width: 20),
-              Text(title, style: const TextStyle(fontSize: 20)),
+              Text(title, style: TextStyle(fontSize: 20, color: titleColor)),
             ],
           ),
         ),

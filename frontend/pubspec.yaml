@@ -19,6 +19,9 @@ dependencies:
   intl: any
   url_launcher: ^6.3.2
   image_picker: ^1.1.2
+  flutter_colorpicker: ^1.1.0
+  http_parser: ^4.1.2
+  mime: ^2.0.0
   # Add other dependencies as needed
 
 dev_dependencies:

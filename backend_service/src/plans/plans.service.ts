@@ -61,14 +61,19 @@ export class PlansService {
     }
 
     async findAll(gymId?: string): Promise<Plan[]> {
-        const where: any = {};
+        const query = this.plansRepository.createQueryBuilder('plan')
+            .leftJoinAndSelect('plan.weeks', 'weeks')
+            .leftJoinAndSelect('weeks.days', 'days')
+            .leftJoinAndSelect('days.exercises', 'exercises')
+            .leftJoinAndSelect('exercises.exercise', 'exercise')
+            .leftJoinAndSelect('plan.teacher', 'teacher')
+            .leftJoinAndSelect('teacher.gym', 'gym');
+
         if (gymId) {
-            where.teacher = { gym: { id: gymId } };
+            query.where('gym.id = :gymId', { gymId });
         }
-        return this.plansRepository.find({
-            where,
-            relations: ['weeks', 'weeks.days', 'weeks.days.exercises', 'weeks.days.exercises.exercise', 'teacher']
-        });
+
+        return query.getMany();
     }
 
     async findAllByTeacher(teacherId: string): Promise<Plan[]> {

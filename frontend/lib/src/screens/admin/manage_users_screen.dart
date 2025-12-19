@@ -184,7 +184,18 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
       return ListTile(
         leading: CircleAvatar(child: Text(user.firstName.isNotEmpty ? user.firstName[0] : '?')),
         title: Text('${user.firstName} ${user.lastName}'),
-        subtitle: Text('${user.email} - ${user.role}'),
+        subtitle: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: '${user.email} - ${user.role}'),
+              if (user.professorName != null)
+                TextSpan(
+                  text: '\nProfe: ${user.professorName}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey),
+                ),
+            ],
+          ),
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -441,7 +452,7 @@ class _AssignProfessorDialogState extends State<_AssignProfessorDialog> {
                                 // Refresh list to show updated data? 
                                 // UserProvider.updateUser usually should update local state, 
                                 // but if not, we might need fetchUsers.
-                                context.read<UserProvider>().fetchUsers(); 
+                                context.read<UserProvider>().fetchUsers(forceRefresh: true); 
                             }
                         },
                         child: const Text('Guardar'),

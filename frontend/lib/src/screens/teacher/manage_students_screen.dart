@@ -72,16 +72,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                               );
                             },
                           ),
-                          ActionChip(
-                            avatar: const Icon(Icons.add_chart),
-                            label: const Text('Crear Plan'),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const CreatePlanScreen()),
-                              );
-                            },
-                          ),
+
                           ActionChip(
                             avatar: const Icon(Icons.assignment_ind),
                             label: const Text('Asignar Plan'),

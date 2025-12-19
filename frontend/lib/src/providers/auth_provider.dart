@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
+import '../models/gym_model.dart';
 import '../services/auth_service.dart';
 
 class AuthProvider with ChangeNotifier {
@@ -42,5 +43,11 @@ class AuthProvider with ChangeNotifier {
     _token = null;
     _user = null;
     notifyListeners();
+  }
+  void updateGym(Gym updatedGym) {
+     if (_user != null) {
+        _user = _user!.copyWith(gym: updatedGym);
+        notifyListeners();
+     }
   }
 }

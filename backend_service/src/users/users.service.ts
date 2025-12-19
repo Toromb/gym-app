@@ -129,7 +129,10 @@ export class UsersService {
         }
 
         Object.assign(user, rest);
-        return this.usersRepository.save(user);
+
+        const saved = await this.usersRepository.save(user);
+
+        return this.findOne(id) as Promise<User>;
     }
 
     async remove(id: string): Promise<void> {
@@ -146,14 +149,22 @@ export class UsersService {
 
         const referenceDate = user.membershipExpirationDate ? new Date(user.membershipExpirationDate) : new Date(user.membershipStartDate);
 
-        // Increment by 1 month
-        referenceDate.setMonth(referenceDate.getMonth() + 1);
+        const now = new Date();
 
-        user.membershipExpirationDate = referenceDate;
-        // Also update LastPaymentDate for record keeping
+        // If reference date is invalid or in the PAST, start from TODAY
+        if (isNaN(referenceDate.getTime()) || referenceDate < now) {
+            user.membershipExpirationDate = new Date(now.setMonth(now.getMonth() + 1));
+        } else {
+            // Valid future date: Increment by 1 month to extend
+            referenceDate.setMonth(referenceDate.getMonth() + 1);
+            user.membershipExpirationDate = referenceDate;
+        }
+
+        // Also update LastPaymentDate
         user.lastPaymentDate = new Date().toISOString().split('T')[0];
 
-        return this.usersRepository.save(user);
+        await this.usersRepository.save(user);
+        return this.findOne(id) as Promise<User>; // Re-fetch to compute status
     }
 
     // Helper to compute status on the fly

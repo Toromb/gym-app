@@ -170,7 +170,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                 ),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Contraseña (Opcional)'),
+                  decoration: const InputDecoration(labelText: 'Contraseña'),
                 ),
                 TextFormField(
                   controller: _phoneController,

@@ -25,12 +25,16 @@ services:
     restart: always
     env_file:
       - ../.env.prod
+    environment:
+      - DB_SYNCHRONIZE=true
     ports:
       - "3000:3000"
     depends_on:
       - postgres
     networks:
       - gym_prod_network
+    volumes:
+      - uploads:/app/uploads
 
   frontend:
     build:
@@ -51,3 +55,4 @@ networks:
 
 volumes:
   pgdata:
+  uploads:

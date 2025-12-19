@@ -1,0 +1,15 @@
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.idea/
+.vscode/
+android/
+ios/
+linux/
+macos/
+windows/
+test/
+*.txt
+*.iml
+analysis_options.yaml

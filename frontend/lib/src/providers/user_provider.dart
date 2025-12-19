@@ -158,11 +158,13 @@ class UserProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final success = await _userService.markAsPaid(userId);
-      if (success) {
-        // Refresh the list to get updated dates/status
-        await fetchUsers(role: null); // Or pass current filter if you had it. 
-        // Ideally we just update the specific user in the list, but full refresh ensures consistency with calculation logic on backend
+      final updatedUser = await _userService.markAsPaid(userId);
+      if (updatedUser != null) {
+        final index = _students.indexWhere((u) => u.id == userId);
+        if (index != -1) {
+          _students[index] = updatedUser;
+          notifyListeners();
+        }
         return true;
       }
       return false;

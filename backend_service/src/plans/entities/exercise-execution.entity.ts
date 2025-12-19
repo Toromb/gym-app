@@ -21,13 +21,13 @@ export class ExerciseExecution {
     exerciseNameSnapshot: string;
 
     @Column({ nullable: true })
-    targetSetsSnapshot: number;
+    targetSetsSnapshot?: number;
 
     @Column({ nullable: true })
-    targetRepsSnapshot: string;
+    targetRepsSnapshot?: string;
 
     @Column({ nullable: true })
-    targetWeightSnapshot: string;
+    targetWeightSnapshot?: string;
 
     @Column({ nullable: true })
     videoUrl: string; // Snapshot or resolved URL for the video
@@ -36,8 +36,8 @@ export class ExerciseExecution {
     @Column({ default: false })
     isCompleted: boolean;
 
-    @Column({ default: 0 })
-    setsDone: number;
+    @Column({ nullable: true })
+    setsDone: string;
 
     @Column({ nullable: true })
     repsDone: string;

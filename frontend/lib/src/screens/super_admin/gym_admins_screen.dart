@@ -4,6 +4,7 @@ import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/gyms_provider.dart';
 import '../../models/user_model.dart';
+import '../../models/gym_model.dart';
 
 class GymAdminsScreen extends StatefulWidget {
   const GymAdminsScreen({super.key});

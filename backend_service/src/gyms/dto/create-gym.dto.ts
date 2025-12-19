@@ -56,4 +56,24 @@ export class CreateGymDto {
     @IsOptional()
     @IsString()
     openingHours?: string;
+
+    @IsOptional()
+    @IsString()
+    paymentAlias?: string;
+
+    @IsOptional()
+    @IsString()
+    paymentCbu?: string;
+
+    @IsOptional()
+    @IsString()
+    paymentAccountName?: string;
+
+    @IsOptional()
+    @IsString()
+    paymentBankName?: string;
+
+    @IsOptional()
+    @IsString()
+    paymentNotes?: string;
 }

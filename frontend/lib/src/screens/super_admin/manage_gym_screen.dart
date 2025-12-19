@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/gyms_provider.dart';
+import '../../models/gym_model.dart';
 
 class ManageGymScreen extends StatefulWidget {
   final Gym? gym;

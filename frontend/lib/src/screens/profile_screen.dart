@@ -32,6 +32,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   
   // Admin controllers
   late TextEditingController _adminNotesController;
+  
+  String? _selectedGender;
 
 
   @override
@@ -63,7 +65,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _specialtyController = TextEditingController(text: user.specialty ?? '');
     _internalNotesController = TextEditingController(text: user.internalNotes ?? '');
     
+    
     _adminNotesController = TextEditingController(text: user.adminNotes ?? '');
+    _selectedGender = user.gender; 
   }
   
   @override
@@ -86,9 +90,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'phone': _phoneController.text,
       'age': int.tryParse(_ageController.text),
       'height': double.tryParse(_heightController.text),
-      'gender': _user!.gender, // Assuming gender is editable but sticking to simple text field or dropdown? 
-      // Plan said gender is editable. Let's keep it simple for now or assume existing value.
-      // Ideally should have a dropdown for Gender.
+      'height': double.tryParse(_heightController.text),
+      'gender': _selectedGender, 
     };
     
     // Add role specific fields
@@ -201,25 +204,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: TextField(
-                controller: TextEditingController(text: _user!.gender), // Keeping gender simple for MVP
-                decoration: const InputDecoration(labelText: 'Género'),
-                 readOnly: !_isEditing, // Assuming simple string edit for now
-                 onChanged: (val) {
-                   // Need to handle gender update if we want it editable
-                   // For now let's assume valid string
-                 },
-              ),
+              child: _isEditing 
+                ? DropdownButtonFormField<String>(
+                    value: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
+                    decoration: const InputDecoration(labelText: 'Género'),
+                    items: const [
+                        DropdownMenuItem(value: 'M', child: Text('Masculino')),
+                        DropdownMenuItem(value: 'F', child: Text('Femenino')),
+                        DropdownMenuItem(value: 'O', child: Text('Otro')),
+                    ],
+                    onChanged: (val) {
+                         setState(() {
+                           _selectedGender = val;
+                         });
+                    },
+                  )
+                : TextField(
+                    controller: TextEditingController(text: _user!.gender == 'M' ? 'Masculino' : _user!.gender == 'F' ? 'Femenino' : 'Otro'), // Display readable
+                    decoration: const InputDecoration(labelText: 'Género'),
+                    readOnly: true,
+                ),
             ),
           ],
         ),
          const SizedBox(height: 10),
-         TextField(
-           controller: _heightController,
-           decoration: const InputDecoration(labelText: 'Altura (cm)'),
-           readOnly: !_isEditing,
-           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-         ),
+         if (_user!.role != 'admin')
+            TextField(
+                controller: _heightController,
+                decoration: const InputDecoration(labelText: 'Altura (cm)'),
+                readOnly: !_isEditing,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
       ],
     );
   }

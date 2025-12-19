@@ -22,6 +22,7 @@ class ExerciseExecutionCard extends StatefulWidget {
 class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   late TextEditingController _repsController;
   late TextEditingController _weightController;
+  late TextEditingController _setsController; // New Controller
   late bool _isCompleted;
   
   // Debounce helper could be added, but for now we update on simple events
@@ -32,16 +33,22 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     _isCompleted = widget.execution.isCompleted;
     
     // Initialize with Real values if present, else empty (or we could pre-fill with Target)
-    // Requirement analysis: "el plan ya viene con las reps y kilos 'sugeridos'... datos reales que colocó el alumno"
-    // Ideally we default to what they likely did (the suggestion), making it easier to just click "check".
     _repsController = TextEditingController(text: widget.execution.repsDone ?? widget.execution.targetRepsSnapshot ?? '');
     _weightController = TextEditingController(text: widget.execution.weightUsed ?? widget.execution.targetWeightSnapshot ?? '');
+    
+    // Initialize Sets Controller. Convert Number to String if needed.
+    // If widget.execution.setsDone is available (and is now String from backend, or we cast).
+    // Note: widget.execution model might still think setsDone is number until we update frontend model.
+    // We will assume backend returns new structure, but frontend model parses it.
+    // Ideally we update frontend model too, but dynamic might handle it.
+    _setsController = TextEditingController(text: widget.execution.setsDone?.toString() ?? widget.execution.targetSetsSnapshot?.toString() ?? '');
   }
 
   @override
   void dispose() {
     _repsController.dispose();
     _weightController.dispose();
+    _setsController.dispose();
     super.dispose();
   }
 
@@ -58,6 +65,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
       'isCompleted': value,
       'repsDone': _repsController.text,
       'weightUsed': _weightController.text,
+      'setsDone': _setsController.text, // Include Sets
     };
 
     final success = await context.read<PlanProvider>().updateExerciseExecution(widget.execution.id, updateData);
@@ -176,11 +184,18 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
             // We show "Suggested" as a label/hint, and "Real" as the input.
             Row(
               children: [
-                // Sets (Read only usually? Or editable? Logic says sets are also execution data, but usually fixed)
-                // Let's keep Sets read-only target for now, or just simple display.
-                _buildStaticMetric(context, '${widget.execution.targetSetsSnapshot ?? "-"}', AppLocalizations.of(context)!.get('sets')),
+                // Sets (Now Editable)
+                Expanded(
+                  child: _buildInputMetric(
+                    context, 
+                    controller: _setsController, 
+                    label: AppLocalizations.of(context)!.get('sets'),
+                    hint: widget.execution.targetSetsSnapshot?.toString() ?? '-',
+                    icon: Icons.repeat,
+                  ),
+                ),
                 
-                Container(width: 1, height: 40, color: Colors.grey[300], margin: const EdgeInsets.symmetric(horizontal: 16)),
+                const SizedBox(width: 16),
 
                 // Reps (Editable)
                 Expanded(

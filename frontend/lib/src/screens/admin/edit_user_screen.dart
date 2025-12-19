@@ -276,7 +276,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                                 const SnackBar(content: Text('Usuario actualizado exitosamente')),
                               );
                               // Refresh list
-                              context.read<UserProvider>().fetchUsers();
+                              context.read<UserProvider>().fetchUsers(forceRefresh: true);
                             } else if (mounted) {
                                ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Error al actualizar usuario')),

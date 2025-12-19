@@ -25,8 +25,9 @@ export class GymsService {
         return this.gymsRepository.findOneBy({ id });
     }
 
-    update(id: string, updateGymDto: UpdateGymDto) {
-        return this.gymsRepository.update(id, updateGymDto);
+    async update(id: string, updateGymDto: UpdateGymDto) {
+        await this.gymsRepository.update(id, updateGymDto);
+        return this.gymsRepository.findOneBy({ id });
     }
 
     remove(id: string) {

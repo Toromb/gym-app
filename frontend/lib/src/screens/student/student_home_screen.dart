@@ -54,7 +54,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                  _buildHeader(user),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
+
+                const SizedBox(height: 20),
                 
                 // --- NEXT WORKOUT SECTION ---
                 _buildNextWorkoutCard(context, planProvider),
@@ -66,6 +68,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   title: AppLocalizations.of(context)!.get('navPlans'), 
                   subtitle: AppLocalizations.of(context)!.get('myPlansSub'),
                   icon: Icons.fitness_center,
+                  color: Theme.of(context).colorScheme.primary, // Dynamic Primary
                   onTap: () {
                     Navigator.push(
                       context,
@@ -79,7 +82,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   title: AppLocalizations.of(context)!.get('workoutHistory'),
                   subtitle: AppLocalizations.of(context)!.get('workoutHistorySub'),
                   icon: Icons.calendar_month,
-                  color: Colors.purple,
+                  color: Theme.of(context).colorScheme.secondary, // Dynamic Secondary
                   onTap: () {
                     Navigator.push(
                       context,
@@ -93,7 +96,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   title: AppLocalizations.of(context)!.get('gymSchedule'),
                   subtitle: AppLocalizations.of(context)!.get('gymScheduleSub'),
                   icon: Icons.access_time,
-                  color: Colors.orange,
+                  color: Theme.of(context).colorScheme.tertiary ?? Colors.orange, // Dynamic Tertiary
                   onTap: () {
                     Navigator.push(
                       context,
@@ -107,7 +110,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   title: AppLocalizations.of(context)!.get('profileTitle'),
                   subtitle: AppLocalizations.of(context)!.get('profileSub'),
                   icon: Icons.person,
-                  color: Colors.blue,
+                  color: Theme.of(context).colorScheme.primary, 
                   onTap: () {
                     Navigator.push(
                       context,
@@ -329,32 +332,121 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   }
 
   Widget _buildHeader(app_models.User? user) {
-    return Row(
+    final welcomeMessage = user?.gym?.welcomeMessage;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch, // Ensure fill
       children: [
-        CircleAvatar(
-          radius: 30,
-          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-          child: Text(
-            (user?.name ?? 'S')[0].toUpperCase(),
-            style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold, fontSize: 24),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center, // Center vertically
           children: [
-            Text(AppLocalizations.of(context)!.get('welcomeBack'), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey)),
-            Text(user?.name ?? "Student", style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            PaymentStatusBadge(status: user?.paymentStatus, isEditable: false),
+            // User Info (Left) - Flex 3
+            Expanded(
+              flex: 3,
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28, // Increased
+                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    child: Text(
+                      (user?.name ?? 'S')[0].toUpperCase(),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold, fontSize: 22), // Increased
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppLocalizations.of(context)!.get('welcomeBack'), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)), // Increased
+                        Text(user?.name ?? "Student", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis), // Increased
+                        const SizedBox(height: 2),
+                        PaymentStatusBadge(status: user?.paymentStatus, isEditable: false),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Logo (Center) - Flex 2 - Large
+             Expanded(
+               flex: 2,
+               child: Center(
+                 child: user?.gym?.logoUrl != null
+                     ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                                user!.gym!.logoUrl!.startsWith('http') 
+                                    ? user!.gym!.logoUrl! 
+                                    : 'http://localhost:3000${user!.gym!.logoUrl}',
+                                height: 100, // Increased
+                                fit: BoxFit.contain,
+                                errorBuilder: (c,e,s) => const SizedBox.shrink(),
+                             ),
+                       )
+                     : const SizedBox.shrink(),
+               )
+             ),
+
+            // Gym Info (Right) - Flex 2
+             Expanded(
+                flex: 3,
+                child: user?.gym != null 
+                 ? Column(
+                   crossAxisAlignment: CrossAxisAlignment.end,
+                   children: [
+                       Text(
+                           user!.gym!.businessName, 
+                           style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor), // Increased
+                           textAlign: TextAlign.end,
+                           overflow: TextOverflow.ellipsis,
+                           maxLines: 2,
+                       ),
+                       const SizedBox(height: 2),
+                       if (user!.gym!.phone != null && user!.gym!.phone!.isNotEmpty)
+                           Text(user!.gym!.phone!, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.secondary), textAlign: TextAlign.end), 
+                       if (user!.gym!.email != null && user!.gym!.email!.isNotEmpty)
+                           Text(user!.gym!.email!, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.secondary), textAlign: TextAlign.end), 
+                       if (user!.gym!.address != null && user!.gym!.address!.isNotEmpty)
+                           Text(user!.gym!.address!, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.secondary), textAlign: TextAlign.end), 
+                   ],
+                 )
+                 : const SizedBox.shrink(),
+              )
           ],
         ),
+        if (welcomeMessage != null && welcomeMessage.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
+                ),
+                child: Text(
+                    welcomeMessage,
+                    style: TextStyle(
+                        fontStyle: FontStyle.italic, 
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                ),
+            ),
+        ],
       ],
     );
   }
 
   Widget _buildDashboardCard(BuildContext context,
-      {required String title, String? subtitle, required IconData icon, required VoidCallback onTap, Color color = Colors.blue}) {
+      {required String title, String? subtitle, required IconData icon, required VoidCallback onTap, Color? color}) {
+    
+    // User Requirement: Icons = Primary, Intaractive Words (Title) = Secondary
+    final iconColor = Theme.of(context).primaryColor;
+    final titleColor = Theme.of(context).colorScheme.secondary;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -368,17 +460,17 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: iconColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, size: 32, color: color),
+                child: Icon(icon, size: 32, color: iconColor),
               ),
               const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: titleColor)),
                     if (subtitle != null)
                       Text(subtitle, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
                   ],
@@ -390,5 +482,20 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         ),
       ),
     );
+  }
+
+
+
+  Widget _infoRow(IconData icon, String text) {
+      return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+              children: [
+                  Icon(icon, size: 16, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
+              ],
+          ),
+      );
   }
 }

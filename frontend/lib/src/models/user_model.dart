@@ -113,6 +113,41 @@ class User {
     );
   }
 
+  User copyWith({
+    Gym? gym,
+  }) {
+    return User(
+      id: id,
+      email: email,
+      role: role,
+      firstName: firstName,
+      lastName: lastName,
+      phone: phone,
+      age: age,
+      gender: gender,
+      notes: notes,
+      paymentStatus: paymentStatus,
+      lastPaymentDate: lastPaymentDate,
+      height: height,
+      trainingGoal: trainingGoal,
+      professorObservations: professorObservations,
+      initialWeight: initialWeight,
+      currentWeight: currentWeight,
+      weightUpdateDate: weightUpdateDate,
+      personalComment: personalComment,
+      isActive: isActive,
+      membershipStartDate: membershipStartDate,
+      membershipExpirationDate: membershipExpirationDate,
+      specialty: specialty,
+      internalNotes: internalNotes,
+      adminNotes: adminNotes,
+      gymName: gymName, // Keep existing if not updating
+      gym: gym ?? this.gym,
+      professorId: professorId,
+      professorName: professorName,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

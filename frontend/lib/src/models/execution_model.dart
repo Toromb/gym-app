@@ -53,7 +53,7 @@ class ExerciseExecution {
   
   // Real Data
   final bool isCompleted;
-  final int setsDone;
+  final String? setsDone; // Changed from int to String?
   final String? repsDone;
   final String? weightUsed;
   final String? notes;
@@ -67,7 +67,7 @@ class ExerciseExecution {
     this.videoUrl,
     this.exercise,
     required this.isCompleted,
-    required this.setsDone,
+    this.setsDone, // Now optional
     this.repsDone,
     this.weightUsed,
     this.notes,
@@ -75,7 +75,7 @@ class ExerciseExecution {
 
   ExerciseExecution copyWith({
     bool? isCompleted,
-    int? setsDone,
+    String? setsDone,
     String? repsDone,
     String? weightUsed,
     String? notes,
@@ -108,7 +108,7 @@ class ExerciseExecution {
       videoUrl: json['videoUrl'],
       exercise: json['exercise'] != null ? Exercise.fromJson(json['exercise']) : null,
       isCompleted: json['isCompleted'] ?? false,
-      setsDone: json['setsDone'] ?? 0,
+      setsDone: json['setsDone']?.toString(), // Handle number or string
       repsDone: json['repsDone'],
       weightUsed: json['weightUsed'],
       notes: json['notes'],
@@ -125,7 +125,7 @@ class ExerciseExecution {
       videoUrl: pe.videoUrl ?? pe.exercise?.videoUrl,
       exercise: pe.exercise,
       isCompleted: false,
-      setsDone: 0,
+      setsDone: pe.sets?.toString(), // Default to target sets as string
     );
   }
 }
