@@ -1,3 +1,4 @@
+import '../polyfill';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { UsersService } from '../users/users.service';
