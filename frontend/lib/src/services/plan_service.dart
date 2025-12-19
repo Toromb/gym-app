@@ -1,25 +1,21 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/plan_model.dart';
 import '../models/student_assignment_model.dart';
 import '../models/execution_model.dart';
+import '../utils/constants.dart';
 
 class PlanService {
   final _storage = const FlutterSecureStorage();
 
-  String get baseUrl {
-    if (kIsWeb) {
-      if (kReleaseMode) return '/api';
-      return 'http://localhost:3000';
-    }
-    // Mobile/Simulator
-    return 'http://10.0.2.2:3000';
-  }
-
   Future<String?> _getToken() async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('jwt');
+    }
     return await _storage.read(key: 'jwt');
   }
 

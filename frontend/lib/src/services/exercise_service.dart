@@ -1,20 +1,19 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/plan_model.dart'; // Using Exercise from plan_model for now
+import '../utils/constants.dart';
 
 class ExerciseService {
   final _storage = const FlutterSecureStorage();
 
-  String get baseUrl {
-    if (kIsWeb) return 'http://localhost:3000';
-    if (Platform.isAndroid) return 'http://10.0.2.2:3000';
-    return 'http://localhost:3000';
-  }
-
   Future<String?> _getToken() async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('jwt');
+    }
     return await _storage.read(key: 'jwt');
   }
 

@@ -2,10 +2,38 @@ import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
 
 class AuthService {
   final _storage = const FlutterSecureStorage();
+
+  Future<void> _saveToken(String token) async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('jwt', token);
+    } else {
+      await _storage.write(key: 'jwt', value: token);
+    }
+  }
+
+  Future<String?> _readToken() async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('jwt');
+    } else {
+      return await _storage.read(key: 'jwt');
+    }
+  }
+
+  Future<void> _deleteToken() async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('jwt');
+    } else {
+      await _storage.delete(key: 'jwt');
+    }
+  }
 
   Future<dynamic> login(String email, String password) async {
     final url = '$baseUrl/auth/login';
@@ -30,7 +58,7 @@ class AuthService {
         if (data['access_token'] == null) {
            return 'No access token in response';
         }
-        await _storage.write(key: 'jwt', value: data['access_token']);
+        await _saveToken(data['access_token']);
         return data; // Success Map
       }
       
@@ -47,10 +75,10 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await _storage.delete(key: 'jwt');
+    await _deleteToken();
   }
 
   Future<String?> getToken() async {
-    return await _storage.read(key: 'jwt');
+    return await _readToken();
   }
 }
