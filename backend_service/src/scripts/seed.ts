@@ -5,9 +5,19 @@ import { UsersService } from '../users/users.service';
 import { GymsService } from '../gyms/gyms.service';
 import { ExercisesService } from '../exercises/exercises.service';
 import { UserRole } from '../users/entities/user.entity';
+import { DataSource } from 'typeorm';
 
 async function bootstrap() {
     const app = await NestFactory.createApplicationContext(AppModule);
+
+    // ⚠️ CRITICAL: In production 'synchronize' is false.
+    // For this FIRST DEPLOYMENT (or manual seed), we force schema sync.
+    // Be careful running this if you have data you don't want to lose if schema changed (sync(false) keeps data safe usually, but careful).
+    // Using { synchronize: false } in app.module means tables aren't created.
+    // We can manually trigger it here.
+    const dataSource = app.get(DataSource);
+    await dataSource.synchronize(); // <--- Creates tables if missing
+
     const userService = app.get(UsersService);
     const gymsService = app.get(GymsService);
 
