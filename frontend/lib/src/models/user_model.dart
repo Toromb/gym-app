@@ -1,3 +1,5 @@
+import 'gym_model.dart';
+
 class UserRoles {
   static const String superAdmin = 'super_admin';
   static const String admin = 'admin';
@@ -39,6 +41,7 @@ class User {
   
   // Gym Info
   final String? gymName;
+  final Gym? gym;
   
   // Professor Info (for students)
   final String? professorId;
@@ -70,6 +73,7 @@ class User {
     this.internalNotes,
     this.adminNotes,
     this.gymName,
+    this.gym,
     this.professorId,
     this.professorName,
   });
@@ -103,6 +107,7 @@ class User {
       internalNotes: json['internalNotes'],
       adminNotes: json['adminNotes'],
       gymName: json['gym'] != null ? json['gym']['businessName'] : null,
+      gym: json['gym'] != null ? Gym.fromJson(json['gym']) : null,
       professorId: json['professor'] != null ? json['professor']['id'] : null,
       professorName: json['professor'] != null ? "${json['professor']['firstName']} ${json['professor']['lastName']}" : null,
     );
@@ -134,6 +139,7 @@ class User {
       'specialty': specialty,
       'internalNotes': internalNotes,
       'adminNotes': adminNotes,
+      'gym': gym?.toJson(),
     };
   }
 }

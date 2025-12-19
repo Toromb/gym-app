@@ -36,4 +36,24 @@ export class CreateGymDto {
     @IsOptional()
     @IsInt()
     maxProfiles?: number;
+
+    @IsOptional()
+    @IsString()
+    logoUrl?: string;
+
+    @IsOptional()
+    @IsString()
+    primaryColor?: string;
+
+    @IsOptional()
+    @IsString()
+    secondaryColor?: string;
+
+    @IsOptional()
+    @IsString()
+    welcomeMessage?: string;
+
+    @IsOptional()
+    @IsString()
+    openingHours?: string;
 }

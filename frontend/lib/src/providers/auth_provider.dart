@@ -13,6 +13,13 @@ class AuthProvider with ChangeNotifier {
   User? get user => _user;
   String? get role => _user?.role;
 
+  // Gym Customization
+  String? get currentGymLogo => _user?.gym?.logoUrl;
+  String? get currentGymPrimaryColor => _user?.gym?.primaryColor;
+  String? get currentGymSecondaryColor => _user?.gym?.secondaryColor;
+  String? get currentGymWelcomeMessage => _user?.gym?.welcomeMessage;
+  String? get currentGymName => _user?.gym?.businessName ?? _user?.gymName;
+
   Future<String?> login(String email, String password) async {
     final result = await _authService.login(email, password);
     

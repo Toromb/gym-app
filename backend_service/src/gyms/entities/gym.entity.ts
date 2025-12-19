@@ -52,6 +52,21 @@ export class Gym {
     @Column({ type: 'int', default: 50 }) // Default to Basic limit
     maxProfiles: number;
 
+    @Column({ nullable: true })
+    logoUrl: string;
+
+    @Column({ nullable: true })
+    primaryColor: string;
+
+    @Column({ nullable: true })
+    secondaryColor: string;
+
+    @Column({ nullable: true })
+    welcomeMessage: string;
+
+    @Column({ nullable: true })
+    openingHours: string;
+
     @CreateDateColumn()
     createdAt: Date;
 

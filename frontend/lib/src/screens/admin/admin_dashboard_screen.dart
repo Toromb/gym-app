@@ -7,6 +7,7 @@ import '../teacher/create_plan_screen.dart';
 import '../teacher/exercises_list_screen.dart';
 import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
+import 'gym_config_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -82,6 +83,18 @@ class AdminDashboardScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const GymScheduleScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildDashboardCard(
+              context,
+              title: 'Configuración del Gym',
+              icon: Icons.settings,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const GymConfigScreen()),
                 );
               },
             ),

@@ -4,39 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 import '../utils/constants.dart';
-
-class Gym {
-  final String id;
-  final String businessName;
-  final String address;
-  final String? phone;
-  final String? email;
-  final String status;
-  final int maxProfiles;
-
-  Gym({
-    required this.id,
-    required this.businessName,
-    required this.address,
-    this.phone,
-    this.email,
-    required this.status,
-    required this.maxProfiles,
-  });
-
-  factory Gym.fromJson(Map<String, dynamic> json) {
-    return Gym(
-      id: json['id'],
-      businessName: json['businessName'],
-      address: json['address'],
-      phone: json['phone'] ?? '',
-      email: json['email'] ?? '',
-      status: json['status'] ?? 'active',
-      maxProfiles: json['maxProfiles'] ?? 0,
-    );
-  }
-}
+import '../models/gym_model.dart';
 
 class GymsProvider with ChangeNotifier {
   List<Gym> _gyms = [];
@@ -140,6 +110,11 @@ class GymsProvider with ChangeNotifier {
                   'email': gym.email,
                   'maxProfiles': gym.maxProfiles,
                   'status': gym.status,
+                  'primaryColor': gym.primaryColor,
+                  'secondaryColor': gym.secondaryColor,
+                  'welcomeMessage': gym.welcomeMessage,
+                  'openingHours': gym.openingHours,
+                  'logoUrl': gym.logoUrl,
               })
           );
           if (response.statusCode == 200) {
@@ -175,5 +150,40 @@ class GymsProvider with ChangeNotifier {
           _isLoading = false;
           notifyListeners();
       }
+  }
+  }
+
+  Future<String?> uploadLogo(String gymId, XFile file) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final token = await _getToken();
+      if (token == null) throw Exception('No authentication token found');
+
+      var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/gyms/$gymId/logo'));
+      request.headers['Authorization'] = 'Bearer $token';
+
+      if (kIsWeb) {
+        request.files.add(http.MultipartFile.fromBytes(
+            'file', await file.readAsBytes(),
+            filename: file.name));
+      } else {
+        request.files.add(await http.MultipartFile.fromPath('file', file.path));
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        await fetchGyms(); // Refresh
+        return data['logoUrl'];
+      } else {
+        throw Exception('Failed to upload logo: ${response.body}');
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }
