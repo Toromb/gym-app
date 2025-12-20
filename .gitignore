@@ -22,6 +22,7 @@ ios/Flutter/Flutter.framework
 android/app/build/
 **/generated_plugin_registrant.*
 **/generated_plugins.cmake
+**/GeneratedPluginRegistrant.swift
 
 # Local/Secrets
 .env
