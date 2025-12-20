@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 import '../constants/app_constants.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
@@ -152,6 +153,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                title: 'Información Personal',
                icon: Icons.person_outline,
                child: _buildCommonSection(),
+            ),
+            const SizedBox(height: 16),
+            _buildSectionCard(
+              title: 'Configuración',
+              icon: Icons.settings_outlined,
+              child: Consumer<ThemeProvider>(
+                builder: (context, themeProvider, _) {
+                  return SwitchListTile(
+                    title: const Text('Modo Oscuro'),
+                    secondary: Icon(themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode),
+                    value: themeProvider.isDarkMode,
+                    onChanged: (val) => themeProvider.toggleTheme(val),
+                    contentPadding: EdgeInsets.zero,
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 16),
             if (_user!.role == AppRoles.alumno) _buildSectionCard(

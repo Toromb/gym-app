@@ -15,6 +15,7 @@ COPY . .
 # Build for web
 # --release defaults to optimizing for speed and size
 # --base-href / ensures routing works from root
+RUN flutter clean
 RUN flutter build web --release
 
 # Stage 2: Serve with Nginx

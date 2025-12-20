@@ -330,35 +330,21 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.center, 
           children: [
-            // User Info (Left) - Flex 3
+            // User Info (Left) - Flex 4 (Increased space since we removed avatar)
             Expanded(
-              flex: 3,
-              child: Row(
+              flex: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    radius: 28, 
-                    backgroundColor: colorScheme.primary,
-                    child: Text(
-                      (user?.name ?? 'S')[0].toUpperCase(),
-                      style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold, fontSize: 22),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(AppLocalizations.of(context)!.get('welcomeBack'), style: Theme.of(context).textTheme.bodySmall), 
-                        Text(
-                          user?.name ?? "Student", 
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold), 
-                          overflow: TextOverflow.ellipsis
-                        ), 
-                        const SizedBox(height: 2),
-                        PaymentStatusBadge(status: user?.paymentStatus, isEditable: false),
-                      ],
-                    ),
-                  ),
+                  Text(AppLocalizations.of(context)!.get('welcomeBack'), style: Theme.of(context).textTheme.bodySmall), 
+                  Text(
+                    user?.name ?? "Student", 
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold), 
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2, // Allow wrapping if barely fitting
+                  ), 
+                  const SizedBox(height: 4),
+                  PaymentStatusBadge(status: user?.paymentStatus, isEditable: false),
                 ],
               ),
             ),

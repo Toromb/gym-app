@@ -164,7 +164,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      // backgroundColor: Colors.grey[50], // Removed to respect Theme
       appBar: AppBar(
         title: Text(widget.day.title ?? 'Día ${widget.day.dayOfWeek}'),
         elevation: 0,
@@ -181,7 +181,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                       AppLocalizations.of(context)!.get('trainingSession'),
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                    if (!widget.readOnly)
+                    if (!widget.readOnly && status == 'COMPLETED')
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(

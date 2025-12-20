@@ -136,9 +136,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     child: Container(
                       margin: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
-                        color: isSelected ? Theme.of(context).primaryColor : (isToday ? Colors.blue[50] : null),
+                        color: isSelected 
+                            ? Theme.of(context).colorScheme.primary 
+                            : (isToday ? Theme.of(context).colorScheme.primary.withOpacity(0.15) : null), // Theme aware tint
                         borderRadius: BorderRadius.circular(8),
-                        border: isSelected ? Border.all(color: Theme.of(context).primaryColor, width: 2) : null,
+                        border: isSelected 
+                            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
+                            : (isToday ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2) : null), // Standardize Today border
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -146,8 +150,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           Text(
                             '$dayNum',
                             style: TextStyle(
-                              color: isSelected ? Colors.white : (isToday ? Colors.blue : Colors.black),
-                              fontWeight: isToday ? FontWeight.bold : FontWeight.normal
+                              fontSize: 16,
+                              color: isSelected 
+                                  ? Theme.of(context).colorScheme.onPrimary 
+                                  : (isToday ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface),
+                              fontWeight: isSelected || isToday ? FontWeight.w900 : FontWeight.w600,
                             ),
                           ),
                           if (events.isNotEmpty)

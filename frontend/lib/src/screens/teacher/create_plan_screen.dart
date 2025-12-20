@@ -307,7 +307,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                     final week = entry.value;
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 8),
-                      color: Colors.grey[50],
+                      // color: Colors.grey[50], // Removed to respect Theme
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Column(

@@ -97,7 +97,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     return Card(
       elevation: _isCompleted ? 1 : 4,
       margin: const EdgeInsets.only(bottom: 20),
-      color: _isCompleted ? Colors.green[50] : Colors.white,
+      color: _isCompleted ? Colors.green.withOpacity(0.15) : null, // Theme aware tint logic
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: _isCompleted ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
@@ -121,7 +121,9 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                   child: Text(
                     '#${widget.index}',
                     style: TextStyle(
-                      color: _isCompleted ? completedColor : defaultColor,
+                      color: _isCompleted 
+                          ? completedColor 
+                          : (Theme.of(context).brightness == Brightness.dark ? Colors.white : Theme.of(context).primaryColor),
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -140,7 +142,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           decoration: _isCompleted ? TextDecoration.lineThrough : null,
-                          color: _isCompleted ? Colors.green[900] : Colors.black,
+                          color: _isCompleted ? Colors.green : Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -150,11 +152,11 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.play_circle_outline, size: 16, color: defaultColor),
+                              const Icon(Icons.play_circle_outline, size: 16, color: Colors.red),
                               const SizedBox(width: 4),
                               Text(
                                 AppLocalizations.of(context)!.get('watchVideo'),
-                                style: TextStyle(color: defaultColor, fontWeight: FontWeight.w600),
+                                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
                               )
                             ],
                           ),
@@ -177,7 +179,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
             ),
             
             const SizedBox(height: 16),
-            Divider(height: 1, color: Colors.grey[300]),
+            const Divider(height: 1), // Theme-aware divider
             const SizedBox(height: 16),
 
             // Inputs Row: Plan vs Real

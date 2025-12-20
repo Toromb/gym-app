@@ -14,6 +14,7 @@ import 'src/theme/app_theme.dart';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'src/localization/app_localizations.dart';
+import 'src/providers/theme_provider.dart';
 
 void main() {
   runApp(
@@ -29,6 +30,7 @@ void main() {
         ),
         ChangeNotifierProvider(create: (_) => GymsProvider()),
         ChangeNotifierProvider(create: (_) => StatsProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -40,11 +42,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, auth, _) {
+    return Consumer2<AuthProvider, ThemeProvider>( 
+      builder: (context, auth, themeProvider, _) {
+         // Sync User ID safely
+         WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (auth.user?.id != null) {
+              themeProvider.setUserId(auth.user!.id);
+            } else {
+              themeProvider.setUserId(null); 
+            }
+         });
+
         // Resolve colors dynamically
         Color primaryColor = AppColors.primary;
-        Color secondaryColor = AppColors.primary; // Default to primary if not set
+        Color secondaryColor = AppColors.primary;
 
         if (auth.user?.gym?.primaryColor != null) {
            try {
@@ -64,9 +75,16 @@ class MyApp extends StatelessWidget {
 
         return MaterialApp(
           title: 'GymFlow',
+          themeMode: themeProvider.themeMode, 
           theme: AppTheme.createTheme(
             primaryColor: primaryColor,
             secondaryColor: secondaryColor,
+            brightness: Brightness.light,
+          ),
+          darkTheme: AppTheme.createTheme(
+            primaryColor: primaryColor,
+            secondaryColor: secondaryColor,
+            brightness: Brightness.dark,
           ),
           localizationsDelegates: const [
             AppLocalizations.delegate,

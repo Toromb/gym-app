@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import 'gyms_list_screen.dart';
 import 'gym_admins_screen.dart';
 import 'platform_stats_screen.dart';
@@ -10,10 +11,18 @@ class SuperAdminDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Super Admin Dashboard'),
         actions: [
+          Consumer<ThemeProvider>(
+            builder: (_, themeProvider, __) => IconButton(
+              icon: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+              onPressed: () => themeProvider.toggleTheme(!themeProvider.isDarkMode),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
@@ -30,16 +39,16 @@ class SuperAdminDashboardScreen extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               'Panel de Super Admin',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: Theme.of(context).primaryColor,
+              style: theme.textTheme.headlineMedium?.copyWith(
+                color: theme.colorScheme.primary, // Theme aware
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 5),
             Text(
               'Gestión global de la plataforma',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.grey[600],
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant, // Theme aware
               ),
             ),
             const SizedBox(height: 30),
@@ -93,7 +102,8 @@ class SuperAdminDashboardScreen extends StatelessWidget {
   Widget _buildDashboardCard(BuildContext context, 
       {required IconData icon, required String title, required String subtitle, required VoidCallback onTap}) {
     
-    final primaryColor = Theme.of(context).primaryColor;
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
     
     return Card(
       elevation: 2.0,
@@ -123,18 +133,18 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18.0, 
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[800]
+                        color: theme.colorScheme.onSurface, // Theme aware
                       )
                     ),
                     const SizedBox(height: 4),
                     Text(
                       subtitle, 
-                      style: TextStyle(fontSize: 13.0, color: Colors.grey[600])
+                      style: TextStyle(fontSize: 13.0, color: theme.colorScheme.onSurfaceVariant) // Theme aware
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+              Icon(Icons.arrow_forward_ios, size: 16, color: theme.colorScheme.onSurfaceVariant),
             ],
           ),
         ),

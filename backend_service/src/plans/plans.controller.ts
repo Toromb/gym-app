@@ -18,7 +18,7 @@ export class PlansController {
         // Only Teacher/Admin can create plans
         // Ideally use a custom Guard or check role here
         if (req.user.role === UserRole.ALUMNO) {
-            // throw new ForbiddenException('Only teachers can create plans');
+            throw new ForbiddenException('Only teachers and admins can create plans');
         }
         return this.plansService.create(createPlanDto, req.user);
     }

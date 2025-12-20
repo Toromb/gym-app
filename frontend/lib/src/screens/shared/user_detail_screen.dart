@@ -51,11 +51,14 @@ class UserDetailScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[300]!)
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)
               ),
-              child: Text(user.notes ?? 'Sin notas disponibles.', style: const TextStyle(fontSize: 16)),
+              child: Text(
+                user.notes ?? 'Sin notas disponibles.', 
+                style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurfaceVariant)
+              ),
             ),
           ],
         ),

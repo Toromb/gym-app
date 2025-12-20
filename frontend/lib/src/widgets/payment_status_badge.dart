@@ -73,8 +73,8 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
           backgroundColor: Colors.white,
           isScrollControlled: true,
           builder: (context) {
+              final colorScheme = Theme.of(context).colorScheme;
               final primaryColor = Theme.of(context).primaryColor;
-              final secondaryColor = Theme.of(context).colorScheme.secondary;
               
               final hasPaymentInfo = (gym!.paymentAlias?.isNotEmpty ?? false) ||
                                      (gym!.paymentCbu?.isNotEmpty ?? false) ||
@@ -86,9 +86,9 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                       bottom: MediaQuery.of(context).viewInsets.bottom + 20,
                       top: 25, left: 25, right: 25
                   ),
-                  decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
+                  decoration: BoxDecoration(
+                      color: colorScheme.surface, // Theme surface
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(25.0)),
                   ),
                   child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -98,7 +98,7 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                               child: Container(
                                   width: 50, height: 5,
                                   decoration: BoxDecoration(
-                                      color: Colors.grey.shade300,
+                                      color: colorScheme.onSurfaceVariant.withOpacity(0.4), // Theme handle
                                       borderRadius: BorderRadius.circular(10)
                                   ),
                               ),
@@ -108,9 +108,9 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                               children: [
                                   Icon(Icons.payment, color: primaryColor, size: 28),
                                   const SizedBox(width: 10),
-                                  const Text(
+                                  Text(
                                       'Datos para el Pago',
-                                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                                   ),
                               ],
                           ),
@@ -121,7 +121,7 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                                 padding: const EdgeInsets.only(bottom: 12.0),
                                 child: Row(
                                     children: [
-                                        Text("Alias: ${gym!.paymentAlias}"),
+                                        Text("Alias: ${gym!.paymentAlias}", style: TextStyle(color: colorScheme.onSurface)),
                                         IconButton(
                                             icon: Icon(Icons.copy, color: primaryColor),
                                             onPressed: () {
@@ -140,7 +140,7 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                                  padding: const EdgeInsets.only(bottom: 12.0),
                                  child: Row(
                                     children: [
-                                        Text("CBU: ${gym!.paymentCbu}"),
+                                        Text("CBU: ${gym!.paymentCbu}", style: TextStyle(color: colorScheme.onSurface)),
                                         IconButton(
                                             icon: Icon(Icons.copy, color: primaryColor),
                                             onPressed: () {
@@ -160,12 +160,12 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                                   child: Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                          const SizedBox(
+                                          SizedBox(
                                               width: 80, 
-                                              child: Text('Banco', style: TextStyle(color: Colors.grey, fontSize: 14))
+                                              child: Text('Banco', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14))
                                           ),
                                           Expanded(
-                                              child: Text(gym!.paymentBankName!, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500))
+                                              child: Text(gym!.paymentBankName!, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: colorScheme.onSurface))
                                           ),
                                       ],
                                   ),
@@ -177,35 +177,36 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                                   child: Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                          const SizedBox(
+                                          SizedBox(
                                               width: 80, 
-                                              child: Text('Titular', style: TextStyle(color: Colors.grey, fontSize: 14))
+                                              child: Text('Titular', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14))
                                           ),
                                           Expanded(
-                                              child: Text(gym!.paymentAccountName!, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500))
+                                              child: Text(gym!.paymentAccountName!, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: colorScheme.onSurface))
                                           ),
                                       ],
                                   ),
                               ),
 
                           if (!hasPaymentInfo)
-                              const Padding(
-                                padding: EdgeInsets.all(20.0),
-                                child: Text('No data'),
+                              Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: Text('No data', style: TextStyle(color: colorScheme.onSurface)),
                               ),
 
                            const SizedBox(height: 20),
                            
                            if (gym!.paymentNotes != null && gym!.paymentNotes!.isNotEmpty)
-                               Text(gym!.paymentNotes!),
+                               Text(gym!.paymentNotes!, style: TextStyle(color: colorScheme.onSurface)),
 
+                          const SizedBox(height: 20),
                           SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
                                   onPressed: () => Navigator.pop(context),
                                   style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.grey.shade200,
-                                      foregroundColor: Colors.black87,
+                                      backgroundColor: colorScheme.secondaryContainer,
+                                      foregroundColor: colorScheme.onSecondaryContainer,
                                   ),
                                   child: const Text('Cerrar'),
                               ),

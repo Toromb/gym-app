@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../localization/app_localizations.dart';
 import '../providers/user_provider.dart';
+import '../providers/theme_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,7 +20,20 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          Consumer<ThemeProvider>(
+            builder: (_, theme, __) => IconButton(
+              icon: Icon(theme.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+              onPressed: () => theme.toggleTheme(!theme.isDarkMode),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      backgroundColor: Theme.of(context).colorScheme.surface, // Use theme surface instead of fixed grey
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -31,16 +45,23 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.fitness_center, size: 64, color: Theme.of(context).primaryColor),
-                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.fitness_center, size: 72, color: Theme.of(context).primaryColor),
+                  ),
+                  const SizedBox(height: 24),
                   Text(
                     AppLocalizations.of(context)!.welcome,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          fontWeight: FontWeight.w900, // Extra Bold
+                          color: Theme.of(context).colorScheme.onSurface, // Theme aware
+                          fontSize: 32, // Larger
                         ),
                   ),
-                  const SizedBox(height: 8),
                   Text(AppLocalizations.of(context)!.loginTitle, style: const TextStyle(color: Colors.grey)), // 'Sign in to continue' -> 'Iniciar Sesión' text below welcome
                   const SizedBox(height: 32),
                   TextField(

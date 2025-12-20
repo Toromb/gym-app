@@ -12,6 +12,12 @@ String get baseUrl {
     final String origin = Uri.base.origin;
     return '$origin/api';
   }
+  // Allow injection via --dart-define=API_URL=...
+  const apiUrl = String.fromEnvironment('API_URL');
+  if (apiUrl.isNotEmpty) {
+    return apiUrl;
+  }
+
   if (Platform.isAndroid) {
       return 'http://10.0.2.2:3000';
   }
