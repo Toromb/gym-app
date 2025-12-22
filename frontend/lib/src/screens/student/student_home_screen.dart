@@ -11,8 +11,10 @@ import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
 // import 'student_plan_screen.dart'; // No longer direct nav
 import 'student_plans_list_screen.dart';
+import 'student_plans_list_screen.dart';
 import '../../widgets/payment_status_badge.dart';
 import 'calendar_screen.dart';
+import 'package:intl/intl.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -24,11 +26,13 @@ class StudentHomeScreen extends StatefulWidget {
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
   @override
+  @override
   void initState() {
     super.initState();
-    // Fetch history to determine next workout
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PlanProvider>().fetchMyHistory();
+      final provider = context.read<PlanProvider>();
+      provider.fetchMyHistory();
+      provider.computeWeeklyStats();
     });
   }
 
@@ -54,10 +58,21 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                  _buildHeader(user),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
-                const SizedBox(height: 20),
-                
+                // PROGRESS SUMMARY (Simple Text)
+                if (planProvider.weeklyWorkoutCount > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      'Has entrenado ${planProvider.weeklyWorkoutCount} ${planProvider.weeklyWorkoutCount == 1 ? "día" : "días"} esta semana. ¡Seguí así!',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold
+                      ),
+                    ),
+                  ),
+
                 // --- NEXT WORKOUT SECTION ---
                 _buildNextWorkoutCard(context, planProvider),
                 const SizedBox(height: 24),
@@ -65,8 +80,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
                 _buildDashboardCard(
                   context,
-                  title: AppLocalizations.of(context)!.get('navPlans'), 
-                  subtitle: AppLocalizations.of(context)!.get('myPlansSub'),
+                  title: 'Mi rutina', // Renamed from "Planes"
+                  subtitle: planProvider.nextWorkout != null && planProvider.nextWorkout!['week'] != null
+                      ? 'Plan activo: Semana ${(planProvider.nextWorkout!['week'] as PlanWeek).weekNumber}'
+                      : AppLocalizations.of(context)!.get('myPlansSub'),
                   icon: Icons.fitness_center,
                   onTap: () {
                     Navigator.push(
@@ -79,7 +96,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 _buildDashboardCard(
                   context,
                   title: AppLocalizations.of(context)!.get('workoutHistory'),
-                  subtitle: AppLocalizations.of(context)!.get('workoutHistorySub'),
+                  subtitle: planProvider.weeklyWorkoutCount > 0 
+                      ? 'Entrenamientos esta semana: ${planProvider.weeklyWorkoutCount}'
+                      : AppLocalizations.of(context)!.get('workoutHistorySub'),
                   icon: Icons.calendar_month,
                   onTap: () {
                     Navigator.push(
@@ -92,7 +111,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 _buildDashboardCard(
                   context,
                   title: AppLocalizations.of(context)!.get('gymSchedule'),
-                  subtitle: AppLocalizations.of(context)!.get('gymScheduleSub'),
+                  subtitle: user?.gym?.openingHours != null && user!.gym!.openingHours!.isNotEmpty
+                      ? 'Hoy abierto: ${user.gym!.openingHours}'
+                      : AppLocalizations.of(context)!.get('gymScheduleSub'),
                   icon: Icons.access_time,
                   onTap: () {
                     Navigator.push(
@@ -233,6 +254,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
     return Card(
       color: colorScheme.primary, // Hero color
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () async {
           // Navigate to DayDetail
@@ -249,9 +272,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
           // If result is true, it means completed. Refresh history to update this card.
           if (result == true && mounted) {
+           if (result == true && mounted) {
              context.read<PlanProvider>().fetchMyHistory();
+             context.read<PlanProvider>().computeWeeklyStats();
+          }
           }
         },
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -267,20 +294,32 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     ),
                     child: Text('PRÓXIMO ENTRENAMIENTO', style: textTheme.labelSmall?.copyWith(color: colorScheme.onPrimary, fontWeight: FontWeight.bold)),
                   ),
-                  const Spacer(),
-                  Icon(Icons.arrow_forward, color: colorScheme.onPrimary),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Text(
-                day.title ?? 'Día ${day.dayOfWeek}',
-                style: textTheme.displaySmall?.copyWith(color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
+                (day.title ?? 'Día ${day.dayOfWeek}').replaceAll('Day', 'Día'),
+                style: textTheme.displaySmall?.copyWith(color: colorScheme.onPrimary, fontWeight: FontWeight.w800, fontSize: 28),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Text(
-                'Semana ${week.weekNumber} - ${assignment.plan.name}',
-                style: textTheme.bodyLarge?.copyWith(color: colorScheme.onPrimary.withOpacity(0.8)),
+                '${assignment.plan.name} • Semana ${week.weekNumber}',
+                style: textTheme.bodyLarge?.copyWith(color: colorScheme.onPrimary.withOpacity(0.9)),
               ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                   Text(
+                     'Comenzar entrenamiento', 
+                     style: textTheme.titleMedium?.copyWith(
+                       color: colorScheme.onPrimary, 
+                       fontWeight: FontWeight.bold
+                     )
+                   ),
+                   const SizedBox(width: 8),
+                   Icon(Icons.arrow_forward, color: colorScheme.onPrimary),
+                ],
+              )
             ],
           ),
         ),
@@ -324,92 +363,94 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     final welcomeMessage = user?.gym?.welcomeMessage;
     final colorScheme = Theme.of(context).colorScheme;
 
+    // Format expiration date if available
+    String? expirationFormatted;
+    if (user?.membershipExpirationDate != null) {
+        try {
+            final date = DateTime.parse(user!.membershipExpirationDate!);
+            expirationFormatted = DateFormat('dd/MM', 'es').format(date);
+        } catch (_) {}
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch, 
       children: [
+        // 1. Header Row: Name/Stats & Gym Info
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center, 
+          crossAxisAlignment: CrossAxisAlignment.start, 
           children: [
-            // User Info (Left) - Flex 4 (Increased space since we removed avatar)
-            Expanded(
-              flex: 4,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(AppLocalizations.of(context)!.get('welcomeBack'), style: Theme.of(context).textTheme.bodySmall), 
-                  Text(
-                    user?.name ?? "Student", 
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold), 
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2, // Allow wrapping if barely fitting
-                  ), 
-                  const SizedBox(height: 4),
-                  PaymentStatusBadge(status: user?.paymentStatus, isEditable: false),
-                ],
-              ),
-            ),
-            
-            // Logo (Center) - Flex 2
+             // Left: User Name & Status
              Expanded(
-               flex: 2,
-               child: Center(
-                 child: user?.gym?.logoUrl != null
-                     ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                                user!.gym!.logoUrl!.startsWith('http') 
-                                    ? user!.gym!.logoUrl! 
-                                    : 'http://localhost:3000${user!.gym!.logoUrl}',
-                                height: 80, 
-                                fit: BoxFit.contain,
-                                errorBuilder: (c,e,s) => const SizedBox.shrink(),
-                             ),
-                       )
-                     : const SizedBox.shrink(),
-               )
+               child: Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                    Text(
+                      '${user?.firstName} ${user?.lastName ?? ""} (Alumno)'.trim(),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    PaymentStatusBadge(
+                      status: user?.paymentStatus, 
+                      isEditable: false,
+                      expirationDate: expirationFormatted, // Logic for date
+                    ),
+                 ],
+               ),
              ),
-
-            // Gym Info (Right) - Flex 3
-             Expanded(
-                flex: 3,
-                child: user?.gym != null 
-                 ? Column(
-                   crossAxisAlignment: CrossAxisAlignment.end,
-                   children: [
-                       Text(
-                           user!.gym!.businessName, 
-                           style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.primary),
-                           textAlign: TextAlign.end,
-                           overflow: TextOverflow.ellipsis,
-                           maxLines: 2,
-                       ),
-                       const SizedBox(height: 2),
-                       if (user!.gym!.phone != null && user!.gym!.phone!.isNotEmpty)
-                           Text(user!.gym!.phone!, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.end), 
-                       if (user!.gym!.address != null && user!.gym!.address!.isNotEmpty)
-                           Text(user!.gym!.address!, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.end), 
-                   ],
-                 )
-                 : const SizedBox.shrink(),
+             
+             // Right: Gym Logo/Info (Less Visual Weight)
+             if (user?.gym != null)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                    if (user!.gym!.logoUrl != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                            user!.gym!.logoUrl!.startsWith('http') 
+                                ? user!.gym!.logoUrl! 
+                                : 'http://localhost:3000${user!.gym!.logoUrl}',
+                            height: 40, // Smaller logo
+                            width: 40,
+                            fit: BoxFit.contain,
+                            errorBuilder: (c,e,s) => const Icon(Icons.fitness_center, color: Colors.grey),
+                         ),
+                      ),
+                     const SizedBox(height: 8),
+                     Text(
+                       user!.gym!.businessName,
+                       style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                       textAlign: TextAlign.end,
+                     ),
+                ],
               )
           ],
         ),
+        
+        // 2. Admin Message (Reduced Weight)
         if (welcomeMessage != null && welcomeMessage.isNotEmpty) ...[
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(16),
+                    color: colorScheme.surfaceContainerLow, // Neutral background
+                    borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                    welcomeMessage,
-                    style: TextStyle(
-                        fontStyle: FontStyle.italic, 
-                        color: colorScheme.onSurfaceVariant,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, size: 20, color: Colors.grey[600]),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                          welcomeMessage,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[800]),
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
+                  ],
                 ),
             ),
         ],

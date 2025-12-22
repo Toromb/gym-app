@@ -60,10 +60,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           ).then((execution) {
              debugPrint('DayDetailScreen: Fetched execution: ${execution?.id ?? "NULL"}');
              if (mounted) {
-               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                 content: Text('DEBUG: Fetched? ${execution != null ? "YES" : "NO"} FirstExReps: ${execution?.exercises.first.repsDone} / ${execution?.exercises.first.targetRepsSnapshot}'),
-                 duration: const Duration(seconds: 8),
-               ));
+
                setState(() {
                  _readOnlyExecution = execution;
                  _isLoadingReadOnly = false;

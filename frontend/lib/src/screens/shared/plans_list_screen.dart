@@ -190,11 +190,28 @@ class _PlansListScreenState extends State<PlansListScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              final success = await context.read<PlanProvider>().deletePlan(plan.id!);
+              final error = await context.read<PlanProvider>().deletePlan(plan.id!);
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(success ? AppLocalizations.of(context)!.get('deletePlanSuccess') : AppLocalizations.of(context)!.get('deletePlanError'))),
-                );
+                if (error == null) {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(AppLocalizations.of(context)!.get('deletePlanSuccess'))),
+                   );
+                } else {
+                   // Show error dialog for conflicts (assigned plans)
+                   showDialog(
+                     context: context,
+                     builder: (context) => AlertDialog(
+                       title: Text(AppLocalizations.of(context)!.get('error')),
+                       content: Text(error),
+                       actions: [
+                         TextButton(
+                           onPressed: () => Navigator.pop(context),
+                           child: const Text('OK'),
+                         ),
+                       ],
+                     ),
+                   );
+                }
               }
             },
             child: Text(AppLocalizations.of(context)!.get('delete'), style: const TextStyle(color: Colors.red)),

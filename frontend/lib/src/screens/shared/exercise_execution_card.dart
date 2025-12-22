@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../models/execution_model.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
@@ -87,6 +88,32 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   // Let's attach listeners or use `onChanged` with simple debounce or save-on-submit.
   // Simplest valid UX: Edit fields -> Click Checkbox -> Saves Everything.
   // If already checked and editing -> We should probably save on field submit or blur.
+
+  // Debounce timer
+  Timer? _debounce;
+
+  void _onFieldChanged(String val) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 1000), () {
+      _saveChanges();
+    });
+  }
+
+  Future<void> _saveChanges() async {
+    final updateData = {
+      // We don't necessarily send isCompleted here unless we want to enforce it? 
+      // Just sending fields corresponds to partial update.
+      'repsDone': _repsController.text,
+      'weightUsed': _weightController.text,
+      'setsDone': _setsController.text,
+    };
+    
+    // We do NOT optimize by checking equality because _repsController.text vs execution.repsDone might differ 
+    // if backend hasn't refreshed yet. But generally good practice.
+    // For now, just save.
+    
+    await context.read<PlanProvider>().updateExerciseExecution(widget.execution.id, updateData);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -259,10 +286,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
         suffixIcon: Icon(icon, size: 16, color: Colors.grey),
       ),
       style: const TextStyle(fontWeight: FontWeight.bold),
-      onChanged: (val) {
-        // Optional: Auto-save or wait for checkbox.
-        // For active sync, could provider.update... 
-      },
+      onChanged: _onFieldChanged,
     );
   }
 

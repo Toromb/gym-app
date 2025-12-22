@@ -97,35 +97,64 @@ async function bootstrap() {
     // 2. Seed Exercises
     console.log('💪 Verificando Ejercicios...');
     const exercisesService = app.get(ExercisesService);
-    const exercises = await exercisesService.findAll();
+    const exercises = await exercisesService.findAll(); // This returns ALL (if updated service) or Gym specific? Service.findAll returns by gymId if provided. Argless returns ALL.
+
+    // Check for orphan exercises (Null Gym)
+    // We can use a direct query or filter the results if findAll returns all.
+    // exercisesService.findAll() returns `this.exercisesRepository.find()` which returns ALL.
 
     if (exercises.length === 0) {
         console.log('➕ Creando Ejercicios Base...');
         const adminUser = await userService.findOneByEmail('admin@gym.com');
 
-        const defaultExercises = [
-            { name: 'Sentadilla', description: 'Pierna completa' },
-            { name: 'Peso Muerto', description: 'Cadena posterior' },
-            { name: 'Banca Plana', description: 'Pecho' },
-            { name: 'Dominadas', description: 'Espalda' },
-            { name: 'Press Militar', description: 'Hombros' },
-            { name: 'Remo con Barra', description: 'Espalda' },
-            { name: 'Estocadas', description: 'Piernas' },
-            { name: 'Curl de Biceps', description: 'Brazos' },
-            { name: 'Triceps en Polea', description: 'Brazos' },
-            { name: 'Plancha Abdominal', description: 'Core' },
-        ];
+        if (!adminUser?.gym) {
+            console.error('❌ CRITICAL: Admin user has no Gym! Cannot seed exercises correctly.');
+        } else {
+            const defaultExercises = [
+                { name: 'Sentadilla', description: 'Pierna completa' },
+                { name: 'Peso Muerto', description: 'Cadena posterior' },
+                { name: 'Banca Plana', description: 'Pecho' },
+                { name: 'Dominadas', description: 'Espalda' },
+                { name: 'Press Militar', description: 'Hombros' },
+                { name: 'Remo con Barra', description: 'Espalda' },
+                { name: 'Estocadas', description: 'Piernas' },
+                { name: 'Curl de Biceps', description: 'Brazos' },
+                { name: 'Triceps en Polea', description: 'Brazos' },
+                { name: 'Plancha Abdominal', description: 'Core' },
+            ];
 
-        for (const ex of defaultExercises) {
-            await exercisesService.create({
-                name: ex.name,
-                description: ex.description,
-                videoUrl: '',
-                imageUrl: ''
-            }, adminUser!);
+            for (const ex of defaultExercises) {
+                await exercisesService.create({
+                    name: ex.name,
+                    description: ex.description,
+                    videoUrl: '',
+                    imageUrl: ''
+                }, adminUser);
+            }
         }
     } else {
-        console.log('✅ Ejercicios ya existen');
+        console.log('✅ Ejercicios ya existen. Verificando integridad...');
+
+        let fixedCount = 0;
+        for (const ex of exercises) {
+            if (!ex.gym) {
+                // Fix orphan exercise
+                if (defaultGym) {
+                    // We need to update relation. Service.update uses DTO, might verify. 
+                    // Direct repo access via checking module or just use query builder here?
+                    // Accessing repo from service is private.
+                    // We can use the service update if it supports it, or use DataSource directly since we have it.
+                    await dataSource.getRepository('Exercise').update(ex.id, { gym: defaultGym });
+                    fixedCount++;
+                }
+            }
+        }
+
+        if (fixedCount > 0) {
+            console.log(`🔧 ${fixedCount} ejercicios huérfanos fueron asignados a "Default Gym".`);
+        } else {
+            console.log('✅ Todos los ejercicios tienen Gym asignado.');
+        }
     }
 
     console.log('✔️ SEED COMPLETADO');

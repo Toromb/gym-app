@@ -80,20 +80,32 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
               : () async {
                   if (_selectedStudentId != null && _selectedPlanId != null) {
                     setState(() => _isLoading = true);
-                    final success = await context.read<PlanProvider>().assignPlan(
+                    final error = await context.read<PlanProvider>().assignPlan(
                           _selectedPlanId!,
                           _selectedStudentId!,
                         );
                     setState(() => _isLoading = false);
-                    if (success && mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Plan asignado exitosamente')),
-                      );
-                    } else if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Error al asignar plan')),
-                      );
+                    if (mounted) {
+                      if (error == null) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Plan asignado exitosamente')),
+                        );
+                      } else {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Error de Asignación'),
+                            content: Text(error),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
                     }
                   }
                 },

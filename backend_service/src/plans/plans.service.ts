@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Plan, PlanDay, PlanExercise } from './entities/plan.entity';
@@ -105,10 +105,15 @@ export class PlansService {
         // 3. Plan has no teacher (orphan/legacy) -> Decide policy. Let's forbid for now or allow Admin.
         // For safety/strictness: fail if not owner and not admin.
 
+        // Validate Assigner Role
+        const assigner = await this.plansRepository.manager.findOne(User, { where: { id: professorId } });
+        if (!assigner) throw new NotFoundException('Assigner user not found');
+
         const isOwner = planTeacherId === professorId;
         const isAdminPlan = planTeacherRole === 'admin';
+        const isAssignerAdmin = assigner.role === 'admin' || assigner.role === 'super_admin';
 
-        if (!isOwner && !isAdminPlan) {
+        if (!isOwner && !isAdminPlan && !isAssignerAdmin) {
             throw new ForbiddenException('You can only assign your own plans or library plans');
         }
 
@@ -127,6 +132,21 @@ export class PlansService {
             } else {
                 throw new ForbiddenException('You can only assign plans to your own students');
             }
+        }
+
+        // Check for duplicate active assignment using QueryBuilder
+        console.log(`Checking duplicate for Student: ${studentId}, Plan: ${planId}`);
+        const existingAssignment = await this.studentPlanRepository.createQueryBuilder('sp')
+            .where('sp.student.id = :studentId', { studentId })
+            .andWhere('sp.plan.id = :planId', { planId })
+            .andWhere('sp.isActive = :isActive', { isActive: true })
+            .getOne();
+
+        console.log('Existing Assignment Found:', existingAssignment);
+
+        if (existingAssignment) {
+            const { ConflictException } = require('@nestjs/common');
+            throw new ConflictException('El alumno ya tiene este plan asignado.');
         }
 
         const studentPlan = this.studentPlanRepository.create({
@@ -287,6 +307,19 @@ export class PlansService {
         // Permission: Admin, Super Admin or Plan Owner
         if (user.role !== 'admin' && user.role !== 'super_admin' && plan.teacher?.id !== user.id) {
             throw new ForbiddenException('You can only delete your own plans');
+        }
+
+        const assignmentCount = await this.studentPlanRepository.count({ where: { plan: { id: id } } });
+        if (assignmentCount > 0) {
+            // Check if we should throw ConflictException. Use string for message.
+            // NestJS exceptions like ConflictException are standard.
+            // Need to import ConflictException if not already imported, but I see NotFound/Forbidden.
+            // I'll add ConflictException to imports if needed, or just throw Forbidden for now with clear message?
+            // Plan says ConflictException. I should verify if it's imported. 
+            // Better to assume I can add it to the top or use BadRequest. 
+            // Let's use ConflictException.
+            const { ConflictException } = require('@nestjs/common');
+            throw new ConflictException('El plan está asignado a alumnos y no puede eliminarse.');
         }
 
         await this.plansRepository.remove(plan);

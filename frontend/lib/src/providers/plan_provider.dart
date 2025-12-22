@@ -16,6 +16,9 @@ class PlanProvider with ChangeNotifier {
   List<StudentAssignment> get assignments => _assignments;
   bool get isLoading => _isLoading;
 
+  int _weeklyWorkoutCount = 0;
+  int get weeklyWorkoutCount => _weeklyWorkoutCount;
+
   List<StudentAssignment> _assignments = [];
   
   StudentAssignment? _activeAssignment;
@@ -252,6 +255,20 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
+  Future<void> computeWeeklyStats() async {
+      final now = DateTime.now();
+      final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+      final endOfWeek = startOfWeek.add(const Duration(days: 6));
+
+      try {
+          final executions = await fetchCalendar(startOfWeek, endOfWeek);
+          _weeklyWorkoutCount = executions.where((e) => e.status == 'COMPLETED').length;
+          notifyListeners();
+      } catch (e) {
+          debugPrint('Error computing stats: $e');
+      }
+  }
+
   // --- EXECUTION ENGINE END ---
 
   Future<bool> updateProgress(String studentPlanId, String type, String id, bool completed, {String? date}) async {
@@ -263,14 +280,14 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> assignPlan(String planId, String studentId) async {
+  Future<String?> assignPlan(String planId, String studentId) async {
     _isLoading = true;
     notifyListeners();
     try {
       return await _planService.assignPlan(planId, studentId);
     } catch (e) {
-    debugPrint('Error assigning plan: $e');
-      return false;
+      debugPrint('Error assigning plan: $e');
+      return 'Error de conexión';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -319,19 +336,19 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> deletePlan(String id) async {
+  Future<String?> deletePlan(String id) async {
     _isLoading = true;
     notifyListeners();
     try {
-      final success = await _planService.deletePlan(id);
-      if (success) {
-        await fetchPlans();
-        return true;
+      final error = await _planService.deletePlan(id);
+      if (error == null) {
+        await fetchPlans(); // Refresh list on success
+        return null;
       }
-      return false;
+      return error;
     } catch (e) {
-    debugPrint('Error deleting plan: $e');
-      return false;
+      debugPrint('Error deleting plan: $e');
+      return 'Error de conexión';
     } finally {
       _isLoading = false;
       notifyListeners();

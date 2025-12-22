@@ -97,6 +97,15 @@ class MyApp extends StatelessWidget {
             Locale('en', ''),
           ],
           locale: const Locale('es', ''),
+          builder: (context, child) {
+            return GestureDetector(
+              onTap: () {
+                // Dismiss keyboard and unfocus globally
+                FocusManager.instance.primaryFocus?.unfocus();
+              },
+              child: child!,
+            );
+          },
           home: auth.isAuthenticated ? const HomeScreen() : const LoginScreen(),
         );
       },

@@ -11,9 +11,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production' ? (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : false) : '*',
+    origin: true,
     credentials: true,
   });
+  console.log('CORS enabled with origin: true (dev mode forced)');
 
   const config = new DocumentBuilder()
     .setTitle('Gym App API')

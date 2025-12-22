@@ -138,7 +138,7 @@ class PlanService {
     return response.statusCode == 200;
   }
 
-  Future<bool> assignPlan(String planId, String studentId) async {
+  Future<String?> assignPlan(String planId, String studentId) async {
     final token = await _getToken();
     final response = await http.post(
       Uri.parse('$baseUrl/plans/assign'),
@@ -152,7 +152,17 @@ class PlanService {
       }),
     );
 
-    return response.statusCode == 201;
+    if (response.statusCode == 201) {
+      return null; // Success
+    } else if (response.statusCode == 409) {
+      try {
+        final body = jsonDecode(response.body);
+        return body['message'] ?? 'Error de asignación.';
+      } catch (_) {
+        return 'Conflicto en la asignación.';
+      }
+    }
+    return 'Error al asignar el plan.';
   }
 
   Future<List<dynamic>> getStudentAssignments(String studentId) async {
@@ -183,7 +193,7 @@ class PlanService {
     return response.statusCode == 200;
   }
 
-  Future<bool> deletePlan(String id) async {
+  Future<String?> deletePlan(String id) async {
     final token = await _getToken();
     final response = await http.delete(
       Uri.parse('$baseUrl/plans/$id'),
@@ -192,7 +202,19 @@ class PlanService {
       },
     );
 
-    return response.statusCode == 200;
+    if (response.statusCode == 200) {
+      return null; // Success
+    } else if (response.statusCode == 409) {
+      // Conflict - likely assigned
+      // NestJS default structure for HttpException: { statusCode: 409, message: "...", error: "Conflict" }
+      try {
+        final body = jsonDecode(response.body);
+        return body['message'] ?? 'El plan no puede eliminarse.';
+      } catch (_) {
+        return 'El plan está en uso y no puede eliminarse.';
+      }
+    }
+    return 'Error al eliminar el plan.';
   }
 
   Future<bool> restartPlan(String assignmentId) async {

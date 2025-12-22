@@ -411,14 +411,26 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
               child: const Text('Cancelar'),
             ),
             TextButton(
-              onPressed: () async {
+                onPressed: () async {
                 if (selectedPlanId != null) {
-                   final success = await context.read<PlanProvider>().assignPlan(selectedPlanId!, studentId);
+                   final error = await context.read<PlanProvider>().assignPlan(selectedPlanId!, studentId);
                    if (context.mounted) {
                      Navigator.pop(context);
-                     ScaffoldMessenger.of(context).showSnackBar(
-                       SnackBar(content: Text(success ? 'Plan assigned successfully' : 'Failed to assign plan')),
-                     );
+                     if (error == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Plan asignado exitosamente'), 
+                            backgroundColor: Colors.green
+                          ),
+                        );
+                     } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(error),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                     }
                    }
                 }
               },

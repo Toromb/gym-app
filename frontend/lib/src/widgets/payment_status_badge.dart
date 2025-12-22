@@ -10,12 +10,14 @@ class PaymentStatusBadge extends StatefulWidget {
   final String? status; // 'paid', 'pending', 'overdue'
   final VoidCallback? onMarkAsPaid;
   final bool isEditable;
+  final String? expirationDate;
 
   const PaymentStatusBadge({
     super.key,
     required this.status,
     this.onMarkAsPaid,
     this.isEditable = false,
+    this.expirationDate,
   });
 
   @override
@@ -250,21 +252,34 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
         icon = Icons.help;
     }
 
-    final badge = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 4),
-          Text(text, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
-        ],
-      ),
+    final badge = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            border: Border.all(color: color),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Text(text, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+            ],
+          ),
+        ),
+        if (widget.expirationDate != null && widget.expirationDate!.isNotEmpty)
+           Padding(
+             padding: const EdgeInsets.only(top: 4.0),
+             child: Text(
+               'Vence: ${widget.expirationDate}',
+               style: const TextStyle(fontSize: 11, color: Colors.grey),
+             ),
+           ),
+      ],
     );
 
     if (widget.isEditable && widget.onMarkAsPaid != null && s != 'paid') {

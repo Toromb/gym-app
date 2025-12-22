@@ -64,64 +64,90 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Planes: ${widget.student.firstName}')),
-      body: _isLoading 
-          ? const Center(child: CircularProgressIndicator())
-          : _assignments == null || _assignments!.isEmpty
-              ? const Center(child: Text('No hay planes asignados.'))
-              : ListView.builder(
-                  itemCount: _assignments!.length,
-                  itemBuilder: (context, index) {
-                    final assignment = _assignments![index];
-                    final plan = assignment['plan'];
-                    final isActive = assignment['isActive'] == true;
-                    final assignedAt = assignment['assignedAt'];
+    // Filter assignments
+    final activeAssignments = _assignments?.where((a) => a['isActive'] == true).toList() ?? [];
+    final historyAssignments = _assignments?.where((a) => a['isActive'] != true).toList() ?? [];
 
-                    return Card(
-                      margin: const EdgeInsets.all(8.0),
-                      child: ListTile(
-                        leading: Icon(Icons.assignment, color: isActive ? Colors.green : Colors.grey),
-                        title: Text(plan['name'] ?? 'Plan sin nombre'),
-                        subtitle: Text('Asignado: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(assignedAt))}\nEstado: ${isActive ? "Activo" : "Inactivo"}'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.visibility, color: Colors.blue),
-                              onPressed: () async {
-                                 // Fetch full plan details
-                                 final planId = plan['id'];
-                                 final fullPlan = await context.read<PlanProvider>().getPlanById(planId);
-                                 
-                                 if (fullPlan != null && context.mounted) {
-                                   Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => PlanDetailsScreen(
-                                          plan: fullPlan, 
-                                          readOnly: true,
-                                          canEdit: false,
-                                          assignment: StudentAssignment.fromJson(assignment), 
-                                          studentId: widget.student.id, // Use widget.student.id (robust)
-                                        ),
-                                      ),
-                                   );
-                                 } else if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error cargando detalles del plan')));
-                                 }
-                              },
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Planes: ${widget.student.firstName}'),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Planes Asignados'),
+              Tab(text: 'Historial'),
+            ],
+          ),
+        ),
+        body: _isLoading 
+            ? const Center(child: CircularProgressIndicator())
+            : TabBarView(
+                children: [
+                  _buildassignmentsList(activeAssignments, true),
+                  _buildassignmentsList(historyAssignments, false),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildassignmentsList(List<dynamic> assignments, bool isActiveList) {
+    if (assignments.isEmpty) {
+      return Center(child: Text(isActiveList ? 'No hay planes activos.' : 'No hay historial de planes.'));
+    }
+
+    return ListView.builder(
+      itemCount: assignments.length,
+      itemBuilder: (context, index) {
+        final assignment = assignments[index];
+        final plan = assignment['plan'];
+        final isActive = assignment['isActive'] == true;
+        final assignedAt = assignment['assignedAt'];
+
+        return Card(
+          margin: const EdgeInsets.all(8.0),
+          child: ListTile(
+            leading: Icon(Icons.assignment, color: isActive ? Colors.green : Colors.grey),
+            title: Text(plan['name'] ?? 'Plan sin nombre'),
+            subtitle: Text('Asignado: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(assignedAt))}\nEstado: ${isActive ? "Activo" : "Finalizado"}'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.visibility, color: Colors.blue),
+                  onPressed: () async {
+                      // Fetch full plan details
+                      final planId = plan['id'];
+                      final fullPlan = await context.read<PlanProvider>().getPlanById(planId);
+                      
+                      if (fullPlan != null && context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PlanDetailsScreen(
+                              plan: fullPlan, 
+                              readOnly: true,
+                              canEdit: false,
+                              assignment: StudentAssignment.fromJson(assignment), 
+                              studentId: widget.student.id, 
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _confirmDelete(assignment['id']),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
+                          ),
+                        );
+                      } else if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error cargando detalles del plan')));
+                      }
                   },
                 ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _confirmDelete(assignment['id']),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

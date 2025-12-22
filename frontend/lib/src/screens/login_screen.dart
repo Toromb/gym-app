@@ -20,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -48,10 +49,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).colorScheme.primaryContainer,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.fitness_center, size: 72, color: Theme.of(context).primaryColor),
+                    child: Icon(Icons.fitness_center, size: 72, color: Theme.of(context).colorScheme.onPrimaryContainer),
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -71,6 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       prefixIcon: const Icon(Icons.email_outlined),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
+                    textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -81,6 +83,30 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) async {
+                        setState(() => _isLoading = true);
+                        final errorMsg = await context.read<AuthProvider>().login(
+                              _emailController.text,
+                              _passwordController.text,
+                            );
+                        setState(() => _isLoading = false);
+                        if (errorMsg == null && mounted) {
+                          context.read<UserProvider>().clear();
+                        } else if (mounted) {
+                            final isInvalidCreds = errorMsg == 'invalidCredentials';
+                            final displayMsg = isInvalidCreds 
+                                ? AppLocalizations.of(context)!.invalidCredentials
+                                : (errorMsg ?? '${AppLocalizations.of(context)!.error}: ${AppLocalizations.of(context)!.invalidEmail}');
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(displayMsg),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                        }
+                    },
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
