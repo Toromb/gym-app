@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+
 import '../../providers/auth_provider.dart';
 import '../../providers/gyms_provider.dart';
 import '../../models/gym_model.dart';
@@ -28,9 +28,7 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
   late TextEditingController _paymentBankNameController;
   late TextEditingController _paymentNotesController;
   
-  // Colors stored as hex strings in model, but we manage Color objects for picker
-  Color _primaryColor = Colors.blue; 
-  Color _secondaryColor = Colors.orange;
+
 
    Gym? _currentGym;
    bool _isInit = true;
@@ -62,21 +60,7 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
     }
   }
   
-  Color _hexToColor(String? hexString) {
-      if (hexString == null || hexString.isEmpty) return Colors.blue;
-      try {
-        final buffer = StringBuffer();
-        if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
-        buffer.write(hexString.replaceFirst('#', ''));
-        return Color(int.parse(buffer.toString(), radix: 16));
-      } catch (e) {
-        return Colors.blue;
-      }
-  }
 
-  String _colorToHex(Color color) {
-      return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
-  }
 
   void _populateParams(Gym gym) {
       setState(() {
@@ -93,8 +77,6 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
           _paymentBankNameController = TextEditingController(text: gym.paymentBankName);
           _paymentNotesController = TextEditingController(text: gym.paymentNotes);
           
-          _primaryColor = _hexToColor(gym.primaryColor);
-          _secondaryColor = _hexToColor(gym.secondaryColor);
       });
   }
 
@@ -166,8 +148,8 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
               status: _currentGym!.status,
               maxProfiles: _currentGym!.maxProfiles,
               logoUrl: _currentGym!.logoUrl, 
-              primaryColor: _colorToHex(_primaryColor),
-              secondaryColor: _colorToHex(_secondaryColor),
+              primaryColor: _currentGym!.primaryColor,
+              secondaryColor: _currentGym!.secondaryColor,
               welcomeMessage: _welcomeMessageController.text,
               openingHours: _currentGym!.openingHours, // Preserve existing or empty
               paymentAlias: _paymentAliasController.text,
@@ -199,44 +181,7 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
       return 'http://10.0.2.2:3000$relativeUrl'; 
   }
 
-  void _showColorPicker(bool isPrimary) {
-      showDialog(
-        context: context,
-        builder: (context) {
-             Color pickerColor = isPrimary ? _primaryColor : _secondaryColor;
-             return AlertDialog(
-                 title: Text('Seleccionar color ${isPrimary ? 'Principal' : 'Secundario'}'),
-                 content: SingleChildScrollView(
-                     child: BlockPicker(
-                         pickerColor: pickerColor,
-                         onColorChanged: (color) {
-                             pickerColor = color;
-                         },
-                     ),
-                 ),
-                 actions: [
-                     TextButton(
-                         child: const Text('Cancelar'),
-                         onPressed: () => Navigator.of(context).pop(),
-                     ),
-                     ElevatedButton(
-                         child: const Text('Seleccionar'),
-                         onPressed: () {
-                             setState(() {
-                                 if (isPrimary) {
-                                     _primaryColor = pickerColor;
-                                 } else {
-                                     _secondaryColor = pickerColor;
-                                 }
-                             });
-                             Navigator.of(context).pop();
-                         },
-                     ),
-                 ],
-             );
-        },
-      );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -283,20 +228,6 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
                ),
                const SizedBox(height: 20),
                
-               // Colors
-               ListTile(
-                   title: const Text('Color Principal'),
-                   trailing: CircleAvatar(backgroundColor: _primaryColor),
-                   onTap: () => _showColorPicker(true),
-                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade300)),
-               ),
-               const SizedBox(height: 10),
-               ListTile(
-                   title: const Text('Color Secundario'),
-                   trailing: CircleAvatar(backgroundColor: _secondaryColor),
-                   onTap: () => _showColorPicker(false),
-                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade300)),
-               ),
               
               const SizedBox(height: 20),
               const Text('Información Institucional', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -327,7 +258,7 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
               const SizedBox(height: 10),
                TextFormField(
                 controller: _welcomeMessageController,
-                decoration: const InputDecoration(labelText: 'Mensaje de Bienvenida (Dashboard Alumnos)'),
+                decoration: const InputDecoration(labelText: 'Mensaje informativo (Pagina principal de Alumnos)'),
                 maxLines: 2,
               ),
 

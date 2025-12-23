@@ -14,6 +14,8 @@ import 'student_plans_list_screen.dart';
 import 'student_plans_list_screen.dart';
 import '../../widgets/payment_status_badge.dart';
 import 'calendar_screen.dart';
+import '../../providers/gym_schedule_provider.dart';
+import '../../models/gym_schedule_model.dart';
 import 'package:intl/intl.dart';
 
 class StudentHomeScreen extends StatefulWidget {
@@ -33,6 +35,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       final provider = context.read<PlanProvider>();
       provider.fetchMyHistory();
       provider.computeWeeklyStats();
+      provider.computeMonthlyStats();
+      context.read<GymScheduleProvider>().fetchSchedule();
     });
   }
 
@@ -81,8 +85,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 _buildDashboardCard(
                   context,
                   title: 'Mi rutina', // Renamed from "Planes"
-                  subtitle: planProvider.nextWorkout != null && planProvider.nextWorkout!['week'] != null
-                      ? 'Plan activo: Semana ${(planProvider.nextWorkout!['week'] as PlanWeek).weekNumber}'
+                  subtitle: planProvider.nextWorkout != null && planProvider.nextWorkout!['assignment'] != null
+                      ? 'Plan activo: ${(planProvider.nextWorkout!['assignment'] as StudentAssignment).plan.name}'
                       : AppLocalizations.of(context)!.get('myPlansSub'),
                   icon: Icons.fitness_center,
                   onTap: () {
@@ -92,12 +96,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     );
                   },
                 ),
-                 const SizedBox(height: 16),
+                  const SizedBox(height: 16),
                 _buildDashboardCard(
                   context,
-                  title: AppLocalizations.of(context)!.get('workoutHistory'),
-                  subtitle: planProvider.weeklyWorkoutCount > 0 
-                      ? 'Entrenamientos esta semana: ${planProvider.weeklyWorkoutCount}'
+                  title: 'Historial de entrenamiento',
+                  subtitle: planProvider.monthlyWorkoutCount > 0 
+                      ? 'Entrenamientos este mes: ${planProvider.monthlyWorkoutCount}'
                       : AppLocalizations.of(context)!.get('workoutHistorySub'),
                   icon: Icons.calendar_month,
                   onTap: () {
@@ -108,12 +112,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   },
                 ),
                  const SizedBox(height: 16),
-                _buildDashboardCard(
+                  _buildDashboardCard(
                   context,
                   title: AppLocalizations.of(context)!.get('gymSchedule'),
-                  subtitle: user?.gym?.openingHours != null && user!.gym!.openingHours!.isNotEmpty
-                      ? 'Hoy abierto: ${user.gym!.openingHours}'
-                      : AppLocalizations.of(context)!.get('gymScheduleSub'),
+                  subtitle: _getTodayScheduleText(context),
                   icon: Icons.access_time,
                   onTap: () {
                     Navigator.push(
@@ -275,6 +277,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
            if (result == true && mounted) {
              context.read<PlanProvider>().fetchMyHistory();
              context.read<PlanProvider>().computeWeeklyStats();
+             context.read<PlanProvider>().computeMonthlyStats();
           }
           }
         },
@@ -410,8 +413,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             user!.gym!.logoUrl!.startsWith('http') 
                                 ? user!.gym!.logoUrl! 
                                 : 'http://localhost:3000${user!.gym!.logoUrl}',
-                            height: 40, // Smaller logo
-                            width: 40,
+                            height: 55, // Increased to 55px as requested
+                            width: 55,
                             fit: BoxFit.contain,
                             errorBuilder: (c,e,s) => const Icon(Icons.fitness_center, color: Colors.grey),
                          ),
@@ -445,7 +448,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     Expanded(
                       child: Text(
                           welcomeMessage,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[800]),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
                           maxLines: 4,
                           overflow: TextOverflow.ellipsis,
                       ),
@@ -511,5 +514,48 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               ],
           ),
       );
+  }
+
+  String _getTodayScheduleText(BuildContext context) {
+      final schedules = context.watch<GymScheduleProvider>().schedules;
+      if (schedules.isEmpty) return AppLocalizations.of(context)!.get('gymScheduleSub');
+
+      final now = DateTime.now();
+      String dayKey = '';
+      switch (now.weekday) {
+          case 1: dayKey = 'MONDAY'; break;
+          case 2: dayKey = 'TUESDAY'; break;
+          case 3: dayKey = 'WEDNESDAY'; break;
+          case 4: dayKey = 'THURSDAY'; break;
+          case 5: dayKey = 'FRIDAY'; break;
+          case 6: dayKey = 'SATURDAY'; break;
+          case 7: dayKey = 'SUNDAY'; break;
+      }
+
+      // Find schedule or return default closed
+      final todaySchedule = schedules.firstWhere(
+        (s) => s.dayOfWeek == dayKey, 
+        orElse: () => GymSchedule(id: 0, dayOfWeek: dayKey, isClosed: true)
+      );
+      
+      // Get localized day name
+      final loc = AppLocalizations.of(context)!;
+      String dayName = '';
+      switch (dayKey) {
+        case 'MONDAY': dayName = loc.get('day_monday'); break;
+        case 'TUESDAY': dayName = loc.get('day_tuesday'); break;
+        case 'WEDNESDAY': dayName = loc.get('day_wednesday'); break;
+        case 'THURSDAY': dayName = loc.get('day_thursday'); break;
+        case 'FRIDAY': dayName = loc.get('day_friday'); break;
+        case 'SATURDAY': dayName = loc.get('day_saturday'); break;
+        case 'SUNDAY': dayName = loc.get('day_sunday'); break;
+        default: dayName = dayKey;
+      }
+
+      if (todaySchedule.isClosed || todaySchedule.displayHours == 'Closed') {
+          return 'Hoy $dayName: CERRADO';
+      }
+      
+      return 'Hoy $dayName: ${todaySchedule.displayHours}';
   }
 }

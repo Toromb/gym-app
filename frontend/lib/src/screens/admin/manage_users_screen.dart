@@ -207,34 +207,34 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
     return users.map((user) {
       return Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2), // Compact margin
         elevation: 0,
         shape: RoundedRectangleBorder(
            borderRadius: BorderRadius.circular(12),
            side: BorderSide(color: colorScheme.outlineVariant),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Compact padding
           child: Column(
             children: [
                Row(
                  children: [
                     CircleAvatar(
                       backgroundColor: colorScheme.primary,
-                      radius: 24,
+                      radius: 20, // Smaller avatar
                       child: Text(
                         user.firstName.isNotEmpty ? user.firstName[0].toUpperCase() : '?',
                         style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                            Text(
                              '${user.firstName} ${user.lastName}',
-                             style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                             style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold), // Smaller title
                            ),
                            Text(
                              user.email,
@@ -283,6 +283,10 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                  children: [
                      // View Details
                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        iconSize: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                         icon: const Icon(Icons.visibility_outlined),
                         tooltip: 'Ver Detalles',
                         onPressed: () {
@@ -294,20 +298,36 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                             );
                         },
                       ),
+                      const SizedBox(width: 12),
                      
                      if ((isProfeView || isAdmin) && user.role == 'alumno') ...[
-                        if (isAdmin) 
+                        if (isAdmin) ...[
                          IconButton(
+                           visualDensity: VisualDensity.compact,
+                           iconSize: 20,
+                           padding: EdgeInsets.zero,
+                           constraints: const BoxConstraints(),
                            icon: const Icon(Icons.person_add_alt),
                            tooltip: 'Asignar Profesor',
                            onPressed: () => _showAssignProfessorDialog(context, user),
                          ),
+                         const SizedBox(width: 12),
+                        ],
                         IconButton(
+                          visualDensity: VisualDensity.compact,
+                          iconSize: 20,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                           icon: const Icon(Icons.assignment_add),
                           tooltip: 'Asignar Plan',
                           onPressed: () => _showAssignPlanDialog(context, user.id),
                         ),
+                        const SizedBox(width: 12),
                         IconButton(
+                          visualDensity: VisualDensity.compact,
+                          iconSize: 20,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                           icon: const Icon(Icons.list_alt),
                           tooltip: 'Gestionar Planes',
                           onPressed: () {
@@ -319,9 +339,14 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                             );
                           },
                         ),
+                        const SizedBox(width: 12),
                      ],
                      
                      IconButton(
+                       visualDensity: VisualDensity.compact,
+                       iconSize: 20,
+                       padding: EdgeInsets.zero,
+                       constraints: const BoxConstraints(),
                        icon: const Icon(Icons.edit_outlined),
                        tooltip: 'Editar',
                        onPressed: () {
@@ -333,8 +358,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                          );
                        },
                      ),
+                     const SizedBox(width: 12),
                      
                       IconButton(
+                       visualDensity: VisualDensity.compact,
+                       iconSize: 20,
+                       padding: EdgeInsets.zero,
+                       constraints: const BoxConstraints(),
                        icon: Icon(Icons.delete_outline, color: colorScheme.error),
                        tooltip: 'Eliminar',
                        onPressed: () async {

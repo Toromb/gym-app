@@ -254,6 +254,7 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
 
     final badge = Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -268,17 +269,23 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
               Icon(icon, size: 14, color: color),
               const SizedBox(width: 4),
               Text(text, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+              if (!widget.isEditable) ...[
+                const SizedBox(width: 6),
+                Icon(Icons.chevron_right, size: 16, color: color.withOpacity(0.8)),
+              ]
             ],
           ),
         ),
         if (widget.expirationDate != null && widget.expirationDate!.isNotEmpty)
            Padding(
-             padding: const EdgeInsets.only(top: 4.0),
+             padding: const EdgeInsets.only(top: 4.0, left: 4.0),
              child: Text(
                'Vence: ${widget.expirationDate}',
                style: const TextStyle(fontSize: 11, color: Colors.grey),
              ),
            ),
+        
+
       ],
     );
 

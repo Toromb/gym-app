@@ -19,6 +19,9 @@ class PlanProvider with ChangeNotifier {
   int _weeklyWorkoutCount = 0;
   int get weeklyWorkoutCount => _weeklyWorkoutCount;
 
+  int _monthlyWorkoutCount = 0;
+  int get monthlyWorkoutCount => _monthlyWorkoutCount;
+
   List<StudentAssignment> _assignments = [];
   
   StudentAssignment? _activeAssignment;
@@ -266,6 +269,20 @@ class PlanProvider with ChangeNotifier {
           notifyListeners();
       } catch (e) {
           debugPrint('Error computing stats: $e');
+      }
+  }
+
+  Future<void> computeMonthlyStats() async {
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+      final endOfMonth = DateTime(now.year, now.month + 1, 0);
+
+      try {
+          final executions = await fetchCalendar(startOfMonth, endOfMonth);
+          _monthlyWorkoutCount = executions.where((e) => e.status == 'COMPLETED').length;
+          notifyListeners();
+      } catch (e) {
+          debugPrint('Error computing monthly stats: $e');
       }
   }
 
