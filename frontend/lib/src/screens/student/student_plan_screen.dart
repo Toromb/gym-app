@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 import '../../providers/plan_provider.dart';
 import '../shared/day_detail_screen.dart';
 import '../../localization/app_localizations.dart';
@@ -17,9 +17,9 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch plan on init to ensure fresh data if navigated directly
+    // Fetch history to get the active assignment structure (ID needed for restart)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PlanProvider>().fetchMyPlan();
+      context.read<PlanProvider>().fetchMyHistory();
     });
   }
 
@@ -34,7 +34,10 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
           if (planProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          final plan = planProvider.myPlan;
+          
+          final assignment = planProvider.activeAssignment;
+          // Fallback to _myPlan if assignment not explicitly calculated but myPlan exists (legacy)
+          final plan = assignment?.plan ?? planProvider.myPlan;
           
           if (plan == null) {
             return const Center(child: Text('No hay plan asignado.'));
@@ -45,7 +48,7 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildPlanSummaryCard(context, plan),
+                _buildPlanSummaryCard(context, plan, assignment?.id),
                 const SizedBox(height: 24),
                 const Text('Cronograma Semanal', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
@@ -58,7 +61,7 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
     );
   }
 
-  Widget _buildPlanSummaryCard(BuildContext context, dynamic plan) {
+  Widget _buildPlanSummaryCard(BuildContext context, dynamic plan, String? assignmentId) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -76,18 +79,34 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Plan Actual',
-            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            plan.name,
-            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Plan Actual',
+                    style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    plan.name,
+                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              if (assignmentId != null) 
+                 IconButton(
+                   icon: const Icon(Icons.refresh, color: Colors.white, size: 28),
+                   onPressed: () => _confirmRestart(context, assignmentId),
+                   tooltip: 'Reiniciar Plan',
+                 ),
+            ],
           ),
           if (plan.objective != null) ...[
             const SizedBox(height: 8),
-             // FIX: Changed background and text color for better contrast
              Chip(
                label: Text(plan.objective!),
                backgroundColor: Colors.white, 
@@ -95,6 +114,45 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
                side: BorderSide.none,
              ),
           ],
+        ],
+      ),
+    );
+  }
+
+  void _confirmRestart(BuildContext context, String assignmentId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reiniciar Plan'),
+        content: const Text(
+          '¿Estás seguro de que deseas reiniciar este plan? \n\n'
+          'Se borrarán los checks de progreso actual, pero tu historial de ejecuciones se guardará para que puedas consultarlo en el calendario.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final success = await context.read<PlanProvider>().restartPlan(assignmentId);
+              if (success && context.mounted) {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                   const SnackBar(content: Text('El plan se ha reiniciado correctamente.')),
+                 );
+              } else if (context.mounted) {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                   const SnackBar(content: Text('Error al reiniciar el plan.')),
+                 );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Reiniciar'),
+          ),
         ],
       ),
     );
