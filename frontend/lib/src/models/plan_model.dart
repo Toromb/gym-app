@@ -1,5 +1,53 @@
 import 'user_model.dart';
 
+import 'user_model.dart';
+
+class Muscle {
+  final String id;
+  final String name;
+  final String region;
+  final String bodySide;
+  final int order;
+
+  Muscle({
+    required this.id,
+    required this.name,
+    required this.region,
+    required this.bodySide,
+    required this.order,
+  });
+
+  factory Muscle.fromJson(Map<String, dynamic> json) {
+    return Muscle(
+      id: json['id'],
+      name: json['name'],
+      region: json['region'] ?? '',
+      bodySide: json['bodySide'] ?? '',
+      order: json['order'] ?? 0,
+    );
+  }
+}
+
+class ExerciseMuscle {
+  final String id;
+  final String role; // PRIMARY, SECONDARY, STABILIZER
+  final Muscle muscle;
+
+  ExerciseMuscle({
+    required this.id,
+    required this.role,
+    required this.muscle,
+  });
+
+  factory ExerciseMuscle.fromJson(Map<String, dynamic> json) {
+    return ExerciseMuscle(
+      id: json['id'],
+      role: json['role'],
+      muscle: Muscle.fromJson(json['muscle']),
+    );
+  }
+}
+
 class Exercise {
   final String id;
   final String name;
@@ -15,6 +63,7 @@ class Exercise {
   final String? rest;
   final String? load;
   final String? notes;
+  final List<ExerciseMuscle> muscles;
 
   Exercise({
     required this.id,
@@ -29,9 +78,15 @@ class Exercise {
     this.rest,
     this.load,
     this.notes,
+    this.muscles = const [],
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
+    var musclesList = (json['exerciseMuscles'] as List<dynamic>?)
+            ?.map((e) => ExerciseMuscle.fromJson(e))
+            .toList() ??
+        [];
+
     return Exercise(
       id: json['id'],
       name: json['name'],
@@ -45,6 +100,7 @@ class Exercise {
       rest: json['rest'],
       load: json['load'],
       notes: json['notes'],
+      muscles: musclesList,
     );
   }
 }

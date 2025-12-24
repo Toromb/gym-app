@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'manage_users_screen.dart';
 import '../shared/plans_list_screen.dart';
-import '../teacher/create_plan_screen.dart';
 import '../teacher/exercises_list_screen.dart';
 import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
@@ -66,8 +65,8 @@ class AdminDashboardScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                   child: Image.network(
                                       user!.gym!.logoUrl!.startsWith('http') 
-                                          ? user!.gym!.logoUrl! 
-                                          : 'http://localhost:3000${user!.gym!.logoUrl}',
+                                          ? user.gym!.logoUrl! 
+                                          : 'http://localhost:3001${user.gym!.logoUrl}',
                                       height: 80, 
                                       fit: BoxFit.contain,
                                       errorBuilder: (c,e,s) => const SizedBox.shrink(),
@@ -94,8 +93,8 @@ class AdminDashboardScreen extends StatelessWidget {
                                    maxLines: 2,
                                ),
                                const SizedBox(height: 2),
-                               if (user!.gym!.address != null && user!.gym!.address!.isNotEmpty)
-                                   Text(user!.gym!.address!, style: TextStyle(fontSize: 11, color: colorScheme.secondary), textAlign: TextAlign.end), 
+                               if (user.gym!.address.isNotEmpty)
+                                   Text(user.gym!.address, style: TextStyle(fontSize: 11, color: colorScheme.secondary), textAlign: TextAlign.end), 
                            ],
                          ),
                       )

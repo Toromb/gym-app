@@ -3,10 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/plan_model.dart'; // Using Exercise from plan_model for now
+import '../models/plan_model.dart';
 import '../utils/constants.dart';
 
 class ExerciseService {
+  // Service to handle exercise operations
   final _storage = const FlutterSecureStorage();
 
   Future<String?> _getToken() async {
@@ -17,10 +18,15 @@ class ExerciseService {
     return await _storage.read(key: 'jwt');
   }
 
-  Future<List<Exercise>> getExercises() async {
+  Future<List<Exercise>> getExercises({String? muscleId}) async {
     final token = await _getToken();
+    
+    final uri = Uri.parse('$baseUrl/exercises').replace(queryParameters: {
+      if (muscleId != null) 'muscleId': muscleId,
+    });
+
     final response = await http.get(
-      Uri.parse('$baseUrl/exercises'),
+      uri,
       headers: {
         'Authorization': 'Bearer $token',
       },
@@ -33,6 +39,7 @@ class ExerciseService {
       throw Exception('Failed to load exercises');
     }
   }
+
   Future<void> createExercise(Map<String, dynamic> exerciseData) async {
     final token = await _getToken();
     final response = await http.post(
@@ -75,7 +82,34 @@ class ExerciseService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to delete exercise: ${response.body}');
+      String message = 'Failed to delete exercise';
+      try {
+        final body = jsonDecode(response.body);
+        message = body['message'] ?? message;
+      } catch (_) {
+        message = '${response.statusCode}: ${response.body}';
+      }
+      throw Exception(message);
+    }
+  }
+
+  Future<List<Muscle>> getMuscles() async {
+    final token = await _getToken();
+    if (token == null) return [];
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/exercises/muscles'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Muscle.fromJson(json)).toList();
+    } else {
+      debugPrint('Failed to load muscles: ${response.body}');
+      return [];
     }
   }
 }

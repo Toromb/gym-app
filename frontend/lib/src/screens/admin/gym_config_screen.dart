@@ -51,7 +51,7 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
             final gym = await gymsProvider.fetchGym(user!.gym!.id);
             if (gym != null) {
                  _populateParams(gym);
-            } else if (user!.gym != null) {
+            } else if (user.gym != null) {
                  _populateParams(user.gym!);
             }
         } catch (e) {
@@ -176,9 +176,9 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
       
       if (kIsWeb) {
           if (kReleaseMode) return relativeUrl; 
-          return 'http://localhost:3000$relativeUrl'; 
+          return 'http://localhost:3001$relativeUrl'; 
       }
-      return 'http://10.0.2.2:3000$relativeUrl'; 
+      return 'http://10.0.2.2:3001$relativeUrl'; 
   }
 
 

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
-import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
-import '../../models/plan_model.dart';
 import '../../models/user_model.dart'; // Import User model for type checking
 import 'add_user_screen.dart';
 import 'edit_user_screen.dart';
@@ -60,7 +58,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
           // Filter Logic
           final filteredUsers = users.where((u) {
-            final matchesSearch = (u.firstName + ' ' + u.lastName).toLowerCase().contains(_searchQuery.toLowerCase()) || 
+            final matchesSearch = ('${u.firstName} ${u.lastName}').toLowerCase().contains(_searchQuery.toLowerCase()) || 
                                   u.email.toLowerCase().contains(_searchQuery.toLowerCase());
             
             if (!matchesSearch) return false;
@@ -129,7 +127,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
               filled: true,
-              fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             ),
             onChanged: (val) {
               setState(() {
@@ -139,13 +137,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _filterStatus,
+            initialValue: _filterStatus,
             decoration: InputDecoration(
               labelText: 'Estado de Cuota',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
               filled: true,
-              fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             ),
             items: const [
               DropdownMenuItem(value: 'all', child: Text('Todos')),
@@ -264,7 +262,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                  Container(
                    padding: const EdgeInsets.all(8),
                    decoration: BoxDecoration(
-                     color: colorScheme.secondaryContainer.withOpacity(0.3),
+                     color: colorScheme.secondaryContainer.withValues(alpha: 0.3),
                      borderRadius: BorderRadius.circular(8),
                    ),
                    child: Row(
@@ -533,7 +531,7 @@ class _AssignProfessorDialogState extends State<_AssignProfessorDialog> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                         DropdownButtonFormField<String>(
-                             value: _professors.any((p) => p.id == _selectedProfessorId) ? _selectedProfessorId : null,
+                             initialValue: _professors.any((p) => p.id == _selectedProfessorId) ? _selectedProfessorId : null,
                              decoration: const InputDecoration(
                                  labelText: 'Seleccionar Profesor',
                              ),

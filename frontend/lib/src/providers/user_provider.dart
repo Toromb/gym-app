@@ -133,21 +133,20 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> deleteUser(String id) async {
+  Future<String?> deleteUser(String id) async {
     _isLoading = true;
     notifyListeners();
     try {
-      final success = await _userService.deleteUser(id);
-      if (success) {
+      final error = await _userService.deleteUser(id);
+      if (error == null) {
         _students.removeWhere((user) => user.id == id);
         notifyListeners();
-        return true;
+        return null; // Success
       }
-      return false;
+      return error; // Failure message
     } catch (e) {
       print('Error deleting user: $e');
-      return false;
-      return false;
+      return 'Error de conexión o excepción: $e';
     } finally {
       _isLoading = false;
       notifyListeners();

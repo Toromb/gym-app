@@ -70,7 +70,7 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -88,7 +88,7 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
                 children: [
                   Text(
                     'Plan Actual',
-                    style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14),
                   ),
                   const SizedBox(height: 8),
                   Text(

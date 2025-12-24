@@ -161,7 +161,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.primary.withOpacity(0.3),
+            color: colorScheme.primary.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -172,7 +172,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
         children: [
           Text(
             AppLocalizations.of(context)!.get('planOverview'),
-            style: textTheme.labelLarge?.copyWith(color: colorScheme.onPrimary.withOpacity(0.8)),
+            style: textTheme.labelLarge?.copyWith(color: colorScheme.onPrimary.withValues(alpha: 0.8)),
           ),
           const SizedBox(height: 8),
           Text(
@@ -197,7 +197,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
              const SizedBox(height: 12),
              Text(
                AppLocalizations.of(context)!.get('durationWeeks').replaceAll('{weeks}', '${plan.durationWeeks}'),
-               style: textTheme.bodyMedium?.copyWith(color: colorScheme.onPrimary.withOpacity(0.9)),
+               style: textTheme.bodyMedium?.copyWith(color: colorScheme.onPrimary.withValues(alpha: 0.9)),
              ),
           ]
         ],
@@ -230,10 +230,10 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: isCompleted ? AppColors.success.withOpacity(0.05) : null, // Subtle green tint if completed
+      color: isCompleted ? AppColors.success.withValues(alpha: 0.05) : null, // Subtle green tint if completed
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: isCompleted ? BorderSide(color: AppColors.success.withOpacity(0.5), width: 1) : BorderSide.none,
+        side: isCompleted ? BorderSide(color: AppColors.success.withValues(alpha: 0.5), width: 1) : BorderSide.none,
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -287,7 +287,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: isCompleted ? AppColors.success : colorScheme.primary.withOpacity(0.1),
+                  color: isCompleted ? AppColors.success : colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(

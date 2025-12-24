@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../localization/app_localizations.dart';
+import '../../models/plan_model.dart';
 
 class ExerciseExecutionCard extends StatefulWidget {
   final ExerciseExecution execution;
@@ -118,13 +119,22 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   @override
   Widget build(BuildContext context) {
     // Colors
-    final completedColor = Colors.green;
+    const completedColor = Colors.green;
     final defaultColor = Theme.of(context).primaryColor;
+    // We assume if Wrap is ignoring pointer (parent), we can't click swap anyway.
+    // But better to hide it if we knew it's readOnly. 
+    // We don't have readOnly passed to Card explicitly except via IgnorePointer.
+    // But we can check if we want to pass it.
+    // Or just rely on IgnorePointer which disables the IconButton.
+    // Let's assume IgnorePointer handles interaction prevention.
+    
+    final bool readOnly = false; // logic handled by parent IgnorePointer
+
 
     return Card(
       elevation: _isCompleted ? 1 : 4,
       margin: const EdgeInsets.only(bottom: 20),
-      color: _isCompleted ? Colors.green.withOpacity(0.15) : null, // Theme aware tint logic
+      color: _isCompleted ? Colors.green.withValues(alpha: 0.15) : null, // Theme aware tint logic
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: _isCompleted ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
@@ -142,7 +152,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _isCompleted ? completedColor.withOpacity(0.2) : defaultColor.withOpacity(0.1),
+                    color: _isCompleted ? completedColor.withValues(alpha: 0.2) : defaultColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -191,7 +201,16 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                     ],
                   ),
                 ),
+
+
                 
+                // Swap Button
+                if (!readOnly && (widget.execution.exercise?.muscles.any((m) => m.role == 'PRIMARY') ?? false))
+                  IconButton(
+                    icon: const Icon(Icons.swap_horiz, color: Colors.blueGrey),
+                    onPressed: () => _showSwapDialog(context),
+                  ),
+
                 // Checkbox
                 Transform.scale(
                   scale: 1.3,
@@ -204,6 +223,35 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                 ),
               ],
             ),
+
+            // Muscle Tags
+            if (widget.execution.exercise?.muscles.isNotEmpty ?? false) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: widget.execution.exercise!.muscles.map((em) {
+                  final isPrimary = em.role == 'PRIMARY'; // Should match Enum string from backend
+                  final color = Theme.of(context).primaryColor;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isPrimary ? color.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                      border: isPrimary ? Border.all(color: color.withOpacity(0.5), width: 0.5) : null,
+                    ),
+                    child: Text(
+                      em.muscle.name,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: isPrimary ? FontWeight.bold : FontWeight.normal,
+                        color: isPrimary ? color : Colors.grey[700],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
             
             const SizedBox(height: 16),
             const Divider(height: 1), // Theme-aware divider
@@ -257,14 +305,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     );
   }
 
-  Widget _buildStaticMetric(BuildContext context, String value, String label) {
-    return Column(
-      children: [
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-      ],
-    );
-  }
+
 
   Widget _buildInputMetric(BuildContext context, {
     required TextEditingController controller, 
@@ -301,5 +342,83 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
         );
       }
     }
+  }
+
+  void _showSwapDialog(BuildContext context) {
+    if (widget.execution.exercise == null) return;
+    
+    // Find Primary Muscle
+    // We assume backend returns 'PRIMARY' string.
+    final muscles = widget.execution.exercise!.muscles;
+    final primary = muscles.firstWhere(
+      (m) => m.role == 'PRIMARY', 
+      orElse: () => muscles.isNotEmpty 
+          ? muscles.first 
+          : throw 'No muscles' // Handled by try/catch or checks
+    );
+    
+    // Check if "No muscles" case (shouldn't happen if button verified)
+    // But if it throws string, handle it (or just return)
+    if (muscles.isEmpty) return; 
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('${AppLocalizations.of(ctx)!.get('changeExercise') ?? "Change Exercise"}'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: FutureBuilder<List<Exercise>>(
+            future: ctx.read<PlanProvider>().fetchExercisesByMuscle(primary.muscle.id),
+            builder: (ctx, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()));
+              }
+              if (snapshot.hasError) {
+                return const Text('Error loading exercises');
+              }
+              final list = snapshot.data ?? [];
+              if (list.isEmpty) return const Text('No alternatives found.');
+
+              return ListView.builder(
+                shrinkWrap: true,
+                itemCount: list.length,
+                itemBuilder: (ctx, i) {
+                  final ex = list[i];
+                  if (ex.id == widget.execution.exercise?.id) return const SizedBox.shrink();
+
+                  return ListTile(
+                    leading: const Icon(Icons.fitness_center),
+                    title: Text(ex.name),
+                    subtitle: Text(ex.muscleGroup),
+                    trailing: const Icon(Icons.swap_horiz, color: Colors.blue),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _performSwap(ex);
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          )
+        ],
+      ),
+    );
+  }
+
+  Future<void> _performSwap(Exercise newEx) async {
+    final updateData = {
+      'exercise': {'id': newEx.id},
+      'exerciseNameSnapshot': newEx.name,
+      'videoUrl': newEx.videoUrl,
+      'planExerciseId': null, 
+    };
+    
+    await context.read<PlanProvider>().updateExerciseExecution(widget.execution.id, updateData);
   }
 }

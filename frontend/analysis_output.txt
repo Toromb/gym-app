@@ -1,0 +1,211 @@
+﻿Resolving dependencies...
+Downloading packages...
+  characters 1.4.0 (1.4.1 available)
+  flutter_lints 2.0.3 (6.0.0 available)
+  flutter_secure_storage 8.1.0 (10.0.0 available)
+  flutter_secure_storage_linux 1.2.3 (3.0.0 available)
+  flutter_secure_storage_macos 3.1.3 (4.0.0 available)
+  flutter_secure_storage_platform_interface 1.1.2 (2.0.1 available)
+  flutter_secure_storage_web 1.2.1 (2.1.0 available)
+  flutter_secure_storage_windows 2.1.1 (4.1.0 available)
+  js 0.6.7 (0.7.2 available)
+  lints 2.1.1 (6.0.0 available)
+  matcher 0.12.17 (0.12.18 available)
+  material_color_utilities 0.11.1 (0.13.0 available)
+  test_api 0.7.7 (0.7.8 available)
+Got dependencies!
+13 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Analyzing frontend...                                           
+
+warning - Two keys in a map literal shouldn't be equal - lib\src\localization\app_localizations.dart:113:7 - equal_keys_in_map
+warning - Two keys in a map literal shouldn't be equal - lib\src\localization\app_localizations.dart:114:7 - equal_keys_in_map
+warning - Two keys in a map literal shouldn't be equal - lib\src\localization\app_localizations.dart:126:7 - equal_keys_in_map
+warning - Two keys in a map literal shouldn't be equal - lib\src\localization\app_localizations.dart:127:7 - equal_keys_in_map
+warning - Two keys in a map literal shouldn't be equal - lib\src\localization\app_localizations.dart:128:7 - equal_keys_in_map
+warning - Two keys in a map literal shouldn't be equal - lib\src\localization\app_localizations.dart:130:7 - equal_keys_in_map
+warning - The receiver can't be null, so the null-aware operator '?.' is unnecessary - lib\src\models\execution_model.dart:128:24 - invalid_null_aware_operator
+   info - Don't invoke 'print' in production code - lib\src\providers\gym_schedule_provider.dart:30:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\gym_schedule_provider.dart:38:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\gym_schedule_provider.dart:43:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\gym_schedule_provider.dart:46:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\gym_schedule_provider.dart:50:7 - avoid_print
+   info - The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/foundation.dart' - lib\src\providers\gyms_provider.dart:3:8 - unnecessary_import
+   info - Unnecessary braces in a string interpolation - lib\src\providers\plan_provider.dart:275:72 - unnecessary_brace_in_string_interps
+   info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:30:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:80:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:128:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:148:7 - avoid_print
+warning - Dead code - lib\src\providers\user_provider.dart:150:7 - dead_code
+   info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:172:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\screens\admin\add_user_screen.dart:59:11 - avoid_print
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\admin\add_user_screen.dart:90:21 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\admin\add_user_screen.dart:125:30 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\admin\add_user_screen.dart:191:19 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\admin\add_user_screen.dart:228:45 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\admin\add_user_screen.dart:229:52 - use_build_context_synchronously
+warning - Unused import: '../teacher/create_plan_screen.dart' - lib\src\screens\admin\admin_dashboard_screen.dart:6:8 - unused_import
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\admin\admin_dashboard_screen.dart:69:49 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\admin\admin_dashboard_screen.dart:70:73 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\admin\admin_dashboard_screen.dart:97:40 - unnecessary_non_null_assertion
+warning - The operand can't be 'null', so the condition is always 'true' - lib\src\screens\admin\admin_dashboard_screen.dart:97:55 - unnecessary_null_comparison
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\admin\admin_dashboard_screen.dart:97:70 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\admin\admin_dashboard_screen.dart:97:84 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\admin\admin_dashboard_screen.dart:98:45 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\admin\admin_dashboard_screen.dart:98:59 - unnecessary_non_null_assertion
+   info - Don't invoke 'print' in production code - lib\src\screens\admin\edit_user_screen.dart:52:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\screens\admin\edit_user_screen.dart:70:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\screens\admin\edit_user_screen.dart:73:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\screens\admin\edit_user_screen.dart:90:11 - avoid_print
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\admin\edit_user_screen.dart:137:30 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\admin\edit_user_screen.dart:191:19 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\admin\edit_user_screen.dart:201:19 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\admin\edit_user_screen.dart:274:45 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\admin\edit_user_screen.dart:275:52 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\admin\edit_user_screen.dart:279:31 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\admin\edit_user_screen.dart:281:53 - use_build_context_synchronously
+   info - Invalid use of a private type in a public API - lib\src\screens\admin\gym_config_screen.dart:14:3 - library_private_types_in_public_api
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\admin\gym_config_screen.dart:54:28 - unnecessary_non_null_assertion
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\admin\gym_config_screen.dart:120:62 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\admin\gym_config_screen.dart:132:41 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\admin\gym_config_screen.dart:135:36 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\admin\gym_config_screen.dart:165:45 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\admin\gym_config_screen.dart:166:40 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\admin\gym_config_screen.dart:169:37 - use_build_context_synchronously
+warning - Duplicate import - lib\src\screens\admin\manage_users_screen.dart:4:8 - duplicate_import
+warning - Unused import: '../../models/plan_model.dart' - lib\src\screens\admin\manage_users_screen.dart:8:8 - unused_import
+   info - Use interpolation to compose strings and values - lib\src\screens\admin\manage_users_screen.dart:63:36 - prefer_interpolation_to_compose_strings
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\admin\manage_users_screen.dart:132:62 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\admin\manage_users_screen.dart:142:13 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\admin\manage_users_screen.dart:148:62 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\admin\manage_users_screen.dart:267:60 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\admin\manage_users_screen.dart:536:30 - deprecated_member_use
+warning - Unused import: '../constants/app_constants.dart' - lib\src\screens\home_screen.dart:3:8 - unused_import
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:95:27 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:99:55 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:100:71 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:100:111 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:102:50 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:127:33 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:135:61 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:136:77 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:136:117 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:138:56 - use_build_context_synchronously
+   info - Invalid use of a private type in a public API - lib\src\screens\profile_screen.dart:12:3 - library_private_types_in_public_api
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\profile_screen.dart:295:21 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\profile_screen.dart:300:89 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\profile_screen.dart:396:59 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\profile_screen.dart:396:89 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\profile_screen.dart:481:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\profile_screen.dart:509:85 - deprecated_member_use
+   info - Don't invoke 'print' in production code - lib\src\screens\shared\day_detail_screen.dart:111:5 - avoid_print
+warning - The declaration '_buildMetric' isn't referenced - lib\src\screens\shared\day_detail_screen.dart:240:10 - unused_element
+warning - The declaration '_launchVideo' isn't referenced - lib\src\screens\shared\day_detail_screen.dart:251:16 - unused_element
+   info - Use 'const' for final variables initialized to a constant value - lib\src\screens\shared\exercise_execution_card.dart:121:5 - prefer_const_declarations
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\shared\exercise_execution_card.dart:127:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\shared\exercise_execution_card.dart:145:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\shared\exercise_execution_card.dart:145:90 - deprecated_member_use
+warning - The declaration '_buildStaticMetric' isn't referenced - lib\src\screens\shared\exercise_execution_card.dart:260:10 - unused_element
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\shared\gym_schedule_screen.dart:25:9 - use_build_context_synchronously
+warning - The declaration '_onDayCheckboxChanged' isn't referenced - lib\src\screens\shared\plan_details_screen.dart:88:8 - unused_element
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plan_details_screen.dart:124:50 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\shared\plan_details_screen.dart:164:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\shared\plan_details_screen.dart:175:80 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\shared\plan_details_screen.dart:200:83 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\shared\plan_details_screen.dart:233:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\shared\plan_details_screen.dart:236:65 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plan_details_screen.dart:259:20 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plan_details_screen.dart:260:40 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plan_details_screen.dart:263:14 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\shared\plan_details_screen.dart:290:80 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\shared\plans_list_screen.dart:123:60 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plans_list_screen.dart:234:41 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plans_list_screen.dart:235:64 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plans_list_screen.dart:240:22 - use_build_context_synchronously
+   info - The imported package 'collection' isn't a dependency of the importing package - lib\src\screens\student\calendar_screen.dart:6:8 - depend_on_referenced_packages
+   info - Don't invoke 'print' in production code - lib\src\screens\student\calendar_screen.dart:66:5 - avoid_print
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\student\calendar_screen.dart:141:80 - deprecated_member_use
+warning - Duplicate import - lib\src\screens\student\student_home_screen.dart:14:8 - duplicate_import
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\student\student_home_screen.dart:188:27 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:234:55 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:278:15 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:279:15 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:280:15 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\student\student_home_screen.dart:294:52 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\student\student_home_screen.dart:309:83 - deprecated_member_use
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\student\student_home_screen.dart:412:33 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\student\student_home_screen.dart:413:39 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\student\student_home_screen.dart:414:63 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\student\student_home_screen.dart:423:28 - unnecessary_non_null_assertion
+warning - The declaration '_infoRow' isn't referenced - lib\src\screens\student\student_home_screen.dart:505:10 - unused_element
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\student\student_plan_screen.dart:73:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\student\student_plan_screen.dart:91:58 - deprecated_member_use
+warning - Unused import: '../../models/plan_model.dart' - lib\src\screens\student\student_plans_list_screen.dart:4:8 - unused_import
+warning - Unused import: '../shared/day_detail_screen.dart' - lib\src\screens\student\student_plans_list_screen.dart:10:8 - unused_import
+warning - The value of the local variable 'isActive' isn't used - lib\src\screens\student\student_plans_list_screen.dart:53:27 - unused_local_variable
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\student\student_plans_list_screen.dart:94:65 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\student\student_plans_list_screen.dart:96:84 - deprecated_member_use
+warning - Unused import: '../../models/user_model.dart' - lib\src\screens\super_admin\gym_admins_screen.dart:6:8 - unused_import
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\super_admin\gym_admins_screen.dart:66:19 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\super_admin\gym_admins_screen.dart:195:43 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\super_admin\gym_admins_screen.dart:197:50 - use_build_context_synchronously
+warning - Unused import: '../../providers/auth_provider.dart' - lib\src\screens\super_admin\gyms_list_screen.dart:3:8 - unused_import
+warning - Unused import: '../../providers/auth_provider.dart' - lib\src\screens\super_admin\manage_gym_screen.dart:3:8 - unused_import
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\super_admin\manage_gym_screen.dart:62:33 - use_build_context_synchronously
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\super_admin\manage_gym_screen.dart:98:19 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\super_admin\manage_gym_screen.dart:152:15 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\super_admin\platform_stats_screen.dart:86:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\super_admin\super_admin_dashboard.dart:121:39 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\teacher\add_student_screen.dart:112:25 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\add_student_screen.dart:163:45 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\add_student_screen.dart:164:52 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\add_student_screen.dart:168:52 - use_build_context_synchronously
+warning - Unused import: '../../models/plan_model.dart' - lib\src\screens\teacher\assign_plan_modal.dart:6:8 - unused_import
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\teacher\assign_plan_modal.dart:45:19 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\teacher\assign_plan_modal.dart:61:19 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\assign_plan_modal.dart:90:39 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\assign_plan_modal.dart:91:46 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\assign_plan_modal.dart:96:27 - use_build_context_synchronously
+warning - Unused import: '../../models/user_model.dart' - lib\src\screens\teacher\create_plan_screen.dart:7:8 - unused_import
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\screens\teacher\create_plan_screen.dart:172:21 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\teacher\create_plan_screen.dart:380:80 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\create_plan_screen.dart:453:31 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\create_plan_screen.dart:454:38 - use_build_context_synchronously
+warning - Unused import: 'create_plan_screen.dart' - lib\src\screens\teacher\dashboard_screen.dart:6:8 - unused_import
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\teacher\dashboard_screen.dart:71:49 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\teacher\dashboard_screen.dart:72:73 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\teacher\dashboard_screen.dart:99:40 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\teacher\dashboard_screen.dart:99:68 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\teacher\dashboard_screen.dart:100:45 - unnecessary_non_null_assertion
+warning - The declaration '_infoRow' isn't referenced - lib\src\screens\teacher\dashboard_screen.dart:223:10 - unused_element
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\teacher\exercise_detail_screen.dart:24:32 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\teacher\exercises_list_screen.dart:209:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\screens\teacher\manage_students_screen.dart:240:60 - deprecated_member_use
+warning - Unused import: '../../models/plan_model.dart' - lib\src\screens\teacher\student_plans_screen.dart:5:8 - unused_import
+warning - The '!' will have no effect because the receiver can't be null - lib\src\screens\teacher\student_plans_screen.dart:54:103 - unnecessary_non_null_assertion
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\student_plans_screen.dart:173:41 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\student_plans_screen.dart:178:41 - use_build_context_synchronously
+warning - Unused import: '../models/gym_model.dart' - lib\src\widgets\payment_status_badge.dart:5:8 - unused_import
+warning - Unused import: '../models/user_model.dart' - lib\src\widgets\payment_status_badge.dart:6:8 - unused_import
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:82:42 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:83:42 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:84:42 - unnecessary_non_null_assertion
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\widgets\payment_status_badge.dart:103:75 - deprecated_member_use
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:121:34 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:121:63 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:126:59 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:140:34 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:140:61 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:145:57 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:159:34 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:159:66 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:170:62 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:176:34 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:176:69 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:187:62 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:201:35 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:201:64 - unnecessary_non_null_assertion
+warning - The '!' will have no effect because the receiver can't be null - lib\src\widgets\payment_status_badge.dart:202:40 - unnecessary_non_null_assertion
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\widgets\payment_status_badge.dart:262:26 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\widgets\payment_status_badge.dart:274:66 - deprecated_member_use
+

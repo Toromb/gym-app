@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 String get baseUrl {
   if (kIsWeb) {
     if (kDebugMode) {
-      return 'http://127.0.0.1:3000';
+      return 'http://localhost:3001';
     }
     // Use the current window origin to ensure absolute URL
     // This avoids issues with relative URIs in some HTTP clients
@@ -19,7 +19,7 @@ String get baseUrl {
   }
 
   if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000';
+      return 'http://10.0.2.2:3001';
   }
-  return 'http://localhost:3000';
+  return 'http://localhost:3001';
 }

@@ -134,7 +134,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                          const LinearProgressIndicator()
                      else
                          DropdownButtonFormField<String>(
-                             value: _professors.any((p) => p.id == _selectedProfessorId) ? _selectedProfessorId : null,
+                             initialValue: _professors.any((p) => p.id == _selectedProfessorId) ? _selectedProfessorId : null,
                              decoration: const InputDecoration(
                                  labelText: 'Profesor Asignado',
                                  helperText: 'Selecciona un profesor para supervisar a este alumno',
@@ -188,7 +188,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   keyboardType: TextInputType.number,
                 ),
                 DropdownButtonFormField<String>(
-                  value: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
+                  initialValue: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
                   decoration: const InputDecoration(labelText: 'Sexo'),
                   items: const [
                     DropdownMenuItem(value: 'M', child: Text('Masculino')),
@@ -198,7 +198,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   onChanged: (value) => setState(() => _selectedGender = value!),
                 ),
                  DropdownButtonFormField<String>(
-                  value: ['pending', 'paid', 'overdue'].contains(_paymentStatus) ? _paymentStatus : 'pending',
+                  initialValue: ['pending', 'paid', 'overdue'].contains(_paymentStatus) ? _paymentStatus : 'pending',
                   decoration: const InputDecoration(labelText: 'Estado de Pago'),
                   items: const [
                     DropdownMenuItem(value: 'pending', child: Text('Pendiente')),
@@ -269,15 +269,18 @@ class _EditUserScreenState extends State<EditUserScreen> {
                                   widget.user.id,
                                   updateData
                                 );
+                            
+                            if (!mounted) return;
                             setState(() => _isLoading = false);
-                            if (success && mounted) {
+                            
+                            if (success) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Usuario actualizado exitosamente')),
                               );
                               // Refresh list
                               context.read<UserProvider>().fetchUsers(forceRefresh: true);
-                            } else if (mounted) {
+                            } else {
                                ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Error al actualizar usuario')),
                               );

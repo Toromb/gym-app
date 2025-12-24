@@ -70,7 +70,7 @@ class AuthService {
     } catch (e, stack) {
       debugPrint('Login error: $e');
       debugPrint('$stack');
-      return 'Connection error';
+      return 'Error: $e';
     }
   }
 

@@ -3,7 +3,6 @@ import '../../localization/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'manage_students_screen.dart';
-import 'create_plan_screen.dart';
 import '../shared/plans_list_screen.dart';
 import 'exercises_list_screen.dart';
 import '../shared/gym_schedule_screen.dart';
@@ -68,8 +67,8 @@ class TeacherDashboardScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                   child: Image.network(
                                       user!.gym!.logoUrl!.startsWith('http') 
-                                          ? user!.gym!.logoUrl! 
-                                          : 'http://localhost:3000${user!.gym!.logoUrl}',
+                                          ? user.gym!.logoUrl! 
+                                          : 'http://localhost:3001${user.gym!.logoUrl}',
                                       height: 80, 
                                       fit: BoxFit.contain,
                                       errorBuilder: (c,e,s) => const SizedBox.shrink(),
@@ -96,8 +95,8 @@ class TeacherDashboardScreen extends StatelessWidget {
                                    maxLines: 2,
                                ),
                                const SizedBox(height: 2),
-                               if (user!.gym!.phone != null && user!.gym!.phone!.isNotEmpty)
-                                   Text(user!.gym!.phone!, style: TextStyle(fontSize: 11, color: colorScheme.secondary), textAlign: TextAlign.end), 
+                               if (user.gym!.phone != null && user.gym!.phone!.isNotEmpty)
+                                   Text(user.gym!.phone!, style: TextStyle(fontSize: 11, color: colorScheme.secondary), textAlign: TextAlign.end), 
                            ],
                          ),
                       )

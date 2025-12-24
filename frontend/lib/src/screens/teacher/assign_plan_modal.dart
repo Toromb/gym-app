@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../models/user_model.dart';
-import '../../models/plan_model.dart';
 
 class AssignPlanModal extends StatefulWidget {
   final User? preselectedStudent;
@@ -42,7 +41,7 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
                 if (userProvider.isLoading) return const CircularProgressIndicator();
                 return DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: 'Seleccionar Alumno'),
-                  value: _selectedStudentId,
+                  initialValue: _selectedStudentId,
                   items: userProvider.students
                       .map((s) => DropdownMenuItem(value: s.id, child: Text(s.name)))
                       .toList(),
@@ -58,7 +57,7 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
                 if (planProvider.isLoading) return const CircularProgressIndicator();
                 return DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: 'Seleccionar Plan'),
-                  value: _selectedPlanId,
+                  initialValue: _selectedPlanId,
                   items: planProvider.plans
                       .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name)))
                       .toList(),
@@ -84,14 +83,16 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
                           _selectedPlanId!,
                           _selectedStudentId!,
                         );
+                    
+                    if (!mounted) return;
                     setState(() => _isLoading = false);
-                    if (mounted) {
-                      if (error == null) {
+
+                    if (error == null) {
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Plan asignado exitosamente')),
                         );
-                      } else {
+                    } else {
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
@@ -105,7 +106,6 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
                             ],
                           ),
                         );
-                      }
                     }
                   }
                 },

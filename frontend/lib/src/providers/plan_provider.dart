@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import '../models/plan_model.dart';
 import '../models/student_assignment_model.dart';
 import '../models/execution_model.dart';
+import '../models/execution_model.dart';
 import '../services/plan_service.dart';
+import '../services/exercise_api_service.dart';
 
 class PlanProvider with ChangeNotifier {
   final PlanService _planService = PlanService();
@@ -15,6 +17,17 @@ class PlanProvider with ChangeNotifier {
   Plan? get myPlan => _myPlan;
   List<StudentAssignment> get assignments => _assignments;
   bool get isLoading => _isLoading;
+
+  // Exercise Service
+  final ExerciseService _exerciseService = ExerciseService();
+  Future<List<Exercise>> fetchExercisesByMuscle(String muscleId) async {
+    try {
+      return await _exerciseService.getExercises(muscleId: muscleId);
+    } catch (e) {
+      debugPrint('Error fetching exercises by muscle: $e');
+      return [];
+    }
+  }
 
   int _weeklyWorkoutCount = 0;
   int get weeklyWorkoutCount => _weeklyWorkoutCount;
@@ -265,7 +278,14 @@ class PlanProvider with ChangeNotifier {
 
       try {
           final executions = await fetchCalendar(startOfWeek, endOfWeek);
-          _weeklyWorkoutCount = executions.where((e) => e.status == 'COMPLETED').length;
+          // Count unique days by date string
+          final uniqueDays = executions
+              .where((e) => e.status == 'COMPLETED')
+              .map((e) => e.date) // e.date is YYYY-MM-DD
+              .toSet();
+          
+          _weeklyWorkoutCount = uniqueDays.length;
+          debugPrint('Weekly Stats: ${executions.length} executions -> $_weeklyWorkoutCount unique days');
           notifyListeners();
       } catch (e) {
           debugPrint('Error computing stats: $e');

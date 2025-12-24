@@ -125,7 +125,7 @@ class ExerciseExecution {
       videoUrl: pe.videoUrl ?? pe.exercise?.videoUrl,
       exercise: pe.exercise,
       isCompleted: false,
-      setsDone: pe.sets?.toString(), // Default to target sets as string
+      setsDone: pe.sets.toString(), // Default to target sets as string
     );
   }
 }

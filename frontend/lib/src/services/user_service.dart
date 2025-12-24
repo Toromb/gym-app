@@ -88,7 +88,7 @@ class UserService {
     return null;
   }
 
-  Future<bool> deleteUser(String id) async {
+  Future<String?> deleteUser(String id) async {
     final token = await _getToken();
     final response = await http.delete(
       Uri.parse('$baseUrl/users/$id'),
@@ -97,7 +97,17 @@ class UserService {
       },
     );
 
-    return response.statusCode == 200;
+    if (response.statusCode == 200) {
+      return null; // Success
+    } else {
+      // Try to parse message
+      try {
+        final body = jsonDecode(response.body);
+        return body['message'] ?? 'Error al eliminar usuario (${response.statusCode})';
+      } catch (_) {
+        return 'Error al eliminar usuario: ${response.statusCode}';
+      }
+    }
   }
 
   Future<bool> assignPlan(String studentId, String planId) async {

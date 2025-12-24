@@ -4,7 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/plan_provider.dart';
 import '../../providers/exercise_provider.dart';
 import '../../models/plan_model.dart';
-import '../../models/user_model.dart'; // Needed if we used User in Plan, but PlanModel imports it? Check imports.
+// Needed if we used User in Plan, but PlanModel imports it? Check imports.
 
 class CreatePlanScreen extends StatefulWidget {
   final Plan? planToEdit;
@@ -169,7 +169,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                 children: [
                   DropdownButtonFormField<Exercise>(
                     decoration: const InputDecoration(labelText: 'Ejercicio'),
-                    value: selectedExercise,
+                    initialValue: selectedExercise,
                     items: exercises.map((e) => DropdownMenuItem(value: e, child: Text(e.name))).toList(),
                     onChanged: (value) {
                        setStateDialog(() {
@@ -447,9 +447,10 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                 success = await context.read<PlanProvider>().createPlan(plan);
               }
 
+              if (!mounted) return;
               setState(() => _isLoading = false);
               
-              if (success && mounted) {
+              if (success) {
                 Navigator.pop(context, true);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(widget.planToEdit != null ? 'Plan actualizado' : 'Plan creado')),

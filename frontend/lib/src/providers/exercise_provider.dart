@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../models/plan_model.dart';
-import '../services/exercise_service.dart';
+import '../services/exercise_api_service.dart';
 
 class ExerciseProvider with ChangeNotifier {
   final ExerciseService _exerciseService = ExerciseService();

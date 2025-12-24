@@ -90,10 +90,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               _emailController.text,
                               _passwordController.text,
                             );
+                        
+                        if (!mounted) return;
                         setState(() => _isLoading = false);
-                        if (errorMsg == null && mounted) {
+
+                        if (errorMsg == null) {
                           context.read<UserProvider>().clear();
-                        } else if (mounted) {
+                        } else {
                             final isInvalidCreds = errorMsg == 'invalidCredentials';
                             final displayMsg = isInvalidCreds 
                                 ? AppLocalizations.of(context)!.invalidCredentials
@@ -121,15 +124,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                     _emailController.text,
                                     _passwordController.text,
                                   );
+                              
+                              if (!mounted) return;
                               setState(() => _isLoading = false);
-                              if (errorMsg == null && mounted) {
+                              
+                              if (errorMsg == null) {
                                 // Clear stale data from previous users (e.g. Admin -> Profe)
                                 context.read<UserProvider>().clear();
                                 // context.read<PlanProvider>().clear(); // PlanProvider doesn't have clear yet, mainly UserProvider is the issue.
                                 // Ideal: Add proper clear to all, but UserProvider is critical for the reported bug.
                                 
                                 // Success - Logic handled by AuthWrapper
-                              } else if (mounted) {
+                              } else {
                                   final isInvalidCreds = errorMsg == 'invalidCredentials';
                                   final displayMsg = isInvalidCreds 
                                       ? AppLocalizations.of(context)!.invalidCredentials

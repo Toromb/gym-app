@@ -87,7 +87,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
               children: [
                 if (context.read<AuthProvider>().role != AppRoles.profe)
                   DropdownButtonFormField<String>(
-                    value: _selectedRole,
+                    initialValue: _selectedRole,
                     decoration: const InputDecoration(labelText: 'Rol'),
                     items: const [
                       DropdownMenuItem(value: AppRoles.admin, child: Text('Admin')),
@@ -122,7 +122,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                          const LinearProgressIndicator()
                      else
                          DropdownButtonFormField<String>(
-                             value: _selectedProfessorId,
+                             initialValue: _selectedProfessorId,
                              decoration: const InputDecoration(
                                  labelText: 'Profesor Asignado',
                                  helperText: 'Selecciona un profesor para supervisar a este alumno',
@@ -188,7 +188,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
                 DropdownButtonFormField<String>(
-                  value: _selectedGender,
+                  initialValue: _selectedGender,
                   decoration: const InputDecoration(labelText: 'Sexo'),
                   items: const [
                     DropdownMenuItem(value: 'M', child: Text('Masculino')),
@@ -223,8 +223,11 @@ class _AddUserScreenState extends State<AddUserScreen> {
                                   initialWeight: double.tryParse(_weightController.text),
                                   membershipStartDate: _membershipDateController.text.isNotEmpty ? _membershipDateController.text : null,
                                 );
+                            
+                            if (!mounted) return;
                             setState(() => _isLoading = false);
-                            if (success && mounted) {
+
+                            if (success) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Usuario agregado exitosamente')),

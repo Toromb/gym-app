@@ -138,7 +138,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       decoration: BoxDecoration(
                         color: isSelected 
                             ? Theme.of(context).colorScheme.primary 
-                            : (isToday ? Theme.of(context).colorScheme.primary.withOpacity(0.15) : null), // Theme aware tint
+                            : (isToday ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15) : null), // Theme aware tint
                         borderRadius: BorderRadius.circular(8),
                         border: isSelected 
                             ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)

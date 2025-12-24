@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
 import '../../models/user_model.dart';
-import '../../models/plan_model.dart';
 import '../../models/student_assignment_model.dart';
 import '../shared/plan_details_screen.dart';
 import 'package:intl/intl.dart';
@@ -51,7 +50,7 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
       // Let's rely on PlanProvider exposing assignment fetching or just use the service instance if simpler.
       // I will update PlanProvider quickly to include this passthrough or just use the service manually.
       // Let's Import PlanService (it's stateless mostly).
-      final assignments = await context.read<PlanProvider>().fetchStudentAssignments(widget.student.id!);
+      final assignments = await context.read<PlanProvider>().fetchStudentAssignments(widget.student.id);
       setState(() {
         _assignments = assignments;
         _isLoading = false;

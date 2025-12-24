@@ -182,8 +182,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                child: _buildProfessorSection()
             ),
             if (_user!.role == AppRoles.admin) _buildSectionCard(
-               title: 'Información Administrativa',
-               icon: Icons.admin_panel_settings_outlined,
+               title: 'Bloc de Notas',
+               icon: Icons.edit_note,
                child: _buildAdminSection()
             ),
           ],
@@ -292,12 +292,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Expanded(
               child: _isEditing 
                 ? DropdownButtonFormField<String>(
-                    value: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
+                    initialValue: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
                     decoration: InputDecoration(
                        labelText: 'Género',
                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                        filled: true,
-                       fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                       fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     ),
                     items: const [
                         DropdownMenuItem(value: 'M', child: Text('Masculino')),
@@ -393,7 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _user!.isActive == true ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+            color: _user!.isActive == true ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: _user!.isActive == true ? Colors.green : Colors.red),
           ),
@@ -465,7 +465,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
          _buildTextFieldWithLabel(
-          label: 'Notas Administrativas',
+          label: 'Mis Notas',
           controller: _adminNotesController,
           readOnly: !_isEditing,
           maxLines: 3,
@@ -478,7 +478,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           contentPadding: EdgeInsets.zero,
           leading: Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
             child: const Icon(Icons.security, color: Colors.blue),
           ),
           title: const Text('Acceso Total al Sistema', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
@@ -506,7 +506,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         prefixIcon: icon != null ? Icon(icon, size: 20) : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
-        fillColor: readOnly ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3) : Theme.of(context).colorScheme.surface,
+        fillColor: readOnly ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Theme.of(context).colorScheme.surface,
       ),
     );
   }

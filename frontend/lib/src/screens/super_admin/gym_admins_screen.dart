@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/gyms_provider.dart';
-import '../../models/user_model.dart';
 import '../../models/gym_model.dart';
 
 class GymAdminsScreen extends StatefulWidget {
@@ -63,7 +62,7 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                   ),
-                  value: _selectedGymId,
+                  initialValue: _selectedGymId,
                   items: [
                     const DropdownMenuItem<String?>(
                         value: null, child: Text('All Gyms')),

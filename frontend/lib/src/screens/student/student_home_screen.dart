@@ -11,12 +11,12 @@ import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
 // import 'student_plan_screen.dart'; // No longer direct nav
 import 'student_plans_list_screen.dart';
-import 'student_plans_list_screen.dart';
 import '../../widgets/payment_status_badge.dart';
 import 'calendar_screen.dart';
 import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
 import 'package:intl/intl.dart';
+import 'muscle_flow_screen.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -111,6 +111,19 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     );
                   },
                 ),
+                //  const SizedBox(height: 16),
+                // _buildDashboardCard(
+                //   context,
+                //   title: 'Estado Muscular', // Should localize
+                //   subtitle: 'Visualizá tu carga muscular y recuperación.',
+                //   icon: Icons.accessibility_new,
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(builder: (context) => const MuscleFlowScreen()),
+                //     );
+                //   },
+                // ),
                  const SizedBox(height: 16),
                   _buildDashboardCard(
                   context,
@@ -221,16 +234,18 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                      if (assignment == null) return;
                      showDialog(
                        context: context,
-                       builder: (context) => AlertDialog(
+                       builder: (dialogCtx) => AlertDialog(
                          title: const Text('¿Reiniciar Plan?'),
                          content: const Text('Esto archivará tu progreso actual y comenzará un nuevo ciclo desde el día 1.'),
                          actions: [
-                           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+                           TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar')),
                            FilledButton(
                              onPressed: () async {
-                               Navigator.pop(context); // Close dialog
+                               Navigator.pop(dialogCtx); // Close dialog
                                final success = await context.read<PlanProvider>().restartPlan(assignment.id);
-                               if (success && mounted) {
+                               
+                               if (!mounted) return;
+                               if (success) {
                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Plan reiniciado exitosamente')));
                                }
                              }, 
@@ -273,12 +288,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           );
 
           // If result is true, it means completed. Refresh history to update this card.
-          if (result == true && mounted) {
-           if (result == true && mounted) {
-             context.read<PlanProvider>().fetchMyHistory();
-             context.read<PlanProvider>().computeWeeklyStats();
-             context.read<PlanProvider>().computeMonthlyStats();
-          }
+          // If result is true, it means completed. Refresh history to update this card.
+          if (!mounted) return;
+          if (result == true) {
+              context.read<PlanProvider>().fetchMyHistory();
+              context.read<PlanProvider>().computeWeeklyStats();
+              context.read<PlanProvider>().computeMonthlyStats();
           }
         },
         borderRadius: BorderRadius.circular(16),
@@ -292,7 +307,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: colorScheme.onPrimary.withOpacity(0.2),
+                      color: colorScheme.onPrimary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text('PRÓXIMO ENTRENAMIENTO', style: textTheme.labelSmall?.copyWith(color: colorScheme.onPrimary, fontWeight: FontWeight.bold)),
@@ -307,7 +322,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               const SizedBox(height: 8),
               Text(
                 '${assignment.plan.name} • Semana ${week.weekNumber}',
-                style: textTheme.bodyLarge?.copyWith(color: colorScheme.onPrimary.withOpacity(0.9)),
+                style: textTheme.bodyLarge?.copyWith(color: colorScheme.onPrimary.withValues(alpha: 0.9)),
               ),
               const SizedBox(height: 24),
               Row(
@@ -410,9 +425,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                            user!.gym!.logoUrl!.startsWith('http') 
-                                ? user!.gym!.logoUrl! 
-                                : 'http://localhost:3000${user!.gym!.logoUrl}',
+                            user.gym!.logoUrl!.startsWith('http') 
+                                ? user.gym!.logoUrl! 
+                                : 'http://localhost:3001${user.gym!.logoUrl}',
                             height: 55, // Increased to 55px as requested
                             width: 55,
                             fit: BoxFit.contain,
@@ -421,7 +436,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       ),
                      const SizedBox(height: 8),
                      Text(
-                       user!.gym!.businessName,
+                       user.gym!.businessName,
                        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey[700]),
                        textAlign: TextAlign.end,
                      ),

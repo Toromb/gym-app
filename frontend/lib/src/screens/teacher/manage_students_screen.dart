@@ -6,6 +6,7 @@ import 'add_student_screen.dart';
 import 'assign_plan_modal.dart';
 import 'student_plans_screen.dart';
 import '../shared/user_detail_screen.dart';
+import '../student/muscle_flow_screen.dart';
 
 class ManageStudentsScreen extends StatefulWidget {
   const ManageStudentsScreen({super.key});
@@ -173,7 +174,25 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                                       );
                                     },
                                   ),
-                                   const SizedBox(width: 8),
+                                    // const SizedBox(width: 8),
+                                    // OutlinedButton.icon(
+                                    //   icon: const Icon(Icons.accessibility_new, size: 16),
+                                    //   label: const Text('Estado'),
+                                    //   style: OutlinedButton.styleFrom(
+                                    //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    //     textStyle: const TextStyle(fontSize: 12),
+                                    //     visualDensity: VisualDensity.compact,
+                                    //   ),
+                                    //   onPressed: () {
+                                    //     Navigator.push(
+                                    //       context,
+                                    //       MaterialPageRoute(
+                                    //         builder: (context) => MuscleFlowScreen(studentId: student.id),
+                                    //       ),
+                                    //     );
+                                    //   },
+                                    // ),
+                                     const SizedBox(width: 8),
                                    IconButton(
                                      visualDensity: VisualDensity.compact,
                                      iconSize: 20,
@@ -201,11 +220,17 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                                       );
 
                                       if (confirm == true && context.mounted) {
-                                        final success = await context.read<UserProvider>().deleteUser(student.id);
-                                        if (success && context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Alumno eliminado')),
-                                          );
+                                        final error = await context.read<UserProvider>().deleteUser(student.id);
+                                        if (context.mounted) {
+                                          if (error == null) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('Usuario eliminado')),
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text(error), backgroundColor: colorScheme.error),
+                                            );
+                                          }
                                         }
                                       }
                                     },
@@ -237,7 +262,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
             filled: true,
-            fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           ),
           onChanged: (val) {
             setState(() {
