@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - gym_prod_network
     # Database isolated in private network, only accessible by backend
@@ -27,6 +27,9 @@ services:
       - ../.env.prod
     environment:
       - DB_SYNCHRONIZE=true
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=gym_db
     ports:
       - "3000:3000"
     depends_on:
@@ -54,5 +57,7 @@ networks:
     driver: bridge
 
 volumes:
-  pgdata:
+  postgres_data:
+    external: true
+    name: infra_postgres_data
   uploads:

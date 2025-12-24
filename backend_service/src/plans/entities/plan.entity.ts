@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { User } from '../../users/entities/user.entity';
 import { Exercise } from '../../exercises/entities/exercise.entity';
@@ -7,104 +15,99 @@ import { PlanWeek } from './plan-week.entity';
 
 @Entity('plans')
 export class Plan {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column()
-    name: string;
+  @Column()
+  name: string;
 
-    @Column({ nullable: true })
-    description: string;
+  @Column({ nullable: true })
+  description: string;
 
-    @Column({ nullable: true })
-    objective?: string;
+  @Column({ nullable: true })
+  objective?: string;
 
-    @Column({ type: 'text', nullable: true })
-    generalNotes?: string;
+  @Column({ type: 'text', nullable: true })
+  generalNotes?: string;
 
+  @ManyToOne(() => User, { onDelete: 'SET NULL' })
+  teacher: User;
 
-    @ManyToOne(() => User, { onDelete: 'SET NULL' })
-    teacher: User;
+  @Column({ type: 'date', nullable: true })
+  startDate: string;
 
-    @Column({ type: 'date', nullable: true })
-    startDate: string;
+  @Column({ default: 4 })
+  durationWeeks: number;
 
-    @Column({ default: 4 })
-    durationWeeks: number;
+  @Column({ default: false })
+  isTemplate: boolean;
 
-    @Column({ default: false })
-    isTemplate: boolean;
+  @OneToMany(() => PlanWeek, (week) => week.plan, { cascade: true })
+  weeks: PlanWeek[];
 
-    @OneToMany(() => PlanWeek, (week) => week.plan, { cascade: true })
-    weeks: PlanWeek[];
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @CreateDateColumn()
-    createdAt: Date;
-
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 }
-
-
 
 @Entity('plan_days')
 export class PlanDay {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Exclude()
-    @ManyToOne(() => PlanWeek, (week) => week.days, { onDelete: 'CASCADE' })
-    week: PlanWeek;
+  @Exclude()
+  @ManyToOne(() => PlanWeek, (week) => week.days, { onDelete: 'CASCADE' })
+  week: PlanWeek;
 
-    @Column({ nullable: true })
-    title?: string;
+  @Column({ nullable: true })
+  title?: string;
 
-    @Column()
-    dayOfWeek: number; // 0=Sunday, 1=Monday, etc.
+  @Column()
+  dayOfWeek: number; // 0=Sunday, 1=Monday, etc.
 
-    @Column({ default: 0 })
-    order: number;
+  @Column({ default: 0 })
+  order: number;
 
-    @Column({ type: 'text', nullable: true })
-    dayNotes?: string;
+  @Column({ type: 'text', nullable: true })
+  dayNotes?: string;
 
-
-    @OneToMany(() => PlanExercise, (exercise) => exercise.day, { cascade: true })
-    exercises: PlanExercise[];
+  @OneToMany(() => PlanExercise, (exercise) => exercise.day, { cascade: true })
+  exercises: PlanExercise[];
 }
 
 @Entity('plan_exercises')
 export class PlanExercise {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Exclude()
-    @ManyToOne(() => PlanDay, (day) => day.exercises, { onDelete: 'CASCADE' })
-    day: PlanDay;
+  @Exclude()
+  @ManyToOne(() => PlanDay, (day) => day.exercises, { onDelete: 'CASCADE' })
+  day: PlanDay;
 
-    @ManyToOne(() => Exercise)
-    exercise: Exercise;
+  @ManyToOne(() => Exercise, { onDelete: 'CASCADE' })
+  exercise: Exercise;
 
-    @Column({ nullable: true })
-    sets?: number;
+  @Column({ nullable: true })
+  sets?: number;
 
-    @Column({ nullable: true })
-    reps?: string; // "10-12" or "10"
+  @Column({ nullable: true })
+  reps?: string; // "10-12" or "10"
 
-    @Column({ nullable: true })
-    suggestedLoad?: string;
+  @Column({ nullable: true })
+  suggestedLoad?: string;
 
-    @Column({ nullable: true })
-    rest?: string;
+  @Column({ nullable: true })
+  rest?: string;
 
-    @Column({ nullable: true })
-    notes?: string;
+  @Column({ nullable: true })
+  notes?: string;
 
-    @Column({ nullable: true })
-    // URL for the exercise video
-    videoUrl?: string;
+  @Column({ nullable: true })
+  // URL for the exercise video
+  videoUrl?: string;
 
-
-    @Column({ default: 0 })
-    order: number;
+  @Column({ default: 0 })
+  order: number;
 }

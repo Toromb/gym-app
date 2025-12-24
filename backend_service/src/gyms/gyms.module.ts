@@ -5,9 +5,9 @@ import { GymsController } from './gyms.controller';
 import { Gym } from './entities/gym.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Gym])],
-    controllers: [GymsController],
-    providers: [GymsService],
-    exports: [GymsService],
+  imports: [TypeOrmModule.forFeature([Gym])],
+  controllers: [GymsController],
+  providers: [GymsService],
+  exports: [GymsService],
 })
-export class GymsModule { }
+export class GymsModule {}

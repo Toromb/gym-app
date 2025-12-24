@@ -17,7 +17,6 @@ import { GymScheduleModule } from './gym-schedule/gym-schedule.module';
 import { GymsModule } from './gyms/gyms.module';
 import { StatsModule } from './stats/stats.module';
 
-
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -37,7 +36,9 @@ import { StatsModule } from './stats/stats.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: process.env.NODE_ENV !== 'production' || configService.get('DB_SYNCHRONIZE') === 'true',
+        synchronize:
+          process.env.NODE_ENV !== 'production' ||
+          configService.get('DB_SYNCHRONIZE') === 'true',
         retryAttempts: 10,
         retryDelay: 3000,
       }),
@@ -58,4 +59,4 @@ import { StatsModule } from './stats/stats.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}
