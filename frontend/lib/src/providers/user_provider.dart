@@ -51,6 +51,7 @@ class UserProvider with ChangeNotifier {
     String? professorId,
     String? membershipStartDate,
     double? initialWeight,
+    bool paysMembership = true,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -69,6 +70,7 @@ class UserProvider with ChangeNotifier {
         professorId: professorId,
         membershipStartDate: membershipStartDate,
         initialWeight: initialWeight,
+        paysMembership: paysMembership,
       );
       if (newUser != null) {
         _students.add(newUser); // This list might be misnamed if it holds all users, but legacy variable name

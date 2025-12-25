@@ -240,9 +240,20 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.planToEdit == null ? 'Crear Plan' : 'Editar Plan')),
-      body: Form(
-        key: _formKey,
-        child: Stepper(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+            child: Text(
+              "Definí una estructura de entrenamiento reutilizable.",
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Expanded(
+            child: Form(
+              key: _formKey,
+              child: Stepper(
           type: StepperType.vertical,
           currentStep: _currentStep,
           onStepTapped: (index) => setState(() => _currentStep = index),
@@ -271,26 +282,38 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
           },
           steps: [
             Step(
-              title: const Text('Información General'),
+              title: const Text('Datos del Plan'),
               content: Column(
                 children: [
                   TextFormField(
                     controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Nombre del Plan'),
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre del Plan',
+                      hintText: 'Ej: Fuerza Inicial · Adaptación',
+                    ),
                     validator: (value) => value!.isEmpty ? 'Requerido' : null,
                   ),
                   TextFormField(
                     controller: _objectiveController,
-                    decoration: const InputDecoration(labelText: 'Objetivo'),
+                    decoration: const InputDecoration(
+                      labelText: 'Objetivo',
+                      hintText: 'Ej: Fuerza · Hipertrofia · Volver a entrenar',
+                    ),
                   ),
                   TextFormField(
                     controller: _durationController,
-                    decoration: const InputDecoration(labelText: 'Duración (Semanas)'),
+                    decoration: const InputDecoration(
+                      labelText: 'Duración (semanas)',
+                      hintText: 'Ej: 4',
+                    ),
                     keyboardType: TextInputType.number,
                   ),
                   TextFormField(
                     controller: _notesController,
-                    decoration: const InputDecoration(labelText: 'Notas Generales'),
+                    decoration: const InputDecoration(
+                      labelText: 'Notas',
+                      hintText: 'Indicaciones o recomendaciones generales',
+                    ),
                     maxLines: 3,
                   ),
                 ],
@@ -299,9 +322,19 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
               state: _currentStep > 0 ? StepState.complete : StepState.editing,
             ),
             Step(
-              title: const Text('Estructura'),
+              title: const Text('Estructura del Plan'),
               content: Column(
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Organizá semanas y días de entrenamiento.",
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
+                    ),
+                  ),
                   ..._weeks.asMap().entries.map((entry) {
                     final weekIndex = entry.key;
                     final week = entry.value;
@@ -417,12 +450,24 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                     icon: const Icon(Icons.add),
                     label: const Text('Agregar Semana'),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24.0, bottom: 8.0),
+                    child: Center(
+                      child: Text(
+                        "Este plan luego podrá asignarse o adaptarse.",
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12, fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  ),
                 ],
               ),
               isActive: _currentStep >= 1,
             ),
           ],
         ),
+      ),
+          ),
+        ],
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),

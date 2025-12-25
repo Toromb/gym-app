@@ -56,7 +56,7 @@ class _ManageGymScreenState extends State<ManageGymScreen> {
            } else {
                await context.read<GymsProvider>().updateGym(widget.gym!.id, gymData);
            }
-           if (mounted) Navigator.pop(context);
+           if (mounted) Navigator.pop(context, true);
        } catch (e) {
            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
        }

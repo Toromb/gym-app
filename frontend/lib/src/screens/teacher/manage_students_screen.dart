@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../models/user_model.dart';
-import 'add_student_screen.dart';
 import 'assign_plan_modal.dart';
 import 'student_plans_screen.dart';
 import '../shared/user_detail_screen.dart';
@@ -32,15 +31,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Gestionar Alumnos')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddStudentScreen()),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
+      // FAB removed to restrict student creation for Professors.
       body: Consumer<UserProvider>(
         builder: (context, userProvider, _) {
           List<User> students = userProvider.students;

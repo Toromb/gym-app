@@ -27,6 +27,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   late String _selectedRole;
   late String _selectedGender;
   late String _paymentStatus;
+  bool _paysMembership = true;
   
   String? _selectedProfessorId;
   List<User> _professors = [];
@@ -64,6 +65,10 @@ class _EditUserScreenState extends State<EditUserScreen> {
     if (!validPaymentStatuses.contains(_paymentStatus)) {
         _paymentStatus = 'pending';
     }
+
+
+
+    _paysMembership = widget.user.paysMembership ?? true;
 
     // Case-insensitive check just to be safe
     if (_selectedRole.toLowerCase() == UserRoles.alumno.toLowerCase()) {
@@ -154,6 +159,17 @@ class _EditUserScreenState extends State<EditUserScreen> {
                      const SizedBox(height: 16),
                  ],
 
+                 // Membership options for Professor
+                 if (_selectedRole.toLowerCase() == UserRoles.profe.toLowerCase()) ...[
+                      SwitchListTile(
+                        title: const Text('Membresía Paga'),
+                        subtitle: const Text('Define si este profesor abona membresía del sistema'),
+                        value: _paysMembership,
+                        onChanged: (val) => setState(() => _paysMembership = val),
+                      ),
+                      const SizedBox(height: 16),
+                 ],
+
                 TextFormField(
                   controller: _firstNameController,
                   decoration: const InputDecoration(labelText: 'Nombre'),
@@ -197,6 +213,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   ],
                   onChanged: (value) => setState(() => _selectedGender = value!),
                 ),
+                if (_paysMembership) ...[
                  DropdownButtonFormField<String>(
                   initialValue: ['pending', 'paid', 'overdue'].contains(_paymentStatus) ? _paymentStatus : 'pending',
                   decoration: const InputDecoration(labelText: 'Estado de Pago'),
@@ -234,6 +251,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                     }
                   },
                 ),
+                ],
                 TextFormField(
                   controller: _notesController,
                   decoration: const InputDecoration(labelText: 'Notas'),
@@ -258,7 +276,8 @@ class _EditUserScreenState extends State<EditUserScreen> {
                               'paymentStatus': _paymentStatus,
                               'lastPaymentDate': _lastPaymentDateController.text.isEmpty ? null : _lastPaymentDateController.text,
                               // Send professorId (null if explicitly unassigned)
-                              'professorId': _selectedProfessorId, 
+                              'professorId': _selectedProfessorId,
+                              'paysMembership': _paysMembership, 
                             };
                             
                             if (_passwordController.text.isNotEmpty) {

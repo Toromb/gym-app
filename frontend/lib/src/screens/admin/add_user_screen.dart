@@ -27,6 +27,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
   
   String _selectedRole = AppRoles.alumno;
   String _selectedGender = 'M';
+  bool _paysMembership = true;
 
   // For Professor Assignment
   String? _selectedProfessorId;
@@ -140,6 +141,22 @@ class _AddUserScreenState extends State<AddUserScreen> {
                              onChanged: (val) => setState(() => _selectedProfessorId = val),
                          ),
                          const SizedBox(height: 16),
+                     const SizedBox(height: 16),
+                 ],
+
+                 // Membership options for Professor
+                 if (_selectedRole == AppRoles.profe) ...[
+                      SwitchListTile(
+                        title: const Text('Membresía Paga'),
+                        subtitle: const Text('Define si este profesor abona membresía del sistema'),
+                        value: _paysMembership,
+                        onChanged: (val) => setState(() => _paysMembership = val),
+                      ),
+                 ],
+
+                  // Membership Date Picker (Visible for Student OR Professor who pays)
+                  if (_selectedRole == AppRoles.alumno || (_selectedRole == AppRoles.profe && _paysMembership)) ...[
+                         const SizedBox(height: 16),
                          TextFormField(
                            controller: _membershipDateController,
                            decoration: const InputDecoration(
@@ -149,9 +166,18 @@ class _AddUserScreenState extends State<AddUserScreen> {
                            ),
                            readOnly: true,
                            onTap: () => _selectDate(context),
+                           validator: (value) {
+                             if (_selectedRole == AppRoles.alumno) {
+                                return value == null || value.isEmpty ? 'Requerido para alumnos' : null;
+                             }
+                             if (_selectedRole == AppRoles.profe && _paysMembership) {
+                                return value == null || value.isEmpty ? 'Requerido si paga membresía' : null;
+                             }
+                             return null;
+                           },
                          ),
-                     const SizedBox(height: 16),
-                 ],
+                         const SizedBox(height: 16),
+                  ],
 
                 TextFormField(
                   controller: _firstNameController,
@@ -222,6 +248,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                                   professorId: _selectedProfessorId,
                                   initialWeight: double.tryParse(_weightController.text),
                                   membershipStartDate: _membershipDateController.text.isNotEmpty ? _membershipDateController.text : null,
+                                  paysMembership: _paysMembership,
                                 );
                             
                             if (!mounted) return;
