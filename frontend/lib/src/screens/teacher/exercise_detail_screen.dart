@@ -76,6 +76,19 @@ class ExerciseDetailScreen extends StatelessWidget {
               const SizedBox(height: 10),
               Chip(label: Text(exercise.type!), backgroundColor: Colors.blue.shade50),
             ],
+            if (exercise.equipments.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                children: exercise.equipments.map((e) => 
+                  Chip(
+                    label: Text(e.name, style: const TextStyle(fontSize: 12)), 
+                    backgroundColor: Colors.orange.shade50,
+                    visualDensity: VisualDensity.compact,
+                  )
+                ).toList(),
+              )
+            ]
           ],
         ),
       ),

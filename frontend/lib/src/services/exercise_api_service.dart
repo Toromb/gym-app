@@ -18,11 +18,12 @@ class ExerciseService {
     return await _storage.read(key: 'jwt');
   }
 
-  Future<List<Exercise>> getExercises({String? muscleId}) async {
+  Future<List<Exercise>> getExercises({String? muscleId, List<String>? equipmentIds}) async {
     final token = await _getToken();
     
     final uri = Uri.parse('$baseUrl/exercises').replace(queryParameters: {
       if (muscleId != null) 'muscleId': muscleId,
+      if (equipmentIds != null && equipmentIds.isNotEmpty) 'equipmentIds': equipmentIds,
     });
 
     final response = await http.get(
@@ -109,6 +110,26 @@ class ExerciseService {
       return data.map((json) => Muscle.fromJson(json)).toList();
     } else {
       debugPrint('Failed to load muscles: ${response.body}');
+      return [];
+    }
+  }
+
+  Future<List<Equipment>> getEquipments() async {
+    final token = await _getToken();
+    if (token == null) return [];
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/exercises/equipments'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Equipment.fromJson(json)).toList();
+    } else {
+      debugPrint('Failed to load equipments: ${response.body}');
       return [];
     }
   }

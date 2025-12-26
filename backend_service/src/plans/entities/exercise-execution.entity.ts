@@ -1,6 +1,8 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { PlanExecution } from './plan-execution.entity';
 import { Exercise } from '../../exercises/entities/exercise.entity';
+import { Equipment } from '../../exercises/entities/equipment.entity';
+import { ManyToMany, JoinTable } from 'typeorm';
 
 @Entity('exercise_executions')
 export class ExerciseExecution {
@@ -33,6 +35,14 @@ export class ExerciseExecution {
 
   @Column({ nullable: true })
   videoUrl: string; // Snapshot or resolved URL for the video
+
+  @ManyToMany(() => Equipment, { cascade: false, eager: true }) // Eager load for Session View
+  @JoinTable({
+    name: 'exercise_execution_equipments',
+    joinColumn: { name: 'exerciseExecutionId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'equipmentId', referencedColumnName: 'id' },
+  })
+  equipmentsSnapshot: Equipment[];
 
   // --- REAL DATA (User input) ---
   @Column({ default: false })

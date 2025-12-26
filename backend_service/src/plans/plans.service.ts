@@ -54,6 +54,9 @@ export class PlansService {
           exercise.order = e.order;
           exercise.exercise = { id: e.exerciseId } as any;
           exercise.day = day; // Back reference
+          if (e.equipmentIds && e.equipmentIds.length > 0) {
+            exercise.equipments = e.equipmentIds.map((eqId: string) => ({ id: eqId } as any));
+          }
           return exercise;
         });
         return day;
@@ -104,6 +107,7 @@ export class PlansService {
         'weeks.days',
         'weeks.days.exercises',
         'weeks.days.exercises.exercise',
+        'weeks.days.exercises.equipments',
         'teacher',
       ],
     });
@@ -243,10 +247,12 @@ export class PlansService {
                 exercise.notes = e.notes;
                 exercise.videoUrl = e.videoUrl;
                 exercise.order = e.order;
-                // Logger usage inside transaction might need bind, but simple log is fine.
                 // this.logger.log(`Mapping Exercise (Update): id=${e.exerciseId}`);
                 exercise.exercise = { id: e.exerciseId } as any;
                 exercise.day = day;
+                if (e.equipmentIds && e.equipmentIds.length > 0) {
+                  exercise.equipments = e.equipmentIds.map((eqId: string) => ({ id: eqId } as any));
+                }
                 return exercise;
               });
               return day;

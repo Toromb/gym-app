@@ -226,7 +226,12 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
 
             // Muscle Tags
             if (widget.execution.exercise?.muscles.isNotEmpty ?? false) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
+              Text(
+                'Músculos a trabajar',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[700]), 
+              ),
+              const SizedBox(height: 4),
               Wrap(
                 spacing: 4,
                 runSpacing: 4,
@@ -251,6 +256,38 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                   );
                 }).toList(),
               ),
+            ],
+
+            // Equipment Tags
+            if (widget.execution.equipmentsSnapshot.isNotEmpty) ...[
+               const SizedBox(height: 12),
+               Text(
+                'Equipamiento a utilizar',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[700]), 
+               ),
+               const SizedBox(height: 4),
+               Wrap(
+                 spacing: 4,
+                 runSpacing: 4,
+                 children: widget.execution.equipmentsSnapshot.map((eq) {
+                   return Container(
+                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                     decoration: BoxDecoration(
+                       color: Colors.blueAccent.withOpacity(0.1),
+                       borderRadius: BorderRadius.circular(4),
+                       border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+                     ),
+                     child: Text(
+                       eq.name,
+                       style: const TextStyle(
+                         fontSize: 10,
+                         fontWeight: FontWeight.bold,
+                         color: Colors.blueAccent,
+                       ),
+                     ),
+                   );
+                 }).toList(),
+               ),
             ],
             
             const SizedBox(height: 16),

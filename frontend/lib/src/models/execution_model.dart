@@ -48,6 +48,7 @@ class ExerciseExecution {
   final String? targetRepsSnapshot;
   final String? targetWeightSnapshot;
   final String? videoUrl;
+  final List<Equipment> equipmentsSnapshot;
   
   final Exercise? exercise;
   
@@ -65,6 +66,7 @@ class ExerciseExecution {
     this.targetRepsSnapshot,
     this.targetWeightSnapshot,
     this.videoUrl,
+    required this.equipmentsSnapshot, 
     this.exercise,
     required this.isCompleted,
     this.setsDone, // Now optional
@@ -87,6 +89,7 @@ class ExerciseExecution {
       targetRepsSnapshot: targetRepsSnapshot,
       targetWeightSnapshot: targetWeightSnapshot,
       videoUrl: videoUrl,
+      equipmentsSnapshot: equipmentsSnapshot,
       exercise: exercise,
       isCompleted: isCompleted ?? this.isCompleted,
       setsDone: setsDone ?? this.setsDone,
@@ -106,6 +109,10 @@ class ExerciseExecution {
       targetRepsSnapshot: json['targetRepsSnapshot'],
       targetWeightSnapshot: json['targetWeightSnapshot'],
       videoUrl: json['videoUrl'],
+      equipmentsSnapshot: (json['equipmentsSnapshot'] as List<dynamic>?)
+              ?.map((e) => Equipment.fromJson(e))
+              .toList() ??
+          [],
       exercise: json['exercise'] != null ? Exercise.fromJson(json['exercise']) : null,
       isCompleted: json['isCompleted'] ?? false,
       setsDone: json['setsDone']?.toString(), // Handle number or string
@@ -123,6 +130,7 @@ class ExerciseExecution {
       targetRepsSnapshot: pe.reps,
       targetWeightSnapshot: pe.suggestedLoad,
       videoUrl: pe.videoUrl ?? pe.exercise?.videoUrl,
+      equipmentsSnapshot: pe.equipments,
       exercise: pe.exercise,
       isCompleted: false,
       setsDone: pe.sets.toString(), // Default to target sets as string

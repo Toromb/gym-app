@@ -2,6 +2,20 @@ import 'user_model.dart';
 
 import 'user_model.dart';
 
+class Equipment {
+  final String id;
+  final String name;
+
+  Equipment({required this.id, required this.name});
+
+  factory Equipment.fromJson(Map<String, dynamic> json) {
+    return Equipment(
+      id: json['id'],
+      name: json['name'],
+    );
+  }
+}
+
 class Muscle {
   final String id;
   final String name;
@@ -64,6 +78,7 @@ class Exercise {
   final String? load;
   final String? notes;
   final List<ExerciseMuscle> muscles;
+  final List<Equipment> equipments;
 
   Exercise({
     required this.id,
@@ -79,6 +94,7 @@ class Exercise {
     this.load,
     this.notes,
     this.muscles = const [],
+    this.equipments = const [],
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
@@ -101,6 +117,10 @@ class Exercise {
       load: json['load'],
       notes: json['notes'],
       muscles: musclesList,
+      equipments: (json['equipments'] as List<dynamic>?)
+              ?.map((e) => Equipment.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 }
@@ -116,6 +136,7 @@ class PlanExercise {
   final String? notes;
   final String? videoUrl;
   int order;
+  final List<Equipment> equipments;
 
   PlanExercise({
     this.id,
@@ -128,6 +149,7 @@ class PlanExercise {
     this.notes,
     this.videoUrl,
     required this.order,
+    this.equipments = const [],
   });
 
   factory PlanExercise.fromJson(Map<String, dynamic> json) {
@@ -141,6 +163,10 @@ class PlanExercise {
       notes: json['notes'],
       videoUrl: json['videoUrl'],
       order: json['order'] ?? 0,
+      equipments: (json['equipments'] as List<dynamic>?)
+              ?.map((e) => Equipment.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 
@@ -154,6 +180,7 @@ class PlanExercise {
       'notes': notes,
       'videoUrl': videoUrl,
       'order': order,
+      'equipmentIds': equipments.map((e) => e.id).toList(),
     };
   }
 }

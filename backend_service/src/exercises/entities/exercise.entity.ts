@@ -9,7 +9,8 @@ import {
 import { User } from '../../users/entities/user.entity';
 import { Gym } from '../../gyms/entities/gym.entity';
 import { ExerciseMuscle } from './exercise-muscle.entity';
-import { OneToMany } from 'typeorm';
+import { Equipment } from './equipment.entity';
+import { OneToMany, ManyToMany, JoinTable } from 'typeorm';
 
 @Entity('exercises')
 export class Exercise {
@@ -58,6 +59,14 @@ export class Exercise {
 
   @OneToMany(() => ExerciseMuscle, (em) => em.exercise)
   exerciseMuscles: ExerciseMuscle[];
+
+  @ManyToMany(() => Equipment, { cascade: false })
+  @JoinTable({
+    name: 'exercise_equipments',
+    joinColumn: { name: 'exerciseId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'equipmentId', referencedColumnName: 'id' },
+  })
+  equipments: Equipment[];
 
   @CreateDateColumn()
   createdAt: Date;

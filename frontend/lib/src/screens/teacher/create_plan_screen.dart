@@ -54,6 +54,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
             notes: e.notes,
             videoUrl: e.videoUrl,
             order: e.order,
+            equipments: e.equipments, // Preserve equipments
           )).toList(),
         )).toList(),
       )).toList();
@@ -156,6 +157,9 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
 
     final notesController = TextEditingController(text: existingExercise?.notes ?? '');
     final videoUrlController = TextEditingController(text: existingExercise?.videoUrl ?? existingExercise?.exercise?.videoUrl ?? '');
+    
+    // Equipment Selection State
+    List<Equipment> selectedPlanEquipments = existingExercise?.equipments.toList() ?? [];
 
     await showDialog(
       context: context,
@@ -181,11 +185,37 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                            restController.text = value.rest ?? '60s';
                            videoUrlController.text = value.videoUrl ?? '';
                            notesController.text = value.notes ?? '';
+                           // Reset equipment selection on change
+                           selectedPlanEquipments = []; 
                          }
                        });
                     },
                     validator: (value) => value == null ? 'Requerido' : null,
                   ),
+                  if (selectedExercise != null && selectedExercise!.equipments.isNotEmpty) ...[
+                     const SizedBox(height: 10),
+                     Align(alignment: Alignment.centerLeft, child: Text('Equipamiento/s en este ejercicio', style: TextStyle(color: Colors.grey[700], fontSize: 12))),
+                     Wrap(
+                       spacing: 6.0,
+                       runSpacing: 0.0,
+                       children: selectedExercise!.equipments.map((eq) {
+                         final isSelected = selectedPlanEquipments.any((s) => s.id == eq.id);
+                         return FilterChip(
+                           label: Text(eq.name),
+                           selected: isSelected,
+                           onSelected: (bool selected) {
+                             setStateDialog(() {
+                               if (selected) {
+                                 selectedPlanEquipments.add(eq);
+                               } else {
+                                 selectedPlanEquipments.removeWhere((s) => s.id == eq.id);
+                               }
+                             });
+                           },
+                         );
+                       }).toList(),
+                     ),
+                  ],
                   TextField(controller: setsController, decoration: const InputDecoration(labelText: 'Series'), keyboardType: TextInputType.number),
                   TextField(controller: repsController, decoration: const InputDecoration(labelText: 'Repeticiones')),
                   TextField(controller: loadController, decoration: const InputDecoration(labelText: 'Peso (kg)')),
@@ -214,6 +244,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                         notes: notesController.text,
                         videoUrl: videoUrlController.text.isNotEmpty ? videoUrlController.text : null,
                         order: existingExercise?.order ?? _weeks[weekIndex].days[dayIndex].exercises.length + 1,
+                        equipments: selectedPlanEquipments,
                       );
 
                       if (existingExercise != null && exerciseIndex != null) {

@@ -33,6 +33,11 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
   Muscle? _primaryMuscle;
   List<Muscle> _secondaryMuscles = [];
 
+  // Equipment State
+  List<Equipment> _allEquipments = [];
+  bool _isLoadingEquipments = true;
+  List<Equipment> _selectedEquipments = [];
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +54,27 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
     _loadController = TextEditingController(text: e?.load ?? '');
 
     _loadMuscles();
+    _loadEquipments();
+  }
+
+  Future<void> _loadEquipments() async {
+    try {
+      final equipments = await _exerciseService.getEquipments();
+      setState(() {
+         _allEquipments = equipments;
+         _isLoadingEquipments = false;
+
+         if (widget.exercise != null) {
+            final e = widget.exercise!;
+            // Map existing IDs to current list objects
+            final existingIds = e.equipments.map((eq) => eq.id).toSet();
+            _selectedEquipments = _allEquipments.where((eq) => existingIds.contains(eq.id)).toList();
+         }
+      });
+    } catch (e) {
+      debugPrint('Error loading equipments: $e');
+      setState(() => _isLoadingEquipments = false);
+    }
   }
 
   Future<void> _loadMuscles() async {
@@ -145,8 +171,8 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
 
       final exerciseData = {
         'name': _nameController.text,
-        // 'muscleGroup': _primaryMuscle!.name, // Legacy field handled by backend now
         'muscles': musclesPayload,
+        'equipments': _selectedEquipments.map((e) => e.id).toList(),
         'type': _typeController.text.isNotEmpty ? _typeController.text : null,
         'videoUrl': _videoUrlController.text.isNotEmpty ? _videoUrlController.text : null,
         'notes': _notesController.text.isNotEmpty ? _notesController.text : null,
@@ -428,6 +454,35 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
               
               // --- END MUSCLE MAPPING ---
 
+              // --- EQUIPMENT SECTION ---
+              Text('Equipamiento', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 10),
+              if (_isLoadingEquipments)
+                const LinearProgressIndicator()
+              else
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 4.0,
+                  children: _allEquipments.map((eq) {
+                    final isSelected = _selectedEquipments.any((s) => s.id == eq.id);
+                    return FilterChip(
+                      label: Text(eq.name),
+                      selected: isSelected,
+                      onSelected: (bool selected) {
+                        setState(() {
+                          if (selected) {
+                            _selectedEquipments.add(eq);
+                          } else {
+                            _selectedEquipments.removeWhere((s) => s.id == eq.id);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+               const SizedBox(height: 20),
+              // --- END EQUIPMENT SECTION ---
+
               TextFormField(
                 controller: _typeController,
                 decoration: const InputDecoration(labelText: 'Tipo', hintText: 'Ej: Fuerza, Hipertrofia, Cardio'),
@@ -471,7 +526,7 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isLoading || _isLoadingMuscles ? null : _saveExercise,
+                  onPressed: _isLoading || _isLoadingMuscles || _isLoadingEquipments ? null : _saveExercise,
                   child: _isLoading 
                       ? const CircularProgressIndicator() 
                       : Text(widget.exercise == null ? 'Guardar Ejercicio' : 'Actualizar Ejercicio'),

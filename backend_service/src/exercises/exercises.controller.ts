@@ -37,21 +37,37 @@ export class ExercisesController {
     return this.exercisesService.findAllMuscles();
   }
 
+  @Get('equipments')
+  getEquipments() {
+    return this.exercisesService.findAllEquipments();
+  }
+
   @Get()
-  async findAll(@Request() req: any, @Query('muscleId') muscleId?: string) {
+  async findAll(
+    @Request() req: any,
+    @Query('muscleId') muscleId?: string,
+    @Query('equipmentIds') equipmentIds?: string | string[],
+  ) {
+    // Normalize equipmentIds to array
+    let eIds: string[] | undefined;
+    if (equipmentIds) {
+      eIds = Array.isArray(equipmentIds) ? equipmentIds : [equipmentIds];
+    }
+
     if (req.user.role === UserRole.SUPER_ADMIN) {
-      return this.exercisesService.findAll(undefined, muscleId);
+      return this.exercisesService.findAllFiltered({ muscleId, equipmentIds: eIds });
     }
     const gymId = req.user.gym?.id;
-    console.log(`[Exercises] DEBUG: User ${req.user.email} (Role: ${req.user.role}). Gym Object:`, req.user.gym);
-    console.log(`[Exercises] DEBUG: Gym ID extracted: ${gymId}`);
+    // console.log(`[Exercises] DEBUG: User ${req.user.email} (Role: ${req.user.role}). Gym Object:`, req.user.gym);
+    // console.log(`[Exercises] DEBUG: Gym ID extracted: ${gymId}`);
 
     if (!gymId) {
-      console.log('[Exercises] No Gym ID found for user');
+      // console.log('[Exercises] No Gym ID found for user');
       return [];
     }
-    const results = await this.exercisesService.findAll(gymId, muscleId);
-    console.log(`[Exercises] Found ${results.length} exercises for Gym ${gymId}`);
+
+    const results = await this.exercisesService.findAllFiltered({ gymId, muscleId, equipmentIds: eIds });
+    // console.log(`[Exercises] Found ${results.length} exercises for Gym ${gymId}`);
     return results;
   }
 

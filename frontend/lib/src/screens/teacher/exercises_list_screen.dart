@@ -14,8 +14,10 @@ class ExercisesListScreen extends StatefulWidget {
 class _ExercisesListScreenState extends State<ExercisesListScreen> {
   final _exerciseService = ExerciseService();
   List<Exercise> _exercises = [];
-  List<Muscle> _muscles = []; // New
-  String? _selectedMuscleId; // New
+  List<Muscle> _muscles = [];
+  List<Equipment> _equipments = []; // New
+  String? _selectedMuscleId;
+  List<String> _selectedEquipmentIds = []; // New
   bool _isLoading = true;
   String _searchQuery = '';
 
@@ -31,8 +33,9 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
     try {
       // Parallel fetch
       final results = await Future.wait([
-        _exerciseService.getExercises(muscleId: _selectedMuscleId),
-        _exerciseService.getMuscles(), 
+        _exerciseService.getExercises(muscleId: _selectedMuscleId, equipmentIds: _selectedEquipmentIds),
+        _exerciseService.getMuscles(),
+        _exerciseService.getEquipments(), // New
       ]);
       
       if (mounted) {
@@ -40,6 +43,9 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
           _exercises = results[0] as List<Exercise>;
            if (_muscles.isEmpty) {
               _muscles = results[1] as List<Muscle>;
+           }
+           if (_equipments.isEmpty) {
+              _equipments = results[2] as List<Equipment>;
            }
         });
       }
@@ -54,7 +60,7 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
   Future<void> _itemsChanged() async {
      setState(() => _isLoading = true);
      try {
-       final ex = await _exerciseService.getExercises(muscleId: _selectedMuscleId);
+       final ex = await _exerciseService.getExercises(muscleId: _selectedMuscleId, equipmentIds: _selectedEquipmentIds);
        setState(() => _exercises = ex);
      } catch(e) { /* ignore */ }
      finally { if(mounted) setState(() => _isLoading = false); }
@@ -133,6 +139,31 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
                                            Text(
                                             'Sin músculos definidos',
                                             style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: colorScheme.onSurfaceVariant),
+                                          ),
+                                        
+                                        const SizedBox(height: 4),
+                                        // Equipment Tags
+                                        if (ex.equipments.isNotEmpty)
+                                          Wrap(
+                                            spacing: 4,
+                                            runSpacing: 4,
+                                            children: ex.equipments.map((eq) {
+                                                return Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: colorScheme.tertiary.withOpacity(0.1),
+                                                    borderRadius: BorderRadius.circular(4),
+                                                    border: Border.all(color: colorScheme.tertiary.withOpacity(0.3), width: 0.5),
+                                                  ),
+                                                  child: Text(
+                                                    eq.name,
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: colorScheme.tertiary
+                                                    ),
+                                                  ),
+                                                );
+                                            }).toList(),
                                           ),
                                       ],
                                     ),
@@ -279,7 +310,7 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
                    child: DropdownButton<String?>(
                      value: _selectedMuscleId,
                      hint: Text('Filtrar por músculo', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
-                     isExpanded: true, // Safe to use in vertical column
+                     isExpanded: true, 
                      icon: Icon(Icons.fitness_center, color: colorScheme.secondary, size: 20),
                      dropdownColor: colorScheme.surface,
                      style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
@@ -297,11 +328,69 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
                        setState(() {
                          _selectedMuscleId = val;
                        });
-                       _itemsChanged(); // Fetch filtered list
+                       _itemsChanged(); 
                      },
                    ),
                  ),
               ),
+
+              const SizedBox(height: 8),
+
+               // Equipment Filter (Expansion)
+               Card(
+                 elevation: 0,
+                 color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                 child: ExpansionTile(
+                   title: Text(
+                      _selectedEquipmentIds.isEmpty 
+                          ? 'Equipamiento (Cualquiera)' 
+                          : 'Equipamiento (${_selectedEquipmentIds.length} selec.)',
+                      style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                   ),
+                   leading: Icon(Icons.fitness_center_outlined, size: 20, color: colorScheme.secondary),
+                   childrenPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                   children: [
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: _equipments.map((eq) {
+                           final isSelected = _selectedEquipmentIds.contains(eq.id);
+                           return FilterChip(
+                             label: Text(eq.name, style: const TextStyle(fontSize: 11)),
+                             selected: isSelected,
+                             onSelected: (val) {
+                               setState(() {
+                                 if (val) {
+                                   _selectedEquipmentIds.add(eq.id);
+                                 } else {
+                                   _selectedEquipmentIds.remove(eq.id);
+                                 }
+                               });
+                               _itemsChanged();
+                             },
+                           );
+                         }).toList(),
+                      ),
+                      if (_selectedEquipmentIds.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _selectedEquipmentIds.clear();
+                                });
+                                _itemsChanged();
+                              },
+                              child: const Text('Limpiar Filtro'),
+                            ),
+                          ),
+                        ),
+                   ],
+                 ),
+               ),
             ],
           ),
         ],

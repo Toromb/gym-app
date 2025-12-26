@@ -77,10 +77,12 @@ export class UsersService {
     return users.map((u) => {
       // TS ignore or DTO usage would be cleaner, but modifying entity is fine for JSON serialization if @AfterLoad not used
       // Actually, typeorm entities are objects.
-      if (u.membershipExpirationDate) {
-        const status = this.calculatePaymentStatus(u.membershipExpirationDate);
-        u.paymentStatus = status as any;
-      }
+      // TS ignore or DTO usage would be cleaner, but modifying entity is fine for JSON serialization if @AfterLoad not used
+      // Actually, typeorm entities are objects.
+
+      // Calculate status for everyone, handling exemption inside the method
+      u.paymentStatus = this.calculatePaymentStatus(u) as any;
+
       return u;
     });
   }
@@ -93,8 +95,8 @@ export class UsersService {
       .where('user.email = :email', { email })
       .getOne();
 
-    if (user && user.membershipExpirationDate) {
-      const status = this.calculatePaymentStatus(user.membershipExpirationDate);
+    if (user) {
+      const status = this.calculatePaymentStatus(user);
       user.paymentStatus = status as any;
     }
 
@@ -107,8 +109,8 @@ export class UsersService {
       relations: ['gym', 'professor'], // Load helpful relations
     });
 
-    if (user && user.membershipExpirationDate) {
-      const status = this.calculatePaymentStatus(user.membershipExpirationDate);
+    if (user) {
+      const status = this.calculatePaymentStatus(user);
       user.paymentStatus = status as any;
     }
 
@@ -264,13 +266,17 @@ export class UsersService {
 
   // Helper to compute status on the fly
   // Note: This logic could be used to populate a virtual field or DTO
-  calculatePaymentStatus(
-    expirationDate: Date | string,
-  ): 'paid' | 'overdue' | 'pending' {
-    if (!expirationDate) return 'pending'; // Or handle as they wish
+  calculatePaymentStatus(user: User): 'paid' | 'overdue' | 'pending' {
+    // 1. Check if user is exempt
+    if (user.paysMembership === false) {
+      return 'paid';
+    }
+
+    // 2. If no expiration date, treat as pending (or whatever default)
+    if (!user.membershipExpirationDate) return 'pending';
 
     const now = new Date();
-    const exp = new Date(expirationDate);
+    const exp = new Date(user.membershipExpirationDate);
 
     // Normalize to YYYY-MM-DD to avoid time issues
     now.setHours(0, 0, 0, 0);
@@ -280,12 +286,7 @@ export class UsersService {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays <= 0) return 'paid'; // Green
-    if (diffDays <= 10) return 'pending'; // Yellow (reusing pending as "Por vencer" maps to 'Yellow') -> Wait, user said Yellow is Por Vencer. Pending usually means unpaid initially.
-    // Let's map to existing Enum?
-    // PaymentStatus: PENDING, PAID, OVERDUE.
-    // Green -> PAID
-    // Yellow -> PENDING (Por vencer/Grace Period)
-    // Red -> OVERDUE
+    if (diffDays <= 10) return 'pending'; // Yellow (Por vencer/Grace Period)
 
     return 'overdue';
   }

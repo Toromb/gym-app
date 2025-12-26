@@ -10,6 +10,8 @@ import {
 import { Exclude } from 'class-transformer';
 import { User } from '../../users/entities/user.entity';
 import { Exercise } from '../../exercises/entities/exercise.entity';
+import { Equipment } from '../../exercises/entities/equipment.entity';
+import { ManyToMany, JoinTable } from 'typeorm';
 
 import { PlanWeek } from './plan-week.entity';
 
@@ -110,4 +112,12 @@ export class PlanExercise {
 
   @Column({ default: 0 })
   order: number;
+
+  @ManyToMany(() => Equipment)
+  @JoinTable({
+    name: 'plan_exercise_equipments',
+    joinColumn: { name: 'planExerciseId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'equipmentId', referencedColumnName: 'id' },
+  })
+  equipments: Equipment[];
 }

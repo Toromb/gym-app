@@ -39,6 +39,11 @@ export class CreatePlanExerciseDto {
 
   @IsInt()
   order: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('all', { each: true })
+  equipmentIds?: string[];
 }
 
 export class CreatePlanDayDto {

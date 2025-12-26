@@ -95,6 +95,7 @@ export class ExecutionsService {
         'weeks.days',
         'weeks.days.exercises',
         'weeks.days.exercises.exercise',
+        'weeks.days.exercises.equipments',
       ],
     });
     if (!plan) throw new NotFoundException('Plan not found');
@@ -133,6 +134,7 @@ export class ExecutionsService {
           targetRepsSnapshot: planEx.reps,
           targetWeightSnapshot: planEx.suggestedLoad,
           videoUrl: planEx.videoUrl || planEx.exercise.videoUrl,
+          equipmentsSnapshot: planEx.equipments,
           // DEFAULTS
           order: planEx.order,
           isCompleted: false,
@@ -425,6 +427,7 @@ export class ExecutionsService {
       if (exExec.planExerciseId) {
         const planEx = await this.planExerciseRepo.findOne({
           where: { id: exExec.planExerciseId },
+          relations: ['equipments'],
         });
 
         if (planEx) {
@@ -434,7 +437,20 @@ export class ExecutionsService {
             updatesNeeded = true;
           }
 
-          // 2. Sync Snapshots
+          // 2. Sync Equipments (Snapshot vs Plan)
+          // Naive check: if length differs or ids differ
+          const exEquipments = exExec.equipmentsSnapshot || [];
+          const planEquipments = planEx.equipments || [];
+
+          const exIds = exEquipments.map(e => e.id).sort().join(',');
+          const planIds = planEquipments.map(e => e.id).sort().join(',');
+
+          if (exIds !== planIds) {
+            exExec.equipmentsSnapshot = planEquipments;
+            updatesNeeded = true;
+          }
+
+          // 3. Sync Snapshots
           if (execution.status !== ExecutionStatus.COMPLETED) {
             if (
               exExec.targetSetsSnapshot !== planEx.sets ||
