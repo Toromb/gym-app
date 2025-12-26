@@ -4,18 +4,30 @@ import { Repository } from 'typeorm';
 import { Gym, GymStatus } from './entities/gym.entity';
 import { CreateGymDto } from './dto/create-gym.dto';
 import { UpdateGymDto } from './dto/update-gym.dto';
+import { ExercisesService } from '../exercises/exercises.service';
+import { BASE_EXERCISES } from '../exercises/constants/base-exercises';
 
 @Injectable()
 export class GymsService {
   constructor(
     @InjectRepository(Gym)
     private gymsRepository: Repository<Gym>,
-  ) {}
+    private exercisesService: ExercisesService,
+  ) { }
 
-  create(createGymDto: CreateGymDto) {
+  async create(createGymDto: CreateGymDto) {
     const gym = this.gymsRepository.create(createGymDto);
-    return this.gymsRepository.save(gym);
+    const savedGym = await this.gymsRepository.save(gym);
+
+    // Initialize Base Exercises
+    console.log(`[GymsService] Creating Base Exercises for Gym: ${savedGym.id} (${savedGym.businessName})`);
+
+    // Asynchronous but awaited to ensure data consistency for first login
+    await this.exercisesService.cloneBaseExercises(savedGym);
+
+    return savedGym;
   }
+
 
   findAll() {
     return this.gymsRepository.find();
@@ -38,6 +50,53 @@ export class GymsService {
 
   countAll() {
     return this.gymsRepository.count();
+  }
+
+  async debugGenerateExercises(gymId: string) {
+    let gym;
+    if (gymId === 'latest') {
+      const gyms = await this.gymsRepository.find({ order: { createdAt: 'DESC' as any }, take: 1 });
+      gym = gyms[0];
+    } else {
+      gym = await this.gymsRepository.findOneBy({ id: gymId });
+    }
+
+    if (!gym) return { error: 'Gym not found' };
+
+    const logs = [];
+    logs.push(`Starting Debug for Gym: ${gym.businessName} (${gym.id})`);
+
+    const testExercise = {
+      name: 'DEBUG ENTRY ' + new Date().toISOString(),
+      description: 'Test Entry',
+      muscles: [
+        { name: 'Cuádriceps', role: 'PRIMARY', loadPercentage: 100 }
+      ],
+      videoUrl: '',
+      imageUrl: '',
+      muscleGroup: 'Cuádriceps'
+    };
+
+    try {
+      logs.push(`Attempting to create exercise: ${testExercise.name}`);
+      const result = await this.exercisesService.createForGym(
+        {
+          ...testExercise,
+          muscles: testExercise.muscles.map(m => ({
+            muscleId: m.name,
+            role: m.role as any,
+            loadPercentage: m.loadPercentage
+          }))
+        } as any,
+        gym
+      );
+      logs.push(`SUCCESS: Created exercise ID ${result.id}`);
+      return { success: true, logs, result };
+    } catch (e) {
+      logs.push(`ERROR: ${e.message}`);
+      logs.push(`STACK: ${e.stack}`);
+      return { success: false, logs, error: e.toString() };
+    }
   }
 
   countActive() {

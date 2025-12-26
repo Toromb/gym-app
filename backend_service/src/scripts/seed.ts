@@ -8,6 +8,7 @@ import { UserRole } from '../users/entities/user.entity';
 import { DataSource } from 'typeorm';
 import { seedMuscles } from './seed-muscles';
 import { seedExerciseMuscles } from './seed-exercise-muscles';
+import { BASE_EXERCISES } from '../exercises/constants/base-exercises';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -93,61 +94,44 @@ async function bootstrap() {
   }
 
   // 2. Seed Exercises
-  console.log('💪 Verificando Ejercicios...');
+  console.log('💪 Verificando Ejercicios (Ahora gestionados per-Gym)...');
   const exercisesService = app.get(ExercisesService);
   const exercises = await exercisesService.findAll();
 
   if (exercises.length === 0) {
-    console.log('➕ Creando Ejercicios Base...');
-    const adminUser = await userService.findOneByEmail('admin@gym.com');
+    console.log('ℹ️ No existen ejercicios globales. Esto es correcto ahora.');
+    // Logic handled by Gym Creation or manual per gym. 
+    // Since we created Default Gym above using GymsService.create, 
+    // if logic worked, Default Gym should have exercises!
 
-    if (!adminUser?.gym) {
-      console.error(
-        '❌ CRITICAL: Admin user has no Gym! Cannot seed exercises correctly.',
-      );
-    } else {
-      const defaultExercises = [
-        { name: 'Sentadilla', description: 'Pierna completa' },
-        { name: 'Peso Muerto', description: 'Cadena posterior' },
-        { name: 'Banca Plana', description: 'Pecho' },
-        { name: 'Dominadas', description: 'Espalda' },
-        { name: 'Press Militar', description: 'Hombros' },
-        { name: 'Remo con Barra', description: 'Espalda' },
-        { name: 'Estocadas', description: 'Piernas' },
-        { name: 'Curl de Biceps', description: 'Brazos' },
-        { name: 'Triceps en Polea', description: 'Brazos' },
-        { name: 'Plancha Abdominal', description: 'Core' },
-      ];
-
-      for (const ex of defaultExercises) {
-        await exercisesService.create(
+    const gymExercises = await exercisesService.findAll(defaultGym.id);
+    if (gymExercises.length === 0) {
+      console.log('⚠️ Alerta: Default Gym no tiene ejercicios. Forzando población...');
+      // Optional: Force populate if Gym existed before migration
+      // Initialize Base Exercises for Default Gym if missing
+      for (const baseEx of BASE_EXERCISES) {
+        await exercisesService.createForGym(
           {
-            name: ex.name,
-            description: ex.description,
+            name: baseEx.name,
+            description: baseEx.description,
+            muscles: baseEx.muscles.map(m => ({
+              muscleId: m.name,
+              role: m.role as any,
+              loadPercentage: m.loadPercentage
+            })),
             videoUrl: '',
             imageUrl: '',
-            // No muscleGroup info here, it will be fixed by step 3
-          } as any, // Cast to any to bypass DTO validation if strict
-          adminUser,
+          } as any,
+          defaultGym
         );
       }
+      console.log('✅ Ejercicios base inyectados a Default Gym.');
+    } else {
+      console.log(`✅ Default Gym ya tiene ${gymExercises.length} ejercicios propios.`);
     }
+
   } else {
-    console.log('✅ Ejercicios ya existen. Verificando integridad...');
-    let fixedCount = 0;
-    for (const ex of exercises) {
-      if (!ex.gym) {
-        if (defaultGym) {
-          await dataSource
-            .getRepository('Exercise')
-            .update(ex.id, { gym: defaultGym });
-          fixedCount++;
-        }
-      }
-    }
-    if (fixedCount > 0) {
-      console.log(`🔧 ${fixedCount} ejercicios huérfanos fueron asignados a "Default Gym".`);
-    }
+    console.log(`✅ Sistema tiene ${exercises.length} ejercicios en total.`);
   }
 
   // 3. SEED MAPPINGS

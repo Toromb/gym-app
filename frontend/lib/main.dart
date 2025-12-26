@@ -16,6 +16,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'src/localization/app_localizations.dart';
 import 'src/providers/theme_provider.dart';
 
+// Trigger Reload
 void main() {
   runApp(
     MultiProvider(

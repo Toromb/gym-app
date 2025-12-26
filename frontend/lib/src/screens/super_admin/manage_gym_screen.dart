@@ -149,7 +149,7 @@ class _ManageGymScreenState extends State<ManageGymScreen> {
     if (confirm == true) {
       try {
         await context.read<GymsProvider>().deleteGym(widget.gym!.id);
-        if (mounted) Navigator.pop(context);
+        if (mounted) Navigator.pop(context, true);
       } catch (e) {
         if (mounted) {
            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error deleting gym: $e')));

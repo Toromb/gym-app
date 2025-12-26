@@ -27,7 +27,7 @@ import { UpdateGymDto } from './dto/update-gym.dto';
 @Controller('gyms')
 @UseGuards(AuthGuard('jwt'))
 export class GymsController {
-  constructor(private readonly gymsService: GymsService) {}
+  constructor(private readonly gymsService: GymsService) { }
 
   private checkSuperAdmin(user: any) {
     if (user.role !== UserRole.SUPER_ADMIN) {
@@ -138,5 +138,10 @@ export class GymsController {
     const logoUrl = `/uploads/logos/${file.filename}`;
     await this.gymsService.update(id, { logoUrl } as any);
     return { logoUrl };
+  }
+
+  @Post(':id/debug-init')
+  async debugInit(@Param('id') id: string) {
+    return this.gymsService.debugGenerateExercises(id);
   }
 }

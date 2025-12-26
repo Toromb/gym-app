@@ -110,6 +110,9 @@ export class User {
   })
   paymentStatus: PaymentStatus;
 
+  @Column({ default: true })
+  paysMembership: boolean;
+
   @Column({ type: 'date', nullable: true })
   lastPaymentDate: string;
 

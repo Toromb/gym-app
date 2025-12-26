@@ -38,17 +38,21 @@ export class ExercisesController {
   }
 
   @Get()
-  findAll(@Request() req: any, @Query('muscleId') muscleId?: string) {
+  async findAll(@Request() req: any, @Query('muscleId') muscleId?: string) {
     if (req.user.role === UserRole.SUPER_ADMIN) {
       return this.exercisesService.findAll(undefined, muscleId);
     }
     const gymId = req.user.gym?.id;
-    console.log(`[Exercises] User: ${req.user.email}, Role: ${req.user.role}, GymID: ${gymId}`);
+    console.log(`[Exercises] DEBUG: User ${req.user.email} (Role: ${req.user.role}). Gym Object:`, req.user.gym);
+    console.log(`[Exercises] DEBUG: Gym ID extracted: ${gymId}`);
+
     if (!gymId) {
       console.log('[Exercises] No Gym ID found for user');
       return [];
     }
-    return this.exercisesService.findAll(gymId, muscleId);
+    const results = await this.exercisesService.findAll(gymId, muscleId);
+    console.log(`[Exercises] Found ${results.length} exercises for Gym ${gymId}`);
+    return results;
   }
 
   @Get(':id')

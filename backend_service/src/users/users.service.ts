@@ -112,6 +112,11 @@ export class UsersService {
       user.paymentStatus = status as any;
     }
 
+    if (user) {
+      console.log(`[UsersService] findOne(${id}) found user with Gym:`, user.gym?.id);
+    } else {
+      console.log(`[UsersService] findOne(${id}) - User NOT FOUND`);
+    }
     return user;
   }
 

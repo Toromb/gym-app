@@ -111,7 +111,9 @@ class GymsProvider with ChangeNotifier {
               })
           );
           if (response.statusCode == 201) {
-              // await fetchGyms(); // Only for SuperAdmin
+              final newGym = Gym.fromJson(json.decode(response.body));
+              _gyms.add(newGym);
+              notifyListeners();
           } else {
               throw Exception('Failed to create gym: ${response.body}');
           }
@@ -155,6 +157,11 @@ class GymsProvider with ChangeNotifier {
           );
           if (response.statusCode == 200) {
               final updatedGym = Gym.fromJson(json.decode(response.body));
+              final index = _gyms.indexWhere((g) => g.id == id);
+              if (index != -1) {
+                  _gyms[index] = updatedGym;
+                  notifyListeners();
+              }
               return updatedGym;
           } else {
               throw Exception('Failed to update gym: ${response.body}');
@@ -179,7 +186,8 @@ class GymsProvider with ChangeNotifier {
               },
           );
           if (response.statusCode == 200 || response.statusCode == 204) {
-              // await fetchGyms(); // Only for SuperAdmin
+              _gyms.removeWhere((g) => g.id == id);
+              notifyListeners();
           } else {
               throw Exception('Failed to delete gym: ${response.body}');
           }

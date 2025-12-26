@@ -83,6 +83,10 @@ export class CreateUserDto {
   isActive?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  paysMembership?: boolean;
+
+  @IsOptional()
   @IsDateString()
   membershipStartDate?: Date;
 
