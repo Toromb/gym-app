@@ -221,7 +221,13 @@ class PlanProvider with ChangeNotifier {
 
   Future<bool> updateExerciseExecution(String exerciseExecId, Map<String, dynamic> updates) async {
     try {
-      final success = await _planService.updateExerciseExecution(exerciseExecId, updates);
+      // Prepare API payload (backend likely only needs ID for exercise)
+      final apiUpdates = Map<String, dynamic>.from(updates);
+      if (apiUpdates['exercise'] != null && apiUpdates['exercise'] is Map) {
+          apiUpdates['exercise'] = {'id': apiUpdates['exercise']['id']}; 
+      }
+
+      final success = await _planService.updateExerciseExecution(exerciseExecId, apiUpdates);
       if (success && _currentExecution != null) {
         
         final updatedExercises = _currentExecution!.exercises.map((e) {
@@ -232,7 +238,19 @@ class PlanProvider with ChangeNotifier {
                     setsDone: updates['setsDone'], 
                     repsDone: updates['repsDone'],
                     weightUsed: updates['weightUsed'],
-                    notes: updates['notes'] // etc
+                    notes: updates['notes'],
+                    // Handle Swap Exercise updates - Preserve Muscles & Equipments
+                    exercise: updates['exercise'] != null ? Exercise(
+                        id: updates['exercise']['id'], 
+                        name: updates['exerciseNameSnapshot'] ?? '', 
+                        description: '', 
+                        muscleGroup: '', 
+                        muscles: updates['exercise']['muscles'] ?? [], // Use muscles passed from UI
+                        equipments: updates['exercise']['equipments'] ?? [] // Use equipments passed from UI
+                    ) : e.exercise,
+                    exerciseNameSnapshot: updates['exerciseNameSnapshot'],
+                    videoUrl: updates['videoUrl'],
+                    equipmentsSnapshot: updates['exercise'] != null ? updates['exercise']['equipments'] : e.equipmentsSnapshot, // Update snapshot
                 );
             }
             return e;

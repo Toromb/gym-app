@@ -411,7 +411,12 @@ export class ExecutionsService {
     const execution = await this.executionRepo.findOne({
       where: whereClause,
       order: { createdAt: 'DESC' },
-      relations: ['exercises', 'exercises.exercise'],
+      relations: [
+        'exercises',
+        'exercises.exercise',
+        'exercises.exercise.exerciseMuscles',
+        'exercises.exercise.exerciseMuscles.muscle',
+      ],
     });
 
     if (!execution) return null;

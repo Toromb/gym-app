@@ -140,7 +140,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
         side: _isCompleted ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0), // Reduced from 16
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -148,40 +148,69 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Number Badge
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: _isCompleted ? completedColor.withValues(alpha: 0.2) : defaultColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '#${widget.index}',
-                    style: TextStyle(
-                      color: _isCompleted 
-                          ? completedColor 
-                          : (Theme.of(context).brightness == Brightness.dark ? Colors.white : Theme.of(context).primaryColor),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                  Container(
+                    padding: const EdgeInsets.all(8), // Reduced from 10
+                    decoration: BoxDecoration(
+                      color: _isCompleted ? completedColor.withValues(alpha: 0.2) : defaultColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '#${widget.index}',
+                      style: TextStyle(
+                        color: _isCompleted 
+                            ? completedColor 
+                            : (Theme.of(context).brightness == Brightness.dark ? Colors.white : Theme.of(context).primaryColor),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14, // Reduced from 16
+                      ),
                     ),
                   ),
-                ),
                 const SizedBox(width: 12),
                 
-                // Name & Video
+                // Name & Video & Swap
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.execution.exerciseNameSnapshot,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          decoration: _isCompleted ? TextDecoration.lineThrough : null,
-                          color: _isCompleted ? Colors.green : Theme.of(context).textTheme.bodyLarge?.color,
+                      // Name + Inline Swap Button
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: widget.execution.exerciseNameSnapshot,
+                              style: TextStyle(
+                                fontSize: 16, 
+                                fontWeight: FontWeight.bold,
+                                decoration: _isCompleted ? TextDecoration.lineThrough : null,
+                                color: _isCompleted ? Colors.green : Theme.of(context).textTheme.bodyLarge?.color,
+                              ),
+                            ),
+                            if (!readOnly && (widget.execution.exercise?.muscles.any((m) => m.role == 'PRIMARY') ?? false))
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Transform.scale(
+                                    scale: 0.9,
+                                    alignment: Alignment.centerLeft,
+                                    child: TextButton.icon(
+                                      icon: const Icon(Icons.swap_horiz, color: Colors.blueGrey, size: 16),
+                                      label: const Text('Cambiar ejercicio', style: TextStyle(color: Colors.blueGrey, fontSize: 11)),
+                                      onPressed: () => _showSwapDialog(context),
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0), 
+                                        minimumSize: Size.zero, 
+                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
+                      
                       const SizedBox(height: 4),
                       if ((widget.execution.videoUrl ?? widget.execution.exercise?.videoUrl) != null)
                         InkWell(
@@ -203,15 +232,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                 ),
 
 
-                
-                // Swap Button
-                if (!readOnly && (widget.execution.exercise?.muscles.any((m) => m.role == 'PRIMARY') ?? false))
-                  IconButton(
-                    icon: const Icon(Icons.swap_horiz, color: Colors.blueGrey),
-                    onPressed: () => _showSwapDialog(context),
-                  ),
-
-                // Checkbox
+                // Checkbox (Swap button removed from here)
+                const SizedBox(width: 8),
                 Transform.scale(
                   scale: 1.3,
                   child: Checkbox(
@@ -224,69 +246,92 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
               ],
             ),
 
-            // Muscle Tags
-            if (widget.execution.exercise?.muscles.isNotEmpty ?? false) ...[
-              const SizedBox(height: 12),
-              Text(
-                'Músculos a trabajar',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[700]), 
-              ),
-              const SizedBox(height: 4),
-              Wrap(
-                spacing: 4,
-                runSpacing: 4,
-                children: widget.execution.exercise!.muscles.map((em) {
-                  final isPrimary = em.role == 'PRIMARY'; // Should match Enum string from backend
-                  final color = Theme.of(context).primaryColor;
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: isPrimary ? color.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: isPrimary ? Border.all(color: color.withOpacity(0.5), width: 0.5) : null,
-                    ),
-                    child: Text(
-                      em.muscle.name,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: isPrimary ? FontWeight.bold : FontWeight.normal,
-                        color: isPrimary ? color : Colors.grey[700],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-
-            // Equipment Tags
-            if (widget.execution.equipmentsSnapshot.isNotEmpty) ...[
-               const SizedBox(height: 12),
-               Text(
-                'Equipamiento a utilizar',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[700]), 
-               ),
-               const SizedBox(height: 4),
-               Wrap(
-                 spacing: 4,
-                 runSpacing: 4,
-                 children: widget.execution.equipmentsSnapshot.map((eq) {
-                   return Container(
-                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                     decoration: BoxDecoration(
-                       color: Colors.blueAccent.withOpacity(0.1),
-                       borderRadius: BorderRadius.circular(4),
-                       border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
-                     ),
-                     child: Text(
-                       eq.name,
-                       style: const TextStyle(
-                         fontSize: 10,
-                         fontWeight: FontWeight.bold,
-                         color: Colors.blueAccent,
+            // Muscles & Equipment (Side by Side)
+            if ((widget.execution.exercise?.muscles.isNotEmpty ?? false) || widget.execution.equipmentsSnapshot.isNotEmpty) ...[
+               const SizedBox(height: 8),
+               Row(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                   // Muscles (Left)
+                   if (widget.execution.exercise?.muscles.isNotEmpty ?? false)
+                     Expanded(
+                       child: Column(
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                           Text(
+                             'Músculos a trabajar',
+                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                           ),
+                           const SizedBox(height: 4),
+                           Wrap(
+                             spacing: 4,
+                             runSpacing: 4,
+                             children: widget.execution.exercise!.muscles.map((em) {
+                               final isPrimary = em.role == 'PRIMARY'; 
+                               final color = Theme.of(context).primaryColor;
+                               return Container(
+                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                 decoration: BoxDecoration(
+                                   color: isPrimary ? color.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
+                                   borderRadius: BorderRadius.circular(4),
+                                   border: isPrimary ? Border.all(color: color.withOpacity(0.5), width: 0.5) : null,
+                                 ),
+                                 child: Text(
+                                   em.muscle.name,
+                                   style: TextStyle(
+                                     fontSize: 10,
+                                     fontWeight: isPrimary ? FontWeight.bold : FontWeight.normal,
+                                     color: isPrimary ? color : Colors.grey[700],
+                                   ),
+                                 ),
+                               );
+                             }).toList(),
+                           ),
+                         ],
                        ),
                      ),
-                   );
-                 }).toList(),
+                   
+                   // Spacer if both exist
+                   if ((widget.execution.exercise?.muscles.isNotEmpty ?? false) && widget.execution.equipmentsSnapshot.isNotEmpty)
+                     const SizedBox(width: 12),
+
+                   // Equipment (Right)
+                   if (widget.execution.equipmentsSnapshot.isNotEmpty)
+                     Expanded(
+                       child: Column(
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                            Text(
+                             'Equipamiento a utilizar',
+                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                            ),
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              children: widget.execution.equipmentsSnapshot.map((eq) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blueAccent.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+                                  ),
+                                  child: Text(
+                                    eq.name,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blueAccent,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                         ],
+                       ),
+                     ),
+                 ],
                ),
             ],
             
@@ -359,7 +404,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
         // "Reps (Plan: 10)" is clear.
         floatingLabelBehavior: FloatingLabelBehavior.always,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced from 12, 8
         isDense: true,
         suffixIcon: Icon(icon, size: 16, color: Colors.grey),
       ),
@@ -401,7 +446,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('${AppLocalizations.of(ctx)!.get('changeExercise') ?? "Change Exercise"}'),
+        title: const Text('Cambiar ejercicio'),
         content: SizedBox(
           width: double.maxFinite,
           child: FutureBuilder<List<Exercise>>(
@@ -450,7 +495,11 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
 
   Future<void> _performSwap(Exercise newEx) async {
     final updateData = {
-      'exercise': {'id': newEx.id},
+      'exercise': {
+        'id': newEx.id,
+        'muscles': newEx.muscles,
+        'equipments': newEx.equipments // Pass full equipment list locally
+      },
       'exerciseNameSnapshot': newEx.name,
       'videoUrl': newEx.videoUrl,
       'planExerciseId': null, 

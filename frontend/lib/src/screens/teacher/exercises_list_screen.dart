@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/exercise_api_service.dart';
 import '../../models/plan_model.dart';
 import 'create_exercise_screen.dart';
@@ -171,6 +172,28 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
+                                      IconButton(
+                                        visualDensity: VisualDensity.compact,
+                                        iconSize: 20,
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        tooltip: (ex.videoUrl != null && ex.videoUrl!.isNotEmpty) ? 'Ver Video' : 'Sin Video',
+                                        icon: Icon(
+                                            Icons.play_arrow, 
+                                            color: (ex.videoUrl != null && ex.videoUrl!.isNotEmpty) ? Colors.red : Colors.grey
+                                        ), 
+                                        onPressed: (ex.videoUrl != null && ex.videoUrl!.isNotEmpty) ? () async {
+                                           final uri = Uri.parse(ex.videoUrl!);
+                                           if (await canLaunchUrl(uri)) {
+                                             await launchUrl(uri);
+                                           } else {
+                                             if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo abrir el enlace: ${ex.videoUrl}')));
+                                             }
+                                           }
+                                        } : null,
+                                      ),
+                                      const SizedBox(width: 8),
                                       IconButton(
                                         visualDensity: VisualDensity.compact,
                                         iconSize: 20,

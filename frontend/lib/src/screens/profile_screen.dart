@@ -442,7 +442,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 8),
         _buildPermissionItem('Puede crear planes'),
         _buildPermissionItem('Puede asignar planes a alumnos'),
-        _buildPermissionItem('Puede crear usuarios alumno'),
+        _buildPermissionItem('Puede crear y editar ejercicios'),
       ],
     );
   }
