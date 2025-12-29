@@ -23,8 +23,20 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => PlanProvider()),
-        ChangeNotifierProvider(create: (_) => ExerciseProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, PlanProvider>(
+          create: (_) => PlanProvider(),
+          update: (_, auth, prev) {
+            if (!auth.isAuthenticated) prev?.clear();
+            return prev!;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, ExerciseProvider>(
+          create: (_) => ExerciseProvider(),
+          update: (_, auth, prev) {
+             if (!auth.isAuthenticated) prev?.clear();
+             return prev!;
+          },
+        ),
         ChangeNotifierProxyProvider<AuthProvider, GymScheduleProvider>(
           create: (_) => GymScheduleProvider(null),
           update: (_, auth, prev) => prev!..update(auth.token),

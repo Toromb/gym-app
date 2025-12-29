@@ -25,7 +25,7 @@ import { UpdatePlanDto } from './dto/update-plan.dto';
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)
 export class PlansController {
-  constructor(private readonly plansService: PlansService) {}
+  constructor(private readonly plansService: PlansService) { }
 
   @Post()
   create(@Body() createPlanDto: CreatePlanDto, @Request() req: any) {
@@ -39,16 +39,15 @@ export class PlansController {
 
   @Get()
   findAll(@Request() req: any) {
-    // Super Admin sees all
     if (req.user.role === UserRole.SUPER_ADMIN) {
       return this.plansService.findAll();
     }
 
-    // Admin and Profe see only their gym's plans
     if (req.user.role === UserRole.PROFE || req.user.role === UserRole.ADMIN) {
       const gymId = req.user.gym?.id;
+      // console.log(`[PlansController] findAll - User: ${req.user.email}, Role: ${req.user.role}, Gym: ${gymId}`);
       if (!gymId) {
-        return []; // No gym assigned, return empty to prevent global leak
+        return [];
       }
       return this.plansService.findAll(gymId);
     }

@@ -80,7 +80,10 @@ export class PlansService {
       .leftJoinAndSelect('teacher.gym', 'gym');
 
     if (gymId) {
+      // console.log(`[PlansService] Filtering plans by Gym ID: ${gymId}`);
       query.where('gym.id = :gymId', { gymId });
+    } else {
+      // console.log('[PlansService] No Gym ID filter provided');
     }
 
     return query.getMany();

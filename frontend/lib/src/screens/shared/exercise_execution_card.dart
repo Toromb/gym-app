@@ -12,11 +12,13 @@ import 'swap_confirmation_dialog.dart';
 class ExerciseExecutionCard extends StatefulWidget {
   final SessionExercise execution;
   final int index;
+  final TrainingIntent intent;
 
   const ExerciseExecutionCard({
     super.key,
     required this.execution,
     required this.index,
+    this.intent = TrainingIntent.GENERAL,
   });
 
   @override
@@ -451,6 +453,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
       oldExercise: widget.execution.exercise!, 
       newExercise: newEx,
       execution: widget.execution,
+      intent: widget.intent,
     );
 
     // 2. Show Confirmation Dialog

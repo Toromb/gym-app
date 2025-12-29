@@ -43,6 +43,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
           dayOfWeek: d.dayOfWeek,
           order: d.order,
           dayNotes: d.dayNotes,
+          trainingIntent: d.trainingIntent, // Copy intent
           exercises: d.exercises.map((e) => PlanExercise(
             id: e.id,
             exerciseId: e.exerciseId ?? e.exercise?.id,
@@ -397,6 +398,41 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                                 children: [
                                   ListTile(
                                     title: Text(day.title ?? 'Día ${day.dayOfWeek}'),
+                                    subtitle: Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Row(
+                                        children: [
+                                          const Text("Objetivo: ", style: TextStyle(fontWeight: FontWeight.bold)),
+                                          const SizedBox(width: 8),
+                                          DropdownButton<TrainingIntent>(
+                                            value: day.trainingIntent,
+                                            isDense: true,
+                                            underline: Container(height: 1, color: Colors.grey),
+                                            items: TrainingIntent.values.map((intent) {
+                                              return DropdownMenuItem(
+                                                value: intent,
+                                                child: Text(intent.label),
+                                              );
+                                            }).toList(),
+                                            onChanged: (newIntent) {
+                                              if (newIntent != null) {
+                                                setState(() {
+                                                   _weeks[weekIndex].days[dayIndex] = PlanDay(
+                                                     id: day.id,
+                                                     title: day.title,
+                                                     dayOfWeek: day.dayOfWeek,
+                                                     order: day.order,
+                                                     dayNotes: day.dayNotes,
+                                                     exercises: day.exercises,
+                                                     trainingIntent: newIntent,
+                                                   );
+                                                });
+                                              }
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [

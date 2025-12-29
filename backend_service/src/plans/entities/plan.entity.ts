@@ -54,6 +54,13 @@ export class Plan {
   updatedAt: Date;
 }
 
+export enum TrainingIntent {
+  STRENGTH = 'STRENGTH',
+  HYPERTROPHY = 'HYPERTROPHY',
+  ENDURANCE = 'ENDURANCE',
+  GENERAL = 'GENERAL',
+}
+
 @Entity('plan_days')
 export class PlanDay {
   @PrimaryGeneratedColumn('uuid')
@@ -71,6 +78,13 @@ export class PlanDay {
 
   @Column({ default: 0 })
   order: number;
+
+  @Column({
+    type: 'enum',
+    enum: TrainingIntent,
+    default: TrainingIntent.GENERAL,
+  })
+  trainingIntent: TrainingIntent;
 
   @Column({ type: 'text', nullable: true })
   dayNotes?: string;

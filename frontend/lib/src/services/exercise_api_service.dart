@@ -109,7 +109,8 @@ class ExerciseService {
       final List<dynamic> data = json.decode(response.body);
       return data.map((json) => Muscle.fromJson(json)).toList();
     } else {
-      debugPrint('Failed to load muscles: ${response.body}');
+      debugPrint('Failed to load muscles. Status: ${response.statusCode}. Token: ${token != null ? "Present" : "Missing"}');
+       debugPrint('Response: ${response.body}');
       return [];
     }
   }
@@ -129,7 +130,8 @@ class ExerciseService {
       final List<dynamic> data = json.decode(response.body);
       return data.map((json) => Equipment.fromJson(json)).toList();
     } else {
-      debugPrint('Failed to load equipments: ${response.body}');
+      debugPrint('Failed to load equipments. Status: ${response.statusCode}. Token: ${token != null ? "Present" : "Missing"}');
+      debugPrint('Response: ${response.body}');
       return [];
     }
   }

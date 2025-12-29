@@ -437,4 +437,35 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
+  Future<TrainingSession?> fetchStudentSession({
+    required String studentId,
+    required String planId,
+    required int week,
+    required int day,
+    String? startDate,
+  }) async {
+    try {
+      return await _planService.getStudentSession(
+        studentId: studentId,
+        planId: planId,
+        week: week,
+        day: day,
+        startDate: startDate,
+      );
+    } catch (e) {
+      debugPrint('Error fetching student session: $e');
+      return null;
+    }
+  }
+
+  void clear() {
+    _plans = [];
+    _myPlan = null;
+    _assignments = [];
+    _activeAssignment = null;
+    _currentSession = null;
+    _isPlansLoaded = false;
+    _isMyPlanLoaded = false;
+    notifyListeners();
+  }
 }

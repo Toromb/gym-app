@@ -232,22 +232,52 @@ class PlanService {
   // --- EXECUTION ENGINE API ---
 
   Future<TrainingSession?> startSession(String? planId, int? weekNumber, int? dayOrder, {String? date}) async {
-    final token = await _authService.getToken();
-  Future<TrainingSession?> startSession(String? planId, int? weekNumber, int? dayOrder, {required String date}) async {
-    final response = await _api.post('/executions/start', {
-      'planId': planId,
-      'weekNumber': weekNumber,
-      'dayOrder': dayOrder,
-      'date': date,
-    });
+    final token = await _getToken();
+    if (token == null) return null;
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/executions/start'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'planId': planId,
+        'weekNumber': weekNumber,
+        'dayOrder': dayOrder,
+        'date': date,
+      }),
+    );
+
     if (response.statusCode == 201 || response.statusCode == 200) {
-      return TrainingSession.fromJson(response.data);
+      return TrainingSession.fromJson(jsonDecode(response.body));
+    }
+    return null;
+  }
+
+  Future<SessionExercise?> addSessionExercise(String sessionId, String exerciseId) async {
+    final token = await _getToken();
+    if (token == null) return null;
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/executions/$sessionId/exercises'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'exerciseId': exerciseId,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return SessionExercise.fromJson(jsonDecode(response.body));
     }
     return null;
   }
 
   Future<bool> updateSessionExercise(String sessionExerciseId, Map<String, dynamic> updates) async {
-    final token = await _authService.getToken();
+    final token = await _getToken();
     if (token == null) return false;
 
     final response = await http.patch(
@@ -263,7 +293,7 @@ class PlanService {
   }
 
   Future<bool> completeSession(String sessionId, String date) async {
-    final token = await _authService.getToken();
+    final token = await _getToken();
     if (token == null) return false;
 
     final response = await http.patch(
@@ -279,7 +309,7 @@ class PlanService {
   }
 
   Future<List<TrainingSession>> getCalendarHistory(String from, String to) async {
-    final token = await _authService.getToken();
+    final token = await _getToken();
     if (token == null) return [];
 
     final response = await http.get(
@@ -303,7 +333,7 @@ class PlanService {
     required int day,
     String? startDate,
   }) async {
-    final token = await _authService.getToken();
+    final token = await _getToken();
     if (token == null) return null;
 
     String url = '$baseUrl/executions/history/structure?studentId=$studentId&planId=$planId&week=$week&day=$day';

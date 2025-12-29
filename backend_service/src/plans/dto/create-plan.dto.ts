@@ -7,7 +7,9 @@ import {
   IsString,
   ValidateNested,
   IsUUID,
+  IsEnum,
 } from 'class-validator';
+import { TrainingIntent } from '../entities/plan.entity';
 
 export class CreatePlanExerciseDto {
   @IsUUID()
@@ -60,6 +62,10 @@ export class CreatePlanDayDto {
   @IsOptional()
   @IsString()
   dayNotes?: string;
+
+  @IsOptional()
+  @IsEnum(TrainingIntent)
+  trainingIntent?: TrainingIntent;
 
   @IsArray()
   @ValidateNested({ each: true })

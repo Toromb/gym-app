@@ -253,7 +253,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       child: ExerciseExecutionCard(
         key: ValueKey(exExec.id),
         execution: exExec, 
-        index: index
+        index: index,
+        intent: widget.day.trainingIntent,
       ),
     );
   }

@@ -199,11 +199,43 @@ class PlanExercise {
   }
 }
 
+enum TrainingIntent {
+  STRENGTH,
+  HYPERTROPHY,
+  ENDURANCE,
+  GENERAL;
+
+  String get label {
+    switch (this) {
+      case TrainingIntent.STRENGTH: return 'Fuerza';
+      case TrainingIntent.HYPERTROPHY: return 'Hipertrofia';
+      case TrainingIntent.ENDURANCE: return 'Resistencia';
+      case TrainingIntent.GENERAL: return 'General';
+    }
+  }
+
+  // To/From String for API
+  static TrainingIntent fromString(String? key) {
+    if (key == null) return TrainingIntent.GENERAL;
+    switch (key.toUpperCase()) {
+      case 'STRENGTH': return TrainingIntent.STRENGTH;
+      case 'HYPERTROPHY': return TrainingIntent.HYPERTROPHY;
+      case 'ENDURANCE': return TrainingIntent.ENDURANCE;
+      default: return TrainingIntent.GENERAL;
+    }
+  }
+
+  String toApiString() {
+    return this.name.toUpperCase();
+  }
+}
+
 class PlanDay {
   final String? id;
   final String? title;
   int dayOfWeek;
   int order;
+  final TrainingIntent trainingIntent;
   final String? dayNotes;
   final List<PlanExercise> exercises;
 
@@ -212,6 +244,7 @@ class PlanDay {
     this.title,
     required this.dayOfWeek,
     required this.order,
+    this.trainingIntent = TrainingIntent.GENERAL,
     this.dayNotes,
     required this.exercises,
   });
@@ -228,6 +261,7 @@ class PlanDay {
       title: json['title'],
       dayOfWeek: json['dayOfWeek'] ?? 0,
       order: json['order'] ?? 0,
+      trainingIntent: TrainingIntent.fromString(json['trainingIntent']),
       dayNotes: json['dayNotes'],
       exercises: exercisesList,
     );
@@ -238,6 +272,7 @@ class PlanDay {
       'title': title,
       'dayOfWeek': dayOfWeek,
       'order': order,
+      'trainingIntent': trainingIntent.toApiString(),
       'dayNotes': dayNotes,
       'exercises': exercises.map((e) => e.toJson()).toList(),
     };

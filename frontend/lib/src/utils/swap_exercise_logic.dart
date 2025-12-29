@@ -21,84 +21,115 @@ class SwapExerciseLogic {
     required Exercise oldExercise,
     required Exercise newExercise,
     required SessionExercise execution,
+    TrainingIntent intent = TrainingIntent.GENERAL,
   }) {
-    // 1. Weight Calculation
+    // 1. Weight Calculation (Unchanged)
     String? newWeight;
     bool isEstimated = false;
 
-    // Parse old weight
-    // Prioritize weightUsed (actual) over targetWeightSnapshot (plan)
     final oldWeightStr = execution.weightUsed ?? execution.targetWeightSnapshot;
     
     if (oldWeightStr != null && oldWeightStr.isNotEmpty) {
-      // Try to parse number
       final oldVal = double.tryParse(oldWeightStr.replaceAll(RegExp(r'[^0-9.]'), ''));
       
       if (oldVal != null && oldExercise.loadFactor != null && newExercise.loadFactor != null) {
-        // Formula: New = Old * (NewFactor / OldFactor)
-        if (oldExercise.loadFactor! > 0) { // Avoid division by zero
+        if (oldExercise.loadFactor! > 0) {
            final ratio = newExercise.loadFactor! / oldExercise.loadFactor!;
            final calculated = oldVal * ratio;
-           
-           // Round to nearest 0.5 or integer for cleanliness
-           // e.g. 23.4 -> 23.5, 23.1 -> 23.0
            final rounded = (calculated * 2).round() / 2;
-           
-           // If integer, remove decimal
            newWeight = rounded % 1 == 0 ? rounded.toInt().toString() : rounded.toString();
            isEstimated = true;
         }
-      } else {
-        // Fallback: Keep old weight string if we can't calculate?
-        // Requirement: "Si NO hay datos suficientes: No sugerir peso (null / 0)."
-        // So we leave newWeight null.
       }
     }
 
-    // 2. Sets Calculation
-    // Use defaultSets if available, else fallback to 3 (safe default)
-    // Or should we keep old sets? 
-    // Plan says: "Usar defaultSets del ejercicio destino (si existe). Si no, fallback global seguro (ej: 3)."
+    // 2. Sets Calculation (Unchanged)
     final int setsVal = newExercise.defaultSets ?? 3;
     final String newSets = setsVal.toString();
 
-    // 3. Reps Calculation
+    // 3. Reps Calculation (Intelligent Swap)
     String newReps;
-    
-    // Get old reps (done or target)
     final oldRepsStr = execution.repsDone ?? execution.targetRepsSnapshot;
-    
-    if (newExercise.minReps != null && newExercise.maxReps != null) {
-      if (oldRepsStr != null) {
-        // Try to parse single number or range
-        // If range "10-12", take average or lower? Let's try to parse first int.
-        final oldRepsVal = int.tryParse(oldRepsStr.replaceAll(RegExp(r'[^0-9].*'), '')); // simple parse first number
-        
-        if (oldRepsVal != null) {
-           if (oldRepsVal < newExercise.minReps!) {
-             newReps = newExercise.minReps.toString();
-           } else if (oldRepsVal > newExercise.maxReps!) {
-             newReps = newExercise.maxReps.toString();
-           } else {
-             newReps = oldRepsVal.toString(); // Keep
-           }
-        } else {
-          // Could not parse old reps, use default range
-           newReps = '${newExercise.minReps}-${newExercise.maxReps}';
+    final int? oldRepsVal = oldRepsStr != null 
+        ? int.tryParse(oldRepsStr.replaceAll(RegExp(r'[^0-9].*'), '')) 
+        : null;
+
+    // Define Base Target based on Intent
+    int targetMin, targetMax;
+    switch (intent) {
+      case TrainingIntent.STRENGTH:
+        targetMin = 3; targetMax = 6;
+        break;
+      case TrainingIntent.HYPERTROPHY:
+        targetMin = 8; targetMax = 12;
+        break;
+      case TrainingIntent.ENDURANCE:
+        targetMin = 15; targetMax = 20;
+        break;
+      case TrainingIntent.GENERAL:
+      default:
+        targetMin = 10; targetMax = 12; // Fallback only if no other info
+        break;
+    }
+
+    // Apply Exercise Hardware Limits
+    // If exercise forces higher reps (e.g. Abs min 15), we respect that even if Intent is Strength.
+    final int exMin = newExercise.minReps ?? 1;
+    final int exMax = newExercise.maxReps ?? 99;
+
+    // Intersect Intent Range with Exercise Range
+    // Effective Range = [max(targetMin, exMin), min(targetMax, exMax)]
+    int effectiveMin = (targetMin < exMin) ? exMin : targetMin;
+    int effectiveMax = (targetMax > exMax) ? exMax : targetMax;
+
+    // Handle invalid range (e.g. Strength 3-6 but Exercise min 10 -> [10, 6] -> fix to [10, 10] or just [10, 10])
+    if (effectiveMin > effectiveMax) {
+        // Exercise limits strictly override Intent
+        // If Exercise Min (10) > Intent Max (6) -> Use 10
+        // If Exercise Max (5) < Intent Min (8) -> Use 5
+        if (exMin > targetMax) {
+             effectiveMin = exMin;
+             effectiveMax = exMin; // clamp to min
+        } else if (exMax < targetMin) {
+             effectiveMin = exMax;
+             effectiveMax = exMax; // clamp to max
         }
-      } else {
-         // No old reps, use range
-         newReps = '${newExercise.minReps}-${newExercise.maxReps}';
-      }
+    }
+
+    if (intent == TrainingIntent.GENERAL) {
+        // GENERAL Specific Logic:
+        // 1. If previous reps exist AND fit in Exercise Limits -> Keep them.
+        if (oldRepsVal != null && oldRepsVal >= exMin && oldRepsVal <= exMax) {
+            newReps = oldRepsVal.toString();
+        } 
+        // 2. Else -> Use Exercise Min (if defined) or fallback (10-12)
+        else {
+             if (newExercise.minReps != null && newExercise.maxReps != null) {
+                 newReps = '${newExercise.minReps}-${newExercise.maxReps}';
+             } else {
+                 newReps = "10-12";
+             }
+        }
     } else {
-       // Destination has no range configuration
-       // Fallback: Keep old reps if exist
-       if (oldRepsStr != null && oldRepsStr.isNotEmpty) {
-         newReps = oldRepsStr;
-       } else {
-         // Fallback global safe
-         newReps = "10-12";
-       }
+        // SPECIFIC INTENT Logic (Strength, Hypertrophy, Endurance):
+        // 1. If effective range is valid (effectiveMin <= effectiveMax)
+        if (effectiveMin <= effectiveMax) {
+             // If old reps fit in effective range, keep them to minimize friction
+             if (oldRepsVal != null && oldRepsVal >= effectiveMin && oldRepsVal <= effectiveMax) {
+                 newReps = oldRepsVal.toString();
+             } else {
+                 // Suggest the range or the midpoint/min?
+                 // Suggest range "Min-Max"
+                 if (effectiveMin == effectiveMax) {
+                     newReps = effectiveMin.toString();
+                 } else {
+                     newReps = '$effectiveMin-$effectiveMax';
+                 }
+             }
+        } else {
+             // Should not happen due to clamp logic above, but fallback
+             newReps = '$exMin-$exMax';
+        }
     }
 
     return SwapSuggestion(

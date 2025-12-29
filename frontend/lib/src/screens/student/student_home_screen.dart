@@ -150,8 +150,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         builder: (context) => DayDetailScreen(
                           day: PlanDay(
                             order: 0, 
-                            daysOfWeek: ['Freestyle'], 
-                            dayOfWeek: 'Entrenamiento Libre',
+                            dayOfWeek: 0, 
+                            title: 'Entrenamiento Libre',
                             exercises: []
                           ),
                           planId: 'FREE_SESSION',
