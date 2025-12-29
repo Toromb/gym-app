@@ -6,12 +6,13 @@ import { Plan, PlanDay, PlanExercise } from './entities/plan.entity';
 import { PlanWeek } from './entities/plan-week.entity';
 import { StudentPlan } from './entities/student-plan.entity';
 import { ExercisesModule } from '../exercises/exercises.module';
+import { Exercise } from '../exercises/entities/exercise.entity';
 import { UsersModule } from '../users/users.module';
 import { StatsModule } from '../stats/stats.module';
-import { PlanExecution } from './entities/plan-execution.entity';
-import { ExerciseExecution } from './entities/exercise-execution.entity';
-import { ExecutionsController } from './executions.controller';
-import { ExecutionsService } from './executions.service';
+import { TrainingSession } from './entities/training-session.entity';
+import { SessionExercise } from './entities/session-exercise.entity';
+import { TrainingSessionsController } from './training-sessions.controller';
+import { TrainingSessionsService } from './training-sessions.service';
 
 @Module({
   imports: [
@@ -21,15 +22,16 @@ import { ExecutionsService } from './executions.service';
       PlanDay,
       PlanExercise,
       StudentPlan,
-      PlanExecution,
-      ExerciseExecution,
+      TrainingSession,
+      SessionExercise,
+      Exercise, // Added for Free Session injection
     ]),
     ExercisesModule,
     UsersModule,
     StatsModule,
   ],
-  controllers: [PlansController, ExecutionsController],
-  providers: [PlansService, ExecutionsService],
-  exports: [PlansService],
+  controllers: [PlansController, TrainingSessionsController],
+  providers: [PlansService, TrainingSessionsService],
+  exports: [PlansService, TrainingSessionsService],
 })
 export class PlansModule { }

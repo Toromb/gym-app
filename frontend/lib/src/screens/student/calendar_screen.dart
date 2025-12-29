@@ -16,7 +16,7 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  Map<String, List<PlanExecution>> _events = {};
+  Map<String, List<TrainingSession>> _events = {};
   bool _isLoading = false;
 
   @override
@@ -28,16 +28,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> _fetchEvents() async {
     setState(() => _isLoading = true);
-    // Fetch for the whole focused month
     final start = DateTime(_focusedDay.year, _focusedDay.month, 1);
-    final end = DateTime(_focusedDay.year, _focusedDay.month + 1, 0); // Last day of month
+    final end = DateTime(_focusedDay.year, _focusedDay.month + 1, 0); 
     
-    // Add some buffer if needed, but strict month is fine.
     try {
       final executions = await context.read<PlanProvider>().fetchCalendar(start, end);
       
-      // Group by date (YYYY-MM-DD)
-      final newEvents = groupBy(executions, (PlanExecution e) => e.date);
+      final newEvents = groupBy(executions, (TrainingSession e) => e.date);
       
       if (mounted) {
         setState(() {
@@ -53,14 +50,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void _onMonthChanged(int offset) {
     setState(() {
       _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + offset, 1);
-      _events.clear(); // Clear while loading
+      _events.clear(); 
     });
     _fetchEvents();
   }
 
-  List<PlanExecution> _getEventsForDay(DateTime day) {
-    // Backend returns dates as YYYY-MM-DD strings. 
-    // We must format the query day to match that exactly.
+  List<TrainingSession> _getEventsForDay(DateTime day) {
     final key = "${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}";
     // Debug logging
     print('Checking key: $key. Available keys: ${_events.keys.toList()}'); 
@@ -71,7 +66,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget build(BuildContext context) {
     final daysInMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 0).day;
     final firstDayOfMonth = DateTime(_focusedDay.year, _focusedDay.month, 1);
-    final startingWeekday = firstDayOfMonth.weekday; // 1=Mon, 7=Sun
+    final startingWeekday = firstDayOfMonth.weekday; 
 
     return Scaffold(
       appBar: AppBar(

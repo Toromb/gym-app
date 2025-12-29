@@ -1,46 +1,55 @@
 import 'plan_model.dart';
 
-class PlanExecution {
+class TrainingSession {
   final String id;
   final String date;
-  final String dayKey;
-  final String status; // 'IN_PROGRESS', 'COMPLETED'
-  final List<ExerciseExecution> exercises;
+  final String? planId; // Nullable for free sessions
+  final String source; // 'PLAN', 'FREE', 'CLASS'
+  final String status; // 'IN_PROGRESS', 'COMPLETED', 'ABANDONED'
+  final List<SessionExercise> exercises;
+  // Legacy fields adapting to new model
+  final String? dayKey; 
 
-  PlanExecution({
+  TrainingSession({
     required this.id,
     required this.date,
-    required this.dayKey,
+    this.planId,
+    this.source = 'PLAN',
     required this.status,
     required this.exercises,
+    this.dayKey,
   });
 
-  factory PlanExecution.fromJson(Map<String, dynamic> json) {
-    return PlanExecution(
+  factory TrainingSession.fromJson(Map<String, dynamic> json) {
+    return TrainingSession(
       id: json['id'],
       date: json['date'],
-      dayKey: json['dayKey'],
+      planId: json['plan'] != null ? (json['plan'] is String ? json['plan'] : json['plan']['id']) : null,
+      source: json['source'] ?? 'PLAN',
       status: json['status'],
+      dayKey: json['dayKey'], // Might be null
       exercises: (json['exercises'] as List)
-          .map((e) => ExerciseExecution.fromJson(e))
+          .map((e) => SessionExercise.fromJson(e))
           .toList(),
     );
   }
-  PlanExecution copyWith({
+  TrainingSession copyWith({
     String? status,
-    List<ExerciseExecution>? exercises,
+    List<SessionExercise>? exercises,
   }) {
-    return PlanExecution(
+    return TrainingSession(
       id: id,
       date: date,
-      dayKey: dayKey,
+      planId: planId,
+      source: source,
       status: status ?? this.status,
       exercises: exercises ?? this.exercises,
+      dayKey: dayKey,
     );
   }
 }
 
-class ExerciseExecution {
+class SessionExercise {
   final String id;
   // Snapshots
   final String exerciseNameSnapshot;
@@ -54,12 +63,12 @@ class ExerciseExecution {
   
   // Real Data
   final bool isCompleted;
-  final String? setsDone; // Changed from int to String?
+  final String? setsDone; 
   final String? repsDone;
   final String? weightUsed;
   final String? notes;
 
-  ExerciseExecution({
+  SessionExercise({
     required this.id,
     required this.exerciseNameSnapshot,
     this.targetSetsSnapshot,
@@ -69,13 +78,13 @@ class ExerciseExecution {
     required this.equipmentsSnapshot, 
     this.exercise,
     required this.isCompleted,
-    this.setsDone, // Now optional
+    this.setsDone, 
     this.repsDone,
     this.weightUsed,
     this.notes,
   });
 
-  ExerciseExecution copyWith({
+  SessionExercise copyWith({
     bool? isCompleted,
     String? setsDone,
     String? repsDone,
@@ -87,7 +96,7 @@ class ExerciseExecution {
     String? videoUrl,
     List<Equipment>? equipmentsSnapshot,
   }) {
-    return ExerciseExecution(
+    return SessionExercise(
       id: id,
       exerciseNameSnapshot: exerciseNameSnapshot ?? this.exerciseNameSnapshot,
       targetSetsSnapshot: targetSetsSnapshot,
@@ -104,11 +113,10 @@ class ExerciseExecution {
     );
   }
 
-  factory ExerciseExecution.fromJson(Map<String, dynamic> json) {
+  factory SessionExercise.fromJson(Map<String, dynamic> json) {
 
-    return ExerciseExecution(
+    return SessionExercise(
       id: json['id'],
-      // Fallback to empty string if snapshot missing (shouldn't happen per strict rules)
       exerciseNameSnapshot: json['exerciseNameSnapshot'] ?? 'Unknown Exercise',
       targetSetsSnapshot: json['targetSetsSnapshot'],
       targetRepsSnapshot: json['targetRepsSnapshot'],
@@ -120,15 +128,16 @@ class ExerciseExecution {
           [],
       exercise: json['exercise'] != null ? Exercise.fromJson(json['exercise']) : null,
       isCompleted: json['isCompleted'] ?? false,
-      setsDone: json['setsDone']?.toString(), // Handle number or string
+      setsDone: json['setsDone']?.toString(), 
       repsDone: json['repsDone'],
       weightUsed: json['weightUsed'],
       notes: json['notes'],
     );
   }
 
-  factory ExerciseExecution.fromPlanExercise(PlanExercise pe) {
-    return ExerciseExecution(
+  // Helper for optimistically creating from PlanExercise before backend confirms
+  factory SessionExercise.fromPlanExercise(PlanExercise pe) {
+    return SessionExercise(
       id: 'dummy-${pe.id}', // Dummy ID
       exerciseNameSnapshot: pe.exercise?.name ?? 'Unknown Exercise',
       targetSetsSnapshot: pe.sets,
@@ -138,7 +147,7 @@ class ExerciseExecution {
       equipmentsSnapshot: pe.equipments,
       exercise: pe.exercise,
       isCompleted: false,
-      setsDone: pe.sets.toString(), // Default to target sets as string
+      setsDone: pe.sets.toString(), 
     );
   }
 }

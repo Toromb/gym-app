@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, LessThanOrEqual } from 'typeorm';
 import { MuscleLoadLedger } from './entities/muscle-load-ledger.entity';
 import { MuscleLoadState } from './entities/muscle-load-state.entity';
-import { PlanExecution } from '../plans/entities/plan-execution.entity';
+import { TrainingSession } from '../plans/entities/training-session.entity';
 import { ExerciseMuscle, MuscleRole } from '../exercises/entities/exercise-muscle.entity';
 import { Muscle, MuscleRegion } from '../exercises/entities/muscle.entity';
 
@@ -32,49 +32,44 @@ export class MuscleLoadService {
     ) { }
 
     /**
-     * Syncs the muscle load impact of a specific PlanExecution.
+     * Syncs the muscle load impact of a specific TrainingSession.
      * - Calculates load based on completed exercises.
-     * - Replaces existing ledger entries for this execution (Idempotent).
-     * - If execution is NOT completed, clears the ledger (removes impact).
+     * - Replaces existing ledger entries for this session (Idempotent).
+     * - If session is NOT completed, clears the ledger (removes impact).
      */
     async syncExecutionLoad(
-        execution: PlanExecution,
+        session: TrainingSession,
         transactionalEntityManager?: any, // Optional for transactions
     ): Promise<void> {
         const manager = transactionalEntityManager || this.ledgerRepo.manager;
 
-        // 1. Clear existing ledger for this execution
+        // 1. Clear existing ledger for this session
+        // Note: Ledger uses 'session' property which maps to 'planExecutionId' column in DB (if valid)
+        // But wait, the Entity still has @JoinColumn({ name: 'planExecutionId' }) session: TrainingSession
+        // So in Find/Delete we use 'session'.
         await manager.delete(MuscleLoadLedger, {
-            planExecution: { id: execution.id },
+            session: { id: session.id },
         });
 
         // If not completed, we are done (load removed)
-        if (execution.status !== 'COMPLETED') {
+        if (session.status !== 'COMPLETED') {
             return;
         }
 
         // 2. Identify Muscles & Calculate Delta
         // We need the ACTUAL exercises performed.
-        // Assuming execution.exercises is populated (if not, we should fetch)
-        const exerciseExecutions = execution.exercises || [];
+        const exerciseExecutions = session.exercises || [];
 
         const muscleDeltas = new Map<string, number>();
 
         for (const exExec of exerciseExecutions) {
             if (!exExec.isCompleted) continue;
 
-            // Find original Exercise (via snapshot or relation)
-            // Ideally we use the relation to Exercise to find mappings
-            // If we don't have the relation loaded, we might need to fetch.
-            // Assuming 'exercise' relation is loaded.
             if (!exExec.exercise) {
-                this.logger.warn(`Exercise not loaded for Execution ${exExec.id}`);
+                this.logger.warn(`Exercise not loaded for Session ${exExec.id}`);
                 continue;
             }
 
-            // Fetch mappings for this exercise
-            // CACHE OPTIMIZATION: In high scale, cache this. MVP: Fetch per loop (or batch load).
-            // Let's fetch per loop for simplicity in MVP, or better, fetch all Mappings ONCE if set is small.
             const mappings = await this.exerciseMuscleRepo.find({
                 where: { exercise: { id: exExec.exercise.id } },
                 relations: ['muscle'],
@@ -83,10 +78,6 @@ export class MuscleLoadService {
             for (const map of mappings) {
                 const stimulus = this.STIMULUS_BY_ROLE[map.role] || 0;
                 const current = muscleDeltas.get(map.muscle.id) || 0;
-                // Logic: Accumulate load? Or Max per session?
-                // User Spec: "5) Agrupar deltaLoad por muscleId" -> Implies accumulation or max.
-                // Usually, multiple exercises hitting same muscle accumulate fatigue.
-                // Let's ACCUMULATE for now.
                 muscleDeltas.set(map.muscle.id, current + stimulus);
             }
         }
@@ -95,11 +86,11 @@ export class MuscleLoadService {
         const ledgerEntries: MuscleLoadLedger[] = [];
         for (const [muscleId, delta] of muscleDeltas.entries()) {
             const entry = new MuscleLoadLedger();
-            entry.student = { id: execution.student.id } as any; // Assuming student relation or ID exists on execution
+            entry.student = { id: session.student.id } as any;
             entry.muscle = { id: muscleId } as any;
-            entry.date = execution.date;
+            entry.date = session.date;
             entry.deltaLoad = delta;
-            entry.planExecution = { id: execution.id } as any;
+            entry.session = { id: session.id } as any; // Updated property
 
             ledgerEntries.push(entry);
         }

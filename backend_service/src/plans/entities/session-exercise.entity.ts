@@ -1,21 +1,22 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
-import { PlanExecution } from './plan-execution.entity';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { TrainingSession } from './training-session.entity';
 import { Exercise } from '../../exercises/entities/exercise.entity';
 import { Equipment } from '../../exercises/entities/equipment.entity';
 import { ManyToMany, JoinTable } from 'typeorm';
 
-@Entity('exercise_executions')
-export class ExerciseExecution {
+@Entity('session_exercises')
+export class SessionExercise {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => PlanExecution, (execution) => execution.exercises, {
+  @ManyToOne(() => TrainingSession, (session) => session.exercises, {
     onDelete: 'CASCADE',
   })
-  execution: PlanExecution;
+  @JoinColumn({ name: 'sessionId' })
+  session: TrainingSession;
 
   @Column({ nullable: true })
-  planExerciseId: string; // Reference to original plan exercise ID if available
+  planExerciseId: string; // Reference to original plan exercise ID if available (Nullable)
 
   @ManyToOne(() => Exercise, { eager: true, onDelete: 'SET NULL' }) // Eager load to show name easily
   exercise: Exercise;

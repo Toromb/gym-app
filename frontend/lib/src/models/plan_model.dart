@@ -79,6 +79,12 @@ class Exercise {
   final String? notes;
   final List<ExerciseMuscle> muscles;
   final List<Equipment> equipments;
+  
+  // Professional Change System Config
+  final double? loadFactor;
+  final int? defaultSets;
+  final int? minReps;
+  final int? maxReps;
 
   Exercise({
     required this.id,
@@ -95,6 +101,10 @@ class Exercise {
     this.notes,
     this.muscles = const [],
     this.equipments = const [],
+    this.loadFactor,
+    this.defaultSets,
+    this.minReps,
+    this.maxReps,
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
@@ -116,6 +126,10 @@ class Exercise {
       rest: json['rest'],
       load: json['load'],
       notes: json['notes'],
+      loadFactor: json['loadFactor'] != null ? (json['loadFactor'] as num).toDouble() : null,
+      defaultSets: json['defaultSets'],
+      minReps: json['minReps'],
+      maxReps: json['maxReps'],
       muscles: musclesList,
       equipments: (json['equipments'] as List<dynamic>?)
               ?.map((e) => Equipment.fromJson(e))

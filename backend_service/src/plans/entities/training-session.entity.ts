@@ -9,34 +9,38 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Plan } from './plan.entity';
-import { ExerciseExecution } from './exercise-execution.entity';
+import { SessionExercise } from './session-exercise.entity';
 
 export enum ExecutionStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
+  ABANDONED = 'ABANDONED',
 }
 
-@Entity('plan_executions')
-export class PlanExecution {
+@Entity('training_sessions')
+export class TrainingSession {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   student: User;
 
-  @ManyToOne(() => Plan, { onDelete: 'CASCADE' })
-  plan: Plan;
+  @ManyToOne(() => Plan, { onDelete: 'CASCADE', nullable: true })
+  plan: Plan | null;
 
   @Column({ type: 'date' })
   date: string; // YYYY-MM-DD
 
-  @Column()
-  dayKey: string; // e.g., "W1-D1"
+  @Column({ default: 'PLAN' })
+  source: string; // 'PLAN', 'FREE', 'CLASS'
 
-  @Column()
+  @Column({ nullable: true })
+  dayKey: string; // e.g., "W1-D1" (Nullable for free sessions)
+
+  @Column({ nullable: true })
   weekNumber: number;
 
-  @Column()
+  @Column({ nullable: true })
   dayOrder: number;
 
   @Column({
@@ -52,8 +56,8 @@ export class PlanExecution {
   @Column({ type: 'json', nullable: true })
   details: any; // Flexible field for future use
 
-  @OneToMany(() => ExerciseExecution, (ex) => ex.execution, { cascade: true })
-  exercises: ExerciseExecution[];
+  @OneToMany(() => SessionExercise, (ex) => ex.session, { cascade: true })
+  exercises: SessionExercise[];
 
   @CreateDateColumn()
   createdAt: Date;

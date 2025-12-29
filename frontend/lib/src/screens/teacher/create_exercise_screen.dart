@@ -27,6 +27,14 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
   late TextEditingController _restController;
   late TextEditingController _loadController;
 
+
+
+  // Advanced Config
+  late TextEditingController _loadFactorController;
+  late TextEditingController _defaultSetsController;
+  late TextEditingController _minRepsController;
+  late TextEditingController _maxRepsController;
+
   // Muscle Mapping State
   List<Muscle> _allMuscles = [];
   bool _isLoadingMuscles = true;
@@ -51,7 +59,15 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
     _setsController = TextEditingController(text: e?.sets?.toString() ?? '');
     _repsController = TextEditingController(text: e?.reps ?? '');
     _restController = TextEditingController(text: e?.rest ?? '');
+    _setsController = TextEditingController(text: e?.sets?.toString() ?? '');
+    _repsController = TextEditingController(text: e?.reps ?? '');
+    _restController = TextEditingController(text: e?.rest ?? '');
     _loadController = TextEditingController(text: e?.load ?? '');
+
+    _loadFactorController = TextEditingController(text: e?.loadFactor?.toString() ?? '');
+    _defaultSetsController = TextEditingController(text: e?.defaultSets?.toString() ?? '');
+    _minRepsController = TextEditingController(text: e?.minReps?.toString() ?? '');
+    _maxRepsController = TextEditingController(text: e?.maxReps?.toString() ?? '');
 
     _loadMuscles();
     _loadEquipments();
@@ -130,6 +146,10 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
     _repsController.dispose();
     _restController.dispose();
     _loadController.dispose();
+    _loadFactorController.dispose();
+    _defaultSetsController.dispose();
+    _minRepsController.dispose();
+    _maxRepsController.dispose();
     super.dispose();
   }
 
@@ -182,6 +202,16 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
         'reps': _repsController.text.isNotEmpty ? _repsController.text : null,
         'rest': _restController.text.isNotEmpty ? _restController.text : null,
         'load': _loadController.text.isNotEmpty ? _loadController.text : null,
+        'sets': int.tryParse(_setsController.text),
+        'reps': _repsController.text.isNotEmpty ? _repsController.text : null,
+        'rest': _restController.text.isNotEmpty ? _restController.text : null,
+        'load': _loadController.text.isNotEmpty ? _loadController.text : null,
+
+        // Advanced Config
+        'loadFactor': double.tryParse(_loadFactorController.text),
+        'defaultSets': int.tryParse(_defaultSetsController.text),
+        'minReps': int.tryParse(_minRepsController.text),
+        'maxReps': int.tryParse(_maxRepsController.text),
       };
 
       if (widget.exercise == null) {
@@ -505,6 +535,54 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                   Expanded(child: TextFormField(controller: _loadController, decoration: const InputDecoration(labelText: 'Peso/Int'))),
                   const SizedBox(width: 10),
                   Expanded(child: TextFormField(controller: _restController, decoration: const InputDecoration(labelText: 'Descanso'))),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+              
+              Text('Configuración para sugerencias automáticas', style: Theme.of(context).textTheme.titleMedium),
+              const Text(
+                'Estos valores se utilizan para sugerir peso, series y repeticiones cuando el alumno cambia de ejercicio. Son orientativos y editables.',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _loadFactorController, 
+                      decoration: const InputDecoration(labelText: 'Factor Carga (Ej: 1.0)'), 
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _defaultSetsController, 
+                      decoration: const InputDecoration(labelText: 'Series Default'), 
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _minRepsController, 
+                      decoration: const InputDecoration(labelText: 'Min Reps'), 
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _maxRepsController, 
+                      decoration: const InputDecoration(labelText: 'Max Reps'), 
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
                 ],
               ),
 

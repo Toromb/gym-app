@@ -20,14 +20,17 @@ class PlanProvider with ChangeNotifier {
 
   // Exercise Service
   final ExerciseService _exerciseService = ExerciseService();
-  Future<List<Exercise>> fetchExercisesByMuscle(String muscleId) async {
+  Future<List<Exercise>> fetchExercises({String? muscleId, List<String>? equipmentIds}) async {
     try {
-      return await _exerciseService.getExercises(muscleId: muscleId);
+      return await _exerciseService.getExercises(muscleId: muscleId, equipmentIds: equipmentIds);
     } catch (e) {
-      debugPrint('Error fetching exercises by muscle: $e');
+      debugPrint('Error fetching exercises: $e');
       return [];
     }
   }
+
+  // Legacy/Convenience wrapper
+  Future<List<Exercise>> fetchExercisesByMuscle(String muscleId) => fetchExercises(muscleId: muscleId);
 
   int _weeklyWorkoutCount = 0;
   int get weeklyWorkoutCount => _weeklyWorkoutCount;
@@ -194,32 +197,32 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-  PlanExecution? _currentExecution;
-  PlanExecution? get currentExecution => _currentExecution;
+  TrainingSession? _currentSession;
+  TrainingSession? get currentSession => _currentSession;
 
   // --- EXECUTION ENGINE START ---
 
-  Future<void> startExecution(String planId, int weekNumber, int dayOrder) async {
+  Future<void> startSession(String? planId, int? weekNumber, int? dayOrder) async {
     _isLoading = true;
     notifyListeners();
     try {
-      // Pass today's date automatically or let backend handle? 
-      // Requirement: Start finds or creates. Date is needed. 
-      // We'll use local time YYYY-MM-DD.
       final now = DateTime.now();
       final dateStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
       
-      _currentExecution = await _planService.startExecution(planId, weekNumber, dayOrder, date: dateStr);
+      // Handle Free Session Logic
+      final String? effectivePlanId = (planId == 'FREE_SESSION') ? null : planId;
+
+      _currentSession = await _planService.startSession(effectivePlanId, weekNumber, dayOrder, date: dateStr);
     } catch (e) {
-      debugPrint('Error starting execution: $e');
-      _currentExecution = null;
+      debugPrint('Error starting session: $e');
+      _currentSession = null;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<bool> updateExerciseExecution(String exerciseExecId, Map<String, dynamic> updates) async {
+  Future<bool> updateSessionExercise(String sessionExerciseId, Map<String, dynamic> updates) async {
     try {
       // Prepare API payload (backend likely only needs ID for exercise)
       final apiUpdates = Map<String, dynamic>.from(updates);
@@ -227,11 +230,11 @@ class PlanProvider with ChangeNotifier {
           apiUpdates['exercise'] = {'id': apiUpdates['exercise']['id']}; 
       }
 
-      final success = await _planService.updateExerciseExecution(exerciseExecId, apiUpdates);
-      if (success && _currentExecution != null) {
+      final success = await _planService.updateSessionExercise(sessionExerciseId, apiUpdates);
+      if (success && _currentSession != null) {
         
-        final updatedExercises = _currentExecution!.exercises.map((e) {
-            if (e.id == exerciseExecId) {
+        final updatedExercises = _currentSession!.exercises.map((e) {
+            if (e.id == sessionExerciseId) {
                 // Apply updates locally
                 return e.copyWith(
                     isCompleted: updates['isCompleted'],
@@ -256,29 +259,44 @@ class PlanProvider with ChangeNotifier {
             return e;
         }).toList();
 
-        _currentExecution = _currentExecution!.copyWith(exercises: updatedExercises);
+        _currentSession = _currentSession!.copyWith(exercises: updatedExercises);
         notifyListeners();
       }
       return success;
     } catch (e) {
-      debugPrint('Error updating exercise execution: $e');
+      debugPrint('Error updating session exercise: $e');
       return false;
     }
   }
 
-  Future<void> completeExecution(String date) async {
-    if (_currentExecution == null) return;
+  Future<void> addSessionExercise(String exerciseId) async {
+    if (_currentSession == null) return;
     try {
-      await _planService.completeExecution(_currentExecution!.id, date);
-      // Update local state to COMPLETED
-      // Or just clear it? User might want to see summary.
-      // _currentExecution = ... (update status)
+      final newExercise = await _planService.addSessionExercise(_currentSession!.id, exerciseId);
+      if (newExercise != null) {
+        // Add to local list
+        final updatedList = List<SessionExercise>.from(_currentSession!.exercises)..add(newExercise);
+        _currentSession = _currentSession!.copyWith(exercises: updatedList);
+        notifyListeners();
+      }
     } catch (e) {
-      rethrow; // Pass error to UI for snackbar (Conflict 409)
+      debugPrint('Error adding exercise: $e');
     }
   }
 
-  Future<List<PlanExecution>> fetchCalendar(DateTime from, DateTime to) async {
+  Future<void> completeSession(String date) async {
+    if (_currentSession == null) return;
+    try {
+      await _planService.completeSession(_currentSession!.id, date);
+      // Update local state to COMPLETED
+      _currentSession = _currentSession!.copyWith(status: 'COMPLETED');
+      notifyListeners();
+    } catch (e) {
+      rethrow; 
+    }
+  }
+
+  Future<List<TrainingSession>> fetchCalendar(DateTime from, DateTime to) async {
     try {
       final fromStr = "${from.year}-${from.month.toString().padLeft(2, '0')}-${from.day.toString().padLeft(2, '0')}";
       final toStr = "${to.year}-${to.month.toString().padLeft(2, '0')}-${to.day.toString().padLeft(2, '0')}";
@@ -418,24 +436,5 @@ class PlanProvider with ChangeNotifier {
       return null;
     }
   }
-  Future<PlanExecution?> fetchStudentExecution({
-    required String studentId,
-    required String planId,
-    required int week,
-    required int day,
-    String? startDate,
-  }) async {
-    try {
-      return await _planService.getStudentExecution(
-        studentId: studentId,
-        planId: planId,
-        week: week,
-        day: day,
-        startDate: startDate,
-      );
-    } catch (e) {
-      debugPrint('Error fetching student execution: $e');
-      return null;
-    }
-  }
+
 }

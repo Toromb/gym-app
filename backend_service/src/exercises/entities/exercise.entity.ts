@@ -51,6 +51,19 @@ export class Exercise {
   @Column({ nullable: true })
   notes?: string;
 
+  // Professional Exercise Change System Config
+  @Column({ type: 'float', nullable: true }) // Using float for decimal factor (e.g. 0.85)
+  loadFactor?: number;
+
+  @Column({ type: 'int', nullable: true })
+  defaultSets?: number;
+
+  @Column({ type: 'int', nullable: true })
+  minReps?: number;
+
+  @Column({ type: 'int', nullable: true })
+  maxReps?: number;
+
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   createdBy: User;
 

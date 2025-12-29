@@ -140,6 +140,36 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 const SizedBox(height: 16),
                 _buildDashboardCard(
                   context,
+                  title: 'Entrenamiento Libre',
+                  subtitle: 'Iniciá una sesión sin plan asignado.',
+                  icon: Icons.add_circle_outline_rounded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DayDetailScreen(
+                          day: PlanDay(
+                            order: 0, 
+                            daysOfWeek: ['Freestyle'], 
+                            dayOfWeek: 'Entrenamiento Libre',
+                            exercises: []
+                          ),
+                          planId: 'FREE_SESSION',
+                          weekNumber: 0,
+                        )
+                      ),
+                    ).then((result) {
+                       if (result == true) {
+                          context.read<PlanProvider>().fetchMyHistory();
+                          context.read<PlanProvider>().computeWeeklyStats();
+                          context.read<PlanProvider>().computeMonthlyStats();
+                       }
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildDashboardCard(
+                  context,
                   title: AppLocalizations.of(context)!.get('profileTitle'),
                   subtitle: AppLocalizations.of(context)!.get('profileSub'),
                   icon: Icons.person,

@@ -64,4 +64,21 @@ export class CreateExerciseDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  // Professional Exercise Change System Config
+  @IsOptional()
+  @IsNumber()
+  loadFactor?: number;
+
+  @IsOptional()
+  @IsNumber()
+  defaultSets?: number;
+
+  @IsOptional()
+  @IsNumber()
+  minReps?: number;
+
+  @IsOptional()
+  @IsNumber()
+  maxReps?: number;
 }

@@ -9,10 +9,10 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Muscle } from '../../exercises/entities/muscle.entity';
-import { PlanExecution } from '../../plans/entities/plan-execution.entity';
+import { TrainingSession } from '../../plans/entities/training-session.entity';
 
 @Entity('muscle_load_ledger')
-@Unique(['student', 'muscle', 'date', 'planExecution']) // Prevent duplicate events for same context
+@Unique(['student', 'muscle', 'date', 'session']) // Prevent duplicate events for same context
 export class MuscleLoadLedger {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -37,12 +37,13 @@ export class MuscleLoadLedger {
     @Column({ type: 'float' })
     deltaLoad: number;
 
-    @ManyToOne(() => PlanExecution, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'planExecutionId' })
-    planExecution: PlanExecution;
+    @ManyToOne(() => TrainingSession, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'planExecutionId' }) // Keep legacy column name for now
+    session: TrainingSession;
 
     @Column()
-    planExecutionId: string;
+    planExecutionId: string; // Keep legacy column name
+
 
     @CreateDateColumn()
     createdAt: Date;
