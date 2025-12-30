@@ -210,7 +210,7 @@ class _PlansListScreenState extends State<PlansListScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PlanDetailsScreen(plan: plan),
+        builder: (context) => PlanDetailsScreen(plan: plan, readOnly: true),
       ),
     );
   }

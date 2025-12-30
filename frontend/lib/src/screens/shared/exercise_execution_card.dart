@@ -13,12 +13,14 @@ class ExerciseExecutionCard extends StatefulWidget {
   final SessionExercise execution;
   final int index;
   final TrainingIntent intent;
+  final bool readOnly;
 
   const ExerciseExecutionCard({
     super.key,
     required this.execution,
     required this.index,
     this.intent = TrainingIntent.GENERAL,
+    this.readOnly = false,
   });
 
   @override
@@ -132,7 +134,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     // Colors
     const completedColor = Colors.green;
     final defaultColor = Theme.of(context).primaryColor;
-    final bool readOnly = false; // logic handled by parent IgnorePointer
+
+    final bool readOnly = widget.readOnly;
 
     return Card(
       elevation: _isCompleted ? 1 : 4,
@@ -242,7 +245,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                     value: _isCompleted,
                     activeColor: completedColor,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                    onChanged: _toggleCompletion,
+                    onChanged: readOnly ? null : _toggleCompletion,
                   ),
                 ),
               ],
@@ -399,7 +402,10 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
         suffixIcon: Icon(icon, size: 16, color: Colors.grey),
       ),
       style: const TextStyle(fontWeight: FontWeight.bold),
-      onChanged: _onFieldChanged,
+
+      onChanged: widget.readOnly ? null : _onFieldChanged,
+      readOnly: widget.readOnly,
+      enabled: !widget.readOnly,
     );
   }
 

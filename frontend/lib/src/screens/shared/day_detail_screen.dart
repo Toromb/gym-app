@@ -264,15 +264,13 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   }
 
   Widget _buildExerciseCard(BuildContext context, SessionExercise exExec, int index, bool readOnly) {
-    return IgnorePointer(
-      ignoring: readOnly,
-      child: ExerciseExecutionCard(
+    return ExerciseExecutionCard(
         key: ValueKey(exExec.id),
         execution: exExec, 
         index: index,
         intent: widget.day.trainingIntent,
-      ),
-    );
+        readOnly: readOnly,
+      );
   }
 
 
