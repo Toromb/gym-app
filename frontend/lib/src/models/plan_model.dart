@@ -1,6 +1,6 @@
 import 'user_model.dart';
 
-import 'user_model.dart';
+
 
 class Equipment {
   final String id;

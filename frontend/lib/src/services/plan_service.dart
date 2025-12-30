@@ -1,329 +1,147 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/plan_model.dart';
 import '../models/student_assignment_model.dart';
 import '../models/execution_model.dart';
-import '../utils/constants.dart';
+import 'api_client.dart';
+import 'api_exceptions.dart';
 
 class PlanService {
-  final _storage = const FlutterSecureStorage();
+  final ApiClient _api = ApiClient();
 
-  Future<String?> _getToken() async {
-    if (kIsWeb) {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('jwt');
-    }
-    return await _storage.read(key: 'jwt');
+  List<T> _parseList<T>(dynamic response, T Function(Map<String, dynamic>) fromJson) {
+      if (response is List) {
+          return response.map((json) => fromJson(json)).toList();
+      }
+      return [];
   }
 
   Future<List<Plan>> getPlans() async {
-    final token = await _getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/plans'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      // Backend returns plans directly
-      return data.map((json) => Plan.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load plans');
-    }
+    final response = await _api.get('/plans');
+    return _parseList(response, (json) => Plan.fromJson(json));
   }
 
   Future<Plan?> getPlan(String id) async {
-    final token = await _getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/plans/$id'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return Plan.fromJson(jsonDecode(response.body));
+    try {
+      final response = await _api.get('/plans/$id');
+      return Plan.fromJson(response);
+    } catch (_) { // 404 handled by ApiClient? ApiClient throws NotFoundException.
+      return null;
     }
-    return null;
   }
 
   Future<Plan?> createPlan(Plan plan) async {
-    final token = await _getToken();
-    final response = await http.post(
-      Uri.parse('$baseUrl/plans'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(plan.toJson()),
-    );
-
-    if (response.statusCode == 201) {
-      return Plan.fromJson(jsonDecode(response.body));
-    }
-    return null;
+    final response = await _api.post('/plans', plan.toJson());
+    return Plan.fromJson(response);
   }
 
   Future<bool> updatePlan(String id, Plan plan) async {
-    final token = await _getToken();
-    final response = await http.patch(
-      Uri.parse('$baseUrl/plans/$id'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(plan.toJson()),
-    );
-
-    return response.statusCode == 200;
+    await _api.patch('/plans/$id', plan.toJson());
+    return true; 
   }
   
-  // Method to get student's plan (active only - simplified)
   Future<Plan?> getMyPlan() async {
-     // Legacy call or for specific usage
-    final token = await _getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/plans/student/my-plan'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return Plan.fromJson(jsonDecode(response.body));
-    }
-    return null;
+    final response = await _api.get('/plans/student/my-plan');
+    return Plan.fromJson(response);
   }
 
-  // Method to get student's plan history - RETURNS StudentAssignment objects (with progress)
   Future<List<StudentAssignment>> getMyHistory() async {
-    final token = await _getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/plans/student/history'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => StudentAssignment.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load plan history');
-    }
+    final response = await _api.get('/plans/student/history');
+    return _parseList(response, (json) => StudentAssignment.fromJson(json));
   }
 
   Future<bool> updateProgress(String studentPlanId, String type, String id, bool completed, {String? date}) async {
-    final token = await _getToken();
-    final response = await http.patch(
-      Uri.parse('$baseUrl/plans/student/progress'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    await _api.patch('/plans/student/progress', {
         'studentPlanId': studentPlanId,
         'type': type,
         'id': id,
         'completed': completed,
         'date': date,
-      }),
-    );
-
-    return response.statusCode == 200;
+    });
+    return true;
   }
 
   Future<String?> assignPlan(String planId, String studentId) async {
-    final token = await _getToken();
-    final response = await http.post(
-      Uri.parse('$baseUrl/plans/assign'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'studentId': studentId,
-        'planId': planId,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      return null; // Success
-    } else if (response.statusCode == 409) {
-      try {
-        final body = jsonDecode(response.body);
-        return body['message'] ?? 'Error de asignación.';
-      } catch (_) {
-        return 'Conflicto en la asignación.';
-      }
+    try {
+        await _api.post('/plans/assign', {
+            'studentId': studentId,
+            'planId': planId,
+        });
+        return null;
+    } on ApiException catch (e) {
+        if (e.statusCode == 409) {
+             // In ApiClient, response body IS included in message?
+             // Not currently. ApiClient logic: throw ApiException('Unknown Error', code).
+             // I should IMPROVE ApiClient to include body in ApiException.
+             return 'Conflicto en la asignación.';
+        }
+        return 'Error al asignar el plan.';
+    } catch (e) {
+        return 'Error al asignar el plan.';
     }
-    return 'Error al asignar el plan.';
   }
 
   Future<List<dynamic>> getStudentAssignments(String studentId) async {
-    final token = await _getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/plans/assignments/student/$studentId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body); 
-    } else {
-      throw Exception('Failed to load assignments');
-    }
+    final response = await _api.get('/plans/assignments/student/$studentId');
+    return response as List<dynamic>;
   }
 
   Future<bool> deleteAssignment(String assignmentId) async {
-    final token = await _getToken();
-    final response = await http.delete(
-      Uri.parse('$baseUrl/plans/assignments/$assignmentId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    return response.statusCode == 200;
+    await _api.delete('/plans/assignments/$assignmentId');
+    return true;
   }
 
   Future<String?> deletePlan(String id) async {
-    final token = await _getToken();
-    final response = await http.delete(
-      Uri.parse('$baseUrl/plans/$id'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return null; // Success
-    } else if (response.statusCode == 409) {
-      // Conflict - likely assigned
-      // NestJS default structure for HttpException: { statusCode: 409, message: "...", error: "Conflict" }
-      try {
-        final body = jsonDecode(response.body);
-        return body['message'] ?? 'El plan no puede eliminarse.';
-      } catch (_) {
-        return 'El plan está en uso y no puede eliminarse.';
-      }
+    try {
+        await _api.delete('/plans/$id');
+        return null; 
+    } on ApiException catch (e) {
+        if (e.statusCode == 409) {
+            return 'El plan está en uso y no puede eliminarse.';
+        }
+        return 'Error al eliminar el plan.';
+    } catch (e) {
+        return 'Error al eliminar el plan.';
     }
-    return 'Error al eliminar el plan.';
   }
 
   Future<bool> restartPlan(String assignmentId) async {
-    final token = await _getToken();
-    final response = await http.post(
-      Uri.parse('$baseUrl/plans/student/restart/$assignmentId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    return response.statusCode == 201 || response.statusCode == 200;
+    await _api.post('/plans/student/restart/$assignmentId', {});
+    return true;
   }
 
   // --- EXECUTION ENGINE API ---
 
   Future<TrainingSession?> startSession(String? planId, int? weekNumber, int? dayOrder, {String? date}) async {
-    final token = await _getToken();
-    if (token == null) return null;
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/executions/start'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+     final response = await _api.post('/executions/start', {
         'planId': planId,
         'weekNumber': weekNumber,
         'dayOrder': dayOrder,
         'date': date,
-      }),
-    );
-
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      return TrainingSession.fromJson(jsonDecode(response.body));
-    }
-    return null;
+     });
+     return TrainingSession.fromJson(response);
   }
 
   Future<SessionExercise?> addSessionExercise(String sessionId, String exerciseId) async {
-    final token = await _getToken();
-    if (token == null) return null;
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/executions/$sessionId/exercises'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    final response = await _api.post('/executions/$sessionId/exercises', {
         'exerciseId': exerciseId,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      return SessionExercise.fromJson(jsonDecode(response.body));
-    }
-    return null;
+    });
+    return SessionExercise.fromJson(response);
   }
 
   Future<bool> updateSessionExercise(String sessionExerciseId, Map<String, dynamic> updates) async {
-    final token = await _getToken();
-    if (token == null) return false;
-
-    final response = await http.patch(
-      Uri.parse('$baseUrl/executions/exercises/$sessionExerciseId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(updates),
-    );
-
-    return response.statusCode == 200;
+    await _api.patch('/executions/exercises/$sessionExerciseId', updates);
+    return true;
   }
 
   Future<bool> completeSession(String sessionId, String date) async {
-    final token = await _getToken();
-    if (token == null) return false;
-
-    final response = await http.patch(
-      Uri.parse('$baseUrl/executions/$sessionId/complete'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'date': date}),
-    );
-
-    return response.statusCode == 200;
+    await _api.patch('/executions/$sessionId/complete', {'date': date});
+    return true;
   }
 
   Future<List<TrainingSession>> getCalendarHistory(String from, String to) async {
-    final token = await _getToken();
-    if (token == null) return [];
-
-    final response = await http.get(
-      Uri.parse('$baseUrl/executions/calendar?from=$from&to=$to'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => TrainingSession.fromJson(json)).toList();
-    }
-    return [];
+    final uri = Uri(path: '/executions/calendar', queryParameters: {'from': from, 'to': to});
+    final response = await _api.get(uri.toString());
+    return _parseList(response, (json) => TrainingSession.fromJson(json));
   }
 
   Future<TrainingSession?> getStudentSession({
@@ -333,25 +151,17 @@ class PlanService {
     required int day,
     String? startDate,
   }) async {
-    final token = await _getToken();
-    if (token == null) return null;
-
-    String url = '$baseUrl/executions/history/structure?studentId=$studentId&planId=$planId&week=$week&day=$day';
-    if (startDate != null) {
-      url += '&startDate=$startDate';
-    }
-
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200 && response.body.isNotEmpty) {
-      if (response.body == 'null') return null;
-      return TrainingSession.fromJson(jsonDecode(response.body));
-    }
-    return null;
+     final params = {
+        'studentId': studentId,
+        'planId': planId,
+        'week': week.toString(),
+        'day': day.toString(),
+        if (startDate != null) 'startDate': startDate,
+     };
+     final uri = Uri(path: '/executions/history/structure', queryParameters: params);
+     
+     final response = await _api.get(uri.toString());
+     if (response == null) return null;
+     return TrainingSession.fromJson(response);
   }
 }

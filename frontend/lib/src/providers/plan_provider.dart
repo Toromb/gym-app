@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import '../models/plan_model.dart';
 import '../models/student_assignment_model.dart';
 import '../models/execution_model.dart';
-import '../models/execution_model.dart';
+
+import '../models/logic/student_assignment_logic.dart';
+import '../models/logic/plan_traversal_logic.dart';
 import '../services/plan_service.dart';
 import '../services/exercise_api_service.dart';
 
@@ -40,66 +42,27 @@ class PlanProvider with ChangeNotifier {
 
   List<StudentAssignment> _assignments = [];
   
-  StudentAssignment? _activeAssignment;
-  StudentAssignment? get activeAssignment => _activeAssignment;
-  
-  void _calculateActiveAssignment() {
-    if (_assignments.isEmpty) {
-        _activeAssignment = null;
-        return;
-    }
-    
-    // Logic:
-    // 1. Filter assignments with isActive = true
-    final active = _assignments.where((a) => a.isActive).toList();
-    if (active.isEmpty) {
-        _activeAssignment = null;
-        return;
-    }
-    
-    // 2. If only one, return it
-    if (active.length == 1) {
-        _activeAssignment = active.first;
-        return;
-    }
-    
-    // 3. If multiple, check if any has progress
-    final withProgress = active.where((a) => a.progress['days'] != null && (a.progress['days'] as Map).isNotEmpty).toList();
-    
-    if (withProgress.length == 1) {
-        _activeAssignment = withProgress.first;
-        return;
-    }
-    
-    // 4. Fallback:
-    // If multiple active plans and none have progress, ask user to choose (return null).
-    if (active.length > 1 && withProgress.isEmpty) {
-       _activeAssignment = null;
-       return;
-    }
-    
-    // If multiple have progress (rare), or just one active total, return default (latest).
-    _activeAssignment = active.first;
-  }
+  // Computed property via Extension
+  StudentAssignment? get activeAssignment => _assignments.activeAssignment;
 
-  // Returns { week: PlanWeek, day: PlanDay } or null if finished/none
+  // Returns { week: PlanWeek, day: PlanDay, assignment: StudentAssignment } or finished map
   Map<String, dynamic>? get nextWorkout {
     final assignment = activeAssignment;
     if (assignment == null) return null;
+    if (assignment.plan.weeks.isEmpty) return null;
 
-    final plan = assignment.plan;
-    if (plan.weeks.isEmpty) return null;
-
-    // Traverse to find first non-completed day
-    for (var week in plan.weeks) {
-      for (var day in week.days) {
-        if (day.id != null && !assignment.isDayCompleted(day.id!)) {
-           return {'week': week, 'day': day, 'assignment': assignment};
-        }
-      }
+    // Use Extension Logic
+    final next = assignment.nextWorkout;
+    
+    if (next != null) {
+        // Inject assignment for UI usage (StudentHomeScreen)
+        return {
+           ...next,
+           'assignment': assignment 
+        };
     }
     
-    // All completed
+    // If extension returns null but we have a plan, it means Finished
     return {'finished': true, 'assignment': assignment};
   }
 
@@ -191,7 +154,6 @@ class PlanProvider with ChangeNotifier {
       debugPrint('Error fetching my history: $e');
       return [];
     } finally {
-      _calculateActiveAssignment(); // Recalculate only when list changes
       _isLoading = false;
       notifyListeners();
     }
@@ -463,7 +425,7 @@ class PlanProvider with ChangeNotifier {
     _plans = [];
     _myPlan = null;
     _assignments = [];
-    _activeAssignment = null;
+
     _currentSession = null;
     _isPlansLoaded = false;
     _isMyPlanLoaded = false;

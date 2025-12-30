@@ -6,6 +6,7 @@ import 'assign_plan_modal.dart';
 import 'student_plans_screen.dart';
 import '../shared/user_detail_screen.dart';
 import '../student/muscle_flow_screen.dart';
+import '../../widgets/student_card_item.dart';
 
 class ManageStudentsScreen extends StatefulWidget {
   const ManageStudentsScreen({super.key});
@@ -69,168 +70,44 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                   itemBuilder: (context, index) {
                     final student = students[index];
                     
-                    return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2), // Compact
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                         borderRadius: BorderRadius.circular(12),
-                         side: BorderSide(color: colorScheme.outlineVariant),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Compact
-                        child: Column(
-                          children: [
-                             Row(
-                               children: [
-                                  CircleAvatar(
-                                    backgroundColor: colorScheme.primaryContainer,
-                                    radius: 20, // Smaller
-                                    child: Text(
-                                      student.firstName.isNotEmpty ? student.firstName[0].toUpperCase() : '?',
-                                      style: TextStyle(color: colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                         Text(
-                                           student.name,
-                                           style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold), // Smaller title
-                                         ),
-                                         Text(
-                                           student.email,
-                                           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  // Quick Action: View
-                                   IconButton(
-                                     visualDensity: VisualDensity.compact,
-                                     iconSize: 20,
-                                     padding: EdgeInsets.zero,
-                                     constraints: const BoxConstraints(),
-                                     icon: const Icon(Icons.visibility_outlined),
-                                     onPressed: () {
-                                       Navigator.push(
-                                         context,
-                                         MaterialPageRoute(
-                                           builder: (context) => UserDetailScreen(user: student),
-                                         ),
-                                       );
-                                     },
-                                   ),
-                               ],
-                             ),
-                             const SizedBox(height: 8),
-                             const Divider(),
-                             const SizedBox(height: 4),
-                             
-                             // Action Chips / Buttons row
-                             Row(
-                               mainAxisAlignment: MainAxisAlignment.end,
-                               children: [
-                                  OutlinedButton.icon(
-                                    icon: const Icon(Icons.assignment_ind, size: 16),
-                                    label: const Text('Asignar Plan'),
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                      textStyle: const TextStyle(fontSize: 12),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => AssignPlanModal(preselectedStudent: student),
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(width: 8),
-                                  OutlinedButton.icon(
-                                    icon: const Icon(Icons.list_alt, size: 16),
-                                    label: const Text('Planes'),
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                      textStyle: const TextStyle(fontSize: 12),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => StudentPlansScreen(student: student),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                    // const SizedBox(width: 8),
-                                    // OutlinedButton.icon(
-                                    //   icon: const Icon(Icons.accessibility_new, size: 16),
-                                    //   label: const Text('Estado'),
-                                    //   style: OutlinedButton.styleFrom(
-                                    //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                    //     textStyle: const TextStyle(fontSize: 12),
-                                    //     visualDensity: VisualDensity.compact,
-                                    //   ),
-                                    //   onPressed: () {
-                                    //     Navigator.push(
-                                    //       context,
-                                    //       MaterialPageRoute(
-                                    //         builder: (context) => MuscleFlowScreen(studentId: student.id),
-                                    //       ),
-                                    //     );
-                                    //   },
-                                    // ),
-                                     const SizedBox(width: 8),
-                                   IconButton(
-                                     visualDensity: VisualDensity.compact,
-                                     iconSize: 20,
-                                     padding: EdgeInsets.zero,
-                                     constraints: const BoxConstraints(),
-                                     icon: Icon(Icons.delete_outline, color: colorScheme.error),
-                                     onPressed: () async {
-                                      final confirm = await showDialog<bool>(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: const Text('Eliminar Alumno'),
-                                          content: Text('¿Estás seguro de que quieres eliminar a ${student.name}?'),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(context, false),
-                                              child: const Text('Cancelar'),
-                                            ),
-                                            FilledButton(
-                                              style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
-                                              onPressed: () => Navigator.pop(context, true),
-                                              child: const Text('Eliminar'),
-                                            ),
-                                          ],
-                                        ),
-                                      );
+                    return StudentCardItem(
+                      student: student,
+                      onDelete: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Eliminar Alumno'),
+                            content: Text('¿Estás seguro de que quieres eliminar a ${student.name}?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancelar'),
+                              ),
+                              FilledButton(
+                                style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Eliminar'),
+                              ),
+                            ],
+                          ),
+                        );
 
-                                      if (confirm == true && context.mounted) {
-                                        final error = await context.read<UserProvider>().deleteUser(student.id);
-                                        if (context.mounted) {
-                                          if (error == null) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('Usuario eliminado')),
-                                            );
-                                          } else {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text(error), backgroundColor: colorScheme.error),
-                                            );
-                                          }
-                                        }
-                                      }
-                                    },
-                                  ),
-                               ],
-                             )
-                          ],
-                        ),
-                      ),
+                        if (confirm == true && context.mounted) {
+                          // ignore: use_build_context_synchronously
+                          final error = await context.read<UserProvider>().deleteUser(student.id);
+                          if (context.mounted) {
+                            if (error == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Usuario eliminado')),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(error), backgroundColor: colorScheme.error),
+                              );
+                            }
+                          }
+                        }
+                      },
                     );
                   },
                 ),

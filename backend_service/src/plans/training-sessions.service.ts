@@ -16,6 +16,7 @@ import { Exercise } from '../exercises/entities/exercise.entity';
 import { StudentPlan } from './entities/student-plan.entity';
 import { MuscleLoadService } from '../stats/muscle-load.service';
 import { StatsService } from '../stats/stats.service';
+import { SessionSynchronizer } from './utils/session-synchronizer';
 
 @Injectable()
 export class TrainingSessionsService {
@@ -379,164 +380,57 @@ export class TrainingSessionsService {
       // 1. Fetch Definitive Plan Day Structure
       const plan = await this.planRepo.findOne({
         where: { id: session.plan.id },
-        relations: ['weeks', 'weeks.days', 'weeks.days.exercises', 'weeks.days.exercises.exercise', 'weeks.days.exercises.equipments']
+        relations: [
+          'weeks',
+          'weeks.days',
+          'weeks.days.exercises',
+          'weeks.days.exercises.exercise',
+          'weeks.days.exercises.equipments',
+        ],
       });
 
       if (!plan) return session;
 
-      const week = plan.weeks.find(w => w.weekNumber === session.weekNumber);
-      const day = week?.days.find(d => d.order === session.dayOrder);
+      const week = plan.weeks.find((w) => w.weekNumber === session.weekNumber);
+      const day = week?.days.find((d) => d.order === session.dayOrder);
 
       if (!day) return session;
 
-      let updatesNeeded = false;
-      const isCompleted = session.status === ExecutionStatus.COMPLETED;
+      // 2. Delegate Logic to Pure Class
+      const diff = SessionSynchronizer.calculateDiff(session, day);
 
-      // 2. Map existing SessionExercises by PlanExerciseId for quick lookup
-      const existingSessionExMap = new Map<string, SessionExercise>();
-      const sessionExToRemove: SessionExercise[] = [];
-
-      session.exercises.forEach(ex => {
-        if (ex.planExerciseId) {
-          existingSessionExMap.set(ex.planExerciseId, ex);
-        } else {
-          // Keep exercises without plan ID (e.g. manually added extras)
+      if (diff.hasChanges) {
+        // A. Remove Deleted
+        if (diff.toDelete.length > 0) {
+          await this.sessionExerciseRepo.remove(diff.toDelete);
         }
-      });
 
-      // 3. Structural Sync: Identify New & Existing
-      const mergedExercises: SessionExercise[] = [];
-
-      // Tracks which session exercises are "kept" (matched to plan)
-      const matchedSessionExIds = new Set<string>();
-
-      for (const planEx of day.exercises) {
-        let sessionEx = existingSessionExMap.get(planEx.id);
-
-        if (sessionEx) {
-          // --- EXISTING: Update Values ---
-          matchedSessionExIds.add(sessionEx.id);
-
-          if (!sessionEx.videoUrl && planEx.videoUrl) {
-            sessionEx.videoUrl = planEx.videoUrl;
-            updatesNeeded = true;
-          }
-
-          const exEquipments = sessionEx.equipmentsSnapshot || [];
-          const planEquipments = planEx.equipments || [];
-          const exIds = exEquipments.map(e => e.id).sort().join(',');
-          const planIds = planEquipments.map(e => e.id).sort().join(',');
-
-          if (exIds !== planIds) {
-            sessionEx.equipmentsSnapshot = planEquipments;
-            updatesNeeded = true;
-          }
-
-          if (!isCompleted) {
-            const snapSets = Number(sessionEx.targetSetsSnapshot);
-            const planSets = Number(planEx.sets);
-
-            if (
-              snapSets !== planSets ||
-              String(sessionEx.targetRepsSnapshot) !== String(planEx.reps) ||
-              String(sessionEx.targetWeightSnapshot) !== String(planEx.suggestedLoad)
-            ) {
-
-              sessionEx.targetSetsSnapshot = planSets;
-              sessionEx.targetRepsSnapshot = planEx.reps;
-              sessionEx.targetWeightSnapshot = planEx.suggestedLoad;
-              updatesNeeded = true;
-            }
-
-            // Also Update Order
-            if (sessionEx.order !== planEx.order) {
-              sessionEx.order = planEx.order;
-              updatesNeeded = true;
-            }
-          }
-          mergedExercises.push(sessionEx);
-
-        } else {
-          // --- NEW: Create ---
-
-          const newEx = this.sessionExerciseRepo.create({
-            session: session, // Important to link
-            planExerciseId: planEx.id,
-            exercise: planEx.exercise,
-            exerciseNameSnapshot: planEx.exercise.name,
-            targetSetsSnapshot: planEx.sets,
-            targetRepsSnapshot: planEx.reps,
-            targetWeightSnapshot: planEx.suggestedLoad,
-            videoUrl: planEx.videoUrl || planEx.exercise.videoUrl,
-            equipmentsSnapshot: planEx.equipments,
-            order: planEx.order,
-            isCompleted: false,
+        // B. Create New
+        if (diff.toCreate.length > 0) {
+          const newEntities = diff.toCreate.map((partial) => {
+            const entity = this.sessionExerciseRepo.create(partial);
+            entity.session = session;
+            return entity;
           });
-          // We need to save it to generate ID or just return it? 
-          // Better to save it later in batch? 
-          // session.exercises array needs to have it.
-          mergedExercises.push(newEx);
-          updatesNeeded = true;
-        }
-      }
-
-      // 4. Identify Removed (Orphans)
-      // Only remove if it HAS a planExerciseId but that ID is no longer in the day.
-      session.exercises.forEach(ex => {
-        if (ex.planExerciseId && !existingSessionExMap.has(ex.planExerciseId) && !matchedSessionExIds.has(ex.id)) {
-          // Wait, logic check:
-          // If ex has planExerciseId, we looked it up in existingSessionExMap.
-          // If it was in the map, we iterated it in the plan loop? 
-          // No, the map is session->plan lookup.
-          // We iterated PLAN. If plan had it, we marked matchedSessionExIds.
-          // IF ex has planExerciseId AND is NOT in matchedSessionExIds, it means it's not in the Plan Day anymore.
-          // REMOVE IT.
-        }
-      });
-
-      // Re-construct session.exercises preserving "extras" (manual)
-      const finalExercises: SessionExercise[] = [];
-
-      // 4a. Add Matched (Existing & New)
-      finalExercises.push(...mergedExercises);
-
-      // 4b. Add Manual Extras (No planExerciseId)
-      session.exercises.forEach(ex => {
-        if (!ex.planExerciseId) {
-          finalExercises.push(ex);
-        } else if (!matchedSessionExIds.has(ex.id)) {
-          // It has an ID but wasn't matched -> It was DELETED from Plan.
-          // We should delete it from DB or mark removed?
-          // For now, let's remove it from the list (which implicitly deletes if cascade? No).
-          // We must explicitly delete.
-          if (!isCompleted) {
-
-            sessionExToRemove.push(ex);
-            updatesNeeded = true;
-          } else {
-            // If completed, maybe keep it but flag it? 
-            finalExercises.push(ex); // Keep history
-          }
-        }
-      });
-
-      if (updatesNeeded) {
-        // Sort by order
-        finalExercises.sort((a, b) => (a.order || 0) - (b.order || 0));
-
-        // SAVE Changes
-        // 1. Remove deleted
-        if (sessionExToRemove.length > 0) {
-          await this.sessionExerciseRepo.remove(sessionExToRemove);
+          await this.sessionExerciseRepo.save(newEntities);
         }
 
-        // 2. Save Updates/New
-        // We link them to session just in case
-        finalExercises.forEach(e => e.session = session);
-        await this.sessionExerciseRepo.save(finalExercises);
+        // C. Update Existing
+        if (diff.toUpdate.length > 0) {
+          await this.sessionExerciseRepo.save(diff.toUpdate);
+        }
 
-        // 3. Update Session object
-        session.exercises = finalExercises;
+        // D. Reload Session Exercises to ensure consistency
+        const freshExercises = await this.sessionExerciseRepo.find({
+          where: { session: { id: session.id } },
+          relations: [
+            'exercise',
+            'exercise.exerciseMuscles',
+            'exercise.exerciseMuscles.muscle',
+          ],
+          order: { order: 'ASC' },
+        });
+        session.exercises = freshExercises;
       }
 
       return session;
