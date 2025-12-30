@@ -42,6 +42,38 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   }
 
   @override
+  void didUpdateWidget(ExerciseExecutionCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.execution != oldWidget.execution) {
+       // Update controllers if the underlying execution data changed
+       // We only update if the USER hasn't typed? Or do we overwrite?
+       // Since this is a sync from backend, we generally want to reflect it.
+       // However, to avoid overriding user typing, one might check if focused.
+       // But for this issue (sync), let's update.
+       
+       final newSets = widget.execution.setsDone?.toString() ?? widget.execution.targetSetsSnapshot?.toString() ?? '';
+       if (_setsController.text != newSets) {
+          _setsController.text = newSets;
+       }
+       
+       final newReps = widget.execution.repsDone ?? widget.execution.targetRepsSnapshot ?? '';
+       if (_repsController.text != newReps) {
+          _repsController.text = newReps;
+       }
+
+       final newWeight = widget.execution.weightUsed ?? widget.execution.targetWeightSnapshot ?? '';
+       if (_weightController.text != newWeight) {
+          _weightController.text = newWeight;
+       }
+       
+       // Also update completion state
+       if (widget.execution.isCompleted != oldWidget.execution.isCompleted) {
+          _isCompleted = widget.execution.isCompleted;
+       }
+    }
+  }
+
+  @override
   void dispose() {
     _repsController.dispose();
     _weightController.dispose();

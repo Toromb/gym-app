@@ -269,7 +269,10 @@ export class UsersService {
   calculatePaymentStatus(user: User): 'paid' | 'overdue' | 'pending' {
     // 1. Check if user is exempt
     if (user.paysMembership === false) {
+      console.log(`[CalcStatus] User ${user.email} EXEMPT (paysMembership=false)`);
       return 'paid';
+    } else {
+      console.log(`[CalcStatus] User ${user.email} Check: Exp=${user.membershipExpirationDate}, Now=${new Date().toISOString()}`);
     }
 
     // 2. If no expiration date, treat as pending (or whatever default)
@@ -285,9 +288,18 @@ export class UsersService {
     const diffTime = now.getTime() - exp.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays <= 0) return 'paid'; // Green
-    if (diffDays <= 10) return 'pending'; // Yellow (Por vencer/Grace Period)
+    // diffDays is negative if expiration is in future.
+    // e.g. Exp is Jan 10. Now is Jan 1. diffDays = 1 - 10 = -9.
 
+    // 1. Future (Safe): More than 10 days before expiration.
+    if (diffDays < -10) return 'paid';
+
+    // 2. Pending Window: 
+    // - Upcoming Expiration (e.g. -10 to 0)
+    // - Grace Period (e.g. 0 to 10)
+    if (diffDays <= 10) return 'pending';
+
+    // 3. Overdue: More than 10 days past expiration.
     return 'overdue';
   }
 }

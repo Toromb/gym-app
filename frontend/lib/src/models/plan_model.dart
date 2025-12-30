@@ -186,6 +186,7 @@ class PlanExercise {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'exerciseId': exerciseId ?? exercise?.id,
       'sets': sets,
       'reps': reps,

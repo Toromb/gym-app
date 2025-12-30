@@ -203,6 +203,7 @@ class PlanProvider with ChangeNotifier {
   // --- EXECUTION ENGINE START ---
 
   Future<void> startSession(String? planId, int? weekNumber, int? dayOrder) async {
+    _currentSession = null; // Clear previous session to avoid "flash" of old data
     _isLoading = true;
     notifyListeners();
     try {

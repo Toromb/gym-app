@@ -193,6 +193,22 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                     ),
                   ],
                 ),
+                // NEW: Training Intent Badge
+                if (widget.day.trainingIntent != null)
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.purple.shade200),
+                    ),
+                    child: Text(
+                      widget.day.trainingIntent.label,
+                      style: TextStyle(color: Colors.purple.shade900, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+
                 const SizedBox(height: 8),
                 Text(
                   '${exercisesToRender.length} ${AppLocalizations.of(context)!.get('exercisesToComplete')}',

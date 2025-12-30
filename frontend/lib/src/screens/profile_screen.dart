@@ -393,19 +393,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _user!.isActive == true ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+            color: _getPaymentColor(_user!).withAlpha(25), // Use helper for color
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _user!.isActive == true ? Colors.green : Colors.red),
+            border: Border.all(color: _getPaymentColor(_user!)),
           ),
           child: Row(
             children: [
-               Icon(_user!.isActive == true ? Icons.check_circle : Icons.cancel, color: _user!.isActive == true ? Colors.green : Colors.red),
+               Icon(_getPaymentIcon(_user!), color: _getPaymentColor(_user!)),
                const SizedBox(width: 12),
                Expanded(
                  child: Column(
                    crossAxisAlignment: CrossAxisAlignment.start,
                    children: [
-                      Text('Estado: ${_user!.isActive == true ? 'Activo' : 'Inactivo'}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text('Estado: ${_getPaymentText(_user!)}', style: const TextStyle(fontWeight: FontWeight.bold)),
                       if (_user!.membershipExpirationDate != null)
                          Text('Vence el: ${_user!.membershipExpirationDate!}', style: const TextStyle(fontSize: 12)),
                    ],
@@ -509,6 +509,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         fillColor: readOnly ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Theme.of(context).colorScheme.surface,
       ),
     );
+  }
+
+  Color _getPaymentColor(User user) {
+    if (user.paymentStatus == 'overdue') return Colors.red;
+    if (user.paymentStatus == 'pending') return Colors.amber;
+    return Colors.green;
+  }
+
+  IconData _getPaymentIcon(User user) {
+    if (user.paymentStatus == 'overdue') return Icons.error_outline;
+    if (user.paymentStatus == 'pending') return Icons.warning_amber_rounded;
+    return Icons.check_circle_outline;
+  }
+
+  String _getPaymentText(User user) {
+    if (user.paymentStatus == 'overdue') return 'Vencida';
+    if (user.paymentStatus == 'pending') return 'Por Vencer / Pendiente';
+    return 'Al Día';
   }
 
 }

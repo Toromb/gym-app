@@ -237,7 +237,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                         id: existingExercise?.id,
                         exerciseId: selectedExercise!.id,
                         exercise: selectedExercise,
-                        sets: int.tryParse(setsController.text) ?? 3,
+                        sets: int.tryParse(setsController.text.trim()) ?? 3,
                         reps: repsController.text,
                         suggestedLoad: loadController.text,
                         rest: restController.text,

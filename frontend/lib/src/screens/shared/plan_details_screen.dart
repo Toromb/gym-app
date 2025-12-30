@@ -133,17 +133,45 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildPlanSummaryCard(context, _plan),
-            const SizedBox(height: 24),
-            Text(AppLocalizations.of(context)!.get('weeklySchedule'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ..._plan.weeks.map((week) => _buildWeekCard(context, week)),
-          ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+            if (_plan.id != null) {
+               // Reload plan
+               final updatedPlan = await context.read<PlanProvider>().getPlanById(_plan.id!);
+               if (updatedPlan != null) {
+                  setState(() {
+                      _plan = updatedPlan;
+                  });
+               }
+               // Reload Progress if assignment exists
+               if (_currentAssignment != null) {
+                  await context.read<PlanProvider>().fetchMyHistory(); 
+                  // Update current assignment reference from provider
+                  // This is tricky because we need to find OUR assignment in the list.
+                  // For now, reloading Plan is key for Sets/Reps.
+                  final assignments = context.read<PlanProvider>().assignments;
+                  try {
+                      final updatedAss = assignments.firstWhere((a) => a.id == _currentAssignment!.id);
+                      setState(() {
+                          _currentAssignment = updatedAss;
+                      });
+                  } catch (_) {}
+               }
+            }
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPlanSummaryCard(context, _plan),
+              const SizedBox(height: 24),
+              Text(AppLocalizations.of(context)!.get('weeklySchedule'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              ..._plan.weeks.map((week) => _buildWeekCard(context, week)),
+            ],
+          ),
         ),
       ),
     );
@@ -309,6 +337,23 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                       '${day.exercises.length} ${AppLocalizations.of(context)!.get('exercisesCount')}',
                       style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
+                    if (day.trainingIntent != TrainingIntent.GENERAL)
+                       Container(
+                         margin: const EdgeInsets.only(top: 4),
+                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                         decoration: BoxDecoration(
+                           color: colorScheme.secondaryContainer, 
+                           borderRadius: BorderRadius.circular(8),
+                         ),
+                         child: Text(
+                           day.trainingIntent.label,
+                           style: TextStyle(
+                             fontSize: 10, 
+                             fontWeight: FontWeight.bold, 
+                             color: colorScheme.onSecondaryContainer
+                           ),
+                         ),
+                       ),
                     if (isCompleted && day.id != null && _currentAssignment!.progress['days'][day.id]['date'] != null)
                       Text(
                          '${AppLocalizations.of(context)!.get('completedOn')} ${_currentAssignment!.progress['days'][day.id]['date']}',

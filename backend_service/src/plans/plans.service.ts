@@ -42,6 +42,7 @@ export class PlansService {
         day.dayOfWeek = d.dayOfWeek;
         day.order = d.order;
         day.dayNotes = d.dayNotes;
+        if (d.trainingIntent) day.trainingIntent = d.trainingIntent;
         day.week = week; // Back reference
         day.exercises = d.exercises.map((e) => {
           const exercise = new PlanExercise();
@@ -223,52 +224,133 @@ export class PlansService {
 
     return await this.plansRepository.manager
       .transaction(async (transactionalEntityManager) => {
-        // Full structure replacement if structure provided
+        // Full structure replacement with ID preservation (Diff & Sync)
         if (updatePlanDto.weeks && updatePlanDto.weeks.length > 0) {
-          // 1. Delete all weeks associated with this plan.
-          await transactionalEntityManager.delete(PlanWeek, {
-            plan: { id: plan.id },
-          });
 
-          // 2. Re-create structure
-          plan.weeks = updatePlanDto.weeks.map((w) => {
-            const week = new PlanWeek();
-            week.weekNumber = w.weekNumber;
-            week.days = w.days.map((d) => {
-              const day = new PlanDay();
-              day.title = d.title;
-              day.dayOfWeek = d.dayOfWeek;
-              day.order = d.order;
-              day.dayNotes = d.dayNotes;
-              day.week = week;
-              day.exercises = d.exercises.map((e) => {
-                const exercise = new PlanExercise();
-                exercise.sets = e.sets;
-                exercise.reps = e.reps;
-                exercise.suggestedLoad = e.suggestedLoad;
-                exercise.rest = e.rest;
-                exercise.notes = e.notes;
-                exercise.videoUrl = e.videoUrl;
-                exercise.order = e.order;
-                // this.logger.log(`Mapping Exercise (Update): id=${e.exerciseId}`);
-                exercise.exercise = { id: e.exerciseId } as any;
-                exercise.day = day;
-                if (e.equipmentIds && e.equipmentIds.length > 0) {
-                  exercise.equipments = e.equipmentIds.map((eqId: string) => ({ id: eqId } as any));
+          // --- 1. SYNC WEEKS ---
+          const incomingWeeks = updatePlanDto.weeks;
+          const incomingWeekIds = incomingWeeks.map(w => w.id).filter(id => !!id);
+
+          // Delete missing weeks
+          const existingWeeks = plan.weeks || [];
+          const weeksToDelete = existingWeeks.filter(w => w.id && !incomingWeekIds.includes(w.id));
+          if (weeksToDelete.length > 0) {
+            await transactionalEntityManager.delete(PlanWeek, weeksToDelete.map(w => w.id));
+          }
+
+          // Upsert Weeks
+          const processedWeeks: PlanWeek[] = [];
+
+          for (const wDto of incomingWeeks) {
+            let weekEntity = wDto.id ? existingWeeks.find(ew => ew.id === wDto.id) : null;
+
+            if (!weekEntity) {
+              weekEntity = new PlanWeek();
+              // If it had an ID but not found in DB, it might be a new ID or error. Treat as new.
+              // Actually if wDto.id is present but not in DB, TypeORM update will fail or creaet if strict is false. 
+              // Better to let TypeORM handle 'save' but we must prepare relationships.
+            }
+
+            weekEntity.weekNumber = wDto.weekNumber;
+            weekEntity.plan = plan;
+
+            // We must save the week first to have an ID if it's new, OR we can rely on cascade? 
+            // Cascade is safer for deep structures, but for Deletion we needed manual manual handling above.
+            // Let's attempt to build the graph and save the Plan? 
+            // Problem: if we rely on cascade for everything, we must remove orphans from the array. 
+            // TypeORM cascade update is sometimes tricky with orphans. 
+            // Explicit handling is more robust.
+
+            const savedWeek = await transactionalEntityManager.save(PlanWeek, weekEntity);
+
+            // --- 2. SYNC DAYS ---
+            const incomingDays = wDto.days;
+            const incomingDayIds = incomingDays.map(d => d.id).filter(id => !!id);
+
+            // Fetch existing days if we just saved/loaded the week. 
+            // Since we might have mutated weekEntity, let's look at what it HAD if it was existing.
+            // If it's new, it has no existing days in DB.
+            // If update, we need to know its days. 'weekEntity.days' might not be loaded if we didn't use fetch with relations?
+            // VALIDATION: 'plan.weeks' was loaded with relations in 'findOne'.
+
+            const existingDays = weekEntity.days || [];
+            const daysToDelete = existingDays.filter(d => d.id && !incomingDayIds.includes(d.id));
+            if (daysToDelete.length > 0) {
+              await transactionalEntityManager.delete(PlanDay, daysToDelete.map(d => d.id));
+            }
+
+            const processedDays: PlanDay[] = [];
+            for (const dDto of incomingDays) {
+              let dayEntity = dDto.id ? existingDays.find(ed => ed.id === dDto.id) : null;
+              if (!dayEntity) dayEntity = new PlanDay();
+
+              dayEntity.title = dDto.title;
+              dayEntity.dayOfWeek = dDto.dayOfWeek;
+              dayEntity.order = dDto.order;
+              dayEntity.dayNotes = dDto.dayNotes;
+              if (dDto.trainingIntent) dayEntity.trainingIntent = dDto.trainingIntent;
+              dayEntity.week = savedWeek;
+
+              const savedDay = await transactionalEntityManager.save(PlanDay, dayEntity);
+
+              // --- 3. SYNC EXERCISES ---
+              const incomingExercises = dDto.exercises;
+              const incomingExIds = incomingExercises.map(e => e.id).filter(id => !!id);
+
+              const existingExercises = dayEntity.exercises || [];
+              const exToDelete = existingExercises.filter(e => e.id && !incomingExIds.includes(e.id));
+              if (exToDelete.length > 0) {
+                await transactionalEntityManager.delete(PlanExercise, exToDelete.map(e => e.id));
+              }
+
+              const processedExercises: PlanExercise[] = [];
+              for (const eDto of incomingExercises) {
+                let exEntity = eDto.id ? existingExercises.find(ee => ee.id === eDto.id) : null;
+                if (!exEntity) exEntity = new PlanExercise();
+
+                exEntity.sets = eDto.sets;
+                exEntity.reps = eDto.reps;
+                exEntity.suggestedLoad = eDto.suggestedLoad;
+                exEntity.rest = eDto.rest;
+                exEntity.notes = eDto.notes;
+                exEntity.videoUrl = eDto.videoUrl;
+                exEntity.order = eDto.order;
+                exEntity.day = savedDay;
+                exEntity.exercise = { id: eDto.exerciseId } as any; // Link to Catalog Exercise
+
+                // DEBUG LOG
+                if (exEntity.sets !== eDto.sets) {
+                  this.logger.log(`[UpdatePlan] Updating Sets for Ex ${exEntity.id}: ${exEntity.sets} -> ${eDto.sets}`);
+                } else {
+                  this.logger.log(`[UpdatePlan] Sets for Ex ${exEntity.id}: ${eDto.sets} (No Change or New)`);
                 }
-                return exercise;
-              });
-              return day;
-            });
-            week.plan = plan;
-            return week;
-          });
+
+
+                if (eDto.equipmentIds) {
+                  exEntity.equipments = eDto.equipmentIds.map((eqId: string) => ({ id: eqId } as any));
+                }
+
+                // Note: We don't save PlanExercise individually to avoid N+1 queries ideally, 
+                // but inside this loop it is N writes. For valid volume it is OK.
+                processedExercises.push(exEntity);
+              }
+
+              // Batch save exercises for this day?
+              // await transactionalEntityManager.save(PlanExercise, processedExercises);
+              // But we need to handle equipments (ManyToMany). Save handles it.
+              // Let's iterate saveto be safe or use save(array).
+              await transactionalEntityManager.save(PlanExercise, processedExercises);
+
+              savedDay.exercises = processedExercises;
+              processedDays.push(savedDay);
+            }
+            savedWeek.days = processedDays;
+            processedWeeks.push(savedWeek);
+          }
+          plan.weeks = processedWeeks;
         }
 
         const saved = await transactionalEntityManager.save(plan);
-        // Must fetch outside or using same manager?
-        // Better to just return ID and let controller fetch, or simple fetch here.
-        // But this.findOne uses the main repo. It's usually fine as transaction committed.
         return saved;
       })
       .then((saved) => this.findOne(saved.id) as Promise<Plan>);

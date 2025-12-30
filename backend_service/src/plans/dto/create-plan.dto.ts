@@ -12,6 +12,10 @@ import {
 import { TrainingIntent } from '../entities/plan.entity';
 
 export class CreatePlanExerciseDto {
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @IsUUID()
   exerciseId: string;
 
@@ -50,6 +54,10 @@ export class CreatePlanExerciseDto {
 
 export class CreatePlanDayDto {
   @IsOptional()
+  @IsUUID()
+  id?: string;
+
+  @IsOptional()
   @IsString()
   title?: string;
 
@@ -74,6 +82,10 @@ export class CreatePlanDayDto {
 }
 
 export class CreatePlanWeekDto {
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @IsInt()
   weekNumber: number;
 

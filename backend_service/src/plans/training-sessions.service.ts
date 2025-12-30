@@ -44,112 +44,118 @@ export class TrainingSessionsService {
     dayOrder?: number,
     date?: string, // YYYY-MM-DD
   ): Promise<TrainingSession> {
-    const finalDate = date || new Date().toISOString().split('T')[0];
+    try {
+      const finalDate = date || new Date().toISOString().split('T')[0];
 
-    // Case A: Plan-based Session
-    if (planId) {
-      if (!weekNumber || !dayOrder) throw new ConflictException('Week and Day required for Plan sessions');
+      // Case A: Plan-based Session
+      if (planId) {
+        if (!weekNumber || !dayOrder) throw new ConflictException('Week and Day required for Plan sessions');
 
-      const dayKey = `W${weekNumber}-D${dayOrder}`;
+        const dayKey = `W${weekNumber}-D${dayOrder}`;
 
-      // Check if there is an IN_PROGRESS session to resume
-      // We allow multiple COMPLETED sessions, but only one IN_PROGRESS per dayKey usually?
-      // Or just resume the latest one if it's today? 
-      // Let's resume any IN_PROGRESS session for this day/plan to avoid abandonment spam.
-      const existingInProgress = await this.sessionRepo.findOne({
-        where: {
-          student: { id: userId },
-          plan: { id: planId },
-          dayKey: dayKey,
+        // Check if there is an IN_PROGRESS session to resume
+        // We allow multiple COMPLETED sessions, but only one IN_PROGRESS per dayKey usually?
+        // Or just resume the latest one if it's today? 
+        // Let's resume any IN_PROGRESS session for this day/plan to avoid abandonment spam.
+        const existingInProgress = await this.sessionRepo.findOne({
+          where: {
+            student: { id: userId },
+            plan: { id: planId },
+            dayKey: dayKey,
+            date: finalDate,
+            status: ExecutionStatus.IN_PROGRESS,
+          },
+          relations: [
+            'plan',
+            'exercises',
+            'exercises.exercise',
+            'exercises.exercise.exerciseMuscles',
+            'exercises.exercise.exerciseMuscles.muscle',
+          ],
+        });
+
+        if (existingInProgress) {
+          return this._syncSnapshots(existingInProgress);
+        }
+
+        // Create NEW Plan Session
+        const plan = await this.planRepo.findOne({
+          where: { id: planId },
+          relations: [
+            'weeks',
+            'weeks.days',
+            'weeks.days.exercises',
+            'weeks.days.exercises.exercise',
+            'weeks.days.exercises.equipments',
+          ],
+        });
+        if (!plan) throw new NotFoundException('Plan not found');
+
+        const week = plan.weeks.find((w) => w.weekNumber === weekNumber);
+        if (!week) throw new NotFoundException(`Week ${weekNumber} not found`);
+
+        const day = week.days.find((d) => d.order === dayOrder);
+        if (!day) throw new NotFoundException(`Day ${dayOrder} not found`);
+
+        const newSession = this.sessionRepo.create({
+          student: { id: userId } as User,
+          plan: { id: planId } as Plan,
           date: finalDate,
+          dayKey: dayKey,
+          weekNumber,
+          dayOrder,
+          source: 'PLAN',
           status: ExecutionStatus.IN_PROGRESS,
-        },
-        relations: [
-          'exercises',
-          'exercises.exercise',
-          'exercises.exercise.exerciseMuscles',
-          'exercises.exercise.exerciseMuscles.muscle',
-        ],
-      });
+          exercises: [],
+        });
 
-      if (existingInProgress) {
-        return this._syncSnapshots(existingInProgress);
+        // Create SessionExercises with Snapshots
+        const sessionExercises: SessionExercise[] = day.exercises.map(
+          (planEx) => {
+            return this.sessionExerciseRepo.create({
+              planExerciseId: planEx.id,
+              exercise: planEx.exercise,
+              // SNAPSHOTS
+              exerciseNameSnapshot: planEx.exercise.name,
+              targetSetsSnapshot: planEx.sets,
+              targetRepsSnapshot: planEx.reps,
+              targetWeightSnapshot: planEx.suggestedLoad,
+              videoUrl: planEx.videoUrl || planEx.exercise.videoUrl,
+              equipmentsSnapshot: planEx.equipments,
+              // DEFAULTS
+              order: planEx.order,
+              isCompleted: false,
+            });
+          },
+        );
+
+        newSession.exercises = sessionExercises;
+        await this.sessionRepo.save(newSession);
+
+        // Reload to ensure relations
+        const reloaded = await this.findOne(newSession.id);
+        if (!reloaded) throw new NotFoundException('Error creating session');
+        return reloaded;
+
+      } else {
+        // Case B: Free Session (No Plan)
+        // TODO: Logic for Free Session (Create empty session, allow user to add exercises)
+        // For now, we return empty session.
+        const newSession = this.sessionRepo.create({
+          student: { id: userId } as User,
+          plan: null,
+          date: finalDate,
+          source: 'FREE',
+          status: ExecutionStatus.IN_PROGRESS,
+          exercises: [],
+        });
+
+        await this.sessionRepo.save(newSession);
+        return newSession;
       }
-
-      // Create NEW Plan Session
-      const plan = await this.planRepo.findOne({
-        where: { id: planId },
-        relations: [
-          'weeks',
-          'weeks.days',
-          'weeks.days.exercises',
-          'weeks.days.exercises.exercise',
-          'weeks.days.exercises.equipments',
-        ],
-      });
-      if (!plan) throw new NotFoundException('Plan not found');
-
-      const week = plan.weeks.find((w) => w.weekNumber === weekNumber);
-      if (!week) throw new NotFoundException(`Week ${weekNumber} not found`);
-
-      const day = week.days.find((d) => d.order === dayOrder);
-      if (!day) throw new NotFoundException(`Day ${dayOrder} not found`);
-
-      const newSession = this.sessionRepo.create({
-        student: { id: userId } as User,
-        plan: { id: planId } as Plan,
-        date: finalDate,
-        dayKey: dayKey,
-        weekNumber,
-        dayOrder,
-        source: 'PLAN',
-        status: ExecutionStatus.IN_PROGRESS,
-        exercises: [],
-      });
-
-      // Create SessionExercises with Snapshots
-      const sessionExercises: SessionExercise[] = day.exercises.map(
-        (planEx) => {
-          return this.sessionExerciseRepo.create({
-            planExerciseId: planEx.id,
-            exercise: planEx.exercise,
-            // SNAPSHOTS
-            exerciseNameSnapshot: planEx.exercise.name,
-            targetSetsSnapshot: planEx.sets,
-            targetRepsSnapshot: planEx.reps,
-            targetWeightSnapshot: planEx.suggestedLoad,
-            videoUrl: planEx.videoUrl || planEx.exercise.videoUrl,
-            equipmentsSnapshot: planEx.equipments,
-            // DEFAULTS
-            order: planEx.order,
-            isCompleted: false,
-          });
-        },
-      );
-
-      newSession.exercises = sessionExercises;
-      await this.sessionRepo.save(newSession);
-
-      // Reload to ensure relations
-      const reloaded = await this.findOne(newSession.id);
-      if (!reloaded) throw new NotFoundException('Error creating session');
-      return reloaded;
-
-    } else {
-      // Case B: Free Session (No Plan)
-      // TODO: Logic for Free Session (Create empty session, allow user to add exercises)
-      // For now, we return empty session.
-      const newSession = this.sessionRepo.create({
-        student: { id: userId } as User,
-        plan: null,
-        date: finalDate,
-        source: 'FREE',
-        status: ExecutionStatus.IN_PROGRESS,
-        exercises: [],
-      });
-
-      await this.sessionRepo.save(newSession);
-      return newSession;
+    } catch (e) {
+      console.error('Error starting session:', e);
+      throw e;
     }
   }
 
@@ -330,84 +336,216 @@ export class TrainingSessionsService {
     dayOrder: number,
     startDate?: string,
   ): Promise<TrainingSession | null> {
-    const whereClause: any = {
-      student: { id: userId },
-      plan: { id: planId },
-      weekNumber: weekNumber,
-      dayOrder: dayOrder,
-    };
+    try {
+      const whereClause: any = {
+        student: { id: userId },
+        plan: { id: planId },
+        weekNumber: weekNumber,
+        dayOrder: dayOrder,
+      };
 
-    if (startDate) {
-      whereClause.date = MoreThanOrEqual(startDate);
+      if (startDate) {
+        whereClause.date = MoreThanOrEqual(startDate);
+      }
+
+      const session = await this.sessionRepo.findOne({
+        where: whereClause,
+        order: { createdAt: 'DESC' },
+        relations: [
+          'exercises',
+          'exercises.exercise',
+          'exercises.exercise.exerciseMuscles',
+          'exercises.exercise.exerciseMuscles.muscle',
+          'plan', // Ensure plan is loaded for sync
+        ],
+      });
+
+      if (!session) return null;
+      return this._syncSnapshots(session);
+    } catch (e) {
+      console.error('Error finding session by structure:', e);
+      throw e;
     }
-
-    const session = await this.sessionRepo.findOne({
-      where: whereClause,
-      order: { createdAt: 'DESC' },
-      relations: [
-        'exercises',
-        'exercises.exercise',
-        'exercises.exercise.exerciseMuscles',
-        'exercises.exercise.exerciseMuscles.muscle',
-      ],
-    });
-
-    if (!session) return null;
-    return this._syncSnapshots(session);
   }
 
   private async _syncSnapshots(
     session: TrainingSession,
   ): Promise<TrainingSession> {
-    let updatesNeeded = false;
+    try {
+      if (!session.plan || !session.weekNumber || !session.dayOrder) {
+        return session;
+      }
 
-    for (const exExec of session.exercises) {
-      if (exExec.planExerciseId) {
-        const planEx = await this.planExerciseRepo.findOne({
-          where: { id: exExec.planExerciseId },
-          relations: ['equipments'],
-        });
+      // 1. Fetch Definitive Plan Day Structure
+      const plan = await this.planRepo.findOne({
+        where: { id: session.plan.id },
+        relations: ['weeks', 'weeks.days', 'weeks.days.exercises', 'weeks.days.exercises.exercise', 'weeks.days.exercises.equipments']
+      });
 
-        if (planEx) {
-          if (!exExec.videoUrl && planEx.videoUrl) {
-            exExec.videoUrl = planEx.videoUrl;
+      if (!plan) return session;
+
+      const week = plan.weeks.find(w => w.weekNumber === session.weekNumber);
+      const day = week?.days.find(d => d.order === session.dayOrder);
+
+      if (!day) return session;
+
+      let updatesNeeded = false;
+      const isCompleted = session.status === ExecutionStatus.COMPLETED;
+
+      // 2. Map existing SessionExercises by PlanExerciseId for quick lookup
+      const existingSessionExMap = new Map<string, SessionExercise>();
+      const sessionExToRemove: SessionExercise[] = [];
+
+      session.exercises.forEach(ex => {
+        if (ex.planExerciseId) {
+          existingSessionExMap.set(ex.planExerciseId, ex);
+        } else {
+          // Keep exercises without plan ID (e.g. manually added extras)
+        }
+      });
+
+      // 3. Structural Sync: Identify New & Existing
+      const mergedExercises: SessionExercise[] = [];
+
+      // Tracks which session exercises are "kept" (matched to plan)
+      const matchedSessionExIds = new Set<string>();
+
+      for (const planEx of day.exercises) {
+        let sessionEx = existingSessionExMap.get(planEx.id);
+
+        if (sessionEx) {
+          // --- EXISTING: Update Values ---
+          matchedSessionExIds.add(sessionEx.id);
+
+          if (!sessionEx.videoUrl && planEx.videoUrl) {
+            sessionEx.videoUrl = planEx.videoUrl;
             updatesNeeded = true;
           }
 
-          const exEquipments = exExec.equipmentsSnapshot || [];
+          const exEquipments = sessionEx.equipmentsSnapshot || [];
           const planEquipments = planEx.equipments || [];
           const exIds = exEquipments.map(e => e.id).sort().join(',');
           const planIds = planEquipments.map(e => e.id).sort().join(',');
 
           if (exIds !== planIds) {
-            exExec.equipmentsSnapshot = planEquipments;
+            sessionEx.equipmentsSnapshot = planEquipments;
             updatesNeeded = true;
           }
 
-          if (session.status !== ExecutionStatus.COMPLETED) {
+          if (!isCompleted) {
+            const snapSets = Number(sessionEx.targetSetsSnapshot);
+            const planSets = Number(planEx.sets);
+
             if (
-              exExec.targetSetsSnapshot !== planEx.sets ||
-              exExec.targetRepsSnapshot !== planEx.reps ||
-              exExec.targetWeightSnapshot !== planEx.suggestedLoad
+              snapSets !== planSets ||
+              String(sessionEx.targetRepsSnapshot) !== String(planEx.reps) ||
+              String(sessionEx.targetWeightSnapshot) !== String(planEx.suggestedLoad)
             ) {
-              exExec.targetSetsSnapshot = planEx.sets;
-              exExec.targetRepsSnapshot = planEx.reps;
-              exExec.targetWeightSnapshot = planEx.suggestedLoad;
+
+              sessionEx.targetSetsSnapshot = planSets;
+              sessionEx.targetRepsSnapshot = planEx.reps;
+              sessionEx.targetWeightSnapshot = planEx.suggestedLoad;
+              updatesNeeded = true;
+            }
+
+            // Also Update Order
+            if (sessionEx.order !== planEx.order) {
+              sessionEx.order = planEx.order;
               updatesNeeded = true;
             }
           }
+          mergedExercises.push(sessionEx);
+
+        } else {
+          // --- NEW: Create ---
+
+          const newEx = this.sessionExerciseRepo.create({
+            session: session, // Important to link
+            planExerciseId: planEx.id,
+            exercise: planEx.exercise,
+            exerciseNameSnapshot: planEx.exercise.name,
+            targetSetsSnapshot: planEx.sets,
+            targetRepsSnapshot: planEx.reps,
+            targetWeightSnapshot: planEx.suggestedLoad,
+            videoUrl: planEx.videoUrl || planEx.exercise.videoUrl,
+            equipmentsSnapshot: planEx.equipments,
+            order: planEx.order,
+            isCompleted: false,
+          });
+          // We need to save it to generate ID or just return it? 
+          // Better to save it later in batch? 
+          // session.exercises array needs to have it.
+          mergedExercises.push(newEx);
+          updatesNeeded = true;
         }
       }
-    }
 
-    if (updatesNeeded) {
-      await Promise.all(
-        session.exercises.map((e) => this.sessionExerciseRepo.save(e)),
-      );
-    }
+      // 4. Identify Removed (Orphans)
+      // Only remove if it HAS a planExerciseId but that ID is no longer in the day.
+      session.exercises.forEach(ex => {
+        if (ex.planExerciseId && !existingSessionExMap.has(ex.planExerciseId) && !matchedSessionExIds.has(ex.id)) {
+          // Wait, logic check:
+          // If ex has planExerciseId, we looked it up in existingSessionExMap.
+          // If it was in the map, we iterated it in the plan loop? 
+          // No, the map is session->plan lookup.
+          // We iterated PLAN. If plan had it, we marked matchedSessionExIds.
+          // IF ex has planExerciseId AND is NOT in matchedSessionExIds, it means it's not in the Plan Day anymore.
+          // REMOVE IT.
+        }
+      });
 
-    return session;
+      // Re-construct session.exercises preserving "extras" (manual)
+      const finalExercises: SessionExercise[] = [];
+
+      // 4a. Add Matched (Existing & New)
+      finalExercises.push(...mergedExercises);
+
+      // 4b. Add Manual Extras (No planExerciseId)
+      session.exercises.forEach(ex => {
+        if (!ex.planExerciseId) {
+          finalExercises.push(ex);
+        } else if (!matchedSessionExIds.has(ex.id)) {
+          // It has an ID but wasn't matched -> It was DELETED from Plan.
+          // We should delete it from DB or mark removed?
+          // For now, let's remove it from the list (which implicitly deletes if cascade? No).
+          // We must explicitly delete.
+          if (!isCompleted) {
+
+            sessionExToRemove.push(ex);
+            updatesNeeded = true;
+          } else {
+            // If completed, maybe keep it but flag it? 
+            finalExercises.push(ex); // Keep history
+          }
+        }
+      });
+
+      if (updatesNeeded) {
+        // Sort by order
+        finalExercises.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        // SAVE Changes
+        // 1. Remove deleted
+        if (sessionExToRemove.length > 0) {
+          await this.sessionExerciseRepo.remove(sessionExToRemove);
+        }
+
+        // 2. Save Updates/New
+        // We link them to session just in case
+        finalExercises.forEach(e => e.session = session);
+        await this.sessionExerciseRepo.save(finalExercises);
+
+        // 3. Update Session object
+        session.exercises = finalExercises;
+      }
+
+      return session;
+    } catch (e) {
+      console.error('Error syncing snapshots:', e);
+      throw e;
+    }
   }
+
   async addSessionExercise(
     sessionId: string,
     exerciseId: string,
