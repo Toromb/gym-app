@@ -64,11 +64,11 @@ let ExecutionsService = class ExecutionsService {
                 if (executionCreated.getTime() < assignmentTimestamp.getTime()) {
                 }
                 else {
-                    return this._syncVideoUrls(existing);
+                    return this._syncSnapshots(existing);
                 }
             }
             else {
-                return this._syncVideoUrls(existing);
+                return this._syncSnapshots(existing);
             }
         }
         const plan = await this.planRepo.findOne({
@@ -116,8 +116,8 @@ let ExecutionsService = class ExecutionsService {
         if (!exExecution)
             throw new common_1.NotFoundException('Exercise execution not found');
         if (updateData.isCompleted === true) {
-            if (exExecution.setsDone === undefined || exExecution.setsDone === null || exExecution.setsDone === 0) {
-                exExecution.setsDone = exExecution.targetSetsSnapshot ?? 0;
+            if (!exExecution.setsDone || exExecution.setsDone === '0') {
+                exExecution.setsDone = (exExecution.targetSetsSnapshot ?? 0).toString();
             }
             if (!exExecution.repsDone) {
                 exExecution.repsDone = exExecution.targetRepsSnapshot ?? '';
@@ -241,7 +241,7 @@ let ExecutionsService = class ExecutionsService {
         });
         if (!execution)
             return null;
-        return this._syncVideoUrls(execution);
+        return this._syncSnapshots(execution);
     }
     async findExecutionByStructure(userId, planId, weekNumber, dayOrder, startDate) {
         const whereClause = {
@@ -253,25 +253,43 @@ let ExecutionsService = class ExecutionsService {
         if (startDate) {
             whereClause.date = (0, typeorm_2.MoreThanOrEqual)(startDate);
         }
-        return this.executionRepo.findOne({
+        const execution = await this.executionRepo.findOne({
             where: whereClause,
             order: { createdAt: 'DESC' },
             relations: ['exercises', 'exercises.exercise']
         });
+        if (!execution)
+            return null;
+        return this._syncSnapshots(execution);
     }
-    async _syncVideoUrls(execution) {
+    async _syncSnapshots(execution) {
         let updatesNeeded = false;
         for (const exExec of execution.exercises) {
-            if (!exExec.videoUrl && exExec.planExerciseId) {
+            if (exExec.planExerciseId) {
                 const planEx = await this.planExerciseRepo.findOne({
                     where: { id: exExec.planExerciseId }
                 });
-                if (planEx && planEx.videoUrl) {
-                    exExec.videoUrl = planEx.videoUrl;
-                    await this.exerciseRepo.save(exExec);
-                    updatesNeeded = true;
+                if (planEx) {
+                    if (!exExec.videoUrl && planEx.videoUrl) {
+                        exExec.videoUrl = planEx.videoUrl;
+                        updatesNeeded = true;
+                    }
+                    if (execution.status !== plan_execution_entity_1.ExecutionStatus.COMPLETED) {
+                        if (exExec.targetSetsSnapshot !== planEx.sets ||
+                            exExec.targetRepsSnapshot !== planEx.reps ||
+                            exExec.targetWeightSnapshot !== planEx.suggestedLoad) {
+                            console.log(`[SyncSnapshots] UPDATING SNAPSHOTS for ${exExec.id} (Status: ${execution.status})`);
+                            exExec.targetSetsSnapshot = planEx.sets;
+                            exExec.targetRepsSnapshot = planEx.reps;
+                            exExec.targetWeightSnapshot = planEx.suggestedLoad;
+                            updatesNeeded = true;
+                        }
+                    }
                 }
             }
+        }
+        if (updatesNeeded) {
+            await Promise.all(execution.exercises.map(e => this.exerciseRepo.save(e)));
         }
         return execution;
     }

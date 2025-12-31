@@ -6,12 +6,12 @@ export declare class ExerciseExecution {
     planExerciseId: string;
     exercise: Exercise;
     exerciseNameSnapshot: string;
-    targetSetsSnapshot: number;
-    targetRepsSnapshot: string;
-    targetWeightSnapshot: string;
+    targetSetsSnapshot?: number;
+    targetRepsSnapshot?: string;
+    targetWeightSnapshot?: string;
     videoUrl: string;
     isCompleted: boolean;
-    setsDone: number;
+    setsDone: string;
     repsDone: string;
     weightUsed: string;
     timeSpent: string;

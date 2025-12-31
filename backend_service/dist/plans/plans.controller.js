@@ -26,6 +26,7 @@ let PlansController = class PlansController {
     }
     create(createPlanDto, req) {
         if (req.user.role === user_entity_1.UserRole.ALUMNO) {
+            throw new common_1.ForbiddenException('Only teachers and admins can create plans');
         }
         return this.plansService.create(createPlanDto, req.user);
     }
@@ -66,7 +67,7 @@ let PlansController = class PlansController {
         if (req.user.role !== user_entity_1.UserRole.PROFE && req.user.role !== user_entity_1.UserRole.ADMIN) {
             throw new common_1.ForbiddenException('Only professors and admins can assign plans');
         }
-        return this.plansService.assignPlan(body.planId, body.studentId, req.user.id);
+        return this.plansService.assignPlan(body.planId, body.studentId, req.user);
     }
     getStudentAssignments(studentId, req) {
         if (req.user.role !== user_entity_1.UserRole.PROFE && req.user.role !== user_entity_1.UserRole.ADMIN) {

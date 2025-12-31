@@ -9,7 +9,10 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.useGlobalPipes(new common_1.ValidationPipe());
     app.useGlobalInterceptors(new common_1.ClassSerializerInterceptor(app.get(core_1.Reflector)));
-    app.enableCors();
+    app.enableCors({
+        origin: process.env.NODE_ENV === 'production' ? (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : false) : '*',
+        credentials: true,
+    });
     const config = new swagger_1.DocumentBuilder()
         .setTitle('Gym App API')
         .setDescription('The Gym App API description')

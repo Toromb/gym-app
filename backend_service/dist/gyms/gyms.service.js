@@ -32,8 +32,9 @@ let GymsService = class GymsService {
     findOne(id) {
         return this.gymsRepository.findOneBy({ id });
     }
-    update(id, updateGymDto) {
-        return this.gymsRepository.update(id, updateGymDto);
+    async update(id, updateGymDto) {
+        await this.gymsRepository.update(id, updateGymDto);
+        return this.gymsRepository.findOneBy({ id });
     }
     remove(id) {
         return this.gymsRepository.delete(id);

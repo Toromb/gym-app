@@ -19,6 +19,16 @@ export declare class Gym {
     subscriptionPlan: GymPlan;
     expirationDate: Date;
     maxProfiles: number;
+    logoUrl: string;
+    primaryColor: string;
+    secondaryColor: string;
+    welcomeMessage: string;
+    openingHours: string;
+    paymentAlias: string;
+    paymentCbu: string;
+    paymentAccountName: string;
+    paymentBankName: string;
+    paymentNotes: string;
     createdAt: Date;
     updatedAt: Date;
     users: User[];

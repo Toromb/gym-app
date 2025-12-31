@@ -48,10 +48,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).colorScheme.primaryContainer,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.fitness_center, size: 72, color: Theme.of(context).primaryColor),
+                    child: Icon(Icons.fitness_center, size: 72, color: Theme.of(context).colorScheme.onPrimaryContainer),
                   ),
                   const SizedBox(height: 24),
                   Text(

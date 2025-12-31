@@ -16,5 +16,5 @@ export declare class ExecutionsService {
     getCalendar(userId: string, from: string, to: string): Promise<PlanExecution[]>;
     findOne(id: string): Promise<PlanExecution | null>;
     findExecutionByStructure(userId: string, planId: string, weekNumber: number, dayOrder: number, startDate?: string): Promise<PlanExecution | null>;
-    private _syncVideoUrls;
+    private _syncSnapshots;
 }

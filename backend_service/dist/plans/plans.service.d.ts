@@ -13,7 +13,7 @@ export declare class PlansService {
     findAll(gymId?: string): Promise<Plan[]>;
     findAllByTeacher(teacherId: string): Promise<Plan[]>;
     findOne(id: string): Promise<Plan | null>;
-    assignPlan(planId: string, studentId: string, professorId: string): Promise<StudentPlan>;
+    assignPlan(planId: string, studentId: string, assigner: User): Promise<StudentPlan>;
     update(id: string, updatePlanDto: UpdatePlanDto, user: User): Promise<Plan>;
     findStudentPlan(studentId: string): Promise<Plan | null>;
     findAllAssignmentsByStudent(studentId: string): Promise<StudentPlan[]>;
