@@ -43,6 +43,13 @@ export class CreatePlanExerciseDto {
   @IsString()
   videoUrl?: string;
 
+  @IsOptional()
+  @IsInt()
+  targetTime?: number;
+
+  @IsOptional()
+  targetDistance?: number; // No validation decorator needed or can use @IsNumber()
+
   @IsInt()
   order: number;
 

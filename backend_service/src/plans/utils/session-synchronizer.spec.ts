@@ -197,4 +197,37 @@ describe('SessionSynchronizer', () => {
         expect(result.toUpdate).toHaveLength(1);
         expect(result.toUpdate[0].videoUrl).toBe('http://new-video.com');
     });
+
+    it('should update targetTime and targetDistance', () => {
+        // Arrange
+        const ex1 = createMockExercise('ex1', 'Plank');
+
+        // Plan has time and distance
+        const planEx = createMockPlanExercise('pex1', ex1, 1);
+        planEx.targetTime = 60; // 60 seconds
+        planEx.targetDistance = 1000; // 1km
+
+        // Session has old/null values
+        const sessionEx = createMockSessionExercise('sex1', 'pex1', 1);
+        sessionEx.targetTimeSnapshot = null;
+        sessionEx.targetDistanceSnapshot = null;
+
+        const session = {
+            exercises: [sessionEx],
+            status: ExecutionStatus.IN_PROGRESS
+        } as TrainingSession;
+
+        const day = {
+            exercises: [planEx]
+        } as PlanDay;
+
+        // Act
+        const result = SessionSynchronizer.calculateDiff(session, day);
+
+        // Assert
+        expect(result.toUpdate).toHaveLength(1);
+        expect(result.toUpdate[0].targetTimeSnapshot).toBe(60);
+        expect(result.toUpdate[0].targetDistanceSnapshot).toBe(1000);
+        expect(result.hasChanges).toBe(true);
+    });
 });

@@ -32,10 +32,35 @@ export class Exercise {
   @Column({ nullable: true })
   muscleGroup?: string;
 
-  @Column({ nullable: true })
-  type?: string;
+  @Column({
+    type: 'enum',
+    enum: ['REPS', 'TIME', 'DISTANCE'],
+    default: 'REPS',
+  })
+  metricType: 'REPS' | 'TIME' | 'DISTANCE';
 
-  // Default Execution Params
+  // --- TIME METRIC FIELDS (Seconds) ---
+  @Column({ type: 'int', nullable: true })
+  defaultTime?: number;
+
+  @Column({ type: 'int', nullable: true })
+  minTime?: number;
+
+  @Column({ type: 'int', nullable: true })
+  maxTime?: number;
+
+  // --- DISTANCE METRIC FIELDS (Meters) ---
+  @Column({ type: 'float', nullable: true })
+  defaultDistance?: number;
+
+  @Column({ type: 'float', nullable: true })
+  minDistance?: number;
+
+  @Column({ type: 'float', nullable: true })
+  maxDistance?: number;
+
+  // Default Execution Params (Legacy/REPS)
+  @Column({ nullable: true, type: 'int' })
   @Column({ nullable: true, type: 'int' })
   sets?: number;
 

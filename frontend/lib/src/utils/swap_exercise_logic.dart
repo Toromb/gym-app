@@ -5,13 +5,19 @@ class SwapSuggestion {
   final String? suggestedWeight;
   final String suggestedSets;
   final String suggestedReps;
+  final String? suggestedTime; // New
+  final String? suggestedDistance; // New
   final bool isWeightEstimated;
+  final String? warning; // New
 
   SwapSuggestion({
     this.suggestedWeight,
     required this.suggestedSets,
     required this.suggestedReps,
+    this.suggestedTime,
+    this.suggestedDistance,
     required this.isWeightEstimated,
+    this.warning,
   });
 }
 
@@ -22,32 +28,102 @@ class SwapExerciseLogic {
     required Exercise newExercise,
     required SessionExercise execution,
     TrainingIntent intent = TrainingIntent.GENERAL,
+    double? userBodyWeight,
   }) {
-    // 1. Weight Calculation (Unchanged)
+    // 0. Check Metric Compatibility
+    if (oldExercise.metricType != newExercise.metricType) {
+        return SwapSuggestion(
+            suggestedSets: newExercise.defaultSets?.toString() ?? '3',
+            suggestedReps: '', 
+            isWeightEstimated: false,
+            warning: 'El ejercicio tiene un tipo de medición diferente (${newExercise.metricType}).',
+        );
+    }
+    
+    // Initialize common defaults
+    final int setsVal = newExercise.defaultSets ?? 3;
+    final String newSets = setsVal.toString();
+    
+    // Handle specific metrics
+    if (newExercise.metricType == 'TIME') {
+        // Suggest time
+        String? newTime;
+        // reuse old time if avail
+        final oldTime = execution.timeSpent ?? execution.targetTimeSnapshot?.toString();
+        if (oldTime != null) {
+            newTime = oldTime; 
+            // Clamp if needed
+            // (Simple implementation for Phase 1: Keep same time)
+        } else {
+            newTime = newExercise.defaultTime?.toString();
+        }
+        
+        return SwapSuggestion(
+            suggestedSets: newSets,
+            suggestedReps: '',
+            suggestedTime: newTime,
+            isWeightEstimated: false,
+        );
+    } else if (newExercise.metricType == 'DISTANCE') {
+        String? newDist;
+        final oldDist = execution.distanceCovered?.toString() ?? execution.targetDistanceSnapshot?.toString();
+        if (oldDist != null) {
+            newDist = oldDist;
+        } else {
+             newDist = newExercise.defaultDistance?.toString();
+        }
+        
+         return SwapSuggestion(
+            suggestedSets: newSets,
+            suggestedReps: '',
+            suggestedDistance: newDist,
+            isWeightEstimated: false,
+        );
+    }
+
+    // --- REPS LOGIC (Existing) ---
+
+    // 1. Weight Calculation
     String? newWeight;
     bool isEstimated = false;
 
+    // Determine Old External Weight (Priority: WeightUsed > TargetSnapshot)
     final oldWeightStr = execution.weightUsed ?? execution.targetWeightSnapshot;
     
+    // Parse Old External Load
+    double? oldExternalLoad;
     if (oldWeightStr != null && oldWeightStr.isNotEmpty) {
-      final oldVal = double.tryParse(oldWeightStr.replaceAll(RegExp(r'[^0-9.]'), ''));
-      
-      if (oldVal != null && oldExercise.loadFactor != null && newExercise.loadFactor != null) {
-        if (oldExercise.loadFactor! > 0) {
-           final ratio = newExercise.loadFactor! / oldExercise.loadFactor!;
-           final calculated = oldVal * ratio;
-           final rounded = (calculated * 2).round() / 2;
-           newWeight = rounded % 1 == 0 ? rounded.toInt().toString() : rounded.toString();
-           isEstimated = true;
-        }
-      }
+      oldExternalLoad = double.tryParse(oldWeightStr.replaceAll(RegExp(r'[^0-9.]'), ''));
     }
 
-    // 2. Sets Calculation (Unchanged)
-    final int setsVal = newExercise.defaultSets ?? 3;
-    final String newSets = setsVal.toString();
+    // Determine Reference Weight (Old Exercise)
+    double? referenceWeight;
+    
+    // Check if Old Exercise is Bodyweight
+    final isBodyweight = oldExercise.equipments.any((e) => e.name.toUpperCase().contains('BODYWEIGHT') || e.id.toUpperCase().contains('BODYWEIGHT')); 
+    
+    if (isBodyweight) {
+      if (userBodyWeight != null) {
+         // Reference = BodyWeight + ExternalLoad (if any)
+         referenceWeight = userBodyWeight + (oldExternalLoad ?? 0);
+      } 
+    } else {
+      // Standard Exercise: Reference is just external load
+      referenceWeight = oldExternalLoad;
+    }
 
-    // 3. Reps Calculation (Intelligent Swap)
+    // Calculate New Weight
+    if (referenceWeight != null && oldExercise.loadFactor != null && newExercise.loadFactor != null) {
+       if (oldExercise.loadFactor! > 0) {
+          final ratio = newExercise.loadFactor! / oldExercise.loadFactor!;
+          final calculated = referenceWeight * ratio;
+          final rounded = (calculated * 2).round() / 2;
+          newWeight = rounded % 1 == 0 ? rounded.toInt().toString() : rounded.toString();
+          isEstimated = true;
+       }
+    }
+
+    // 2. Reps Calculation (Intelligent Swap)
     String newReps;
     final oldRepsStr = execution.repsDone ?? execution.targetRepsSnapshot;
     final int? oldRepsVal = oldRepsStr != null 
@@ -73,20 +149,14 @@ class SwapExerciseLogic {
     }
 
     // Apply Exercise Hardware Limits
-    // If exercise forces higher reps (e.g. Abs min 15), we respect that even if Intent is Strength.
     final int exMin = newExercise.minReps ?? 1;
     final int exMax = newExercise.maxReps ?? 99;
 
     // Intersect Intent Range with Exercise Range
-    // Effective Range = [max(targetMin, exMin), min(targetMax, exMax)]
     int effectiveMin = (targetMin < exMin) ? exMin : targetMin;
     int effectiveMax = (targetMax > exMax) ? exMax : targetMax;
 
-    // Handle invalid range (e.g. Strength 3-6 but Exercise min 10 -> [10, 6] -> fix to [10, 10] or just [10, 10])
     if (effectiveMin > effectiveMax) {
-        // Exercise limits strictly override Intent
-        // If Exercise Min (10) > Intent Max (6) -> Use 10
-        // If Exercise Max (5) < Intent Min (8) -> Use 5
         if (exMin > targetMax) {
              effectiveMin = exMin;
              effectiveMax = exMin; // clamp to min
@@ -97,12 +167,9 @@ class SwapExerciseLogic {
     }
 
     if (intent == TrainingIntent.GENERAL) {
-        // GENERAL Specific Logic:
-        // 1. If previous reps exist AND fit in Exercise Limits -> Keep them.
         if (oldRepsVal != null && oldRepsVal >= exMin && oldRepsVal <= exMax) {
             newReps = oldRepsVal.toString();
         } 
-        // 2. Else -> Use Exercise Min (if defined) or fallback (10-12)
         else {
              if (newExercise.minReps != null && newExercise.maxReps != null) {
                  newReps = '${newExercise.minReps}-${newExercise.maxReps}';
@@ -111,15 +178,10 @@ class SwapExerciseLogic {
              }
         }
     } else {
-        // SPECIFIC INTENT Logic (Strength, Hypertrophy, Endurance):
-        // 1. If effective range is valid (effectiveMin <= effectiveMax)
         if (effectiveMin <= effectiveMax) {
-             // If old reps fit in effective range, keep them to minimize friction
              if (oldRepsVal != null && oldRepsVal >= effectiveMin && oldRepsVal <= effectiveMax) {
                  newReps = oldRepsVal.toString();
              } else {
-                 // Suggest the range or the midpoint/min?
-                 // Suggest range "Min-Max"
                  if (effectiveMin == effectiveMax) {
                      newReps = effectiveMin.toString();
                  } else {
@@ -127,7 +189,6 @@ class SwapExerciseLogic {
                  }
              }
         } else {
-             // Should not happen due to clamp logic above, but fallback
              newReps = '$exMin-$exMax';
         }
     }

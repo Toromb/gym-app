@@ -124,6 +124,12 @@ export class PlanExercise {
   // URL for the exercise video
   videoUrl?: string;
 
+  @Column({ nullable: true })
+  targetTime?: number; // In seconds
+
+  @Column({ type: 'float', nullable: true })
+  targetDistance?: number; // In meters
+
   @Column({ default: 0 })
   order: number;
 

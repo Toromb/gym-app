@@ -8,6 +8,7 @@ import '../../localization/app_localizations.dart';
 import '../../models/plan_model.dart';
 import '../../utils/swap_exercise_logic.dart';
 import 'swap_confirmation_dialog.dart';
+import '../../providers/auth_provider.dart'; // Import AuthProvider
 
 class ExerciseExecutionCard extends StatefulWidget {
   final SessionExercise execution;
@@ -28,19 +29,33 @@ class ExerciseExecutionCard extends StatefulWidget {
 }
 
 class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
-  late TextEditingController _repsController;
-  late TextEditingController _weightController;
+  // Common
   late TextEditingController _setsController; 
   late bool _isCompleted;
+  // REPS Mode
+  late TextEditingController _repsController;
+  late TextEditingController _weightController;
+  // TIME Mode
+  late TextEditingController _timeController; 
+  // DISTANCE Mode
+  late TextEditingController _distanceController;
+
+  late String _metricType;
   
   @override
   void initState() {
     super.initState();
     _isCompleted = widget.execution.isCompleted;
+    _metricType = widget.execution.exercise?.metricType ?? 'REPS';
     
+    _setsController = TextEditingController(text: widget.execution.setsDone?.toString() ?? widget.execution.targetSetsSnapshot?.toString() ?? '');
+    
+    // Initialize specific controllers
     _repsController = TextEditingController(text: widget.execution.repsDone ?? widget.execution.targetRepsSnapshot ?? '');
     _weightController = TextEditingController(text: widget.execution.weightUsed ?? widget.execution.targetWeightSnapshot ?? '');
-    _setsController = TextEditingController(text: widget.execution.setsDone?.toString() ?? widget.execution.targetSetsSnapshot?.toString() ?? '');
+    
+    _timeController = TextEditingController(text: widget.execution.timeSpent ?? widget.execution.targetTimeSnapshot?.toString() ?? '');
+    _distanceController = TextEditingController(text: widget.execution.distanceCovered?.toString() ?? widget.execution.targetDistanceSnapshot?.toString() ?? '');
   }
 
   @override
@@ -80,6 +95,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     _repsController.dispose();
     _weightController.dispose();
     _setsController.dispose();
+    _timeController.dispose();
+    _distanceController.dispose();
     super.dispose();
   }
 
@@ -90,12 +107,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
       _isCompleted = value;
     });
 
-    final updateData = {
-      'isCompleted': value,
-      'repsDone': _repsController.text,
-      'weightUsed': _weightController.text,
-      'setsDone': _setsController.text, 
-    };
+    final updateData = _buildUpdateData();
+    updateData['isCompleted'] = value;
 
     final success = await context.read<PlanProvider>().updateSessionExercise(widget.execution.id, updateData);
     
@@ -120,13 +133,21 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   }
 
   Future<void> _saveChanges() async {
-    final updateData = {
+    final updateData = _buildUpdateData();
+    await context.read<PlanProvider>().updateSessionExercise(widget.execution.id, updateData);
+  }
+
+  Map<String, dynamic> _buildUpdateData() {
+     return {
+      'setsDone': _setsController.text,
+      // REPS
       'repsDone': _repsController.text,
       'weightUsed': _weightController.text,
-      'setsDone': _setsController.text,
+      // TIME
+      'timeSpent': _timeController.text,
+      // DISTANCE
+      'distanceCovered': double.tryParse(_distanceController.text),
     };
-    
-    await context.read<PlanProvider>().updateSessionExercise(widget.execution.id, updateData);
   }
 
   @override
@@ -357,25 +378,50 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                Expanded(
-                  child: _buildInputMetric(
-                    context, 
-                    controller: _repsController, 
-                    label: AppLocalizations.of(context)!.get('reps'),
-                    hint: widget.execution.targetRepsSnapshot ?? '-',
-                    icon: Icons.refresh,
+                
+                if (_metricType == 'REPS') ...[
+                  Expanded(
+                    child: _buildInputMetric(
+                      context, 
+                      controller: _repsController, 
+                      label: AppLocalizations.of(context)!.get('reps'),
+                      hint: widget.execution.targetRepsSnapshot ?? '-',
+                      icon: Icons.refresh,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildInputMetric(
-                    context, 
-                    controller: _weightController, 
-                    label: AppLocalizations.of(context)!.get('load'),
-                    hint: widget.execution.targetWeightSnapshot ?? '-',
-                    icon: Icons.fitness_center,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildInputMetric(
+                      context, 
+                      controller: _weightController, 
+                      label: AppLocalizations.of(context)!.get('load'),
+                      hint: widget.execution.targetWeightSnapshot ?? '-',
+                      icon: Icons.fitness_center,
+                    ),
                   ),
-                ),
+                ] else if (_metricType == 'TIME') ...[
+                   Expanded(
+                    flex: 2, 
+                    child: _buildInputMetric(
+                      context, 
+                      controller: _timeController, 
+                      label: 'Tiempo (seg)', // Localize later
+                      hint: widget.execution.targetTimeSnapshot?.toString() ?? '-',
+                      icon: Icons.timer,
+                    ),
+                  ),
+                ] else if (_metricType == 'DISTANCE') ...[
+                   Expanded(
+                    flex: 2,
+                    child: _buildInputMetric(
+                      context, 
+                      controller: _distanceController, 
+                      label: 'Distancia (m)', // Localize later
+                      hint: widget.execution.targetDistanceSnapshot?.toString() ?? '-',
+                      icon: Icons.directions_run,
+                    ),
+                  ),
+                ],
               ],
             ),
           ],
@@ -450,16 +496,34 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
               if (snapshot.hasError) {
                 return const Text('Error loading exercises');
               }
-              final list = snapshot.data ?? [];
-              if (list.isEmpty) return const Text('No alternatives found.');
+              final fullList = snapshot.data ?? [];
+              // Filter out the current exercise so it doesn't appear as an option
+              final list = fullList.where((e) => e.id != widget.execution.exercise?.id).toList();
+
+              if (list.isEmpty) {
+                 return const Padding(
+                   padding: EdgeInsets.all(16.0),
+                   child: Column(
+                     mainAxisSize: MainAxisSize.min,
+                     children: [
+                       Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 40),
+                       SizedBox(height: 12),
+                       Text(
+                         "No se encontraron ejercicios que coincidieran con el mismo músculo primario",
+                         textAlign: TextAlign.center,
+                         style: TextStyle(color: Colors.grey, fontSize: 14),
+                       ),
+                     ],
+                   ),
+                 );
+              }
 
               return ListView.builder(
                 shrinkWrap: true,
                 itemCount: list.length,
                 itemBuilder: (ctx, i) {
                   final ex = list[i];
-                  if (ex.id == widget.execution.exercise?.id) return const SizedBox.shrink();
-
+                  
                   return ListTile(
                     leading: const Icon(Icons.fitness_center),
                     title: Text(ex.name),
@@ -486,12 +550,22 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   }
 
   Future<void> _performSwap(Exercise newEx) async {
-    // 1. Calculate Suggestions
+    // 1. Get User Weight (if Student)
+    final authValues = context.read<AuthProvider>();
+    double? userWeight;
+    
+    // Check if current user is student and has weight
+    if (authValues.user?.role == 'alumno') { // Or check logic more robustly if needed
+         userWeight = authValues.user?.currentWeight ?? authValues.user?.initialWeight;
+    }
+
+    // 2. Calculate Suggestions
     final suggestion = SwapExerciseLogic.calculate(
       oldExercise: widget.execution.exercise!, 
       newExercise: newEx,
       execution: widget.execution,
       intent: widget.intent,
+      userBodyWeight: userWeight,
     );
 
     // 2. Show Confirmation Dialog
@@ -508,30 +582,48 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
 
     if (confirmed == null) return; 
 
-    // 3. Apply Changes
-    final updateData = {
-      'exercise': {
-        'id': newEx.id,
-        'muscles': newEx.muscles,
-        'equipments': newEx.equipments 
-      },
-      'exerciseNameSnapshot': newEx.name,
-      'videoUrl': newEx.videoUrl,
-      'planExerciseId': null, 
-      
-      'targetSetsSnapshot': int.tryParse(confirmed['sets']!),
-      'targetRepsSnapshot': confirmed['reps'],
-      'targetWeightSnapshot': confirmed['weight'],
-    };
+  // 3. Apply Changes
+  final updateData = {
+    'exercise': {
+      'id': newEx.id,
+      'muscles': newEx.muscles,
+      'equipments': newEx.equipments,
+      'metricType': newEx.metricType, // Vital: Pass metricType if needed by backend, though backend fetches exercise.
+    },
+    'exerciseNameSnapshot': newEx.name,
+    'videoUrl': newEx.videoUrl,
+    'planExerciseId': null, 
     
-    final success = await context.read<PlanProvider>().updateSessionExercise(widget.execution.id, updateData);
+    // Common
+    'targetSetsSnapshot': int.tryParse(confirmed['sets']!),
     
-    if (success && mounted) {
-       setState(() {
-          _setsController.text = confirmed['sets']!;
-          _repsController.text = confirmed['reps']!;
-          _weightController.text = confirmed['weight']!;
-       });
-    }
+    // REPS
+    'targetRepsSnapshot': newEx.metricType == 'REPS' ? confirmed['reps'] : null,
+    'targetWeightSnapshot': newEx.metricType == 'REPS' ? confirmed['weight'] : null,
+    
+    // TIME
+    'targetTimeSnapshot': newEx.metricType == 'TIME' ? int.tryParse(confirmed['time']!) : null,
+    // DISTANCE
+    'targetDistanceSnapshot': newEx.metricType == 'DISTANCE' ? double.tryParse(confirmed['distance']!) : null,
+    
+  };
+  
+  final success = await context.read<PlanProvider>().updateSessionExercise(widget.execution.id, updateData);
+  
+  if (success && mounted) {
+     setState(() {
+        _metricType = newEx.metricType; // Reset logic for UI
+        _setsController.text = confirmed['sets']!;
+        
+        if (newEx.metricType == 'REPS') {
+            _repsController.text = confirmed['reps']!;
+            _weightController.text = confirmed['weight']!;
+        } else if (newEx.metricType == 'TIME') {
+            _timeController.text = confirmed['time']!;
+        } else if (newEx.metricType == 'DISTANCE') {
+            _distanceController.text = confirmed['distance']!;
+        }
+     });
   }
+}
 }

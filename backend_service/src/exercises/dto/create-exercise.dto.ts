@@ -43,6 +43,34 @@ export class CreateExerciseDto {
   muscles: ExerciseMuscleDto[];
 
   @IsOptional()
+  @IsEnum(['REPS', 'TIME', 'DISTANCE'])
+  metricType?: 'REPS' | 'TIME' | 'DISTANCE';
+
+  @IsOptional()
+  @IsNumber()
+  defaultTime?: number;
+
+  @IsOptional()
+  @IsNumber()
+  minTime?: number;
+
+  @IsOptional()
+  @IsNumber()
+  maxTime?: number;
+
+  @IsOptional()
+  @IsNumber()
+  defaultDistance?: number;
+
+  @IsOptional()
+  @IsNumber()
+  minDistance?: number;
+
+  @IsOptional()
+  @IsNumber()
+  maxDistance?: number;
+
+  @IsOptional()
   @IsString()
   type?: string;
 

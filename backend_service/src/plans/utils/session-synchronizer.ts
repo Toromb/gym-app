@@ -67,11 +67,15 @@ export class SessionSynchronizer {
                     if (
                         snapSets !== planSets ||
                         String(sessionEx.targetRepsSnapshot) !== String(planEx.reps) ||
-                        String(sessionEx.targetWeightSnapshot) !== String(planEx.suggestedLoad)
+                        String(sessionEx.targetWeightSnapshot) !== String(planEx.suggestedLoad) ||
+                        Number(sessionEx.targetTimeSnapshot) !== Number(planEx.targetTime) ||
+                        Number(sessionEx.targetDistanceSnapshot) !== Number(planEx.targetDistance)
                     ) {
                         sessionEx.targetSetsSnapshot = planSets;
                         sessionEx.targetRepsSnapshot = planEx.reps;
                         sessionEx.targetWeightSnapshot = planEx.suggestedLoad;
+                        sessionEx.targetTimeSnapshot = planEx.targetTime;
+                        sessionEx.targetDistanceSnapshot = planEx.targetDistance;
                         updated = true;
                     }
 
@@ -95,6 +99,8 @@ export class SessionSynchronizer {
                     targetSetsSnapshot: planEx.sets,
                     targetRepsSnapshot: planEx.reps,
                     targetWeightSnapshot: planEx.suggestedLoad,
+                    targetTimeSnapshot: planEx.targetTime,
+                    targetDistanceSnapshot: planEx.targetDistance,
                     videoUrl: planEx.videoUrl || planEx.exercise.videoUrl,
                     equipmentsSnapshot: planEx.equipments,
                     order: planEx.order,

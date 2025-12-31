@@ -139,7 +139,6 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
       return;
     }
 
-    // Correctly find the initial selection object from the provider list based on ID
     Exercise? selectedExercise;
     if (existingExercise?.exerciseId != null) {
       try {
@@ -155,6 +154,10 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
     final repsController = TextEditingController(text: existingExercise?.reps ?? '10');
     final loadController = TextEditingController(text: existingExercise?.suggestedLoad ?? '');
     final restController = TextEditingController(text: existingExercise?.rest ?? '60s');
+    
+    // New Controllers
+    final timeController = TextEditingController(text: existingExercise?.targetTime?.toString() ?? '');
+    final distanceController = TextEditingController(text: existingExercise?.targetDistance?.toString() ?? '');
 
     final notesController = TextEditingController(text: existingExercise?.notes ?? '');
     final videoUrlController = TextEditingController(text: existingExercise?.videoUrl ?? existingExercise?.exercise?.videoUrl ?? '');
@@ -164,8 +167,10 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
 
     await showDialog(
       context: context,
-      builder: (context) => StatefulBuilder( // Use StatefulBuilder to update dropdown in Dialog if needed, though usually not for just selection
+      builder: (context) => StatefulBuilder( 
         builder: (context, setStateDialog) {
+          final metricType = selectedExercise?.metricType ?? 'REPS';
+
           return AlertDialog(
             title: Text(existingExercise == null ? 'Agregar Ejercicio' : 'Editar Ejercicio'),
             content: SingleChildScrollView(
@@ -180,19 +185,39 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                        setStateDialog(() {
                          selectedExercise = value;
                          if (value != null) {
-                           setsController.text = value.sets?.toString() ?? '3';
-                           repsController.text = value.reps ?? '10';
-                           loadController.text = value.load ?? '';
+                           setsController.text = value.sets?.toString() ?? value.defaultSets?.toString() ?? '3';
                            restController.text = value.rest ?? '60s';
                            videoUrlController.text = value.videoUrl ?? '';
                            notesController.text = value.notes ?? '';
-                           // Reset equipment selection on change
+                           
+                           // Populate Defaults based on metric
+                           if (value.metricType == 'REPS') {
+                              repsController.text = value.reps ?? '10';
+                              loadController.text = value.load ?? '';
+                           } else if (value.metricType == 'TIME') {
+                              timeController.text = value.defaultTime?.toString() ?? '';
+                           } else if (value.metricType == 'DISTANCE') {
+                              distanceController.text = value.defaultDistance?.toString() ?? '';
+                           }
+
                            selectedPlanEquipments = []; 
                          }
                        });
                     },
                     validator: (value) => value == null ? 'Requerido' : null,
                   ),
+                  
+                  if (selectedExercise != null) ...[
+                      const SizedBox(height: 5),
+                      Align(
+                          alignment: Alignment.centerLeft, 
+                          child: Chip(
+                              label: Text('Métrica: $metricType', style: const TextStyle(fontSize: 10)),
+                              visualDensity: VisualDensity.compact,
+                          )
+                      ),
+                  ],
+
                   if (selectedExercise != null && selectedExercise!.equipments.isNotEmpty) ...[
                      const SizedBox(height: 10),
                      Align(alignment: Alignment.centerLeft, child: Text('Equipamiento/s en este ejercicio', style: TextStyle(color: Colors.grey[700], fontSize: 12))),
@@ -217,11 +242,23 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                        }).toList(),
                      ),
                   ],
+                  
                   TextField(controller: setsController, decoration: const InputDecoration(labelText: 'Series'), keyboardType: TextInputType.number),
-                  TextField(controller: repsController, decoration: const InputDecoration(labelText: 'Repeticiones')),
-                  TextField(controller: loadController, decoration: const InputDecoration(labelText: 'Peso (kg)')),
+                  
+                  // CONDITIONAL FIELDS
+                  if (metricType == 'REPS') ...[
+                      TextField(controller: repsController, decoration: const InputDecoration(labelText: 'Repeticiones')),
+                      TextField(controller: loadController, decoration: const InputDecoration(labelText: 'Peso (kg)')),
+                  ] else if (metricType == 'TIME') ...[
+                      TextField(controller: timeController, decoration: const InputDecoration(labelText: 'Tiempo Objetivo (segundos)'), keyboardType: TextInputType.number),
+                  ] else if (metricType == 'DISTANCE') ...[
+                      TextField(controller: distanceController, decoration: const InputDecoration(labelText: 'Distancia Objetivo (metros)'), keyboardType: TextInputType.number),
+                  ],
+
                   TextField(controller: restController, decoration: const InputDecoration(labelText: 'Descanso (seg)')),
-                  TextField(controller: videoUrlController, decoration: const InputDecoration(labelText: 'URL de Video', hintText: 'https://youtube.com/...')),
+                  
+                  // Collapsible or bottom fields
+                  TextField(controller: videoUrlController, decoration: const InputDecoration(labelText: 'URL de Video')),
                   TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notas')),
                 ],
               ),
@@ -231,17 +268,22 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
               TextButton(
                 onPressed: () {
                   if (selectedExercise != null) {
-                    // Update the main state
                     setState(() {
                       final newExercise = PlanExercise(
                         id: existingExercise?.id,
                         exerciseId: selectedExercise!.id,
                         exercise: selectedExercise,
                         sets: int.tryParse(setsController.text.trim()) ?? 3,
-                        reps: repsController.text,
-                        suggestedLoad: loadController.text,
-                        rest: restController.text,
+                        // Always send default '0' or '' if hidden, but prefer null handling in backend if possible.
+                        // For now we persist "" if not REPS, but PlanExercise model expects required string reps?
+                        // Model says: required reps. So we send "0" or "-" if not REPS.
+                        reps: metricType == 'REPS' ? repsController.text : '', 
+                        suggestedLoad: metricType == 'REPS' ? loadController.text : null,
+                        
+                        targetTime: metricType == 'TIME' ? int.tryParse(timeController.text) : null,
+                        targetDistance: metricType == 'DISTANCE' ? double.tryParse(distanceController.text) : null,
 
+                        rest: restController.text,
                         notes: notesController.text,
                         videoUrl: videoUrlController.text.isNotEmpty ? videoUrlController.text : null,
                         order: existingExercise?.order ?? _weeks[weekIndex].days[dayIndex].exercises.length + 1,
@@ -459,10 +501,14 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                                           return Card(
                                             child: ListTile(
                                               dense: true,
-                                              title: Text('${ex.exercise?.name ?? "Unknown"}: ${ex.sets}x${ex.reps}'),
+                                              title: Text(
+                                                  ex.exercise?.metricType == 'TIME' ? '${ex.exercise?.name ?? "Unknown"}: ${ex.sets} x ${ex.targetTime ?? "-"}s'
+                                                  : ex.exercise?.metricType == 'DISTANCE' ? '${ex.exercise?.name ?? "Unknown"}: ${ex.sets} x ${ex.targetDistance ?? "-"}m'
+                                                  : '${ex.exercise?.name ?? "Unknown"}: ${ex.sets}x${ex.reps}'
+                                              ),
                                               subtitle: Text(
-                                                '${ex.suggestedLoad != null ? " ${ex.suggestedLoad}kg" : ""}'
-                                                '${ex.rest != null ? " | Rest: ${ex.rest}" : ""}'
+                                                '${ex.exercise?.metricType == 'REPS' && ex.suggestedLoad != null ? " ${ex.suggestedLoad}kg |" : ""}'
+                                                '${ex.rest != null ? " Rest: ${ex.rest}" : ""}'
                                                 '${ex.notes != null && ex.notes!.isNotEmpty ? "\n📝 ${ex.notes}" : ""}',
                                               ),
                                               trailing: Row(

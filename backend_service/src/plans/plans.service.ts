@@ -52,6 +52,8 @@ export class PlansService {
           exercise.rest = e.rest;
           exercise.notes = e.notes;
           exercise.videoUrl = e.videoUrl;
+          exercise.targetTime = e.targetTime;
+          exercise.targetDistance = e.targetDistance;
           exercise.order = e.order;
           exercise.exercise = { id: e.exerciseId } as any;
           exercise.day = day; // Back reference
@@ -314,11 +316,18 @@ export class PlansService {
                 exEntity.rest = eDto.rest;
                 exEntity.notes = eDto.notes;
                 exEntity.videoUrl = eDto.videoUrl;
+                exEntity.targetTime = eDto.targetTime;
+                exEntity.targetDistance = eDto.targetDistance;
                 exEntity.order = eDto.order;
+                exEntity.day = savedDay;
+                exEntity.day = savedDay;
                 exEntity.day = savedDay;
                 exEntity.exercise = { id: eDto.exerciseId } as any; // Link to Catalog Exercise
 
                 // DEBUG LOG
+                this.logger.log(`[UpdatePlan] Processing Ex ${eDto.exerciseId} DTO: ${JSON.stringify(eDto)}`);
+                // this.logger.log(`Payload: targetTime=${eDto.targetTime}, targetDistance=${eDto.targetDistance}, sets=${eDto.sets}`);
+
                 if (exEntity.sets !== eDto.sets) {
                   this.logger.log(`[UpdatePlan] Updating Sets for Ex ${exEntity.id}: ${exEntity.sets} -> ${eDto.sets}`);
                 } else {

@@ -56,6 +56,8 @@ class SessionExercise {
   final int? targetSetsSnapshot;
   final String? targetRepsSnapshot;
   final String? targetWeightSnapshot;
+  final int? targetTimeSnapshot; // Seconds
+  final double? targetDistanceSnapshot; // Meters
   final String? videoUrl;
   final List<Equipment> equipmentsSnapshot;
   
@@ -66,6 +68,8 @@ class SessionExercise {
   final String? setsDone; 
   final String? repsDone;
   final String? weightUsed;
+  final String? timeSpent; 
+  final double? distanceCovered;
   final String? notes;
 
   SessionExercise({
@@ -74,6 +78,8 @@ class SessionExercise {
     this.targetSetsSnapshot,
     this.targetRepsSnapshot,
     this.targetWeightSnapshot,
+    this.targetTimeSnapshot,
+    this.targetDistanceSnapshot,
     this.videoUrl,
     required this.equipmentsSnapshot, 
     this.exercise,
@@ -81,6 +87,8 @@ class SessionExercise {
     this.setsDone, 
     this.repsDone,
     this.weightUsed,
+    this.timeSpent,
+    this.distanceCovered,
     this.notes,
   });
 
@@ -89,6 +97,8 @@ class SessionExercise {
     String? setsDone,
     String? repsDone,
     String? weightUsed,
+    String? timeSpent,
+    double? distanceCovered,
     String? notes,
     // Add swap support
     Exercise? exercise,
@@ -102,6 +112,8 @@ class SessionExercise {
       targetSetsSnapshot: targetSetsSnapshot,
       targetRepsSnapshot: targetRepsSnapshot,
       targetWeightSnapshot: targetWeightSnapshot,
+      targetTimeSnapshot: targetTimeSnapshot,
+      targetDistanceSnapshot: targetDistanceSnapshot,
       videoUrl: videoUrl ?? this.videoUrl,
       equipmentsSnapshot: equipmentsSnapshot ?? this.equipmentsSnapshot,
       exercise: exercise ?? this.exercise,
@@ -109,6 +121,8 @@ class SessionExercise {
       setsDone: setsDone ?? this.setsDone,
       repsDone: repsDone ?? this.repsDone,
       weightUsed: weightUsed ?? this.weightUsed,
+      timeSpent: timeSpent ?? this.timeSpent,
+      distanceCovered: distanceCovered ?? this.distanceCovered,
       notes: notes ?? this.notes,
     );
   }
@@ -121,6 +135,8 @@ class SessionExercise {
       targetSetsSnapshot: json['targetSetsSnapshot'],
       targetRepsSnapshot: json['targetRepsSnapshot'],
       targetWeightSnapshot: json['targetWeightSnapshot'],
+      targetTimeSnapshot: json['targetTimeSnapshot'],
+      targetDistanceSnapshot: json['targetDistanceSnapshot'] != null ? (json['targetDistanceSnapshot'] as num).toDouble() : null,
       videoUrl: json['videoUrl'],
       equipmentsSnapshot: (json['equipmentsSnapshot'] as List<dynamic>?)
               ?.map((e) => Equipment.fromJson(e))
@@ -131,6 +147,8 @@ class SessionExercise {
       setsDone: json['setsDone']?.toString(), 
       repsDone: json['repsDone'],
       weightUsed: json['weightUsed'],
+      timeSpent: json['timeSpent'],
+      distanceCovered: json['distanceCovered'] != null ? (json['distanceCovered'] as num).toDouble() : null,
       notes: json['notes'],
     );
   }
@@ -143,6 +161,11 @@ class SessionExercise {
       targetSetsSnapshot: pe.sets,
       targetRepsSnapshot: pe.reps,
       targetWeightSnapshot: pe.suggestedLoad,
+      // PlanExercise doesn't have targetTime/Distance yet in my Plan update? 
+      // I need to check PlanExercise update. Assuming I'll add them there too.
+      // But for now, let's keep it robust.
+      targetTimeSnapshot: pe.targetTime,
+      targetDistanceSnapshot: pe.targetDistance,
       videoUrl: pe.videoUrl ?? pe.exercise?.videoUrl,
       equipmentsSnapshot: pe.equipments,
       exercise: pe.exercise,

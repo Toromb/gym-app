@@ -86,6 +86,15 @@ class Exercise {
   final int? minReps;
   final int? maxReps;
 
+  // Metric fields
+  final String metricType; // 'REPS', 'TIME', 'DISTANCE'
+  final int? defaultTime;
+  final int? minTime;
+  final int? maxTime;
+  final double? defaultDistance;
+  final double? minDistance;
+  final double? maxDistance;
+
   Exercise({
     required this.id,
     required this.name,
@@ -105,6 +114,13 @@ class Exercise {
     this.defaultSets,
     this.minReps,
     this.maxReps,
+    this.metricType = 'REPS',
+    this.defaultTime,
+    this.minTime,
+    this.maxTime,
+    this.defaultDistance,
+    this.minDistance,
+    this.maxDistance,
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
@@ -135,6 +151,13 @@ class Exercise {
               ?.map((e) => Equipment.fromJson(e))
               .toList() ??
           [],
+      metricType: json['metricType'] ?? 'REPS',
+      defaultTime: json['defaultTime'],
+      minTime: json['minTime'],
+      maxTime: json['maxTime'],
+      defaultDistance: json['defaultDistance'] != null ? (json['defaultDistance'] as num).toDouble() : null,
+      minDistance: json['minDistance'] != null ? (json['minDistance'] as num).toDouble() : null,
+      maxDistance: json['maxDistance'] != null ? (json['maxDistance'] as num).toDouble() : null,
     );
   }
 }
@@ -149,6 +172,8 @@ class PlanExercise {
   final String? rest;
   final String? notes;
   final String? videoUrl;
+  final int? targetTime; // New: For TIME exercises
+  final double? targetDistance; // New: For DISTANCE exercises
   int order;
   final List<Equipment> equipments;
 
@@ -157,11 +182,13 @@ class PlanExercise {
     this.exercise,
     this.exerciseId,
     required this.sets,
-    required this.reps,
+    required this.reps, // Kept required for legacy, even if empty for Time
     this.suggestedLoad,
     this.rest,
     this.notes,
     this.videoUrl,
+    this.targetTime,
+    this.targetDistance,
     required this.order,
     this.equipments = const [],
   });
@@ -176,6 +203,8 @@ class PlanExercise {
       rest: json['rest'],
       notes: json['notes'],
       videoUrl: json['videoUrl'],
+      targetTime: json['targetTime'],
+      targetDistance: json['targetDistance'] != null ? (json['targetDistance'] as num).toDouble() : null,
       order: json['order'] ?? 0,
       equipments: (json['equipments'] as List<dynamic>?)
               ?.map((e) => Equipment.fromJson(e))
@@ -194,6 +223,8 @@ class PlanExercise {
       'rest': rest,
       'notes': notes,
       'videoUrl': videoUrl,
+      'targetTime': targetTime,
+      'targetDistance': targetDistance,
       'order': order,
       'equipmentIds': equipments.map((e) => e.id).toList(),
     };

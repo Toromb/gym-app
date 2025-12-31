@@ -121,6 +121,8 @@ export class TrainingSessionsService {
               targetSetsSnapshot: planEx.sets,
               targetRepsSnapshot: planEx.reps,
               targetWeightSnapshot: planEx.suggestedLoad,
+              targetTimeSnapshot: planEx.targetTime,
+              targetDistanceSnapshot: planEx.targetDistance,
               videoUrl: planEx.videoUrl || planEx.exercise.videoUrl,
               equipmentsSnapshot: planEx.equipments,
               // DEFAULTS

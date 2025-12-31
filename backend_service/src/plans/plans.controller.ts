@@ -85,7 +85,7 @@ export class PlansController {
     if (req.user.role !== UserRole.ADMIN && req.user.role !== UserRole.PROFE) {
       throw new ForbiddenException('Only admins and professors can edit plans');
     }
-    // console.log('Update Payload:', JSON.stringify(updatePlanDto, null, 2));
+    console.log('Update Payload RAW:', JSON.stringify(updatePlanDto, null, 2));
     return this.plansService.update(id, updatePlanDto, req.user);
   }
 

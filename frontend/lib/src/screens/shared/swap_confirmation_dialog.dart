@@ -22,6 +22,9 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
   late TextEditingController _weightController;
   late TextEditingController _setsController;
   late TextEditingController _repsController;
+  // New Controllers
+  late TextEditingController _timeController;
+  late TextEditingController _distanceController;
 
   @override
   void initState() {
@@ -29,6 +32,8 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
     _weightController = TextEditingController(text: widget.suggestion.suggestedWeight ?? '');
     _setsController = TextEditingController(text: widget.suggestion.suggestedSets);
     _repsController = TextEditingController(text: widget.suggestion.suggestedReps);
+    _timeController = TextEditingController(text: widget.suggestion.suggestedTime ?? '');
+    _distanceController = TextEditingController(text: widget.suggestion.suggestedDistance ?? '');
   }
 
   @override
@@ -36,11 +41,15 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
     _weightController.dispose();
     _setsController.dispose();
     _repsController.dispose();
+    _timeController.dispose();
+    _distanceController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final metricType = widget.newExercise.metricType;
+
     return AlertDialog(
       title: const Text('Confirmar Cambio'),
       content: SingleChildScrollView(
@@ -48,12 +57,31 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Vas a cambiar:'),
+            const Text('Vas a cambiar:'),
             Text(widget.oldExerciseName, style: const TextStyle(fontWeight: FontWeight.bold, decoration: TextDecoration.lineThrough, color: Colors.grey)),
             const Icon(Icons.arrow_downward, size: 16),
             Text(widget.newExercise.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
             const SizedBox(height: 16),
             
+            // Warning
+            if (widget.suggestion.warning != null)
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.amber)
+                ),
+                child: Row(
+                    children: [
+                        const Icon(Icons.warning_amber, color: Colors.amber, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(widget.suggestion.warning!, style: const TextStyle(fontSize: 12, color: Colors.black87))),
+                    ]
+                ),
+              ),
+
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -78,15 +106,40 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
                    ),
                  ),
                  const SizedBox(width: 8),
-                 Expanded(
-                   child: TextField(
-                     controller: _repsController,
-                     decoration: const InputDecoration(labelText: 'Reps', isDense: true),
-                   ),
-                 ),
+                 
+                 // METRIC SPECIFIC INPUTS
+                 if (metricType == 'REPS') ...[
+                     Expanded(
+                        child: TextField(
+                            controller: _repsController,
+                            decoration: const InputDecoration(labelText: 'Reps', isDense: true),
+                        ),
+                     ),
+                 ] else if (metricType == 'TIME') ...[
+                     Expanded(
+                         flex: 2,
+                        child: TextField(
+                            controller: _timeController,
+                            decoration: const InputDecoration(labelText: 'Tiempo (seg)', isDense: true),
+                            keyboardType: TextInputType.number,
+                        ),
+                     ),
+                 ] else if (metricType == 'DISTANCE') ...[
+                     Expanded(
+                         flex: 2,
+                        child: TextField(
+                            controller: _distanceController,
+                            decoration: const InputDecoration(labelText: 'Distancia (m)', isDense: true),
+                            keyboardType: TextInputType.number,
+                        ),
+                     ),
+                 ],
+
               ],
             ),
             const SizedBox(height: 12),
+            
+            if (metricType == 'REPS')
              TextField(
                controller: _weightController,
                decoration: InputDecoration(
@@ -109,6 +162,9 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
               'sets': _setsController.text,
               'reps': _repsController.text,
               'weight': _weightController.text,
+               // New
+              'time': _timeController.text,
+              'distance': _distanceController.text,
             });
           },
           child: const Text('Confirmar Cambio'),

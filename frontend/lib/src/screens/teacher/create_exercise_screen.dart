@@ -21,11 +21,24 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
   late TextEditingController _videoUrlController;
   late TextEditingController _notesController;
   
+  // Metric Type
+  String _metricType = 'REPS';
+
   // Defaults
   late TextEditingController _setsController;
   late TextEditingController _repsController;
   late TextEditingController _restController;
-  late TextEditingController _loadController;
+  late TextEditingController _loadController; // Weight
+
+  // Time Defaults
+  late TextEditingController _defaultTimeController;
+  late TextEditingController _minTimeController;
+  late TextEditingController _maxTimeController;
+
+  // Distance Defaults
+  late TextEditingController _defaultDistanceController;
+  late TextEditingController _minDistanceController;
+  late TextEditingController _maxDistanceController;
 
 
 
@@ -68,6 +81,14 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
     _defaultSetsController = TextEditingController(text: e?.defaultSets?.toString() ?? '');
     _minRepsController = TextEditingController(text: e?.minReps?.toString() ?? '');
     _maxRepsController = TextEditingController(text: e?.maxReps?.toString() ?? '');
+
+    _metricType = e?.metricType ?? 'REPS';
+    _defaultTimeController = TextEditingController(text: e?.defaultTime?.toString() ?? '');
+    _minTimeController = TextEditingController(text: e?.minTime?.toString() ?? '');
+    _maxTimeController = TextEditingController(text: e?.maxTime?.toString() ?? '');
+    _defaultDistanceController = TextEditingController(text: e?.defaultDistance?.toString() ?? '');
+    _minDistanceController = TextEditingController(text: e?.minDistance?.toString() ?? '');
+    _maxDistanceController = TextEditingController(text: e?.maxDistance?.toString() ?? '');
 
     _loadMuscles();
     _loadEquipments();
@@ -150,6 +171,12 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
     _defaultSetsController.dispose();
     _minRepsController.dispose();
     _maxRepsController.dispose();
+    _defaultTimeController.dispose();
+    _minTimeController.dispose();
+    _maxTimeController.dispose();
+    _defaultDistanceController.dispose();
+    _minDistanceController.dispose();
+    _maxDistanceController.dispose();
     super.dispose();
   }
 
@@ -202,10 +229,15 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
         'reps': _repsController.text.isNotEmpty ? _repsController.text : null,
         'rest': _restController.text.isNotEmpty ? _restController.text : null,
         'load': _loadController.text.isNotEmpty ? _loadController.text : null,
-        'sets': int.tryParse(_setsController.text),
-        'reps': _repsController.text.isNotEmpty ? _repsController.text : null,
-        'rest': _restController.text.isNotEmpty ? _restController.text : null,
-        'load': _loadController.text.isNotEmpty ? _loadController.text : null,
+
+        // Metric Fields
+        'metricType': _metricType,
+        'defaultTime': int.tryParse(_defaultTimeController.text),
+        'minTime': int.tryParse(_minTimeController.text),
+        'maxTime': int.tryParse(_maxTimeController.text),
+        'defaultDistance': double.tryParse(_defaultDistanceController.text),
+        'minDistance': double.tryParse(_minDistanceController.text),
+        'maxDistance': double.tryParse(_maxDistanceController.text),
 
         // Advanced Config
         'loadFactor': double.tryParse(_loadFactorController.text),
@@ -513,30 +545,68 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                const SizedBox(height: 20),
               // --- END EQUIPMENT SECTION ---
 
-              TextFormField(
+               TextFormField(
                 controller: _typeController,
                 decoration: const InputDecoration(labelText: 'Tipo', hintText: 'Ej: Fuerza, Hipertrofia, Cardio'),
+              ),
+              const SizedBox(height: 20),
+
+              // --- METRIC TYPE SELECTOR ---
+              DropdownButtonFormField<String>(
+                value: _metricType,
+                decoration: const InputDecoration(labelText: 'Tipo de Métrica'),
+                items: const [
+                  DropdownMenuItem(value: 'REPS', child: Text('Repeticiones')),
+                  DropdownMenuItem(value: 'TIME', child: Text('Tiempo')),
+                  DropdownMenuItem(value: 'DISTANCE', child: Text('Distancia')),
+                ],
+                onChanged: (val) {
+                  if (val != null) setState(() => _metricType = val);
+                },
               ),
               const SizedBox(height: 20),
                
               Text('Parámetros por Defecto (Opcional)', style: Theme.of(context).textTheme.titleMedium),
               const Text('Estos valores se precargarán al agregar el ejercicio a un plan.', style: TextStyle(color: Colors.grey, fontSize: 12)),
               const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(child: TextFormField(controller: _setsController, decoration: const InputDecoration(labelText: 'Series'), keyboardType: TextInputType.number)),
-                  const SizedBox(width: 10),
-                  Expanded(child: TextFormField(controller: _repsController, decoration: const InputDecoration(labelText: 'Reps'))),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(child: TextFormField(controller: _loadController, decoration: const InputDecoration(labelText: 'Peso/Int'))),
-                  const SizedBox(width: 10),
-                  Expanded(child: TextFormField(controller: _restController, decoration: const InputDecoration(labelText: 'Descanso'))),
-                ],
-              ),
+              
+              if (_metricType == 'REPS') ...[
+                Row(
+                  children: [
+                    Expanded(child: TextFormField(controller: _setsController, decoration: const InputDecoration(labelText: 'Series'), keyboardType: TextInputType.number)),
+                    const SizedBox(width: 10),
+                    Expanded(child: TextFormField(controller: _repsController, decoration: const InputDecoration(labelText: 'Reps'))),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: TextFormField(controller: _loadController, decoration: const InputDecoration(labelText: 'Peso/Int'))),
+                    const SizedBox(width: 10),
+                    Expanded(child: TextFormField(controller: _restController, decoration: const InputDecoration(labelText: 'Descanso'))),
+                  ],
+                ),
+              ] else if (_metricType == 'TIME') ...[
+                 Row(
+                  children: [
+                    Expanded(child: TextFormField(controller: _setsController, decoration: const InputDecoration(labelText: 'Series'), keyboardType: TextInputType.number)),
+                     const SizedBox(width: 10),
+                    Expanded(child: TextFormField(controller: _defaultTimeController, decoration: const InputDecoration(labelText: 'Tiempo (seg)'), keyboardType: TextInputType.number)),
+                  ],
+                 ),
+                 const SizedBox(height: 10),
+                 TextFormField(controller: _restController, decoration: const InputDecoration(labelText: 'Descanso')),
+              ] else if (_metricType == 'DISTANCE') ...[
+                 Row(
+                  children: [
+                    Expanded(child: TextFormField(controller: _setsController, decoration: const InputDecoration(labelText: 'Series'), keyboardType: TextInputType.number)),
+                     const SizedBox(width: 10),
+                    Expanded(child: TextFormField(controller: _defaultDistanceController, decoration: const InputDecoration(labelText: 'Distancia (m)'), keyboardType: TextInputType.number)),
+                  ],
+                 ),
+                 const SizedBox(height: 10),
+                 TextFormField(controller: _restController, decoration: const InputDecoration(labelText: 'Descanso')),
+              ],
 
               const SizedBox(height: 20),
               
@@ -546,6 +616,8 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                 style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
               const SizedBox(height: 10),
+              
+              // Common Fields
               Row(
                 children: [
                   Expanded(
@@ -566,25 +638,69 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                 ],
               ),
               const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _minRepsController, 
-                      decoration: const InputDecoration(labelText: 'Min Reps'), 
-                      keyboardType: TextInputType.number,
-                    ),
+              
+              // Metric Specific Logic Config
+               if (_metricType == 'REPS') ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _minRepsController, 
+                          decoration: const InputDecoration(labelText: 'Min Reps'), 
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _maxRepsController, 
+                          decoration: const InputDecoration(labelText: 'Max Reps'), 
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _maxRepsController, 
-                      decoration: const InputDecoration(labelText: 'Max Reps'), 
-                      keyboardType: TextInputType.number,
-                    ),
+               ] else if (_metricType == 'TIME') ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _minTimeController, 
+                          decoration: const InputDecoration(labelText: 'Min Tiempo (seg)'), 
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _maxTimeController, 
+                          decoration: const InputDecoration(labelText: 'Max Tiempo (seg)'), 
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+               ] else if (_metricType == 'DISTANCE') ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _minDistanceController, 
+                          decoration: const InputDecoration(labelText: 'Min Distancia (m)'), 
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _maxDistanceController, 
+                          decoration: const InputDecoration(labelText: 'Max Distancia (m)'), 
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+               ],
 
               const SizedBox(height: 20),
               Text('Multimedia y Notas', style: Theme.of(context).textTheme.titleMedium),

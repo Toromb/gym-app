@@ -34,6 +34,12 @@ export class SessionExercise {
   @Column({ nullable: true })
   targetWeightSnapshot?: string;
 
+  @Column({ nullable: true, type: 'int' })
+  targetTimeSnapshot?: number; // Seconds
+
+  @Column({ nullable: true, type: 'float' })
+  targetDistanceSnapshot?: number; // Meters
+
   @Column({ nullable: true })
   videoUrl: string; // Snapshot or resolved URL for the video
 
@@ -60,6 +66,9 @@ export class SessionExercise {
 
   @Column({ nullable: true })
   timeSpent: string;
+
+  @Column({ nullable: true, type: 'float' })
+  distanceCovered?: number; // Meters
 
   @Column({ type: 'text', nullable: true })
   notes: string;
