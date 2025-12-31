@@ -75,14 +75,6 @@ export class PlansController {
     return this.plansService.findOne(id);
   }
 
-<<<<<<< HEAD
-    @Post('assign')
-    assignPlan(@Body() body: { planId: string; studentId: string }, @Request() req: any) {
-        if (req.user.role !== UserRole.PROFE && req.user.role !== UserRole.ADMIN) {
-            throw new ForbiddenException('Only professors and admins can assign plans');
-        }
-        return this.plansService.assignPlan(body.planId, body.studentId, req.user);
-=======
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -92,27 +84,17 @@ export class PlansController {
     // Allow Admin or Profe (any Profe can edit any plan per requirements)
     if (req.user.role !== UserRole.ADMIN && req.user.role !== UserRole.PROFE) {
       throw new ForbiddenException('Only admins and professors can edit plans');
->>>>>>> feature/payment-info
     }
     console.log('Update Payload RAW:', JSON.stringify(updatePlanDto, null, 2));
     return this.plansService.update(id, updatePlanDto, req.user);
   }
 
   @Post('assign')
-  assignPlan(
-    @Body() body: { planId: string; studentId: string },
-    @Request() req: any,
-  ) {
+  assignPlan(@Body() body: { planId: string; studentId: string }, @Request() req: any) {
     if (req.user.role !== UserRole.PROFE && req.user.role !== UserRole.ADMIN) {
-      throw new ForbiddenException(
-        'Only professors and admins can assign plans',
-      );
+      throw new ForbiddenException('Only professors and admins can assign plans');
     }
-    return this.plansService.assignPlan(
-      body.planId,
-      body.studentId,
-      req.user.id,
-    );
+    return this.plansService.assignPlan(body.planId, body.studentId, req.user);
   }
 
   @Get('assignments/student/:studentId')

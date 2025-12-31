@@ -119,109 +119,33 @@ export class PlansService {
     });
   }
 
-  async assignPlan(
-    planId: string,
-    studentId: string,
-    professorId: string,
-  ): Promise<StudentPlan> {
+
+
+  async assignPlan(planId: string, studentId: string, assigner: User): Promise<StudentPlan> {
     const plan = await this.findOne(planId);
     if (!plan) throw new NotFoundException('Plan not found');
 
-    // Validate Plan Ownership (Allow own plans OR Admin/Global plans)
+    // Validate Plan Ownership (Allow own plans OR Admin/Global plans OR if Assigner is Admin)
     const planTeacherId = plan.teacher?.id;
     const planTeacherRole = plan.teacher?.role;
+    const isAssignerAdmin = assigner.role === UserRole.ADMIN || assigner.role === UserRole.SUPER_ADMIN;
 
     // Allow if:
-    // 1. Plan belongs to the professor
-    // 2. Plan belongs to an Admin (Global)
-    // 3. Plan has no teacher (orphan/legacy) -> Decide policy. Let's forbid for now or allow Admin.
-    // For safety/strictness: fail if not owner and not admin.
+    // 1. Plan belongs to the assigner
+    // 2. Plan belongs to an Admin (Global) (and user can see it)
+    // 3. Assigner is Admin (can assign any plan)
 
-    // Validate Assigner Role
-    const assigner = await this.plansRepository.manager.findOne(User, {
-      where: { id: professorId },
-    });
-    if (!assigner) throw new NotFoundException('Assigner user not found');
-
-    const isOwner = planTeacherId === professorId;
-    const isAdminPlan = planTeacherRole === 'admin';
-    const isAssignerAdmin =
-      assigner.role === 'admin' || assigner.role === 'super_admin';
+    const isOwner = planTeacherId === assigner.id;
+    const isAdminPlan = planTeacherRole === UserRole.ADMIN || planTeacherRole === UserRole.SUPER_ADMIN;
 
     if (!isOwner && !isAdminPlan && !isAssignerAdmin) {
-      throw new ForbiddenException(
-        'You can only assign your own plans or library plans',
-      );
+      throw new ForbiddenException('You can only assign your own plans or library plans');
     }
 
-    // Validate Student Ownership
-    const student = await this.plansRepository.manager.findOne(User, {
-      where: { id: studentId },
-      relations: ['professor'],
-    });
+    // Validate Student Ownership 
+    const student = await this.plansRepository.manager.findOne(User, { where: { id: studentId }, relations: ['professor', 'gym'] });
     if (!student) throw new NotFoundException('Student not found');
 
-    const studentProfessorId = student.professor?.id;
-
-    if (studentProfessorId !== professorId) {
-      // Allow if assigner is ADMIN of the same gym (or Super Admin)
-      if (
-        student.gym?.id === plan.teacher?.gym?.id &&
-        planTeacherRole === 'admin'
-      ) {
-        // Allowed (Admin assigning to student of same gym)
-      } else if (planTeacherRole === 'admin') {
-        // Simplification for MVP check
-        // Allowed
-      } else {
-        throw new ForbiddenException(
-          'You can only assign plans to your own students',
-        );
-      }
-    }
-
-    // Check for duplicate active assignment using QueryBuilder
-    // console.log(`Checking duplicate for Student: ${studentId}, Plan: ${planId}`);
-    const existingAssignment = await this.studentPlanRepository
-      .createQueryBuilder('sp')
-      .where('sp.student.id = :studentId', { studentId })
-      .andWhere('sp.plan.id = :planId', { planId })
-      .andWhere('sp.isActive = :isActive', { isActive: true })
-      .getOne();
-
-    // console.log('Existing Assignment Found:', existingAssignment);
-
-    if (existingAssignment) {
-      const { ConflictException } = require('@nestjs/common');
-      throw new ConflictException('El alumno ya tiene este plan asignado.');
-    }
-
-<<<<<<< HEAD
-    async assignPlan(planId: string, studentId: string, assigner: User): Promise<StudentPlan> {
-        const plan = await this.findOne(planId);
-        if (!plan) throw new NotFoundException('Plan not found');
-
-        // Validate Plan Ownership (Allow own plans OR Admin/Global plans OR if Assigner is Admin)
-        const planTeacherId = plan.teacher?.id;
-        const planTeacherRole = plan.teacher?.role;
-        const isAssignerAdmin = assigner.role === UserRole.ADMIN || assigner.role === UserRole.SUPER_ADMIN;
-
-        // Allow if:
-        // 1. Plan belongs to the assigner
-        // 2. Plan belongs to an Admin (Global) (and user can see it)
-        // 3. Assigner is Admin (can assign any plan)
-
-        const isOwner = planTeacherId === assigner.id;
-        const isAdminPlan = planTeacherRole === UserRole.ADMIN || planTeacherRole === UserRole.SUPER_ADMIN;
-
-        if (!isOwner && !isAdminPlan && !isAssignerAdmin) {
-            throw new ForbiddenException('You can only assign your own plans or library plans');
-        }
-
-        // Validate Student Ownership 
-        const student = await this.plansRepository.manager.findOne(User, { where: { id: studentId }, relations: ['professor', 'gym'] });
-        if (!student) throw new NotFoundException('Student not found');
-=======
     const studentPlan = this.studentPlanRepository.create({
       plan: { id: planId } as any,
       student: { id: studentId } as any,
@@ -229,9 +153,6 @@ export class PlansService {
       startDate: new Date().toISOString(), // Default to today
       isActive: true,
     });
-
-    // Deactivate other active plans for this student -> REMOVED per requirement (multiple active plans allowed)
-    // await this.studentPlanRepository.update({ student: { id: studentId } as any, isActive: true }, { isActive: false });
 
     return this.studentPlanRepository.save(studentPlan);
   }
@@ -254,34 +175,16 @@ export class PlansService {
       .transaction(async (transactionalEntityManager) => {
         // Full structure replacement with ID preservation (Diff & Sync)
         if (updatePlanDto.weeks && updatePlanDto.weeks.length > 0) {
->>>>>>> feature/payment-info
-
           // --- 1. SYNC WEEKS ---
           const incomingWeeks = updatePlanDto.weeks;
           const incomingWeekIds = incomingWeeks.map(w => w.id).filter(id => !!id);
 
-<<<<<<< HEAD
-        if (studentProfessorId !== assigner.id) {
-            // Allow if assigner is ADMIN of the same gym (or Super Admin)
-            if (isAssignerAdmin) {
-                // Check if Admin belongs to same gym if not Super Admin
-                if (assigner.role === UserRole.ADMIN && assigner.gym?.id && student.gym?.id && assigner.gym.id !== student.gym.id) {
-                    // Ideally check gym match, but 'assigner.gym' might not be loaded on 'req.user'. 
-                    // Assuming 'req.user' comes with gym info or we fetch it.
-                    // For MVP, if Admin, let them assign.
-                }
-            } else {
-                throw new ForbiddenException('You can only assign plans to your own students');
-            }
-        }
-=======
           // Delete missing weeks
           const existingWeeks = plan.weeks || [];
           const weeksToDelete = existingWeeks.filter(w => w.id && !incomingWeekIds.includes(w.id));
           if (weeksToDelete.length > 0) {
             await transactionalEntityManager.delete(PlanWeek, weeksToDelete.map(w => w.id));
           }
->>>>>>> feature/payment-info
 
           // Upsert Weeks
           const processedWeeks: PlanWeek[] = [];
