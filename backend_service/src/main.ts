@@ -11,7 +11,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production' ? (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : false) : '*',
+    origin: process.env.NODE_ENV === 'production' ? (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : false) : true,
     credentials: true,
   });
 

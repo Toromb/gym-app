@@ -26,11 +26,14 @@ class _GymsListScreenState extends State<GymsListScreen> {
       appBar: AppBar(
         title: const Text('Manage Gyms'),
         actions: [
-            IconButton(icon: const Icon(Icons.add), onPressed: (){
-                Navigator.push(
+            IconButton(icon: const Icon(Icons.add), onPressed: () async {
+                await Navigator.push(
                     context, 
                     MaterialPageRoute(builder: (_) => const ManageGymScreen())
                 );
+                if (context.mounted) {
+                  context.read<GymsProvider>().fetchGyms();
+                }
             })
         ],
       ),
@@ -47,11 +50,14 @@ class _GymsListScreenState extends State<GymsListScreen> {
                           title: Text(gym.businessName),
                           subtitle: Text('Status: ${gym.status} | Profiles: ${gym.maxProfiles}'),
                           trailing: const Icon(Icons.chevron_right),
-                          onTap: () {
-                              Navigator.push(
+                          onTap: () async {
+                              await Navigator.push(
                                 context, 
                                 MaterialPageRoute(builder: (_) => ManageGymScreen(gym: gym))
                               );
+                              if (context.mounted) {
+                                context.read<GymsProvider>().fetchGyms();
+                              }
                           },
                       );
                   },

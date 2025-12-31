@@ -27,4 +27,30 @@ export class AuthController {
     getProfile(@Request() req: any) {
         return req.user;
     }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('generate-activation-link')
+    async generateActivationLink(@Body('userId') userId: string) {
+        const token = await this.authService.generateActivationToken(userId);
+        return { token };
+    }
+
+    @Post('activate-account') // Public
+    async activateAccount(@Body() body: any) {
+        await this.authService.activateAccount(body.token, body.password);
+        return { message: 'Account activated' };
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('generate-reset-link')
+    async generateResetLink(@Body('userId') userId: string) {
+        const token = await this.authService.generateResetToken(userId);
+        return { token };
+    }
+
+    @Post('reset-password') // Public
+    async resetPassword(@Body() body: any) {
+        await this.authService.resetPassword(body.token, body.password);
+        return { message: 'Password reset successful' };
+    }
 }

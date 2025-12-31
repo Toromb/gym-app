@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
+import '../../providers/gym_schedule_provider.dart';
 import '../../models/user_model.dart' as app_models;
 import '../../localization/app_localizations.dart';
+import '../../models/gym_schedule_model.dart';
 import '../../models/plan_model.dart';
 import '../../models/student_assignment_model.dart';
 import '../shared/day_detail_screen.dart';
@@ -29,6 +31,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     // Fetch history to determine next workout
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PlanProvider>().fetchMyHistory();
+      context.read<GymScheduleProvider>().fetchSchedule();
     });
   }
 
@@ -42,7 +45,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
          actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthProvider>().logout(),
+            onPressed: () {
+              context.read<AuthProvider>().logout();
+              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+            },
           ),
         ],
       ),
@@ -89,17 +95,46 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   },
                 ),
                  const SizedBox(height: 16),
-                _buildDashboardCard(
-                  context,
-                  title: AppLocalizations.of(context)!.get('gymSchedule'),
-                  subtitle: AppLocalizations.of(context)!.get('gymScheduleSub'),
-                  icon: Icons.access_time,
-                  onTap: () {
-                    Navigator.push(
+                 // Dynamic Gym Schedule Card
+                Consumer<GymScheduleProvider>(
+                  builder: (context, scheduleProvider, _) {
+                    String subtitle = AppLocalizations.of(context)!.get('gymScheduleSub');
+                    
+                    if (!scheduleProvider.isLoading && scheduleProvider.schedules.isNotEmpty) {
+                       final now = DateTime.now();
+                       final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                       final todayName = days[now.weekday - 1];
+                       
+                       try {
+                         // Find today schedule
+                         final actualToday = scheduleProvider.schedules.cast<GymSchedule?>().firstWhere(
+                            (s) => s!.dayOfWeek.toLowerCase() == todayName.toLowerCase(),
+                            orElse: () => null
+                         );
+
+                         if (actualToday != null) {
+                            subtitle = actualToday.isClosed 
+                                ? 'Hoy: Cerrado' 
+                                : 'Hoy: ${actualToday.displayHours}';
+                         }
+                       } catch (e) {
+                         // Fallback
+                       }
+                    }
+
+                    return _buildDashboardCard(
                       context,
-                      MaterialPageRoute(builder: (context) => const GymScheduleScreen()),
+                      title: AppLocalizations.of(context)!.get('gymSchedule'),
+                      subtitle: subtitle,
+                      icon: Icons.access_time,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const GymScheduleScreen()),
+                        );
+                      },
                     );
-                  },
+                  }
                 ),
                 const SizedBox(height: 16),
                 _buildDashboardCard(

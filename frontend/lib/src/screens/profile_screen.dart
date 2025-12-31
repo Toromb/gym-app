@@ -4,6 +4,7 @@ import '../providers/theme_provider.dart';
 import '../constants/app_constants.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
+import '../widgets/payment_status_badge.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -393,21 +394,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _user!.isActive == true ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _user!.isActive == true ? Colors.green : Colors.red),
+            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           child: Row(
             children: [
-               Icon(_user!.isActive == true ? Icons.check_circle : Icons.cancel, color: _user!.isActive == true ? Colors.green : Colors.red),
-               const SizedBox(width: 12),
                Expanded(
                  child: Column(
                    crossAxisAlignment: CrossAxisAlignment.start,
                    children: [
-                      Text('Estado: ${_user!.isActive == true ? 'Activo' : 'Inactivo'}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      PaymentStatusBadge(status: _user!.paymentStatus, isEditable: false),
                       if (_user!.membershipExpirationDate != null)
-                         Text('Vence el: ${_user!.membershipExpirationDate!}', style: const TextStyle(fontSize: 12)),
+                         Padding(
+                           padding: const EdgeInsets.only(top: 8.0),
+                           child: Text('Vence el: ${_user!.membershipExpirationDate!}', style: const TextStyle(fontSize: 12)),
+                         ),
                    ],
                  ),
                )

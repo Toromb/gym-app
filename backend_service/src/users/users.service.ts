@@ -21,8 +21,19 @@ export class UsersService {
 
     async create(createUserDto: CreateUserDto, creator?: User): Promise<User> {
         const { password, gymId, professorId, ...rest } = createUserDto;
-        const passwordToHash = password || '123456'; // Default password
-        const passwordHash = await bcrypt.hash(passwordToHash, 10);
+
+        let passwordHash = null;
+        let isActive = false;
+
+        if (password) {
+            passwordHash = await bcrypt.hash(password, 10);
+            isActive = true; // If created with password, assume active (or respect DTO)
+        }
+
+        // Respect DTO isActive if provided, otherwise default to logic above
+        if (createUserDto.isActive !== undefined) {
+            isActive = createUserDto.isActive;
+        }
 
         let gym = null;
         if (gymId) {
@@ -38,8 +49,9 @@ export class UsersService {
 
         const user = this.usersRepository.create({
             ...rest,
-            passwordHash,
-            professor: professor || undefined, // TypeORM create usually prefers undefined over null for "not set", but allows null for "empty relation"
+            passwordHash: passwordHash as any, // TypeORM nullable
+            isActive,
+            professor: professor || undefined,
             gym: gym || undefined,
         });
         return this.usersRepository.save(user);
@@ -191,6 +203,22 @@ export class UsersService {
         // Red -> OVERDUE
 
         return 'overdue';
+    }
+
+    async findOneByActivationTokenHash(hash: string): Promise<User | null> {
+        return this.usersRepository.findOne({
+            where: { activationTokenHash: hash },
+        });
+    }
+
+    async findOneByResetTokenHash(hash: string): Promise<User | null> {
+        return this.usersRepository.findOne({
+            where: { resetTokenHash: hash },
+        });
+    }
+
+    async updateTokens(id: string, updates: Partial<User>): Promise<void> {
+        await this.usersRepository.update(id, updates);
     }
 }
 

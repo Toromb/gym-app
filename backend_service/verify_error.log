@@ -1,0 +1,130 @@
+[32m[Nest] 25628  - [39m31/12/2025, 11:47:47 [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 25628  - [39m31/12/2025, 11:47:47 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +7ms[39m
+[32m[Nest] 25628  - [39m31/12/2025, 11:47:47 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25628  - [39m31/12/2025, 11:47:47 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 25628  - [39m31/12/2025, 11:47:47 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 25628  - [39m31/12/2025, 11:47:47 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25628  - [39m31/12/2025, 11:47:47 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25628  - [39m31/12/2025, 11:47:47 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mServeStaticModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25628  - [39m31/12/2025, 11:47:47 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +19ms[39m
+[32m[Nest] 25628  - [39m31/12/2025, 11:47:47 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mNotificationsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[31m[Nest] 25628  - [39m31/12/2025, 11:47:47 [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (1)...[39m
+DataTypeNotSupportedError: Data type "Object" in "User.passwordHash" is not supported by "postgres" database.
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:133:31
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:43:18
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:753:33)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async DataSource.initialize (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25628  - [39m31/12/2025, 11:47:50 [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (2)...[39m
+DataTypeNotSupportedError: Data type "Object" in "User.passwordHash" is not supported by "postgres" database.
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:133:31
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:43:18
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:753:33)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async DataSource.initialize (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25628  - [39m31/12/2025, 11:47:53 [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (3)...[39m
+DataTypeNotSupportedError: Data type "Object" in "User.passwordHash" is not supported by "postgres" database.
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:133:31
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:43:18
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:753:33)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async DataSource.initialize (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25628  - [39m31/12/2025, 11:47:56 [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (4)...[39m
+DataTypeNotSupportedError: Data type "Object" in "User.passwordHash" is not supported by "postgres" database.
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:133:31
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:43:18
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:753:33)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async DataSource.initialize (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25628  - [39m31/12/2025, 11:47:59 [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (5)...[39m
+DataTypeNotSupportedError: Data type "Object" in "User.passwordHash" is not supported by "postgres" database.
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:133:31
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:43:18
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:753:33)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async DataSource.initialize (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25628  - [39m31/12/2025, 11:48:02 [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (6)...[39m
+DataTypeNotSupportedError: Data type "Object" in "User.passwordHash" is not supported by "postgres" database.
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:133:31
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:43:18
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:753:33)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async DataSource.initialize (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25628  - [39m31/12/2025, 11:48:05 [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (7)...[39m
+DataTypeNotSupportedError: Data type "Object" in "User.passwordHash" is not supported by "postgres" database.
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:133:31
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:43:18
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:753:33)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async DataSource.initialize (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25628  - [39m31/12/2025, 11:48:08 [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (8)...[39m
+DataTypeNotSupportedError: Data type "Object" in "User.passwordHash" is not supported by "postgres" database.
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:133:31
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:43:18
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:753:33)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async DataSource.initialize (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25628  - [39m31/12/2025, 11:48:11 [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (9)...[39m
+DataTypeNotSupportedError: Data type "Object" in "User.passwordHash" is not supported by "postgres" database.
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:133:31
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:43:18
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:753:33)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async DataSource.initialize (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25628  - [39m31/12/2025, 11:48:14 [31m  ERROR[39m [38;5;3m[TypeOrmModule] [39m[31mUnable to connect to the database. Retrying (10)...[39m
+DataTypeNotSupportedError: Data type "Object" in "User.passwordHash" is not supported by "postgres" database.
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:133:31
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:43:18
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:753:33)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async DataSource.initialize (C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\node_modules\src\data-source\DataSource.ts:264:13)
+[31m[Nest] 25628  - [39m31/12/2025, 11:48:14 [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mDataTypeNotSupportedError: Data type "Object" in "User.passwordHash" is not supported by "postgres" database.
+    at [90mC:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\[39mnode_modules\[4msrc[24m\metadata-builder\EntityMetadataValidator.ts:133:31
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate [90m(C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\[39mnode_modules\[4msrc[24m\metadata-builder\EntityMetadataValidator.ts:128:18[90m)[39m
+    at [90mC:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\[39mnode_modules\[4msrc[24m\metadata-builder\EntityMetadataValidator.ts:43:18
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany [90m(C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\[39mnode_modules\[4msrc[24m\metadata-builder\EntityMetadataValidator.ts:42:25[90m)[39m
+    at DataSource.buildMetadatas [90m(C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\[39mnode_modules\[4msrc[24m\data-source\DataSource.ts:753:33[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at async DataSource.initialize [90m(C:\Users\Cristian\.gemini\antigravity\scratch\gym_app\backend_service\[39mnode_modules\[4msrc[24m\data-source\DataSource.ts:264:13[90m)[39m

@@ -180,7 +180,7 @@ class GymsProvider with ChangeNotifier {
               },
           );
           if (response.statusCode == 200 || response.statusCode == 204) {
-              // await fetchGyms(); // Only for SuperAdmin
+              _gyms.removeWhere((g) => g.id == id); // Update local state
           } else {
               throw Exception('Failed to delete gym: ${response.body}');
           }

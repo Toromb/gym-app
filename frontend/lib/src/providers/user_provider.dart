@@ -39,7 +39,7 @@ class UserProvider with ChangeNotifier {
 
   Future<bool> addUser({
     required String email,
-    required String password,
+    String? password, // Made optional for activation flow
     required String firstName,
     required String lastName,
     String? phone,
@@ -71,7 +71,7 @@ class UserProvider with ChangeNotifier {
         initialWeight: initialWeight,
       );
       if (newUser != null) {
-        _students.add(newUser); // This list might be misnamed if it holds all users, but legacy variable name
+        _students.add(newUser); 
         notifyListeners();
         return true;
       }
@@ -88,7 +88,7 @@ class UserProvider with ChangeNotifier {
   // Helper for adding students (defaults role to alumno)
   Future<bool> addStudent({
     required String email,
-    required String password,
+    String? password, // Made optional
     required String firstName,
     required String lastName,
     String? phone,

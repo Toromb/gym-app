@@ -16,7 +16,6 @@ class AddUserScreen extends StatefulWidget {
 class _AddUserScreenState extends State<AddUserScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController(); 
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -169,10 +168,6 @@ class _AddUserScreenState extends State<AddUserScreen> {
                   validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
                 TextFormField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Contraseña'),
-                ),
-                TextFormField(
                   controller: _phoneController,
                   decoration: const InputDecoration(labelText: 'Teléfono'),
                 ),
@@ -211,7 +206,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                             setState(() => _isLoading = true);
                             final success = await context.read<UserProvider>().addUser(
                                   email: _emailController.text,
-                                  password: _passwordController.text.isEmpty ? '123456' : _passwordController.text,
+                                  // Password not sent, handled by backend generator + email
                                   firstName: _firstNameController.text,
                                   lastName: _lastNameController.text,
                                   phone: _phoneController.text,

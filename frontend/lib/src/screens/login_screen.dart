@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../localization/app_localizations.dart';
 import '../providers/user_provider.dart';
 import '../providers/theme_provider.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -82,6 +83,25 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     obscureText: true,
                   ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context, 
+                          builder: (c) => AlertDialog(
+                            title: const Text('Recuperar Contraseña'),
+                            content: const Text('Si olvidaste tu contraseña, por favor contacta al administrador del gimnasio para que genere un enlace de recuperación.'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cerrar')),
+                            ],
+                          )
+                        );
+                      },
+                      child: const Text('¿Olvidaste tu contraseña?'),
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
@@ -97,12 +117,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                   );
                               setState(() => _isLoading = false);
                               if (errorMsg == null && mounted) {
-                                // Clear stale data from previous users (e.g. Admin -> Profe)
+                                // Clear stale data
                                 context.read<UserProvider>().clear();
-                                // context.read<PlanProvider>().clear(); // PlanProvider doesn't have clear yet, mainly UserProvider is the issue.
-                                // Ideal: Add proper clear to all, but UserProvider is critical for the reported bug.
                                 
-                                // Success - Logic handled by AuthWrapper
+                                // Explicitly navigate to HomeScreen
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(builder: (_) => const HomeScreen()),
+                                  (route) => false
+                                );
                               } else if (mounted) {
                                   final isInvalidCreds = errorMsg == 'invalidCredentials';
                                   final displayMsg = isInvalidCreds 

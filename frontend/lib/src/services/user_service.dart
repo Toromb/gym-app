@@ -43,7 +43,7 @@ class UserService {
 
   Future<User?> createUser({
     required String email,
-    required String password,
+    String? password, // Made optional
     required String firstName,
     required String lastName,
     String? phone,
@@ -59,7 +59,7 @@ class UserService {
     final token = await _getToken();
     final bodyData = {
         'email': email,
-        'password': password,
+        if (password != null) 'password': password,
         'firstName': firstName,
         'lastName': lastName,
         'phone': phone,

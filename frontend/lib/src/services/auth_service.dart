@@ -81,4 +81,85 @@ class AuthService {
   Future<String?> getToken() async {
     return await _readToken();
   }
+  Future<String?> activateAccount(String token, String password) async {
+    final url = '$baseUrl/auth/activate-account';
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'token': token, 'password': password}),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) return null;
+      final data = jsonDecode(response.body);
+      return data['message'] ?? 'Activation failed';
+    } catch (e) {
+      return 'Error: $e';
+    }
+  }
+
+  Future<String?> resetPassword(String token, String password) async {
+    final url = '$baseUrl/auth/reset-password';
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'token': token, 'password': password}),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) return null;
+      final data = jsonDecode(response.body);
+      return data['message'] ?? 'Reset failed';
+    } catch (e) {
+      return 'Error: $e';
+    }
+  }
+
+  Future<String?> generateActivationLink(String userId) async {
+     final token = await _readToken();
+     if (token == null) return null;
+
+     final url = '$baseUrl/auth/generate-activation-link';
+     try {
+       final response = await http.post(
+         Uri.parse(url),
+         headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token'
+         },
+         body: jsonEncode({'userId': userId}),
+       );
+       if (response.statusCode == 200 || response.statusCode == 201) {
+          final data = jsonDecode(response.body);
+          return data['token'];
+       }
+       return null;
+     } catch (e) {
+       debugPrint('Error generating link: $e');
+       return null;
+     }
+  }
+
+  Future<String?> generateResetLink(String userId) async {
+     final token = await _readToken();
+     if (token == null) return null;
+
+     final url = '$baseUrl/auth/generate-reset-link';
+     try {
+       final response = await http.post(
+         Uri.parse(url),
+         headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token'
+         },
+         body: jsonEncode({'userId': userId}),
+       );
+       if (response.statusCode == 200 || response.statusCode == 201) {
+          final data = jsonDecode(response.body);
+          return data['token'];
+       }
+       return null;
+     } catch (e) {
+       debugPrint('Error generating reset link: $e');
+       return null;
+     }
+  }
 }

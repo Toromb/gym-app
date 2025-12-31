@@ -27,6 +27,7 @@ class SuperAdminDashboardScreen extends StatelessWidget {
             icon: const Icon(Icons.logout),
             onPressed: () {
               context.read<AuthProvider>().logout();
+              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
             },
           ),
         ],
