@@ -8,7 +8,7 @@ export declare class GymsService {
     create(createGymDto: CreateGymDto): Promise<Gym>;
     findAll(): Promise<Gym[]>;
     findOne(id: string): Promise<Gym | null>;
-    update(id: string, updateGymDto: UpdateGymDto): Promise<import("typeorm").UpdateResult>;
+    update(id: string, updateGymDto: UpdateGymDto): Promise<Gym | null>;
     remove(id: string): Promise<import("typeorm").DeleteResult>;
     countAll(): Promise<number>;
     countActive(): Promise<number>;

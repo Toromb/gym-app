@@ -68,14 +68,17 @@ let PlansService = PlansService_1 = class PlansService {
         return this.findOne(saved.id);
     }
     async findAll(gymId) {
-        const where = {};
+        const query = this.plansRepository.createQueryBuilder('plan')
+            .leftJoinAndSelect('plan.weeks', 'weeks')
+            .leftJoinAndSelect('weeks.days', 'days')
+            .leftJoinAndSelect('days.exercises', 'exercises')
+            .leftJoinAndSelect('exercises.exercise', 'exercise')
+            .leftJoinAndSelect('plan.teacher', 'teacher')
+            .leftJoinAndSelect('teacher.gym', 'gym');
         if (gymId) {
-            where.teacher = { gym: { id: gymId } };
+            query.where('gym.id = :gymId', { gymId });
         }
-        return this.plansRepository.find({
-            where,
-            relations: ['weeks', 'weeks.days', 'weeks.days.exercises', 'weeks.days.exercises.exercise', 'teacher']
-        });
+        return query.getMany();
     }
     async findAllByTeacher(teacherId) {
         return this.plansRepository.find({
@@ -90,25 +93,26 @@ let PlansService = PlansService_1 = class PlansService {
             relations: ['weeks', 'weeks.days', 'weeks.days.exercises', 'weeks.days.exercises.exercise', 'teacher'],
         });
     }
-    async assignPlan(planId, studentId, professorId) {
+    async assignPlan(planId, studentId, assigner) {
         const plan = await this.findOne(planId);
         if (!plan)
             throw new common_1.NotFoundException('Plan not found');
         const planTeacherId = plan.teacher?.id;
         const planTeacherRole = plan.teacher?.role;
-        const isOwner = planTeacherId === professorId;
-        const isAdminPlan = planTeacherRole === 'admin';
-        if (!isOwner && !isAdminPlan) {
+        const isAssignerAdmin = assigner.role === user_entity_1.UserRole.ADMIN || assigner.role === user_entity_1.UserRole.SUPER_ADMIN;
+        const isOwner = planTeacherId === assigner.id;
+        const isAdminPlan = planTeacherRole === user_entity_1.UserRole.ADMIN || planTeacherRole === user_entity_1.UserRole.SUPER_ADMIN;
+        if (!isOwner && !isAdminPlan && !isAssignerAdmin) {
             throw new common_1.ForbiddenException('You can only assign your own plans or library plans');
         }
-        const student = await this.plansRepository.manager.findOne(user_entity_1.User, { where: { id: studentId }, relations: ['professor'] });
+        const student = await this.plansRepository.manager.findOne(user_entity_1.User, { where: { id: studentId }, relations: ['professor', 'gym'] });
         if (!student)
             throw new common_1.NotFoundException('Student not found');
         const studentProfessorId = student.professor?.id;
-        if (studentProfessorId !== professorId) {
-            if (student.gym?.id === plan.teacher?.gym?.id && planTeacherRole === 'admin') {
-            }
-            else if (planTeacherRole === 'admin') {
+        if (studentProfessorId !== assigner.id) {
+            if (isAssignerAdmin) {
+                if (assigner.role === user_entity_1.UserRole.ADMIN && assigner.gym?.id && student.gym?.id && assigner.gym.id !== student.gym.id) {
+                }
             }
             else {
                 throw new common_1.ForbiddenException('You can only assign plans to your own students');

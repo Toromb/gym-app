@@ -22,6 +22,16 @@ class CreateGymDto {
     subscriptionPlan;
     expirationDate;
     maxProfiles;
+    logoUrl;
+    primaryColor;
+    secondaryColor;
+    welcomeMessage;
+    openingHours;
+    paymentAlias;
+    paymentCbu;
+    paymentAccountName;
+    paymentBankName;
+    paymentNotes;
 }
 exports.CreateGymDto = CreateGymDto;
 __decorate([
@@ -68,4 +78,54 @@ __decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], CreateGymDto.prototype, "maxProfiles", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateGymDto.prototype, "logoUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateGymDto.prototype, "primaryColor", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateGymDto.prototype, "secondaryColor", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateGymDto.prototype, "welcomeMessage", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateGymDto.prototype, "openingHours", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateGymDto.prototype, "paymentAlias", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateGymDto.prototype, "paymentCbu", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateGymDto.prototype, "paymentAccountName", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateGymDto.prototype, "paymentBankName", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateGymDto.prototype, "paymentNotes", void 0);
 //# sourceMappingURL=create-gym.dto.js.map

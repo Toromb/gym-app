@@ -1,13 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+require("../polyfill");
 const core_1 = require("@nestjs/core");
 const app_module_1 = require("../app.module");
 const users_service_1 = require("../users/users.service");
 const gyms_service_1 = require("../gyms/gyms.service");
 const exercises_service_1 = require("../exercises/exercises.service");
 const user_entity_1 = require("../users/entities/user.entity");
+const typeorm_1 = require("typeorm");
 async function bootstrap() {
     const app = await core_1.NestFactory.createApplicationContext(app_module_1.AppModule);
+    const dataSource = app.get(typeorm_1.DataSource);
+    await dataSource.synchronize();
     const userService = app.get(users_service_1.UsersService);
     const gymsService = app.get(gyms_service_1.GymsService);
     console.log('➡️ Ejecutando SEED…');

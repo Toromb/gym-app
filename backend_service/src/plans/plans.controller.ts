@@ -77,7 +77,7 @@ export class PlansController {
         if (req.user.role !== UserRole.PROFE && req.user.role !== UserRole.ADMIN) {
             throw new ForbiddenException('Only professors and admins can assign plans');
         }
-        return this.plansService.assignPlan(body.planId, body.studentId, req.user.id);
+        return this.plansService.assignPlan(body.planId, body.studentId, req.user);
     }
 
     @Get('assignments/student/:studentId')

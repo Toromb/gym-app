@@ -151,7 +151,8 @@ let UsersService = UsersService_1 = class UsersService {
             }
         }
         Object.assign(user, rest);
-        return this.usersRepository.save(user);
+        const saved = await this.usersRepository.save(user);
+        return this.findOne(id);
     }
     async remove(id) {
         await this.usersRepository.delete(id);
@@ -164,10 +165,17 @@ let UsersService = UsersService_1 = class UsersService {
         if (!user)
             throw new Error('User not found');
         const referenceDate = user.membershipExpirationDate ? new Date(user.membershipExpirationDate) : new Date(user.membershipStartDate);
-        referenceDate.setMonth(referenceDate.getMonth() + 1);
-        user.membershipExpirationDate = referenceDate;
+        const now = new Date();
+        if (isNaN(referenceDate.getTime()) || referenceDate < now) {
+            user.membershipExpirationDate = new Date(now.setMonth(now.getMonth() + 1));
+        }
+        else {
+            referenceDate.setMonth(referenceDate.getMonth() + 1);
+            user.membershipExpirationDate = referenceDate;
+        }
         user.lastPaymentDate = new Date().toISOString().split('T')[0];
-        return this.usersRepository.save(user);
+        await this.usersRepository.save(user);
+        return this.findOne(id);
     }
     calculatePaymentStatus(expirationDate) {
         if (!expirationDate)

@@ -73,8 +73,8 @@ __decorate([
     __metadata("design:type", Boolean)
 ], ExerciseExecution.prototype, "isCompleted", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: 0 }),
-    __metadata("design:type", Number)
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
 ], ExerciseExecution.prototype, "setsDone", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),

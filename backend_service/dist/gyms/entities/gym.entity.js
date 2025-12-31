@@ -34,6 +34,16 @@ let Gym = class Gym {
     subscriptionPlan;
     expirationDate;
     maxProfiles;
+    logoUrl;
+    primaryColor;
+    secondaryColor;
+    welcomeMessage;
+    openingHours;
+    paymentAlias;
+    paymentCbu;
+    paymentAccountName;
+    paymentBankName;
+    paymentNotes;
     createdAt;
     updatedAt;
     users;
@@ -87,6 +97,46 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'int', default: 50 }),
     __metadata("design:type", Number)
 ], Gym.prototype, "maxProfiles", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Gym.prototype, "logoUrl", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Gym.prototype, "primaryColor", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Gym.prototype, "secondaryColor", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Gym.prototype, "welcomeMessage", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Gym.prototype, "openingHours", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Gym.prototype, "paymentAlias", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Gym.prototype, "paymentCbu", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Gym.prototype, "paymentAccountName", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Gym.prototype, "paymentBankName", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", String)
+], Gym.prototype, "paymentNotes", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
