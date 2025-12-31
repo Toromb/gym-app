@@ -10,9 +10,11 @@ async function bootstrap() {
     app.useGlobalPipes(new common_1.ValidationPipe());
     app.useGlobalInterceptors(new common_1.ClassSerializerInterceptor(app.get(core_1.Reflector)));
     app.enableCors({
-        origin: process.env.NODE_ENV === 'production' ? (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : false) : '*',
-        credentials: true,
+        origin: '*',
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+        allowedHeaders: 'Content-Type, Accept, Authorization',
     });
+    console.log('CORS enabled with origin: true (dev mode forced)');
     const config = new swagger_1.DocumentBuilder()
         .setTitle('Gym App API')
         .setDescription('The Gym App API description')
@@ -21,8 +23,8 @@ async function bootstrap() {
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
     swagger_1.SwaggerModule.setup('api', app, document);
-    const port = process.env.PORT || 3000;
-    await app.listen(port, '0.0.0.0');
+    const port = process.env.PORT || 3001;
+    await app.listen(port);
     console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();

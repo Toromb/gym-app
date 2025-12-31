@@ -18,7 +18,6 @@ const plans_service_1 = require("./plans.service");
 const passport_1 = require("@nestjs/passport");
 const create_plan_dto_1 = require("./dto/create-plan.dto");
 const user_entity_1 = require("../users/entities/user.entity");
-const update_plan_dto_1 = require("./dto/update-plan.dto");
 let PlansController = class PlansController {
     plansService;
     constructor(plansService) {
@@ -56,37 +55,14 @@ let PlansController = class PlansController {
     findOne(id) {
         return this.plansService.findOne(id);
     }
-    update(id, updatePlanDto, req) {
-        if (req.user.role !== user_entity_1.UserRole.ADMIN && req.user.role !== user_entity_1.UserRole.PROFE) {
-            throw new common_1.ForbiddenException('Only admins and professors can edit plans');
-        }
-        console.log('Update Payload:', JSON.stringify(updatePlanDto, null, 2));
-        return this.plansService.update(id, updatePlanDto, req.user);
-    }
     assignPlan(body, req) {
         if (req.user.role !== user_entity_1.UserRole.PROFE && req.user.role !== user_entity_1.UserRole.ADMIN) {
             throw new common_1.ForbiddenException('Only professors and admins can assign plans');
         }
         return this.plansService.assignPlan(body.planId, body.studentId, req.user);
     }
-    getStudentAssignments(studentId, req) {
-        if (req.user.role !== user_entity_1.UserRole.PROFE && req.user.role !== user_entity_1.UserRole.ADMIN) {
-            throw new common_1.ForbiddenException('Access denied');
-        }
-        return this.plansService.findAllAssignmentsByStudent(studentId);
-    }
-    deleteAssignment(id, req) {
-        return this.plansService.removeAssignment(id, req.user);
-    }
-    remove(id, req) {
-        return this.plansService.remove(id, req.user);
-    }
-    updateProgress(body, req) {
-        return this.plansService.updateProgress(body.studentPlanId, req.user.id, body);
-    }
-    restartAssignment(assignmentId, req) {
-        return this.plansService.restartAssignment(assignmentId, req.user.id);
-    }
+    console;
+    log(, JSON, stringify) { }
 };
 exports.PlansController = PlansController;
 __decorate([
@@ -126,15 +102,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PlansController.prototype, "findOne", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __param(2, (0, common_1.Request)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_plan_dto_1.UpdatePlanDto, Object]),
-    __metadata("design:returntype", void 0)
-], PlansController.prototype, "update", null);
-__decorate([
     (0, common_1.Post)('assign'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Request)()),
@@ -142,50 +109,49 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], PlansController.prototype, "assignPlan", null);
-__decorate([
-    (0, common_1.Get)('assignments/student/:studentId'),
-    __param(0, (0, common_1.Param)('studentId')),
-    __param(1, (0, common_1.Request)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
-], PlansController.prototype, "getStudentAssignments", null);
-__decorate([
-    (0, common_1.Delete)('assignments/:id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Request)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
-], PlansController.prototype, "deleteAssignment", null);
-__decorate([
-    (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Request)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
-], PlansController.prototype, "remove", null);
-__decorate([
-    (0, common_1.Patch)('student/progress'),
-    __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Request)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
-    __metadata("design:returntype", void 0)
-], PlansController.prototype, "updateProgress", null);
-__decorate([
-    (0, common_1.Post)('student/restart/:assignmentId'),
-    __param(0, (0, common_1.Param)('assignmentId')),
-    __param(1, (0, common_1.Request)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
-], PlansController.prototype, "restartAssignment", null);
 exports.PlansController = PlansController = __decorate([
     (0, common_1.Controller)('plans'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, common_1.UseInterceptors)(common_1.ClassSerializerInterceptor),
     __metadata("design:paramtypes", [plans_service_1.PlansService])
 ], PlansController);
+(updatePlanDto, null, 2);
+;
+return this.plansService.update(id, updatePlanDto, req.user);
+assignPlan(, body, { planId: string, studentId: string }, , req, any);
+{
+    if (req.user.role !== user_entity_1.UserRole.PROFE && req.user.role !== user_entity_1.UserRole.ADMIN) {
+        throw new common_1.ForbiddenException('Only professors and admins can assign plans');
+    }
+    return this.plansService.assignPlan(body.planId, body.studentId, req.user.id);
+}
+getStudentAssignments(, studentId, string, , req, any);
+{
+    if (req.user.role !== user_entity_1.UserRole.PROFE && req.user.role !== user_entity_1.UserRole.ADMIN) {
+        throw new common_1.ForbiddenException('Access denied');
+    }
+    return this.plansService.findAllAssignmentsByStudent(studentId);
+}
+deleteAssignment(, id, string, , req, any);
+{
+    return this.plansService.removeAssignment(id, req.user);
+}
+remove(, id, string, , req, any);
+{
+    return this.plansService.remove(id, req.user);
+}
+updateProgress(, body, {
+    studentPlanId: string,
+    type: 'exercise' | 'day',
+    id: string,
+    completed: boolean,
+    date: string
+}, , req, any);
+{
+    return this.plansService.updateProgress(body.studentPlanId, req.user.id, body);
+}
+restartAssignment(, assignmentId, string, , req, any);
+{
+    return this.plansService.restartAssignment(assignmentId, req.user.id);
+}
 //# sourceMappingURL=plans.controller.js.map

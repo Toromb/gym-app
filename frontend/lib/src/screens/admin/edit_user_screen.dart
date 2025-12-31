@@ -27,6 +27,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   late String _selectedRole;
   late String _selectedGender;
   late String _paymentStatus;
+  bool _paysMembership = true;
   
   String? _selectedProfessorId;
   List<User> _professors = [];
@@ -64,6 +65,10 @@ class _EditUserScreenState extends State<EditUserScreen> {
     if (!validPaymentStatuses.contains(_paymentStatus)) {
         _paymentStatus = 'pending';
     }
+
+
+
+    _paysMembership = widget.user.paysMembership ?? true;
 
     // Case-insensitive check just to be safe
     if (_selectedRole.toLowerCase() == UserRoles.alumno.toLowerCase()) {
@@ -134,7 +139,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                          const LinearProgressIndicator()
                      else
                          DropdownButtonFormField<String>(
-                             value: _professors.any((p) => p.id == _selectedProfessorId) ? _selectedProfessorId : null,
+                             initialValue: _professors.any((p) => p.id == _selectedProfessorId) ? _selectedProfessorId : null,
                              decoration: const InputDecoration(
                                  labelText: 'Profesor Asignado',
                                  helperText: 'Selecciona un profesor para supervisar a este alumno',
@@ -152,6 +157,17 @@ class _EditUserScreenState extends State<EditUserScreen> {
                              onChanged: (val) => setState(() => _selectedProfessorId = val),
                          ),
                      const SizedBox(height: 16),
+                 ],
+
+                 // Membership options for Professor
+                 if (_selectedRole.toLowerCase() == UserRoles.profe.toLowerCase()) ...[
+                      SwitchListTile(
+                        title: const Text('Membresía Paga'),
+                        subtitle: const Text('Define si este profesor abona membresía del sistema'),
+                        value: _paysMembership,
+                        onChanged: (val) => setState(() => _paysMembership = val),
+                      ),
+                      const SizedBox(height: 16),
                  ],
 
                 TextFormField(
@@ -188,7 +204,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   keyboardType: TextInputType.number,
                 ),
                 DropdownButtonFormField<String>(
-                  value: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
+                  initialValue: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
                   decoration: const InputDecoration(labelText: 'Sexo'),
                   items: const [
                     DropdownMenuItem(value: 'M', child: Text('Masculino')),
@@ -197,8 +213,9 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   ],
                   onChanged: (value) => setState(() => _selectedGender = value!),
                 ),
+                if (_paysMembership) ...[
                  DropdownButtonFormField<String>(
-                  value: ['pending', 'paid', 'overdue'].contains(_paymentStatus) ? _paymentStatus : 'pending',
+                  initialValue: ['pending', 'paid', 'overdue'].contains(_paymentStatus) ? _paymentStatus : 'pending',
                   decoration: const InputDecoration(labelText: 'Estado de Pago'),
                   items: const [
                     DropdownMenuItem(value: 'pending', child: Text('Pendiente')),
@@ -234,6 +251,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                     }
                   },
                 ),
+                ],
                 TextFormField(
                   controller: _notesController,
                   decoration: const InputDecoration(labelText: 'Notas'),
@@ -258,7 +276,8 @@ class _EditUserScreenState extends State<EditUserScreen> {
                               'paymentStatus': _paymentStatus,
                               'lastPaymentDate': _lastPaymentDateController.text.isEmpty ? null : _lastPaymentDateController.text,
                               // Send professorId (null if explicitly unassigned)
-                              'professorId': _selectedProfessorId, 
+                              'professorId': _selectedProfessorId,
+                              'paysMembership': _paysMembership, 
                             };
                             
                             if (_passwordController.text.isNotEmpty) {
@@ -269,15 +288,18 @@ class _EditUserScreenState extends State<EditUserScreen> {
                                   widget.user.id,
                                   updateData
                                 );
+                            
+                            if (!mounted) return;
                             setState(() => _isLoading = false);
-                            if (success && mounted) {
+                            
+                            if (success) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Usuario actualizado exitosamente')),
                               );
                               // Refresh list
                               context.read<UserProvider>().fetchUsers(forceRefresh: true);
-                            } else if (mounted) {
+                            } else {
                                ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Error al actualizar usuario')),
                               );

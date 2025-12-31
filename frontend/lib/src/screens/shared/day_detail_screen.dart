@@ -7,6 +7,7 @@ import '../../providers/plan_provider.dart';
 import '../../models/execution_model.dart'; // Import Execution Model
 import '../../localization/app_localizations.dart';
 import 'exercise_execution_card.dart';
+import 'exercise_selection_dialog.dart';
 
 class DayDetailScreen extends StatefulWidget {
   final PlanDay day;
@@ -33,7 +34,7 @@ class DayDetailScreen extends StatefulWidget {
 class _DayDetailScreenState extends State<DayDetailScreen> {
   bool _isInit = true;
   bool _isLoadingReadOnly = false;
-  PlanExecution? _readOnlyExecution; 
+  TrainingSession? _readOnlySession; 
 
   @override
   void didChangeDependencies() {
@@ -41,31 +42,26 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     if (_isInit) {
       if (!widget.readOnly) {
          WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.read<PlanProvider>().startExecution(
+          context.read<PlanProvider>().startSession(
             widget.planId, 
             widget.weekNumber, 
             widget.day.order
           );
         });
       } else if (widget.readOnly && widget.studentId != null) {
-          debugPrint('DayDetailScreen: Fetching execution for student ${widget.studentId}, Plan ${widget.planId}, W${widget.weekNumber} D${widget.day.order}');
-          // Fetch specific student execution for Teacher View
+          debugPrint('DayDetailScreen: Fetching session for student ${widget.studentId}, Plan ${widget.planId}, W${widget.weekNumber} D${widget.day.order}');
           setState(() => _isLoadingReadOnly = true);
-          context.read<PlanProvider>().fetchStudentExecution(
+          context.read<PlanProvider>().fetchStudentSession(
             studentId: widget.studentId!,
             planId: widget.planId,
             week: widget.weekNumber,
             day: widget.day.order,
             startDate: widget.assignedAt,
-          ).then((execution) {
-             debugPrint('DayDetailScreen: Fetched execution: ${execution?.id ?? "NULL"}');
+          ).then((session) {
+             debugPrint('DayDetailScreen: Fetched session: ${session?.id ?? "NULL"}');
              if (mounted) {
-               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                 content: Text('DEBUG: Fetched? ${execution != null ? "YES" : "NO"} FirstExReps: ${execution?.exercises.first.repsDone} / ${execution?.exercises.first.targetRepsSnapshot}'),
-                 duration: const Duration(seconds: 8),
-               ));
                setState(() {
-                 _readOnlyExecution = execution;
+                 _readOnlySession = session;
                  _isLoadingReadOnly = false;
                });
              }
@@ -87,16 +83,21 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     if (picked != null && mounted) {
       final dateStr = DateFormat('yyyy-MM-dd').format(picked);
       try {
-        await context.read<PlanProvider>().completeExecution(dateStr);
+          // If we are in standard mode, we have _currentSession in provider
+          // We need to pass the ID.
+          final currentSession = context.read<PlanProvider>().currentSession;
+          if (currentSession != null) {
+              await context.read<PlanProvider>().completeSession(dateStr);
+          }
+        
         if (mounted) {
-           Navigator.pop(context, true); // Return success
+           Navigator.pop(context, true); 
            ScaffoldMessenger.of(context).showSnackBar(
              SnackBar(content: Text(AppLocalizations.of(context)!.get('workoutFinished'), style: const TextStyle(color: Colors.white)), backgroundColor: Colors.green),
            );
         }
       } catch (e) {
         if (mounted) {
-          // Check for conflict message (naive string check, ideally parse error object)
           String msg = AppLocalizations.of(context)!.get('errorFinish');
           if (e.toString().contains('Conflict')) {
             msg = 'Date already has a completed workout!';
@@ -111,29 +112,24 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('DayDetailScreen BUILD: readOnly=${widget.readOnly}, studentId=${widget.studentId}'); // DEBUG
-
     if (_isLoadingReadOnly) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    List<ExerciseExecution> exercisesToRender = [];
+    List<SessionExercise> exercisesToRender = [];
     String status = 'READ_ONLY';
 
     if (widget.readOnly) {
-        if (_readOnlyExecution != null) {
-            // Case 1: Professor viewing student's actual execution
-            exercisesToRender = _readOnlyExecution!.exercises;
-            status = 'ALUMNO REGISTRO: ${_readOnlyExecution!.status}'; // Or just show completion label
+        if (_readOnlySession != null) {
+            exercisesToRender = _readOnlySession!.exercises;
+            status = 'ALUMNO REGISTRO: ${_readOnlySession!.status}'; 
         } else {
-            // Case 2: No execution recorded yet -> Show Plan Definition (clean slate)
-            exercisesToRender = widget.day.exercises.map((pe) => ExerciseExecution.fromPlanExercise(pe)).toList();
+            exercisesToRender = widget.day.exercises.map((pe) => SessionExercise.fromPlanExercise(pe)).toList();
             status = 'SIN DATOS';
         }
     } else {
-        // Student Mode (Standard)
-        final execution = context.watch<PlanProvider>().currentExecution;
-        if (execution == null) {
+        final session = context.watch<PlanProvider>().currentSession;
+        if (session == null) {
             if (context.read<PlanProvider>().isLoading) {
                  return const Scaffold(body: Center(child: CircularProgressIndicator()));
             }
@@ -146,7 +142,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                        Text(AppLocalizations.of(context)!.get('errorLoadExecution')),
                        ElevatedButton(
                          onPressed: () {
-                            context.read<PlanProvider>().startExecution(
+                            context.read<PlanProvider>().startSession(
                               widget.planId, 
                               widget.weekNumber, 
                               widget.day.order
@@ -159,12 +155,11 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                  ),
             );
         }
-        exercisesToRender = execution.exercises;
-        status = execution.status;
+        exercisesToRender = session.exercises;
+        status = session.status;
     }
 
     return Scaffold(
-      // backgroundColor: Colors.grey[50], // Removed to respect Theme
       appBar: AppBar(
         title: Text(widget.day.title ?? 'Día ${widget.day.dayOfWeek}'),
         elevation: 0,
@@ -198,6 +193,22 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                     ),
                   ],
                 ),
+                // NEW: Training Intent Badge
+                if (widget.day.trainingIntent != null)
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.purple.shade200),
+                    ),
+                    child: Text(
+                      widget.day.trainingIntent.label,
+                      style: TextStyle(color: Colors.purple.shade900, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+
                 const SizedBox(height: 8),
                 Text(
                   '${exercisesToRender.length} ${AppLocalizations.of(context)!.get('exercisesToComplete')}',
@@ -207,14 +218,26 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                 ...exercisesToRender.asMap().entries.map((entry) {
                   final index = entry.key;
                   final exExec = entry.value;
-                  // If readOnly, we might should treat it differently in the Card?
-                  // passing readOnly (pointer-events: none) or making the card readonly?
-                  // For now, let's just make the card ignores input if we passed a dummy.
-                  // But `ExerciseExecutionCard` has local state and calls provider.
-                  // We should wrap it in IgnorePointer if readOnly.
                   return _buildExerciseCard(context, exExec, index + 1, widget.readOnly);
                 }),
-                const SizedBox(height: 80), // Space for FAB
+                
+                if (!widget.readOnly)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                      child: OutlinedButton.icon(
+                        onPressed: _handleAddExercise,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Exercise'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 80), 
               ],
             ),
           ),
@@ -229,16 +252,27 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     );
   }
 
-  Widget _buildExerciseCard(BuildContext context, ExerciseExecution exExec, int index, bool readOnly) {
-    return IgnorePointer(
-      ignoring: readOnly,
-      child: ExerciseExecutionCard(
+  Future<void> _handleAddExercise() async {
+    final Exercise? selected = await showDialog<Exercise>(
+      context: context,
+      builder: (ctx) => const ExerciseSelectionDialog(),
+    );
+
+    if (selected != null && mounted) {
+      await context.read<PlanProvider>().addSessionExercise(selected.id);
+    }
+  }
+
+  Widget _buildExerciseCard(BuildContext context, SessionExercise exExec, int index, bool readOnly) {
+    return ExerciseExecutionCard(
         key: ValueKey(exExec.id),
         execution: exExec, 
-        index: index
-      ),
-    );
+        index: index,
+        intent: widget.day.trainingIntent,
+        readOnly: readOnly,
+      );
   }
+
 
   Widget _buildMetric(BuildContext context, IconData icon, String value, String label) {
     return Column(

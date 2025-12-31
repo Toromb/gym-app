@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+  Query,
+} from '@nestjs/common';
 import { ExercisesService } from './exercises.service';
 import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
@@ -9,40 +20,72 @@ import { UserRole } from '../users/entities/user.entity';
 @Controller('exercises')
 @UseGuards(AuthGuard('jwt'))
 export class ExercisesController {
-    constructor(private readonly exercisesService: ExercisesService) { }
+  constructor(private readonly exercisesService: ExercisesService) { }
 
-    @Post()
-    create(@Body() createExerciseDto: CreateExerciseDto, @Request() req: any) {
-        // Check if user is PROFE or ADMIN (can be done with a custom decorator/guard)
-        // For MVP, assuming any authenticated user can create for now, or check role here
-        if (req.user.role === UserRole.ALUMNO) {
-            // throw new ForbiddenException('Only teachers can create exercises');
-        }
-        return this.exercisesService.create(createExerciseDto, req.user);
+  @Post()
+  create(@Body() createExerciseDto: CreateExerciseDto, @Request() req: any) {
+    // Check if user is PROFE or ADMIN (can be done with a custom decorator/guard)
+    // For MVP, assuming any authenticated user can create for now, or check role here
+    if (req.user.role === UserRole.ALUMNO) {
+      // throw new ForbiddenException('Only teachers can create exercises');
+    }
+    return this.exercisesService.create(createExerciseDto, req.user);
+  }
+
+  @Get('muscles')
+  getMuscles() {
+    return this.exercisesService.findAllMuscles();
+  }
+
+  @Get('equipments')
+  getEquipments() {
+    return this.exercisesService.findAllEquipments();
+  }
+
+  @Get()
+  async findAll(
+    @Request() req: any,
+    @Query('muscleId') muscleId?: string,
+    @Query('equipmentIds') equipmentIds?: string | string[],
+  ) {
+    // Normalize equipmentIds to array
+    let eIds: string[] | undefined;
+    if (equipmentIds) {
+      eIds = Array.isArray(equipmentIds) ? equipmentIds : [equipmentIds];
     }
 
-    @Get()
-    findAll(@Request() req: any) {
-        if (req.user.role === UserRole.SUPER_ADMIN) {
-            return this.exercisesService.findAll();
-        }
-        const gymId = req.user.gym?.id;
-        if (!gymId) return [];
-        return this.exercisesService.findAll(gymId);
+    if (req.user.role === UserRole.SUPER_ADMIN) {
+      return this.exercisesService.findAllFiltered({ muscleId, equipmentIds: eIds });
+    }
+    const gymId = req.user.gym?.id;
+    // console.log(`[Exercises] DEBUG: User ${req.user.email} (Role: ${req.user.role}). Gym Object:`, req.user.gym);
+    // console.log(`[Exercises] DEBUG: Gym ID extracted: ${gymId}`);
+
+    if (!gymId) {
+      // console.log('[Exercises] No Gym ID found for user');
+      return [];
     }
 
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.exercisesService.findOne(id);
-    }
+    const results = await this.exercisesService.findAllFiltered({ gymId, muscleId, equipmentIds: eIds });
+    // console.log(`[Exercises] Found ${results.length} exercises for Gym ${gymId}`);
+    return results;
+  }
 
-    @Patch(':id')
-    update(@Param('id') id: string, @Body() updateExerciseDto: UpdateExerciseDto) {
-        return this.exercisesService.update(id, updateExerciseDto);
-    }
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.exercisesService.findOne(id);
+  }
 
-    @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.exercisesService.remove(id);
-    }
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() updateExerciseDto: UpdateExerciseDto,
+  ) {
+    return this.exercisesService.update(id, updateExerciseDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.exercisesService.remove(id);
+  }
 }

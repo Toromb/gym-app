@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../models/gym_model.dart';
-import '../models/user_model.dart';
 import '../providers/gyms_provider.dart';
 
 class PaymentStatusBadge extends StatefulWidget {
   final String? status; // 'paid', 'pending', 'overdue'
   final VoidCallback? onMarkAsPaid;
   final bool isEditable;
+  final String? expirationDate;
 
   const PaymentStatusBadge({
     super.key,
     required this.status,
     this.onMarkAsPaid,
     this.isEditable = false,
+    this.expirationDate,
   });
 
   @override
@@ -77,9 +77,9 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
               final primaryColor = Theme.of(context).primaryColor;
               
               final hasPaymentInfo = (gym!.paymentAlias?.isNotEmpty ?? false) ||
-                                     (gym!.paymentCbu?.isNotEmpty ?? false) ||
-                                     (gym!.paymentBankName?.isNotEmpty ?? false) ||
-                                     (gym!.paymentAccountName?.isNotEmpty ?? false);
+                                     (gym.paymentCbu?.isNotEmpty ?? false) ||
+                                     (gym.paymentBankName?.isNotEmpty ?? false) ||
+                                     (gym.paymentAccountName?.isNotEmpty ?? false);
 
               return Container(
                   padding: EdgeInsets.only(
@@ -98,7 +98,7 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                               child: Container(
                                   width: 50, height: 5,
                                   decoration: BoxDecoration(
-                                      color: colorScheme.onSurfaceVariant.withOpacity(0.4), // Theme handle
+                                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4), // Theme handle
                                       borderRadius: BorderRadius.circular(10)
                                   ),
                               ),
@@ -116,12 +116,12 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                           ),
                           const SizedBox(height: 25),
                           
-                          if (gym!.paymentAlias != null && gym!.paymentAlias!.isNotEmpty)
+                          if (gym.paymentAlias != null && gym.paymentAlias!.isNotEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 12.0),
                                 child: Row(
                                     children: [
-                                        Text("Alias: ${gym!.paymentAlias}", style: TextStyle(color: colorScheme.onSurface)),
+                                        Text("Alias: ${gym.paymentAlias}", style: TextStyle(color: colorScheme.onSurface)),
                                         IconButton(
                                             icon: Icon(Icons.copy, color: primaryColor),
                                             onPressed: () {
@@ -135,12 +135,12 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                                 ),
                               ),
                               
-                          if (gym!.paymentCbu != null && gym!.paymentCbu!.isNotEmpty)
+                          if (gym.paymentCbu != null && gym.paymentCbu!.isNotEmpty)
                                Padding(
                                  padding: const EdgeInsets.only(bottom: 12.0),
                                  child: Row(
                                     children: [
-                                        Text("CBU: ${gym!.paymentCbu}", style: TextStyle(color: colorScheme.onSurface)),
+                                        Text("CBU: ${gym.paymentCbu}", style: TextStyle(color: colorScheme.onSurface)),
                                         IconButton(
                                             icon: Icon(Icons.copy, color: primaryColor),
                                             onPressed: () {
@@ -154,7 +154,7 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                                 ),
                                ),
                                
-                          if (gym!.paymentBankName != null && gym!.paymentBankName!.isNotEmpty)
+                          if (gym.paymentBankName != null && gym.paymentBankName!.isNotEmpty)
                               Padding(
                                   padding: const EdgeInsets.only(bottom: 12, left: 4),
                                   child: Row(
@@ -165,13 +165,13 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                                               child: Text('Banco', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14))
                                           ),
                                           Expanded(
-                                              child: Text(gym!.paymentBankName!, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: colorScheme.onSurface))
+                                              child: Text(gym.paymentBankName!, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: colorScheme.onSurface))
                                           ),
                                       ],
                                   ),
                               ),
                               
-                          if (gym!.paymentAccountName != null && gym!.paymentAccountName!.isNotEmpty)
+                          if (gym.paymentAccountName != null && gym.paymentAccountName!.isNotEmpty)
                               Padding(
                                   padding: const EdgeInsets.only(bottom: 12, left: 4),
                                   child: Row(
@@ -182,7 +182,7 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                                               child: Text('Titular', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14))
                                           ),
                                           Expanded(
-                                              child: Text(gym!.paymentAccountName!, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: colorScheme.onSurface))
+                                              child: Text(gym.paymentAccountName!, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: colorScheme.onSurface))
                                           ),
                                       ],
                                   ),
@@ -196,8 +196,8 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
 
                            const SizedBox(height: 20),
                            
-                           if (gym!.paymentNotes != null && gym!.paymentNotes!.isNotEmpty)
-                               Text(gym!.paymentNotes!, style: TextStyle(color: colorScheme.onSurface)),
+                           if (gym.paymentNotes != null && gym.paymentNotes!.isNotEmpty)
+                               Text(gym.paymentNotes!, style: TextStyle(color: colorScheme.onSurface)),
 
                           const SizedBox(height: 20),
                           SizedBox(
@@ -250,21 +250,41 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
         icon = Icons.help;
     }
 
-    final badge = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 4),
-          Text(text, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
-        ],
-      ),
+    final badge = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            border: Border.all(color: color),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Text(text, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+              if (!widget.isEditable) ...[
+                const SizedBox(width: 6),
+                Icon(Icons.chevron_right, size: 16, color: color.withValues(alpha: 0.8)),
+              ]
+            ],
+          ),
+        ),
+        if (widget.expirationDate != null && widget.expirationDate!.isNotEmpty)
+           Padding(
+             padding: const EdgeInsets.only(top: 4.0, left: 4.0),
+             child: Text(
+               'Vence: ${widget.expirationDate}',
+               style: const TextStyle(fontSize: 11, color: Colors.grey),
+             ),
+           ),
+        
+
+      ],
     );
 
     if (widget.isEditable && widget.onMarkAsPaid != null && s != 'paid') {

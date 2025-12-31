@@ -20,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -71,6 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       prefixIcon: const Icon(Icons.email_outlined),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
+                    textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -81,6 +83,33 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) async {
+                        setState(() => _isLoading = true);
+                        final errorMsg = await context.read<AuthProvider>().login(
+                              _emailController.text,
+                              _passwordController.text,
+                            );
+                        
+                        if (!mounted) return;
+                        setState(() => _isLoading = false);
+
+                        if (errorMsg == null) {
+                          context.read<UserProvider>().clear();
+                        } else {
+                            final isInvalidCreds = errorMsg == 'invalidCredentials';
+                            final displayMsg = isInvalidCreds 
+                                ? AppLocalizations.of(context)!.invalidCredentials
+                                : (errorMsg ?? '${AppLocalizations.of(context)!.error}: ${AppLocalizations.of(context)!.invalidEmail}');
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(displayMsg),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                        }
+                    },
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
@@ -95,15 +124,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                     _emailController.text,
                                     _passwordController.text,
                                   );
+                              
+                              if (!mounted) return;
                               setState(() => _isLoading = false);
-                              if (errorMsg == null && mounted) {
+                              
+                              if (errorMsg == null) {
                                 // Clear stale data from previous users (e.g. Admin -> Profe)
                                 context.read<UserProvider>().clear();
                                 // context.read<PlanProvider>().clear(); // PlanProvider doesn't have clear yet, mainly UserProvider is the issue.
                                 // Ideal: Add proper clear to all, but UserProvider is critical for the reported bug.
                                 
                                 // Success - Logic handled by AuthWrapper
-                              } else if (mounted) {
+                              } else {
                                   final isInvalidCreds = errorMsg == 'invalidCredentials';
                                   final displayMsg = isInvalidCreds 
                                       ? AppLocalizations.of(context)!.invalidCredentials

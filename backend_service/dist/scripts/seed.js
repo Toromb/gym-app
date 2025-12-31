@@ -8,15 +8,19 @@ const gyms_service_1 = require("../gyms/gyms.service");
 const exercises_service_1 = require("../exercises/exercises.service");
 const user_entity_1 = require("../users/entities/user.entity");
 const typeorm_1 = require("typeorm");
+const seed_muscles_1 = require("./seed-muscles");
+const seed_exercise_muscles_1 = require("./seed-exercise-muscles");
+const base_exercises_1 = require("../exercises/constants/base-exercises");
 async function bootstrap() {
     const app = await core_1.NestFactory.createApplicationContext(app_module_1.AppModule);
     const dataSource = app.get(typeorm_1.DataSource);
-    await dataSource.synchronize();
+    await dataSource.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
     const userService = app.get(users_service_1.UsersService);
     const gymsService = app.get(gyms_service_1.GymsService);
-    console.log('➡️ Ejecutando SEED…');
+    console.log('➡️ Ejecutando SEED MASTER (Safe Mode)…');
+    await (0, seed_muscles_1.seedMuscles)(dataSource);
     const gyms = await gymsService.findAll();
-    let defaultGym = gyms.find(g => g.businessName === 'Default Gym');
+    let defaultGym = gyms.find((g) => g.businessName === 'Default Gym');
     if (!defaultGym) {
         console.log('➕ Creando Default Gym (Migración)');
         defaultGym = await gymsService.create({
@@ -65,45 +69,42 @@ async function bootstrap() {
     for (const u of users) {
         const exists = await userService.findOneByEmail(u.email);
         if (exists) {
-            console.log(`⚠️ El usuario ${u.email} ya existe — se salta.`);
-            if (u.role !== user_entity_1.UserRole.SUPER_ADMIN && !exists.gym) {
-                console.log(`   ↪ Asignando a Default Gym...`);
-            }
             continue;
         }
         console.log(`➕ Creando usuario: ${u.email}`);
         await userService.create(u);
     }
-    console.log('💪 Verificando Ejercicios...');
+    console.log('💪 Verificando Ejercicios (Ahora gestionados per-Gym)...');
     const exercisesService = app.get(exercises_service_1.ExercisesService);
     const exercises = await exercisesService.findAll();
     if (exercises.length === 0) {
-        console.log('➕ Creando Ejercicios Base...');
-        const adminUser = await userService.findOneByEmail('admin@gym.com');
-        const defaultExercises = [
-            { name: 'Sentadilla', description: 'Pierna completa' },
-            { name: 'Peso Muerto', description: 'Cadena posterior' },
-            { name: 'Banca Plana', description: 'Pecho' },
-            { name: 'Dominadas', description: 'Espalda' },
-            { name: 'Press Militar', description: 'Hombros' },
-            { name: 'Remo con Barra', description: 'Espalda' },
-            { name: 'Estocadas', description: 'Piernas' },
-            { name: 'Curl de Biceps', description: 'Brazos' },
-            { name: 'Triceps en Polea', description: 'Brazos' },
-            { name: 'Plancha Abdominal', description: 'Core' },
-        ];
-        for (const ex of defaultExercises) {
-            await exercisesService.create({
-                name: ex.name,
-                description: ex.description,
-                videoUrl: '',
-                imageUrl: ''
-            }, adminUser);
+        console.log('ℹ️ No existen ejercicios globales. Esto es correcto ahora.');
+        const gymExercises = await exercisesService.findAll(defaultGym.id);
+        if (gymExercises.length === 0) {
+            console.log('⚠️ Alerta: Default Gym no tiene ejercicios. Forzando población...');
+            for (const baseEx of base_exercises_1.BASE_EXERCISES) {
+                await exercisesService.createForGym({
+                    name: baseEx.name,
+                    description: baseEx.description,
+                    muscles: baseEx.muscles.map(m => ({
+                        muscleId: m.name,
+                        role: m.role,
+                        loadPercentage: m.loadPercentage
+                    })),
+                    videoUrl: '',
+                    imageUrl: '',
+                }, defaultGym);
+            }
+            console.log('✅ Ejercicios base inyectados a Default Gym.');
+        }
+        else {
+            console.log(`✅ Default Gym ya tiene ${gymExercises.length} ejercicios propios.`);
         }
     }
     else {
-        console.log('✅ Ejercicios ya existen');
+        console.log(`✅ Sistema tiene ${exercises.length} ejercicios en total.`);
     }
+    await (0, seed_exercise_muscles_1.seedExerciseMuscles)(dataSource);
     console.log('✔️ SEED COMPLETADO');
     await app.close();
 }

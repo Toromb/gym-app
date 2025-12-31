@@ -31,10 +31,14 @@ nano .env.prod
 *   Set a strong `JWT_SECRET`.
 *   ensure `DB_HOST=postgres` (Required for Docker networking).
 
-## 3. Deploy
+## 3. DNS & Domain Configuration
+
+Ensure your domain (`tugymflow.com`) points to this VPS IP address. The deployment now handles automatic SSL via Let's Encrypt.
+
+## 4. Deploy
 
 Run the following command to build and start the services. 
-*Note: The first run will take a few minutes as it downloads the Flutter SDK and compiles the web application.*
+*Note: The first run will take a few minutes as it downloads the Flutter SDK, compiles the web application, and generates SSL certificates.*
 
 ```bash
 docker compose --env-file .env.prod -f infra/docker-compose.prod.yml up -d --build

@@ -1,1 +1,0 @@
-{"version":3,"file":"polyfill.js","sourceRoot":"","sources":["../src/polyfill.ts"],"names":[],"mappings":";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAAA,+CAAiC;AAEjC,IAAI,CAAC,MAAM,CAAC,MAAM,EAAE,CAAC;IACjB,OAAO,CAAC,GAAG,CAAC,2BAA2B,CAAC,CAAC;IACxC,MAAc,CAAC,MAAM,GAAG,MAAM,CAAC;AACpC,CAAC"}

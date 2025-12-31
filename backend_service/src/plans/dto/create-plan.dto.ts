@@ -1,88 +1,125 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested, IsUUID } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateNested,
+  IsUUID,
+  IsEnum,
+} from 'class-validator';
+import { TrainingIntent } from '../entities/plan.entity';
 
 export class CreatePlanExerciseDto {
-    @IsUUID()
-    exerciseId: string;
+  @IsOptional()
+  @IsUUID()
+  id?: string;
 
-    @IsInt()
-    sets: number;
+  @IsUUID()
+  exerciseId: string;
 
-    @IsString()
-    reps: string;
+  @IsInt()
+  sets: number;
 
-    @IsOptional()
-    @IsString()
-    suggestedLoad?: string;
+  @IsString()
+  reps: string;
 
-    @IsOptional()
-    @IsString()
-    rest?: string;
+  @IsOptional()
+  @IsString()
+  suggestedLoad?: string;
 
-    @IsOptional()
-    @IsString()
-    @IsOptional()
-    @IsString()
-    notes?: string;
+  @IsOptional()
+  @IsString()
+  rest?: string;
 
-    @IsOptional()
-    @IsString()
-    videoUrl?: string;
+  @IsOptional()
+  @IsString()
+  @IsOptional()
+  @IsString()
+  notes?: string;
 
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
 
-    @IsInt()
-    order: number;
+  @IsOptional()
+  @IsInt()
+  targetTime?: number;
+
+  @IsOptional()
+  targetDistance?: number; // No validation decorator needed or can use @IsNumber()
+
+  @IsInt()
+  order: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('all', { each: true })
+  equipmentIds?: string[];
 }
 
 export class CreatePlanDayDto {
-    @IsOptional()
-    @IsString()
-    title?: string;
+  @IsOptional()
+  @IsUUID()
+  id?: string;
 
-    @IsInt()
-    dayOfWeek: number;
+  @IsOptional()
+  @IsString()
+  title?: string;
 
-    @IsInt()
-    order: number;
+  @IsInt()
+  dayOfWeek: number;
 
-    @IsOptional()
-    @IsString()
-    dayNotes?: string;
+  @IsInt()
+  order: number;
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreatePlanExerciseDto)
-    exercises: CreatePlanExerciseDto[];
+  @IsOptional()
+  @IsString()
+  dayNotes?: string;
+
+  @IsOptional()
+  @IsEnum(TrainingIntent)
+  trainingIntent?: TrainingIntent;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreatePlanExerciseDto)
+  exercises: CreatePlanExerciseDto[];
 }
 
 export class CreatePlanWeekDto {
-    @IsInt()
-    weekNumber: number;
+  @IsOptional()
+  @IsUUID()
+  id?: string;
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreatePlanDayDto)
-    days: CreatePlanDayDto[];
+  @IsInt()
+  weekNumber: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreatePlanDayDto)
+  days: CreatePlanDayDto[];
 }
 
 export class CreatePlanDto {
-    @IsString()
-    @IsNotEmpty()
-    name: string;
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-    @IsOptional()
-    @IsString()
-    objective?: string;
+  @IsOptional()
+  @IsString()
+  objective?: string;
 
-    @IsInt()
-    durationWeeks: number;
+  @IsInt()
+  durationWeeks: number;
 
-    @IsOptional()
-    @IsString()
-    generalNotes?: string;
+  @IsOptional()
+  @IsString()
+  generalNotes?: string;
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreatePlanWeekDto)
-    weeks: CreatePlanWeekDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreatePlanWeekDto)
+  weeks: CreatePlanWeekDto[];
 }

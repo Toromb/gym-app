@@ -1,0 +1,88 @@
+﻿Analyzing frontend...                                           
+
+warning - Two keys in a map literal shouldn't be equal - lib\src\localization\app_localizations.dart:113:7 - equal_keys_in_map
+warning - Two keys in a map literal shouldn't be equal - lib\src\localization\app_localizations.dart:114:7 - equal_keys_in_map
+warning - Two keys in a map literal shouldn't be equal - lib\src\localization\app_localizations.dart:126:7 - equal_keys_in_map
+warning - Two keys in a map literal shouldn't be equal - lib\src\localization\app_localizations.dart:127:7 - equal_keys_in_map
+warning - Two keys in a map literal shouldn't be equal - lib\src\localization\app_localizations.dart:128:7 - equal_keys_in_map
+warning - Two keys in a map literal shouldn't be equal - lib\src\localization\app_localizations.dart:130:7 - equal_keys_in_map
+   info - Don't invoke 'print' in production code - lib\src\providers\gym_schedule_provider.dart:30:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\gym_schedule_provider.dart:38:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\gym_schedule_provider.dart:43:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\gym_schedule_provider.dart:46:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\gym_schedule_provider.dart:50:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:30:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:80:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:128:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:148:7 - avoid_print
+warning - Dead code - lib\src\providers\user_provider.dart:150:7 - dead_code
+   info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:172:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\screens\admin\add_user_screen.dart:59:11 - avoid_print
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\admin\add_user_screen.dart:231:45 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\admin\add_user_screen.dart:232:52 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\src\screens\admin\edit_user_screen.dart:52:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\screens\admin\edit_user_screen.dart:70:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\screens\admin\edit_user_screen.dart:73:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\src\screens\admin\edit_user_screen.dart:90:11 - avoid_print
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\admin\edit_user_screen.dart:277:45 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\admin\edit_user_screen.dart:278:52 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\admin\edit_user_screen.dart:282:31 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\admin\edit_user_screen.dart:284:53 - use_build_context_synchronously
+   info - Invalid use of a private type in a public API - lib\src\screens\admin\gym_config_screen.dart:14:3 - library_private_types_in_public_api
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\admin\gym_config_screen.dart:120:62 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\admin\gym_config_screen.dart:132:41 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\admin\gym_config_screen.dart:135:36 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\admin\gym_config_screen.dart:165:45 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\admin\gym_config_screen.dart:166:40 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\admin\gym_config_screen.dart:169:37 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:98:27 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:102:55 - use_build_context_synchronously
+warning - The left operand can't be null, so the right operand is never executed - lib\src\screens\login_screen.dart:103:48 - dead_null_aware_expression
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:103:71 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:103:111 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:105:50 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:133:33 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:141:61 - use_build_context_synchronously
+warning - The left operand can't be null, so the right operand is never executed - lib\src\screens\login_screen.dart:142:54 - dead_null_aware_expression
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:142:77 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:142:117 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\login_screen.dart:144:56 - use_build_context_synchronously
+   info - Invalid use of a private type in a public API - lib\src\screens\profile_screen.dart:12:3 - library_private_types_in_public_api
+   info - Don't invoke 'print' in production code - lib\src\screens\shared\day_detail_screen.dart:111:5 - avoid_print
+warning - The declaration '_buildMetric' isn't referenced - lib\src\screens\shared\day_detail_screen.dart:240:10 - unused_element
+warning - The declaration '_launchVideo' isn't referenced - lib\src\screens\shared\day_detail_screen.dart:251:16 - unused_element
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\shared\gym_schedule_screen.dart:25:9 - use_build_context_synchronously
+warning - The declaration '_onDayCheckboxChanged' isn't referenced - lib\src\screens\shared\plan_details_screen.dart:88:8 - unused_element
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plan_details_screen.dart:124:50 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plan_details_screen.dart:259:20 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plan_details_screen.dart:260:40 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plan_details_screen.dart:263:14 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plans_list_screen.dart:234:41 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plans_list_screen.dart:235:64 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\shared\plans_list_screen.dart:240:22 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\src\screens\student\calendar_screen.dart:66:5 - avoid_print
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\student\student_home_screen.dart:187:27 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:235:55 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:280:15 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:281:15 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:282:15 - use_build_context_synchronously
+warning - The declaration '_infoRow' isn't referenced - lib\src\screens\student\student_home_screen.dart:507:10 - unused_element
+warning - The value of the local variable 'isActive' isn't used - lib\src\screens\student\student_plans_list_screen.dart:52:27 - unused_local_variable
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\super_admin\gym_admins_screen.dart:194:43 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\super_admin\gym_admins_screen.dart:196:50 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\super_admin\manage_gym_screen.dart:61:33 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\super_admin\manage_gym_screen.dart:151:15 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\add_student_screen.dart:163:45 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\add_student_screen.dart:164:52 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\add_student_screen.dart:168:52 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\assign_plan_modal.dart:91:39 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\assign_plan_modal.dart:92:46 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\assign_plan_modal.dart:97:27 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\teacher\create_plan_screen.dart:380:80 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\create_plan_screen.dart:454:31 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\create_plan_screen.dart:455:38 - use_build_context_synchronously
+warning - The declaration '_infoRow' isn't referenced - lib\src\screens\teacher\dashboard_screen.dart:222:10 - unused_element
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\teacher\exercise_detail_screen.dart:24:32 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\student_plans_screen.dart:172:41 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\teacher\student_plans_screen.dart:177:41 - use_build_context_synchronously
+

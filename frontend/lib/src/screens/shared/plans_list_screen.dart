@@ -15,6 +15,8 @@ class PlansListScreen extends StatefulWidget {
 }
 
 class _PlansListScreenState extends State<PlansListScreen> {
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +43,11 @@ class _PlansListScreenState extends State<PlansListScreen> {
           final Map<String, List<Plan>> groupedPlans = {};
           
           for (var plan in planProvider.plans) {
+            // Search Filter
+            if (_searchQuery.isNotEmpty && !plan.name.toLowerCase().contains(_searchQuery.toLowerCase())) {
+               continue;
+            }
+
             final creatorName = plan.teacher != null 
                 ? '${plan.teacher!.firstName} ${plan.teacher!.lastName}' 
                 : AppLocalizations.of(context)!.get('withoutAuthor');
@@ -54,9 +61,12 @@ class _PlansListScreenState extends State<PlansListScreen> {
           final sortedKeys = groupedPlans.keys.toList()..sort();
 
           return ListView.builder(
-            itemCount: sortedKeys.length,
             itemBuilder: (context, index) {
-              final creatorName = sortedKeys[index];
+              // Header index
+              if (index == 0) {
+                 return _buildSearch();
+              }
+              final creatorName = sortedKeys[index - 1]; // Offset by 1 for search
               final plans = groupedPlans[creatorName]!;
 
               return Column(
@@ -67,6 +77,7 @@ class _PlansListScreenState extends State<PlansListScreen> {
                 ],
               );
             },
+            itemCount: sortedKeys.length + 1, // +1 for Search
           );
         },
       ),
@@ -98,6 +109,28 @@ class _PlansListScreenState extends State<PlansListScreen> {
     );
   }
 
+  Widget _buildSearch() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: TextField(
+          decoration: InputDecoration(
+            hintText: 'Buscar plan por nombre...',
+            prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+            filled: true,
+            fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          ),
+          onChanged: (val) {
+            setState(() {
+              _searchQuery = val;
+            });
+          },
+      ),
+    );
+  }
+
   Widget _buildPlanCard(BuildContext context, Plan plan) {
     final date = plan.createdAt != null
         ? DateFormat('yyyy-MM-dd').format(DateTime.parse(plan.createdAt!))
@@ -106,21 +139,21 @@ class _PlansListScreenState extends State<PlansListScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2), // Compact margin
       elevation: 0,
       shape: RoundedRectangleBorder(
          borderRadius: BorderRadius.circular(12),
          side: BorderSide(color: colorScheme.outlineVariant),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Compact padding
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Expanded(
-                  child: Text(plan.name, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  child: Text(plan.name, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)), // Smaller title
                 ),
                 if (plan.objective != null)
                   Container(
@@ -142,20 +175,25 @@ class _PlansListScreenState extends State<PlansListScreen> {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)
              ),
              const SizedBox(height: 12),
-            const Divider(),
+             const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 OutlinedButton.icon(
                   onPressed: () => _showPlanDetails(context, plan),
-                  icon: const Icon(Icons.visibility, size: 18),
-                  label: Text(AppLocalizations.of(context)!.get('viewDetails')),
+                  icon: const Icon(Icons.visibility, size: 16), // Smaller icon
+                  label: Text(AppLocalizations.of(context)!.get('viewDetails'), style: const TextStyle(fontSize: 12)),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), // Compact layout
+                    visualDensity: VisualDensity.compact,
                   ),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
+                  visualDensity: VisualDensity.compact,
+                  iconSize: 20,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: () => _confirmDeletePlan(context, plan),
                   tooltip: AppLocalizations.of(context)!.get('deletePlanTitle'),
@@ -172,7 +210,7 @@ class _PlansListScreenState extends State<PlansListScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PlanDetailsScreen(plan: plan),
+        builder: (context) => PlanDetailsScreen(plan: plan, readOnly: true),
       ),
     );
   }
@@ -190,11 +228,28 @@ class _PlansListScreenState extends State<PlansListScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              final success = await context.read<PlanProvider>().deletePlan(plan.id!);
+              final error = await context.read<PlanProvider>().deletePlan(plan.id!);
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(success ? AppLocalizations.of(context)!.get('deletePlanSuccess') : AppLocalizations.of(context)!.get('deletePlanError'))),
-                );
+                if (error == null) {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(AppLocalizations.of(context)!.get('deletePlanSuccess'))),
+                   );
+                } else {
+                   // Show error dialog for conflicts (assigned plans)
+                   showDialog(
+                     context: context,
+                     builder: (context) => AlertDialog(
+                       title: Text(AppLocalizations.of(context)!.get('error')),
+                       content: Text(error),
+                       actions: [
+                         TextButton(
+                           onPressed: () => Navigator.pop(context),
+                           child: const Text('OK'),
+                         ),
+                       ],
+                     ),
+                   );
+                }
               }
             },
             child: Text(AppLocalizations.of(context)!.get('delete'), style: const TextStyle(color: Colors.red)),

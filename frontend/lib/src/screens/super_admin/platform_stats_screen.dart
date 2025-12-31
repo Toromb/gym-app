@@ -83,7 +83,7 @@ class _PlatformStatsScreenState extends State<PlatformStatsScreen> {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: color.withOpacity(0.2),
+              backgroundColor: color.withValues(alpha: 0.2),
               radius: 30,
               child: Icon(icon, size: 30, color: color),
             ),

@@ -5,9 +5,9 @@ import { GymScheduleController } from './gym-schedule.controller';
 import { GymSchedule } from './entities/gym-schedule.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([GymSchedule])],
-    controllers: [GymScheduleController],
-    providers: [GymScheduleService],
-    exports: [GymScheduleService],
+  imports: [TypeOrmModule.forFeature([GymSchedule])],
+  controllers: [GymScheduleController],
+  providers: [GymScheduleService],
+  exports: [GymScheduleService],
 })
-export class GymScheduleModule { }
+export class GymScheduleModule {}

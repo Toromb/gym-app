@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/gyms_provider.dart';
 import '../../models/gym_model.dart';
 
@@ -57,7 +56,7 @@ class _ManageGymScreenState extends State<ManageGymScreen> {
            } else {
                await context.read<GymsProvider>().updateGym(widget.gym!.id, gymData);
            }
-           if (mounted) Navigator.pop(context);
+           if (mounted) Navigator.pop(context, true);
        } catch (e) {
            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
        }
@@ -95,7 +94,7 @@ class _ManageGymScreenState extends State<ManageGymScreen> {
                  validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
               DropdownButtonFormField<String>(
-                  value: _status,
+                  initialValue: _status,
                   decoration: const InputDecoration(labelText: 'Status'),
                   items: const [
                       DropdownMenuItem(value: 'active', child: Text('Active')),
@@ -150,7 +149,7 @@ class _ManageGymScreenState extends State<ManageGymScreen> {
     if (confirm == true) {
       try {
         await context.read<GymsProvider>().deleteGym(widget.gym!.id);
-        if (mounted) Navigator.pop(context);
+        if (mounted) Navigator.pop(context, true);
       } catch (e) {
         if (mounted) {
            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error deleting gym: $e')));

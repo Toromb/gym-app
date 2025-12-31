@@ -75,6 +75,9 @@ let GymsController = class GymsController {
         await this.gymsService.update(id, { logoUrl });
         return { logoUrl };
     }
+    async debugInit(id) {
+        return this.gymsService.debugGenerateExercises(id);
+    }
 };
 exports.GymsController = GymsController;
 __decorate([
@@ -129,7 +132,10 @@ __decorate([
                 cb(null, uploadPath);
             },
             filename: (req, file, cb) => {
-                const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
+                const randomName = Array(32)
+                    .fill(null)
+                    .map(() => Math.round(Math.random() * 16).toString(16))
+                    .join('');
                 cb(null, `${randomName}${(0, path_1.extname)(file.originalname)}`);
             },
         }),
@@ -140,8 +146,8 @@ __decorate([
             cb(null, true);
         },
         limits: {
-            fileSize: 5 * 1024 * 1024
-        }
+            fileSize: 5 * 1024 * 1024,
+        },
     })),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.UploadedFile)()),
@@ -150,6 +156,13 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], GymsController.prototype, "uploadLogo", null);
+__decorate([
+    (0, common_1.Post)(':id/debug-init'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], GymsController.prototype, "debugInit", null);
 exports.GymsController = GymsController = __decorate([
     (0, common_1.Controller)('gyms'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),

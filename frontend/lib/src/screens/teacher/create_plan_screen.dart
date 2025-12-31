@@ -4,7 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/plan_provider.dart';
 import '../../providers/exercise_provider.dart';
 import '../../models/plan_model.dart';
-import '../../models/user_model.dart'; // Needed if we used User in Plan, but PlanModel imports it? Check imports.
+// Needed if we used User in Plan, but PlanModel imports it? Check imports.
 
 class CreatePlanScreen extends StatefulWidget {
   final Plan? planToEdit;
@@ -43,6 +43,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
           dayOfWeek: d.dayOfWeek,
           order: d.order,
           dayNotes: d.dayNotes,
+          trainingIntent: d.trainingIntent, // Copy intent
           exercises: d.exercises.map((e) => PlanExercise(
             id: e.id,
             exerciseId: e.exerciseId ?? e.exercise?.id,
@@ -54,6 +55,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
             notes: e.notes,
             videoUrl: e.videoUrl,
             order: e.order,
+            equipments: e.equipments, // Preserve equipments
           )).toList(),
         )).toList(),
       )).toList();
@@ -137,7 +139,6 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
       return;
     }
 
-    // Correctly find the initial selection object from the provider list based on ID
     Exercise? selectedExercise;
     if (existingExercise?.exerciseId != null) {
       try {
@@ -153,14 +154,23 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
     final repsController = TextEditingController(text: existingExercise?.reps ?? '10');
     final loadController = TextEditingController(text: existingExercise?.suggestedLoad ?? '');
     final restController = TextEditingController(text: existingExercise?.rest ?? '60s');
+    
+    // New Controllers
+    final timeController = TextEditingController(text: existingExercise?.targetTime?.toString() ?? '');
+    final distanceController = TextEditingController(text: existingExercise?.targetDistance?.toString() ?? '');
 
     final notesController = TextEditingController(text: existingExercise?.notes ?? '');
     final videoUrlController = TextEditingController(text: existingExercise?.videoUrl ?? existingExercise?.exercise?.videoUrl ?? '');
+    
+    // Equipment Selection State
+    List<Equipment> selectedPlanEquipments = existingExercise?.equipments.toList() ?? [];
 
     await showDialog(
       context: context,
-      builder: (context) => StatefulBuilder( // Use StatefulBuilder to update dropdown in Dialog if needed, though usually not for just selection
+      builder: (context) => StatefulBuilder( 
         builder: (context, setStateDialog) {
+          final metricType = selectedExercise?.metricType ?? 'REPS';
+
           return AlertDialog(
             title: Text(existingExercise == null ? 'Agregar Ejercicio' : 'Editar Ejercicio'),
             content: SingleChildScrollView(
@@ -169,28 +179,86 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                 children: [
                   DropdownButtonFormField<Exercise>(
                     decoration: const InputDecoration(labelText: 'Ejercicio'),
-                    value: selectedExercise,
+                    initialValue: selectedExercise,
                     items: exercises.map((e) => DropdownMenuItem(value: e, child: Text(e.name))).toList(),
                     onChanged: (value) {
                        setStateDialog(() {
                          selectedExercise = value;
                          if (value != null) {
-                           setsController.text = value.sets?.toString() ?? '3';
-                           repsController.text = value.reps ?? '10';
-                           loadController.text = value.load ?? '';
+                           setsController.text = value.sets?.toString() ?? value.defaultSets?.toString() ?? '3';
                            restController.text = value.rest ?? '60s';
                            videoUrlController.text = value.videoUrl ?? '';
                            notesController.text = value.notes ?? '';
+                           
+                           // Populate Defaults based on metric
+                           if (value.metricType == 'REPS') {
+                              repsController.text = value.reps ?? '10';
+                              loadController.text = value.load ?? '';
+                           } else if (value.metricType == 'TIME') {
+                              timeController.text = value.defaultTime?.toString() ?? '';
+                           } else if (value.metricType == 'DISTANCE') {
+                              distanceController.text = value.defaultDistance?.toString() ?? '';
+                           }
+
+                           selectedPlanEquipments = []; 
                          }
                        });
                     },
                     validator: (value) => value == null ? 'Requerido' : null,
                   ),
+                  
+                  if (selectedExercise != null) ...[
+                      const SizedBox(height: 5),
+                      Align(
+                          alignment: Alignment.centerLeft, 
+                          child: Chip(
+                              label: Text('Métrica: $metricType', style: const TextStyle(fontSize: 10)),
+                              visualDensity: VisualDensity.compact,
+                          )
+                      ),
+                  ],
+
+                  if (selectedExercise != null && selectedExercise!.equipments.isNotEmpty) ...[
+                     const SizedBox(height: 10),
+                     Align(alignment: Alignment.centerLeft, child: Text('Equipamiento/s en este ejercicio', style: TextStyle(color: Colors.grey[700], fontSize: 12))),
+                     Wrap(
+                       spacing: 6.0,
+                       runSpacing: 0.0,
+                       children: selectedExercise!.equipments.map((eq) {
+                         final isSelected = selectedPlanEquipments.any((s) => s.id == eq.id);
+                         return FilterChip(
+                           label: Text(eq.name),
+                           selected: isSelected,
+                           onSelected: (bool selected) {
+                             setStateDialog(() {
+                               if (selected) {
+                                 selectedPlanEquipments.add(eq);
+                               } else {
+                                 selectedPlanEquipments.removeWhere((s) => s.id == eq.id);
+                               }
+                             });
+                           },
+                         );
+                       }).toList(),
+                     ),
+                  ],
+                  
                   TextField(controller: setsController, decoration: const InputDecoration(labelText: 'Series'), keyboardType: TextInputType.number),
-                  TextField(controller: repsController, decoration: const InputDecoration(labelText: 'Repeticiones')),
-                  TextField(controller: loadController, decoration: const InputDecoration(labelText: 'Peso (kg)')),
+                  
+                  // CONDITIONAL FIELDS
+                  if (metricType == 'REPS') ...[
+                      TextField(controller: repsController, decoration: const InputDecoration(labelText: 'Repeticiones')),
+                      TextField(controller: loadController, decoration: const InputDecoration(labelText: 'Peso (kg)')),
+                  ] else if (metricType == 'TIME') ...[
+                      TextField(controller: timeController, decoration: const InputDecoration(labelText: 'Tiempo Objetivo (segundos)'), keyboardType: TextInputType.number),
+                  ] else if (metricType == 'DISTANCE') ...[
+                      TextField(controller: distanceController, decoration: const InputDecoration(labelText: 'Distancia Objetivo (metros)'), keyboardType: TextInputType.number),
+                  ],
+
                   TextField(controller: restController, decoration: const InputDecoration(labelText: 'Descanso (seg)')),
-                  TextField(controller: videoUrlController, decoration: const InputDecoration(labelText: 'URL de Video', hintText: 'https://youtube.com/...')),
+                  
+                  // Collapsible or bottom fields
+                  TextField(controller: videoUrlController, decoration: const InputDecoration(labelText: 'URL de Video')),
                   TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notas')),
                 ],
               ),
@@ -200,20 +268,26 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
               TextButton(
                 onPressed: () {
                   if (selectedExercise != null) {
-                    // Update the main state
                     setState(() {
                       final newExercise = PlanExercise(
                         id: existingExercise?.id,
                         exerciseId: selectedExercise!.id,
                         exercise: selectedExercise,
-                        sets: int.tryParse(setsController.text) ?? 3,
-                        reps: repsController.text,
-                        suggestedLoad: loadController.text,
-                        rest: restController.text,
+                        sets: int.tryParse(setsController.text.trim()) ?? 3,
+                        // Always send default '0' or '' if hidden, but prefer null handling in backend if possible.
+                        // For now we persist "" if not REPS, but PlanExercise model expects required string reps?
+                        // Model says: required reps. So we send "0" or "-" if not REPS.
+                        reps: metricType == 'REPS' ? repsController.text : '', 
+                        suggestedLoad: metricType == 'REPS' ? loadController.text : null,
+                        
+                        targetTime: metricType == 'TIME' ? int.tryParse(timeController.text) : null,
+                        targetDistance: metricType == 'DISTANCE' ? double.tryParse(distanceController.text) : null,
 
+                        rest: restController.text,
                         notes: notesController.text,
                         videoUrl: videoUrlController.text.isNotEmpty ? videoUrlController.text : null,
                         order: existingExercise?.order ?? _weeks[weekIndex].days[dayIndex].exercises.length + 1,
+                        equipments: selectedPlanEquipments,
                       );
 
                       if (existingExercise != null && exerciseIndex != null) {
@@ -240,9 +314,20 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.planToEdit == null ? 'Crear Plan' : 'Editar Plan')),
-      body: Form(
-        key: _formKey,
-        child: Stepper(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+            child: Text(
+              "Definí una estructura de entrenamiento reutilizable.",
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Expanded(
+            child: Form(
+              key: _formKey,
+              child: Stepper(
           type: StepperType.vertical,
           currentStep: _currentStep,
           onStepTapped: (index) => setState(() => _currentStep = index),
@@ -271,26 +356,38 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
           },
           steps: [
             Step(
-              title: const Text('Información General'),
+              title: const Text('Datos del Plan'),
               content: Column(
                 children: [
                   TextFormField(
                     controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Nombre del Plan'),
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre del Plan',
+                      hintText: 'Ej: Fuerza Inicial · Adaptación',
+                    ),
                     validator: (value) => value!.isEmpty ? 'Requerido' : null,
                   ),
                   TextFormField(
                     controller: _objectiveController,
-                    decoration: const InputDecoration(labelText: 'Objetivo'),
+                    decoration: const InputDecoration(
+                      labelText: 'Objetivo',
+                      hintText: 'Ej: Fuerza · Hipertrofia · Volver a entrenar',
+                    ),
                   ),
                   TextFormField(
                     controller: _durationController,
-                    decoration: const InputDecoration(labelText: 'Duración (Semanas)'),
+                    decoration: const InputDecoration(
+                      labelText: 'Duración (semanas)',
+                      hintText: 'Ej: 4',
+                    ),
                     keyboardType: TextInputType.number,
                   ),
                   TextFormField(
                     controller: _notesController,
-                    decoration: const InputDecoration(labelText: 'Notas Generales'),
+                    decoration: const InputDecoration(
+                      labelText: 'Notas',
+                      hintText: 'Indicaciones o recomendaciones generales',
+                    ),
                     maxLines: 3,
                   ),
                 ],
@@ -299,9 +396,19 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
               state: _currentStep > 0 ? StepState.complete : StepState.editing,
             ),
             Step(
-              title: const Text('Estructura'),
+              title: const Text('Estructura del Plan'),
               content: Column(
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Organizá semanas y días de entrenamiento.",
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
+                    ),
+                  ),
                   ..._weeks.asMap().entries.map((entry) {
                     final weekIndex = entry.key;
                     final week = entry.value;
@@ -333,6 +440,41 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                                 children: [
                                   ListTile(
                                     title: Text(day.title ?? 'Día ${day.dayOfWeek}'),
+                                    subtitle: Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Row(
+                                        children: [
+                                          const Text("Objetivo: ", style: TextStyle(fontWeight: FontWeight.bold)),
+                                          const SizedBox(width: 8),
+                                          DropdownButton<TrainingIntent>(
+                                            value: day.trainingIntent,
+                                            isDense: true,
+                                            underline: Container(height: 1, color: Colors.grey),
+                                            items: TrainingIntent.values.map((intent) {
+                                              return DropdownMenuItem(
+                                                value: intent,
+                                                child: Text(intent.label),
+                                              );
+                                            }).toList(),
+                                            onChanged: (newIntent) {
+                                              if (newIntent != null) {
+                                                setState(() {
+                                                   _weeks[weekIndex].days[dayIndex] = PlanDay(
+                                                     id: day.id,
+                                                     title: day.title,
+                                                     dayOfWeek: day.dayOfWeek,
+                                                     order: day.order,
+                                                     dayNotes: day.dayNotes,
+                                                     exercises: day.exercises,
+                                                     trainingIntent: newIntent,
+                                                   );
+                                                });
+                                              }
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -359,10 +501,14 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                                           return Card(
                                             child: ListTile(
                                               dense: true,
-                                              title: Text('${ex.exercise?.name ?? "Unknown"}: ${ex.sets}x${ex.reps}'),
+                                              title: Text(
+                                                  ex.exercise?.metricType == 'TIME' ? '${ex.exercise?.name ?? "Unknown"}: ${ex.sets} x ${ex.targetTime ?? "-"}s'
+                                                  : ex.exercise?.metricType == 'DISTANCE' ? '${ex.exercise?.name ?? "Unknown"}: ${ex.sets} x ${ex.targetDistance ?? "-"}m'
+                                                  : '${ex.exercise?.name ?? "Unknown"}: ${ex.sets}x${ex.reps}'
+                                              ),
                                               subtitle: Text(
-                                                '${ex.suggestedLoad != null ? " ${ex.suggestedLoad}kg" : ""}'
-                                                '${ex.rest != null ? " | Rest: ${ex.rest}" : ""}'
+                                                '${ex.exercise?.metricType == 'REPS' && ex.suggestedLoad != null ? " ${ex.suggestedLoad}kg |" : ""}'
+                                                '${ex.rest != null ? " Rest: ${ex.rest}" : ""}'
                                                 '${ex.notes != null && ex.notes!.isNotEmpty ? "\n📝 ${ex.notes}" : ""}',
                                               ),
                                               trailing: Row(
@@ -417,12 +563,24 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                     icon: const Icon(Icons.add),
                     label: const Text('Agregar Semana'),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24.0, bottom: 8.0),
+                    child: Center(
+                      child: Text(
+                        "Este plan luego podrá asignarse o adaptarse.",
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12, fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  ),
                 ],
               ),
               isActive: _currentStep >= 1,
             ),
           ],
         ),
+      ),
+          ),
+        ],
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -447,9 +605,10 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                 success = await context.read<PlanProvider>().createPlan(plan);
               }
 
+              if (!mounted) return;
               setState(() => _isLoading = false);
               
-              if (success && mounted) {
+              if (success) {
                 Navigator.pop(context, true);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(widget.planToEdit != null ? 'Plan actualizado' : 'Plan creado')),

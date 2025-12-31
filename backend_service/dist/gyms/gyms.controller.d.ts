@@ -14,4 +14,20 @@ export declare class GymsController {
     uploadLogo(id: string, file: any, req: any): Promise<{
         logoUrl: string;
     }>;
+    debugInit(id: string): Promise<{
+        error: string;
+        success?: undefined;
+        logs?: undefined;
+        result?: undefined;
+    } | {
+        success: boolean;
+        logs: string[];
+        result: import("../exercises/entities/exercise.entity").Exercise;
+        error?: undefined;
+    } | {
+        success: boolean;
+        logs: string[];
+        error: any;
+        result?: undefined;
+    }>;
 }

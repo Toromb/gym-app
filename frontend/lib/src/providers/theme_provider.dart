@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider with ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
 
   String? _userId;
   String get _themeKey => _userId != null ? 'theme_mode_$_userId' : 'theme_mode_guest';
@@ -39,7 +39,7 @@ class ThemeProvider with ChangeNotifier {
     } else if (savedTheme == 'light') {
       _themeMode = ThemeMode.light;
     } else {
-      _themeMode = ThemeMode.system;
+      _themeMode = ThemeMode.light;
     }
     notifyListeners();
   }

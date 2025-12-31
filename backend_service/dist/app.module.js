@@ -46,7 +46,8 @@ exports.AppModule = AppModule = __decorate([
                     password: configService.get('DB_PASSWORD'),
                     database: configService.get('DB_NAME'),
                     autoLoadEntities: true,
-                    synchronize: process.env.NODE_ENV !== 'production' || configService.get('DB_SYNCHRONIZE') === 'true',
+                    synchronize: process.env.NODE_ENV !== 'production' ||
+                        configService.get('DB_SYNCHRONIZE') === 'true',
                     retryAttempts: 10,
                     retryDelay: 3000,
                 }),

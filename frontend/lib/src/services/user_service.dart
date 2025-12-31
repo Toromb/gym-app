@@ -1,44 +1,26 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
-import '../utils/constants.dart';
+import 'api_client.dart';
+import 'api_exceptions.dart';
 
 class UserService {
-  final _storage = const FlutterSecureStorage();
+  final ApiClient _api = ApiClient();
 
-  Future<String?> _getToken() async {
-    if (kIsWeb) {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('jwt');
-    }
-    return await _storage.read(key: 'jwt');
+  // Helper
+  List<T> _parseList<T>(dynamic response, T Function(Map<String, dynamic>) fromJson) {
+      if (response is List) {
+          return response.map((json) => fromJson(json)).toList();
+      }
+      return [];
   }
 
   Future<List<User>> getUsers({String? role, String? gymId}) async {
-    final token = await _getToken();
+    final uri = Uri(path: '/users', queryParameters: {
+      if (role != null) 'role': role,
+      if (gymId != null) 'gymId': gymId,
+    });
     
-    String queryString = '';
-    List<String> params = [];
-    if (role != null) params.add('role=$role');
-    if (gymId != null) params.add('gymId=$gymId');
-    if (params.isNotEmpty) queryString = '?${params.join('&')}';
-
-    final response = await http.get(
-      Uri.parse('$baseUrl/users$queryString'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => User.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load users');
-    }
+    final response = await _api.get(uri.toString());
+    return _parseList(response, (json) => User.fromJson(json));
   }
 
   Future<User?> createUser({
@@ -55,8 +37,8 @@ class UserService {
     String? professorId,
     String? membershipStartDate,
     double? initialWeight,
+    bool paysMembership = true,
   }) async {
-    final token = await _getToken();
     final bodyData = {
         'email': email,
         'password': password,
@@ -71,104 +53,77 @@ class UserService {
         if (professorId != null) 'professorId': professorId,
         if (membershipStartDate != null) 'membershipStartDate': membershipStartDate,
         if (initialWeight != null) 'initialWeight': initialWeight,
+        'paysMembership': paysMembership,
     };
 
-    final response = await http.post(
-      Uri.parse('$baseUrl/users'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(bodyData),
-    );
-
-    if (response.statusCode == 201) {
-      return User.fromJson(jsonDecode(response.body));
+    try {
+        final response = await _api.post('/users', bodyData);
+        return User.fromJson(response);
+    } catch (_) {
+        return null;
     }
-    return null;
   }
 
-  Future<bool> deleteUser(String id) async {
-    final token = await _getToken();
-    final response = await http.delete(
-      Uri.parse('$baseUrl/users/$id'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    return response.statusCode == 200;
+  Future<String?> deleteUser(String id) async {
+    try {
+      await _api.delete('/users/$id');
+      return null;
+    } on ApiException catch (e) {
+      // Improve this mapping if needed
+      if (e.statusCode == 409) return 'Usuario en uso';
+      return e.message; 
+    } catch (e) {
+      return 'Error al eliminar usuario';
+    }
   }
 
+  // Uses Plan endpoint but kept here for compatibility
   Future<bool> assignPlan(String studentId, String planId) async {
-    final token = await _getToken();
-    final response = await http.post(
-      Uri.parse('$baseUrl/plans/assign'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'studentId': studentId,
-        'planId': planId,
-      }),
-    );
-
-    return response.statusCode == 201;
+    try {
+        await _api.post('/plans/assign', {
+            'studentId': studentId,
+            'planId': planId,
+        });
+        return true;
+    } catch (_) {
+        return false;
+    }
   }
 
   Future<bool> updateUser(String id, Map<String, dynamic> data) async {
-    final token = await _getToken();
-    final response = await http.patch(
-      Uri.parse('$baseUrl/users/$id'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    );
-    return response.statusCode == 200;
+     try {
+       await _api.patch('/users/$id', data);
+       return true;
+     } catch (_) {
+       return false;
+     }
   }
-  Future<User?> getProfile() async {
-    final token = await _getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/users/profile'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
 
-    if (response.statusCode == 200) {
-      return User.fromJson(jsonDecode(response.body));
-    } else {
+  Future<User?> getProfile() async {
+    try {
+      final response = await _api.get('/users/profile');
+      return User.fromJson(response);
+    } catch (_) {
       return null;
     }
   }
 
   Future<bool> updateProfile(Map<String, dynamic> data) async {
-    final token = await _getToken();
-    final response = await http.patch(
-      Uri.parse('$baseUrl/users/profile'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    );
-    return response.statusCode == 200;
+    try {
+      await _api.patch('/users/profile', data);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<User?> markAsPaid(String userId) async {
-    final token = await _getToken();
-    final response = await http.patch(
-      Uri.parse('$baseUrl/users/$userId/payment-status'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode == 200 || response.statusCode == 201) {
-       return User.fromJson(jsonDecode(response.body));
+    try {
+       // Passing empty map as body
+       final response = await _api.patch('/users/$userId/payment-status', {});
+       return User.fromJson(response);
+    } catch (_) {
+       return null;
     }
-    return null;
   }
 }

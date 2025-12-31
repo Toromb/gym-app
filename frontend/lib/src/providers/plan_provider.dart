@@ -3,7 +3,11 @@ import 'package:flutter/foundation.dart';
 import '../models/plan_model.dart';
 import '../models/student_assignment_model.dart';
 import '../models/execution_model.dart';
+
+import '../models/logic/student_assignment_logic.dart';
+import '../models/logic/plan_traversal_logic.dart';
 import '../services/plan_service.dart';
+import '../services/exercise_api_service.dart';
 
 class PlanProvider with ChangeNotifier {
   final PlanService _planService = PlanService();
@@ -16,68 +20,49 @@ class PlanProvider with ChangeNotifier {
   List<StudentAssignment> get assignments => _assignments;
   bool get isLoading => _isLoading;
 
-  List<StudentAssignment> _assignments = [];
-  
-  StudentAssignment? _activeAssignment;
-  StudentAssignment? get activeAssignment => _activeAssignment;
-  
-  void _calculateActiveAssignment() {
-    if (_assignments.isEmpty) {
-        _activeAssignment = null;
-        return;
+  // Exercise Service
+  final ExerciseService _exerciseService = ExerciseService();
+  Future<List<Exercise>> fetchExercises({String? muscleId, List<String>? equipmentIds}) async {
+    try {
+      return await _exerciseService.getExercises(muscleId: muscleId, equipmentIds: equipmentIds);
+    } catch (e) {
+      debugPrint('Error fetching exercises: $e');
+      return [];
     }
-    
-    // Logic:
-    // 1. Filter assignments with isActive = true
-    final active = _assignments.where((a) => a.isActive).toList();
-    if (active.isEmpty) {
-        _activeAssignment = null;
-        return;
-    }
-    
-    // 2. If only one, return it
-    if (active.length == 1) {
-        _activeAssignment = active.first;
-        return;
-    }
-    
-    // 3. If multiple, check if any has progress
-    final withProgress = active.where((a) => a.progress['days'] != null && (a.progress['days'] as Map).isNotEmpty).toList();
-    
-    if (withProgress.length == 1) {
-        _activeAssignment = withProgress.first;
-        return;
-    }
-    
-    // 4. Fallback:
-    // If multiple active plans and none have progress, ask user to choose (return null).
-    if (active.length > 1 && withProgress.isEmpty) {
-       _activeAssignment = null;
-       return;
-    }
-    
-    // If multiple have progress (rare), or just one active total, return default (latest).
-    _activeAssignment = active.first;
   }
 
-  // Returns { week: PlanWeek, day: PlanDay } or null if finished/none
+  // Legacy/Convenience wrapper
+  Future<List<Exercise>> fetchExercisesByMuscle(String muscleId) => fetchExercises(muscleId: muscleId);
+
+  int _weeklyWorkoutCount = 0;
+  int get weeklyWorkoutCount => _weeklyWorkoutCount;
+
+  int _monthlyWorkoutCount = 0;
+  int get monthlyWorkoutCount => _monthlyWorkoutCount;
+
+  List<StudentAssignment> _assignments = [];
+  
+  // Computed property via Extension
+  StudentAssignment? get activeAssignment => _assignments.activeAssignment;
+
+  // Returns { week: PlanWeek, day: PlanDay, assignment: StudentAssignment } or finished map
   Map<String, dynamic>? get nextWorkout {
     final assignment = activeAssignment;
     if (assignment == null) return null;
+    if (assignment.plan.weeks.isEmpty) return null;
 
-    final plan = assignment.plan;
-    if (plan.weeks.isEmpty) return null;
-
-    // Traverse to find first non-completed day
-    for (var week in plan.weeks) {
-      for (var day in week.days) {
-        if (day.id != null && !assignment.isDayCompleted(day.id!)) {
-           return {'week': week, 'day': day, 'assignment': assignment};
-        }
-      }
+    // Use Extension Logic
+    final next = assignment.nextWorkout;
+    
+    if (next != null) {
+        // Inject assignment for UI usage (StudentHomeScreen)
+        return {
+           ...next,
+           'assignment': assignment 
+        };
     }
     
-    // All completed
+    // If extension returns null but we have a plan, it means Finished
     return {'finished': true, 'assignment': assignment};
   }
 
@@ -169,79 +154,112 @@ class PlanProvider with ChangeNotifier {
       debugPrint('Error fetching my history: $e');
       return [];
     } finally {
-      _calculateActiveAssignment(); // Recalculate only when list changes
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  PlanExecution? _currentExecution;
-  PlanExecution? get currentExecution => _currentExecution;
+  TrainingSession? _currentSession;
+  TrainingSession? get currentSession => _currentSession;
 
   // --- EXECUTION ENGINE START ---
 
-  Future<void> startExecution(String planId, int weekNumber, int dayOrder) async {
+  Future<void> startSession(String? planId, int? weekNumber, int? dayOrder) async {
+    _currentSession = null; // Clear previous session to avoid "flash" of old data
     _isLoading = true;
     notifyListeners();
     try {
-      // Pass today's date automatically or let backend handle? 
-      // Requirement: Start finds or creates. Date is needed. 
-      // We'll use local time YYYY-MM-DD.
       final now = DateTime.now();
       final dateStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
       
-      _currentExecution = await _planService.startExecution(planId, weekNumber, dayOrder, date: dateStr);
+      // Handle Free Session Logic
+      final String? effectivePlanId = (planId == 'FREE_SESSION') ? null : planId;
+
+      _currentSession = await _planService.startSession(effectivePlanId, weekNumber, dayOrder, date: dateStr);
     } catch (e) {
-      debugPrint('Error starting execution: $e');
-      _currentExecution = null;
+      debugPrint('Error starting session: $e');
+      _currentSession = null;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<bool> updateExerciseExecution(String exerciseExecId, Map<String, dynamic> updates) async {
+  Future<bool> updateSessionExercise(String sessionExerciseId, Map<String, dynamic> updates) async {
     try {
-      final success = await _planService.updateExerciseExecution(exerciseExecId, updates);
-      if (success && _currentExecution != null) {
+      // Prepare API payload (backend likely only needs ID for exercise)
+      final apiUpdates = Map<String, dynamic>.from(updates);
+      if (apiUpdates['exercise'] != null && apiUpdates['exercise'] is Map) {
+          apiUpdates['exercise'] = {'id': apiUpdates['exercise']['id']}; 
+      }
+
+      final success = await _planService.updateSessionExercise(sessionExerciseId, apiUpdates);
+      if (success && _currentSession != null) {
         
-        final updatedExercises = _currentExecution!.exercises.map((e) {
-            if (e.id == exerciseExecId) {
+        final updatedExercises = _currentSession!.exercises.map((e) {
+            if (e.id == sessionExerciseId) {
                 // Apply updates locally
                 return e.copyWith(
                     isCompleted: updates['isCompleted'],
                     setsDone: updates['setsDone'], 
                     repsDone: updates['repsDone'],
                     weightUsed: updates['weightUsed'],
-                    notes: updates['notes'] // etc
+                    notes: updates['notes'],
+                    // Handle Swap Exercise updates - Preserve Muscles & Equipments
+                    exercise: updates['exercise'] != null ? Exercise(
+                        id: updates['exercise']['id'], 
+                        name: updates['exerciseNameSnapshot'] ?? '', 
+                        description: '', 
+                        muscleGroup: '', 
+                        muscles: updates['exercise']['muscles'] ?? [], // Use muscles passed from UI
+                        equipments: updates['exercise']['equipments'] ?? [] // Use equipments passed from UI
+                    ) : e.exercise,
+                    exerciseNameSnapshot: updates['exerciseNameSnapshot'],
+                    videoUrl: updates['videoUrl'],
+                    equipmentsSnapshot: updates['exercise'] != null ? updates['exercise']['equipments'] : e.equipmentsSnapshot, // Update snapshot
                 );
             }
             return e;
         }).toList();
 
-        _currentExecution = _currentExecution!.copyWith(exercises: updatedExercises);
+        _currentSession = _currentSession!.copyWith(exercises: updatedExercises);
         notifyListeners();
       }
       return success;
     } catch (e) {
-      debugPrint('Error updating exercise execution: $e');
+      debugPrint('Error updating session exercise: $e');
       return false;
     }
   }
 
-  Future<void> completeExecution(String date) async {
-    if (_currentExecution == null) return;
+  Future<void> addSessionExercise(String exerciseId) async {
+    if (_currentSession == null) return;
     try {
-      await _planService.completeExecution(_currentExecution!.id, date);
-      // Update local state to COMPLETED
-      // Or just clear it? User might want to see summary.
-      // _currentExecution = ... (update status)
+      final newExercise = await _planService.addSessionExercise(_currentSession!.id, exerciseId);
+      if (newExercise != null) {
+        // Add to local list
+        final updatedList = List<SessionExercise>.from(_currentSession!.exercises)..add(newExercise);
+        _currentSession = _currentSession!.copyWith(exercises: updatedList);
+        notifyListeners();
+      }
     } catch (e) {
-      rethrow; // Pass error to UI for snackbar (Conflict 409)
+      debugPrint('Error adding exercise: $e');
     }
   }
 
-  Future<List<PlanExecution>> fetchCalendar(DateTime from, DateTime to) async {
+  Future<void> completeSession(String date) async {
+    if (_currentSession == null) return;
+    try {
+      await _planService.completeSession(_currentSession!.id, date);
+      // Update local state to COMPLETED
+      _currentSession = _currentSession!.copyWith(status: 'COMPLETED');
+      notifyListeners();
+    } catch (e) {
+      rethrow; 
+    }
+  }
+
+  Future<List<TrainingSession>> fetchCalendar(DateTime from, DateTime to) async {
     try {
       final fromStr = "${from.year}-${from.month.toString().padLeft(2, '0')}-${from.day.toString().padLeft(2, '0')}";
       final toStr = "${to.year}-${to.month.toString().padLeft(2, '0')}-${to.day.toString().padLeft(2, '0')}";
@@ -250,6 +268,41 @@ class PlanProvider with ChangeNotifier {
       debugPrint('Error fetching calendar: $e');
       return [];
     }
+  }
+
+  Future<void> computeWeeklyStats() async {
+      final now = DateTime.now();
+      final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+      final endOfWeek = startOfWeek.add(const Duration(days: 6));
+
+      try {
+          final executions = await fetchCalendar(startOfWeek, endOfWeek);
+          // Count unique days by date string
+          final uniqueDays = executions
+              .where((e) => e.status == 'COMPLETED')
+              .map((e) => e.date) // e.date is YYYY-MM-DD
+              .toSet();
+          
+          _weeklyWorkoutCount = uniqueDays.length;
+          debugPrint('Weekly Stats: ${executions.length} executions -> $_weeklyWorkoutCount unique days');
+          notifyListeners();
+      } catch (e) {
+          debugPrint('Error computing stats: $e');
+      }
+  }
+
+  Future<void> computeMonthlyStats() async {
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+      final endOfMonth = DateTime(now.year, now.month + 1, 0);
+
+      try {
+          final executions = await fetchCalendar(startOfMonth, endOfMonth);
+          _monthlyWorkoutCount = executions.where((e) => e.status == 'COMPLETED').length;
+          notifyListeners();
+      } catch (e) {
+          debugPrint('Error computing monthly stats: $e');
+      }
   }
 
   // --- EXECUTION ENGINE END ---
@@ -263,14 +316,14 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> assignPlan(String planId, String studentId) async {
+  Future<String?> assignPlan(String planId, String studentId) async {
     _isLoading = true;
     notifyListeners();
     try {
       return await _planService.assignPlan(planId, studentId);
     } catch (e) {
-    debugPrint('Error assigning plan: $e');
-      return false;
+      debugPrint('Error assigning plan: $e');
+      return 'Error de conexión';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -319,19 +372,19 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> deletePlan(String id) async {
+  Future<String?> deletePlan(String id) async {
     _isLoading = true;
     notifyListeners();
     try {
-      final success = await _planService.deletePlan(id);
-      if (success) {
-        await fetchPlans();
-        return true;
+      final error = await _planService.deletePlan(id);
+      if (error == null) {
+        await fetchPlans(); // Refresh list on success
+        return null;
       }
-      return false;
+      return error;
     } catch (e) {
-    debugPrint('Error deleting plan: $e');
-      return false;
+      debugPrint('Error deleting plan: $e');
+      return 'Error de conexión';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -346,7 +399,8 @@ class PlanProvider with ChangeNotifier {
       return null;
     }
   }
-  Future<PlanExecution?> fetchStudentExecution({
+
+  Future<TrainingSession?> fetchStudentSession({
     required String studentId,
     required String planId,
     required int week,
@@ -354,7 +408,7 @@ class PlanProvider with ChangeNotifier {
     String? startDate,
   }) async {
     try {
-      return await _planService.getStudentExecution(
+      return await _planService.getStudentSession(
         studentId: studentId,
         planId: planId,
         week: week,
@@ -362,8 +416,19 @@ class PlanProvider with ChangeNotifier {
         startDate: startDate,
       );
     } catch (e) {
-      debugPrint('Error fetching student execution: $e');
+      debugPrint('Error fetching student session: $e');
       return null;
     }
+  }
+
+  void clear() {
+    _plans = [];
+    _myPlan = null;
+    _assignments = [];
+
+    _currentSession = null;
+    _isPlansLoaded = false;
+    _isMyPlanLoaded = false;
+    notifyListeners();
   }
 }

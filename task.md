@@ -64,3 +64,7 @@
     - [x] Service Layer: Adapt to Execution API
     - [x] Day Detail: Integrate Execution (Live metrics, snapshots)
     - [x] Calendar Screen: Monthly view + Daily history
+
+## Maintenance & UX Improvements
+- [x] **Membership Logic**: Strict anchor date calculation (Start Date determines expiration day).
+- [x] **Student Features**: Restart Plan button (Cycle reset).

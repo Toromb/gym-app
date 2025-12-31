@@ -16,14 +16,27 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'src/localization/app_localizations.dart';
 import 'src/providers/theme_provider.dart';
 
+// Trigger Reload
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => PlanProvider()),
-        ChangeNotifierProvider(create: (_) => ExerciseProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, PlanProvider>(
+          create: (_) => PlanProvider(),
+          update: (_, auth, prev) {
+            if (!auth.isAuthenticated) prev?.clear();
+            return prev!;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, ExerciseProvider>(
+          create: (_) => ExerciseProvider(),
+          update: (_, auth, prev) {
+             if (!auth.isAuthenticated) prev?.clear();
+             return prev!;
+          },
+        ),
         ChangeNotifierProxyProvider<AuthProvider, GymScheduleProvider>(
           create: (_) => GymScheduleProvider(null),
           update: (_, auth, prev) => prev!..update(auth.token),
@@ -97,6 +110,15 @@ class MyApp extends StatelessWidget {
             Locale('en', ''),
           ],
           locale: const Locale('es', ''),
+          builder: (context, child) {
+            return GestureDetector(
+              onTap: () {
+                // Dismiss keyboard and unfocus globally
+                FocusManager.instance.primaryFocus?.unfocus();
+              },
+              child: child!,
+            );
+          },
           home: auth.isAuthenticated ? const HomeScreen() : const LoginScreen(),
         );
       },
