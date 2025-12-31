@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - gym_prod_network
     # Database isolated in private network, only accessible by backend
@@ -27,6 +27,9 @@ services:
       - ../.env.prod
     environment:
       - DB_SYNCHRONIZE=true
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=gym_db
     ports:
       - "3000:3000"
     depends_on:
@@ -42,10 +45,48 @@ services:
       dockerfile: Dockerfile
     container_name: gym_app_frontend_prod
     restart: always
-    ports:
-      - "${PROD_FRONTEND_PORT:-80}:80"
+    # Ports removed to force traffic through nginx-proxy
+    # ports:
+    #   - "${PROD_FRONTEND_PORT:-80}:80"
+    environment:
+      # Nginx Proxy Configuration
+      - VIRTUAL_HOST=tugymflow.com,www.tugymflow.com
+      - LETSENCRYPT_HOST=tugymflow.com,www.tugymflow.com
+      - LETSENCRYPT_EMAIL=cristianvagni87@gmail.com
     depends_on:
       - backend
+    networks:
+      - gym_prod_network
+
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:alpine
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+    networks:
+      - gym_prod_network
+
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - acme:/etc/acme.sh
+    environment:
+      - NGINX_PROXY_CONTAINER=nginx-proxy
+    depends_on:
+      - nginx-proxy
     networks:
       - gym_prod_network
 
@@ -54,5 +95,11 @@ networks:
     driver: bridge
 
 volumes:
-  pgdata:
+  postgres_data:
+    external: true
+    name: infra_postgres_data
   uploads:
+  certs:
+  vhost:
+  html:
+  acme:
