@@ -1,33 +1,39 @@
 param(
     [Parameter(Mandatory = $true)]
-    [string]$Target  # Format: user@ip_address
+    [string]$Target,  # Format: user@ip_address or host alias
+
+    [Parameter(Mandatory = $false)]
+    [string]$Branch = "main"
 )
 
-$RemotePath = "~/gym_app"
-$Branch = "test/ui-overhaul"
+$RemotePath = "/root/gym-app"
 $ComposeFile = "infra/docker-compose.prod.yml"
+$EnvFile = ".env.prod"
 
-Write-Host "🚀 Iniciando despliegue en $Target..." -ForegroundColor Cyan
+Write-Host "Starting deployment to $Target on branch $Branch..." -ForegroundColor Cyan
 
 # 1. Update Code
-Write-Host "📥 Actualizando código desde github ($Branch)..." -ForegroundColor Yellow
-ssh $Target "cd $RemotePath && git fetch && git checkout $Branch && git pull origin $Branch"
+Write-Host "Updating code from GitHub..." -ForegroundColor Yellow
+$updateCmd = "cd $RemotePath && git fetch origin && git checkout $Branch && git pull origin $Branch"
+ssh $Target $updateCmd
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Error actualizando el código. Verifica la conexión y el path." -ForegroundColor Red
+    Write-Host "Error updating code. Check connection and path." -ForegroundColor Red
     exit 1
 }
 
 # 2. Rebuild and Restart
-Write-Host "🐳 Reconstruyendo contenedores Docker..." -ForegroundColor Yellow
-ssh $Target "cd $RemotePath && docker compose -f $ComposeFile up -d --build"
+Write-Host "Rebuilding Docker containers..." -ForegroundColor Yellow
+# Ensure we use the prod env file and prod compose file
+$deployCmd = "cd $RemotePath && docker compose --env-file $EnvFile -f $ComposeFile up -d --build"
+ssh $Target $deployCmd
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Error en Docker Compose." -ForegroundColor Red
+    Write-Host "Error in Docker Compose." -ForegroundColor Red
     exit 1
 }
 
-# 3. Clean up (Optional Prune)
+# 3. Clean up (Optional)
 # ssh $Target "docker image prune -f"
 
-Write-Host "✅ ¡Despliegue Finalizado con Éxito!" -ForegroundColor Green
+Write-Host "Deployment Completed Successfully!" -ForegroundColor Green
