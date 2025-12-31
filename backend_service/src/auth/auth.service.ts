@@ -8,13 +8,14 @@ import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class AuthService {
-    private readonly logger = new Logger(AuthService.name);
+  private readonly logger = new Logger(AuthService.name);
 
-    constructor(
-        private usersService: UsersService,
-        private jwtService: JwtService,
-    ) { }
+  constructor(
+    private usersService: UsersService,
+    private jwtService: JwtService,
+  ) { }
 
+<<<<<<< HEAD
     async validateUser(email: string, pass: string): Promise<any> {
         const user = await this.usersService.findOneByEmail(email);
         if (!user) {
@@ -41,10 +42,38 @@ export class AuthService {
             return result;
         } else {
             this.logger.warn(`Login failed: Password mismatch for user ${email}`);
-        }
-        return null;
-    }
+=======
+  async validateUser(email: string, pass: string): Promise<any> {
+    try {
+      const user = await this.usersService.findOneByEmail(email);
 
+      if (user) {
+        if (!user.passwordHash) {
+          this.logger.error(`User ${user.email} has no passwordHash loaded!`);
+          return null;
+>>>>>>> origin/main
+        }
+
+        const isMatch = await bcrypt.compare(pass, user.passwordHash);
+
+        if (isMatch) {
+          // Suspended Gym Check
+          if (user.gym && user.gym.status === 'suspended') {
+            throw new UnauthorizedException('CUENTA/GYM SUSPENDIDO/A');
+          }
+
+          const { passwordHash, ...result } = user;
+          return result;
+        }
+      }
+      return null;
+    } catch (error) {
+      this.logger.error('ValidateUser Error:', error);
+      throw error;
+    }
+  }
+
+<<<<<<< HEAD
 
     async login(user: any) {
         const payload = { email: user.email, sub: user.id, role: user.role };
@@ -57,8 +86,25 @@ export class AuthService {
             access_token: this.jwtService.sign(payload),
             user: safeUser,
         };
+=======
+  async login(user: any) {
+    try {
+      const payload = { email: user.email, sub: user.id, role: user.role };
+      console.log('DEBUG: Signing JWT for', payload);
+      const token = this.jwtService.sign(payload);
+      console.log('DEBUG: Token signed successfully');
+      return {
+        access_token: token,
+        user: user,
+      };
+    } catch (e) {
+      console.error('LOGIN ERROR:', e);
+      throw e;
+>>>>>>> origin/main
     }
+  }
 
+<<<<<<< HEAD
     async register(createUserDto: CreateUserDto) {
         const user = await this.usersService.create(createUserDto);
         const { passwordHash, ...result } = user;
@@ -157,4 +203,11 @@ export class AuthService {
         const { createHash } = await import('crypto');
         return createHash('sha256').update(token).digest('hex');
     }
+=======
+  async register(createUserDto: CreateUserDto) {
+    const user = await this.usersService.create(createUserDto);
+    const { passwordHash, ...result } = user;
+    return result;
+  }
+>>>>>>> origin/main
 }

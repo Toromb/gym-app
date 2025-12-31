@@ -102,7 +102,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                        child: DropdownButtonFormField<String>(
-                        value: _genderController.text.isNotEmpty ? _genderController.text : null,
+                        initialValue: _genderController.text.isNotEmpty ? _genderController.text : null,
                         decoration: const InputDecoration(labelText: 'Sexo'),
                         items: const [
                           DropdownMenuItem(value: 'M', child: Text('Masculino')),

@@ -1,113 +1,126 @@
-import { IsEmail, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, MinLength, IsNumber, IsBoolean, IsDateString } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+  IsNumber,
+  IsBoolean,
+  IsDateString,
+} from 'class-validator';
 import { UserRole, PaymentStatus } from '../entities/user.entity';
 
 export class CreateUserDto {
-    @IsString()
-    @IsNotEmpty()
-    firstName: string;
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
 
-    @IsString()
-    @IsNotEmpty()
-    lastName: string;
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
 
-    @IsEmail()
-    email: string;
+  @IsEmail()
+  email: string;
 
-    @IsOptional()
-    @IsString()
-    @MinLength(6)
-    password?: string;
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  password?: string;
 
+  @IsOptional()
+  @IsString()
+  phone?: string;
 
-    @IsOptional()
-    @IsString()
-    phone?: string;
+  @IsOptional()
+  @IsInt()
+  age?: number;
 
-    @IsOptional()
-    @IsInt()
-    age?: number;
+  @IsOptional()
+  @IsString()
+  gender?: string;
 
-    @IsOptional()
-    @IsString()
-    gender?: string;
+  @IsOptional()
+  @IsString()
+  notes?: string;
 
-    @IsOptional()
-    @IsString()
-    notes?: string;
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole;
 
-    @IsOptional()
-    @IsEnum(UserRole)
-    role?: UserRole;
+  @IsOptional()
+  @IsNumber()
+  height?: number;
 
-    @IsOptional()
-    @IsNumber()
-    height?: number;
+  // Student Specific
+  @IsOptional()
+  @IsString()
+  trainingGoal?: string;
 
-    // Student Specific
-    @IsOptional()
-    @IsString()
-    trainingGoal?: string;
+  @IsOptional()
+  @IsString()
+  professorObservations?: string;
 
-    @IsOptional()
-    @IsString()
-    professorObservations?: string;
+  @IsOptional()
+  @IsNumber()
+  initialWeight?: number;
 
-    @IsOptional()
-    @IsNumber()
-    initialWeight?: number;
+  @IsOptional()
+  @IsNumber()
+  currentWeight?: number;
 
-    @IsOptional()
-    @IsNumber()
-    currentWeight?: number;
+  @IsOptional()
+  @IsDateString()
+  weightUpdateDate?: Date;
 
-    @IsOptional()
-    @IsDateString()
-    weightUpdateDate?: Date;
+  @IsOptional()
+  @IsString()
+  personalComment?: string;
 
-    @IsOptional()
-    @IsString()
-    personalComment?: string;
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 
-    @IsOptional()
-    @IsBoolean()
-    isActive?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  paysMembership?: boolean;
 
-    @IsOptional()
-    @IsDateString()
-    membershipStartDate?: Date;
+  @IsOptional()
+  @IsDateString()
+  membershipStartDate?: Date;
 
-    @IsOptional()
-    @IsDateString()
-    membershipExpirationDate?: Date;
+  @IsOptional()
+  @IsDateString()
+  membershipExpirationDate?: Date;
 
-    // Professor Specific
-    @IsOptional()
-    @IsString()
-    specialty?: string;
+  // Professor Specific
+  @IsOptional()
+  @IsString()
+  specialty?: string;
 
-    @IsOptional()
-    @IsString()
-    internalNotes?: string;
+  @IsOptional()
+  @IsString()
+  internalNotes?: string;
 
-    // Admin Specific
-    @IsOptional()
-    @IsString()
-    adminNotes?: string;
+  // Admin Specific
+  @IsOptional()
+  @IsString()
+  adminNotes?: string;
 
-    @IsOptional()
-    @IsEnum(PaymentStatus)
-    paymentStatus?: PaymentStatus;
+  @IsOptional()
+  @IsEnum(PaymentStatus)
+  paymentStatus?: PaymentStatus;
 
-    @IsOptional()
-    @IsDateString()
-    lastPaymentDate?: string; // string 'YYYY-MM-DD'
+  @IsOptional()
+  @IsDateString()
+  lastPaymentDate?: string; // string 'YYYY-MM-DD'
 
-    @IsOptional()
-    @IsString()
-    gymId?: string;
+  @IsOptional()
+  @IsString()
+  gymId?: string;
 
-    @IsOptional()
-    @IsString()
-    professorId?: string;
+  @IsOptional()
+  @IsString()
+  professorId?: string;
 }
-

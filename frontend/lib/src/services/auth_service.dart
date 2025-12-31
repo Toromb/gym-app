@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../utils/constants.dart';
+import 'api_client.dart';
+import 'api_exceptions.dart';
 
 class AuthService {
+  final ApiClient _api = ApiClient();
   final _storage = const FlutterSecureStorage();
 
   Future<void> _saveToken(String token) async {
@@ -14,15 +14,6 @@ class AuthService {
       await prefs.setString('jwt', token);
     } else {
       await _storage.write(key: 'jwt', value: token);
-    }
-  }
-
-  Future<String?> _readToken() async {
-    if (kIsWeb) {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('jwt');
-    } else {
-      return await _storage.read(key: 'jwt');
     }
   }
 
@@ -36,41 +27,31 @@ class AuthService {
   }
 
   Future<dynamic> login(String email, String password) async {
-    final url = '$baseUrl/auth/login';
-    debugPrint('AuthService: Requesting $url');
-    
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      );
+      final response = await _api.post('/auth/login', {
+          'email': email, 
+          'password': password
+      });
 
-      debugPrint('AuthService: Response Code ${response.statusCode}');
-
-      if (response.body.isEmpty) {
-         return 'Empty response from server';
+      // Response is parsed JSON (Map)
+      if (response == null || response is! Map) {
+         return 'Empty or invalid response from server';
       }
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        if (data['access_token'] == null) {
-           return 'No access token in response';
-        }
-        await _saveToken(data['access_token']);
-        return data; // Success Map
+      final token = response['access_token'];
+      if (token == null) {
+          return 'No access token in response';
       }
       
-      if (response.statusCode == 401) {
-        return 'invalidCredentials';
-      }
-      
-      return data['message'] ?? 'Login failed'; 
-    } catch (e, stack) {
-      debugPrint('Login error: $e');
-      debugPrint('$stack');
-      return 'Connection error';
+      await _saveToken(token);
+      return response;
+
+    } on UnauthorizedException {
+      return 'invalidCredentials';
+    } on ApiException catch (e) {
+       return e.message;
+    } catch (e) {
+      return 'Error: $e';
     }
   }
 
@@ -79,7 +60,11 @@ class AuthService {
   }
 
   Future<String?> getToken() async {
-    return await _readToken();
+    if (kIsWeb) {
+       final prefs = await SharedPreferences.getInstance();
+       return prefs.getString('jwt');
+    }
+    return await _storage.read(key: 'jwt');
   }
   Future<String?> activateAccount(String token, String password) async {
     final url = '$baseUrl/auth/activate-account';

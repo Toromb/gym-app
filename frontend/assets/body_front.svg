@@ -1,0 +1,34 @@
+<svg width="200" height="400" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Body Outline (Front) -->
+  <g id="body-front">
+    <!-- Head -->
+    <circle cx="100" cy="30" r="20" fill="#ddd" stroke="#999"/>
+    
+    <!-- Chest -->
+    <path id="chest" d="M70,60 L130,60 L120,90 L80,90 Z" fill="#eee" stroke="#333"/>
+    
+    <!-- Abs -->
+    <path id="abs" d="M82,90 L118,90 L115,130 L85,130 Z" fill="#eee" stroke="#333"/>
+    
+    <!-- Obliques -->
+    <path id="obliques" d="M70,90 L82,90 L85,130 L70,120 Z M130,90 L118,90 L115,130 L130,120 Z" fill="#eee" stroke="#333"/>
+    
+    <!-- Shoulders (Front) -->
+    <path id="shoulders" d="M50,60 L70,60 L70,80 L50,70 Z M150,60 L130,60 L130,80 L150,70 Z" fill="#eee" stroke="#333"/>
+    
+    <!-- Biceps -->
+    <path id="biceps" d="M50,70 L70,80 L65,100 L45,90 Z M150,70 L130,80 L135,100 L155,90 Z" fill="#eee" stroke="#333"/>
+    
+    <!-- Forearms -->
+    <path id="forearms" d="M45,100 L65,110 L55,130 L35,120 Z M155,100 L135,110 L145,130 L165,120 Z" fill="#eee" stroke="#333"/>
+    
+    <!-- Quads -->
+    <path id="quads" d="M75,140 L125,140 L120,200 L80,200 Z" fill="#eee" stroke="#333"/>
+    
+    <!-- Adductors -->
+    <path id="adductors" d="M95,145 L105,145 L103,180 L97,180 Z" fill="#eee" stroke="#333"/>
+    
+    <!-- Calves (Front?? Tibialis?) Usually Calves are back, but let's put generic lower leg -->
+    <path id="calves" d="M80,210 L120,210 L115,260 L85,260 Z" fill="#eee" stroke="#333"/>
+  </g>
+</svg>

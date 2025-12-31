@@ -28,7 +28,7 @@ class UserDetailScreen extends StatelessWidget {
               _buildSectionHeader(context, 'Estado de Membresía'),
               _buildDetailRow('Estado', _translatePaymentStatus(user.paymentStatus)),
               _buildDetailRow('Último Pago', user.lastPaymentDate ?? 'N/A'),
-              _buildDetailRow('Vencimiento', _calculateDueDate(user.lastPaymentDate)),
+              _buildDetailRow('Inicio de Membresia', user.membershipStartDate ?? 'N/A'),
               
               const Divider(height: 30),
               _buildSectionHeader(context, 'Información Física'),
@@ -110,15 +110,5 @@ class UserDetailScreen extends StatelessWidget {
     }
   }
 
-  String _calculateDueDate(String? lastPaymentDate) {
-    if (lastPaymentDate == null) return 'N/A';
-    try {
-      final date = DateTime.parse(lastPaymentDate);
-      final nextMonth = DateTime(date.year, date.month + 1, date.day);
-      // Logic: Same day next month is the due date.
-      return "${nextMonth.year}-${nextMonth.month.toString().padLeft(2, '0')}-${nextMonth.day.toString().padLeft(2, '0')}";
-    } catch (e) {
-      return 'Fecha Inválida';
-    }
-  }
+
 }

@@ -1,79 +1,86 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsEmail, IsInt } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsEmail,
+  IsInt,
+} from 'class-validator';
 import { GymPlan, GymStatus } from '../entities/gym.entity';
 
 export class CreateGymDto {
-    @IsString()
-    @IsNotEmpty()
-    businessName: string;
+  @IsString()
+  @IsNotEmpty()
+  businessName: string;
 
-    @IsString()
-    @IsNotEmpty()
-    address: string;
+  @IsString()
+  @IsNotEmpty()
+  address: string;
 
-    @IsOptional()
-    @IsString()
-    phone?: string;
+  @IsOptional()
+  @IsString()
+  phone?: string;
 
-    @IsOptional()
-    @IsEmail()
-    email?: string;
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 
-    @IsOptional()
-    @IsEnum(GymStatus)
-    status?: GymStatus;
+  @IsOptional()
+  @IsEnum(GymStatus)
+  status?: GymStatus;
 
-    @IsOptional()
-    @IsString()
-    suspensionReason?: string;
+  @IsOptional()
+  @IsString()
+  suspensionReason?: string;
 
-    @IsOptional()
-    @IsEnum(GymPlan)
-    subscriptionPlan?: GymPlan;
+  @IsOptional()
+  @IsEnum(GymPlan)
+  subscriptionPlan?: GymPlan;
 
-    @IsOptional()
-    expirationDate?: Date;
+  @IsOptional()
+  expirationDate?: Date;
 
-    @IsOptional()
-    @IsInt()
-    maxProfiles?: number;
+  @IsOptional()
+  @IsInt()
+  maxProfiles?: number;
 
-    @IsOptional()
-    @IsString()
-    logoUrl?: string;
+  @IsOptional()
+  @IsString()
+  logoUrl?: string;
 
-    @IsOptional()
-    @IsString()
-    primaryColor?: string;
+  @IsOptional()
+  @IsString()
+  primaryColor?: string;
 
-    @IsOptional()
-    @IsString()
-    secondaryColor?: string;
+  @IsOptional()
+  @IsString()
+  secondaryColor?: string;
 
-    @IsOptional()
-    @IsString()
-    welcomeMessage?: string;
+  @IsOptional()
+  @IsString()
+  welcomeMessage?: string;
 
-    @IsOptional()
-    @IsString()
-    openingHours?: string;
+  @IsOptional()
+  @IsString()
+  openingHours?: string;
 
-    @IsOptional()
-    @IsString()
-    paymentAlias?: string;
+  @IsOptional()
+  @IsString()
+  paymentAlias?: string;
 
-    @IsOptional()
-    @IsString()
-    paymentCbu?: string;
+  @IsOptional()
+  @IsString()
+  paymentCbu?: string;
 
-    @IsOptional()
-    @IsString()
-    paymentAccountName?: string;
+  @IsOptional()
+  @IsString()
+  paymentAccountName?: string;
 
-    @IsOptional()
-    @IsString()
-    paymentBankName?: string;
+  @IsOptional()
+  @IsString()
+  paymentBankName?: string;
 
-    @IsOptional()
-    @IsString()
-    paymentNotes?: string;
+  @IsOptional()
+  @IsString()
+  paymentNotes?: string;
 }

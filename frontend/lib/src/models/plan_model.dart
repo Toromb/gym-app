@@ -1,5 +1,67 @@
 import 'user_model.dart';
 
+
+
+class Equipment {
+  final String id;
+  final String name;
+
+  Equipment({required this.id, required this.name});
+
+  factory Equipment.fromJson(Map<String, dynamic> json) {
+    return Equipment(
+      id: json['id'],
+      name: json['name'],
+    );
+  }
+}
+
+class Muscle {
+  final String id;
+  final String name;
+  final String region;
+  final String bodySide;
+  final int order;
+
+  Muscle({
+    required this.id,
+    required this.name,
+    required this.region,
+    required this.bodySide,
+    required this.order,
+  });
+
+  factory Muscle.fromJson(Map<String, dynamic> json) {
+    return Muscle(
+      id: json['id'],
+      name: json['name'],
+      region: json['region'] ?? '',
+      bodySide: json['bodySide'] ?? '',
+      order: json['order'] ?? 0,
+    );
+  }
+}
+
+class ExerciseMuscle {
+  final String id;
+  final String role; // PRIMARY, SECONDARY, STABILIZER
+  final Muscle muscle;
+
+  ExerciseMuscle({
+    required this.id,
+    required this.role,
+    required this.muscle,
+  });
+
+  factory ExerciseMuscle.fromJson(Map<String, dynamic> json) {
+    return ExerciseMuscle(
+      id: json['id'],
+      role: json['role'],
+      muscle: Muscle.fromJson(json['muscle']),
+    );
+  }
+}
+
 class Exercise {
   final String id;
   final String name;
@@ -15,6 +77,23 @@ class Exercise {
   final String? rest;
   final String? load;
   final String? notes;
+  final List<ExerciseMuscle> muscles;
+  final List<Equipment> equipments;
+  
+  // Professional Change System Config
+  final double? loadFactor;
+  final int? defaultSets;
+  final int? minReps;
+  final int? maxReps;
+
+  // Metric fields
+  final String metricType; // 'REPS', 'TIME', 'DISTANCE'
+  final int? defaultTime;
+  final int? minTime;
+  final int? maxTime;
+  final double? defaultDistance;
+  final double? minDistance;
+  final double? maxDistance;
 
   Exercise({
     required this.id,
@@ -29,9 +108,27 @@ class Exercise {
     this.rest,
     this.load,
     this.notes,
+    this.muscles = const [],
+    this.equipments = const [],
+    this.loadFactor,
+    this.defaultSets,
+    this.minReps,
+    this.maxReps,
+    this.metricType = 'REPS',
+    this.defaultTime,
+    this.minTime,
+    this.maxTime,
+    this.defaultDistance,
+    this.minDistance,
+    this.maxDistance,
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
+    var musclesList = (json['exerciseMuscles'] as List<dynamic>?)
+            ?.map((e) => ExerciseMuscle.fromJson(e))
+            .toList() ??
+        [];
+
     return Exercise(
       id: json['id'],
       name: json['name'],
@@ -45,6 +142,22 @@ class Exercise {
       rest: json['rest'],
       load: json['load'],
       notes: json['notes'],
+      loadFactor: json['loadFactor'] != null ? (json['loadFactor'] as num).toDouble() : null,
+      defaultSets: json['defaultSets'],
+      minReps: json['minReps'],
+      maxReps: json['maxReps'],
+      muscles: musclesList,
+      equipments: (json['equipments'] as List<dynamic>?)
+              ?.map((e) => Equipment.fromJson(e))
+              .toList() ??
+          [],
+      metricType: json['metricType'] ?? 'REPS',
+      defaultTime: json['defaultTime'],
+      minTime: json['minTime'],
+      maxTime: json['maxTime'],
+      defaultDistance: json['defaultDistance'] != null ? (json['defaultDistance'] as num).toDouble() : null,
+      minDistance: json['minDistance'] != null ? (json['minDistance'] as num).toDouble() : null,
+      maxDistance: json['maxDistance'] != null ? (json['maxDistance'] as num).toDouble() : null,
     );
   }
 }
@@ -59,19 +172,25 @@ class PlanExercise {
   final String? rest;
   final String? notes;
   final String? videoUrl;
+  final int? targetTime; // New: For TIME exercises
+  final double? targetDistance; // New: For DISTANCE exercises
   int order;
+  final List<Equipment> equipments;
 
   PlanExercise({
     this.id,
     this.exercise,
     this.exerciseId,
     required this.sets,
-    required this.reps,
+    required this.reps, // Kept required for legacy, even if empty for Time
     this.suggestedLoad,
     this.rest,
     this.notes,
     this.videoUrl,
+    this.targetTime,
+    this.targetDistance,
     required this.order,
+    this.equipments = const [],
   });
 
   factory PlanExercise.fromJson(Map<String, dynamic> json) {
@@ -84,12 +203,19 @@ class PlanExercise {
       rest: json['rest'],
       notes: json['notes'],
       videoUrl: json['videoUrl'],
+      targetTime: json['targetTime'],
+      targetDistance: json['targetDistance'] != null ? (json['targetDistance'] as num).toDouble() : null,
       order: json['order'] ?? 0,
+      equipments: (json['equipments'] as List<dynamic>?)
+              ?.map((e) => Equipment.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'exerciseId': exerciseId ?? exercise?.id,
       'sets': sets,
       'reps': reps,
@@ -97,8 +223,42 @@ class PlanExercise {
       'rest': rest,
       'notes': notes,
       'videoUrl': videoUrl,
+      'targetTime': targetTime,
+      'targetDistance': targetDistance,
       'order': order,
+      'equipmentIds': equipments.map((e) => e.id).toList(),
     };
+  }
+}
+
+enum TrainingIntent {
+  STRENGTH,
+  HYPERTROPHY,
+  ENDURANCE,
+  GENERAL;
+
+  String get label {
+    switch (this) {
+      case TrainingIntent.STRENGTH: return 'Fuerza';
+      case TrainingIntent.HYPERTROPHY: return 'Hipertrofia';
+      case TrainingIntent.ENDURANCE: return 'Resistencia';
+      case TrainingIntent.GENERAL: return 'General';
+    }
+  }
+
+  // To/From String for API
+  static TrainingIntent fromString(String? key) {
+    if (key == null) return TrainingIntent.GENERAL;
+    switch (key.toUpperCase()) {
+      case 'STRENGTH': return TrainingIntent.STRENGTH;
+      case 'HYPERTROPHY': return TrainingIntent.HYPERTROPHY;
+      case 'ENDURANCE': return TrainingIntent.ENDURANCE;
+      default: return TrainingIntent.GENERAL;
+    }
+  }
+
+  String toApiString() {
+    return this.name.toUpperCase();
   }
 }
 
@@ -107,6 +267,7 @@ class PlanDay {
   final String? title;
   int dayOfWeek;
   int order;
+  final TrainingIntent trainingIntent;
   final String? dayNotes;
   final List<PlanExercise> exercises;
 
@@ -115,6 +276,7 @@ class PlanDay {
     this.title,
     required this.dayOfWeek,
     required this.order,
+    this.trainingIntent = TrainingIntent.GENERAL,
     this.dayNotes,
     required this.exercises,
   });
@@ -131,6 +293,7 @@ class PlanDay {
       title: json['title'],
       dayOfWeek: json['dayOfWeek'] ?? 0,
       order: json['order'] ?? 0,
+      trainingIntent: TrainingIntent.fromString(json['trainingIntent']),
       dayNotes: json['dayNotes'],
       exercises: exercisesList,
     );
@@ -141,6 +304,7 @@ class PlanDay {
       'title': title,
       'dayOfWeek': dayOfWeek,
       'order': order,
+      'trainingIntent': trainingIntent.toApiString(),
       'dayNotes': dayNotes,
       'exercises': exercises.map((e) => e.toJson()).toList(),
     };

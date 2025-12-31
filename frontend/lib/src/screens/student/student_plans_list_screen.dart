@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
-import '../../models/plan_model.dart'; // Keep for Plan refs if needed
+// Keep for Plan refs if needed
 import '../../models/student_assignment_model.dart';
 import '../../utils/app_colors.dart'; // Corrected path
 import 'package:intl/intl.dart';
 import '../../localization/app_localizations.dart';
 import '../shared/plan_details_screen.dart';
-import '../shared/day_detail_screen.dart';
 
 class StudentPlansListScreen extends StatefulWidget {
   const StudentPlansListScreen({super.key});
@@ -91,9 +90,9 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
                                   Container(
                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                      decoration: BoxDecoration(
-                                       color: AppColors.success.withOpacity(0.1), 
+                                       color: AppColors.success.withValues(alpha: 0.1), 
                                        borderRadius: BorderRadius.circular(20),
-                                       border: Border.all(color: AppColors.success.withOpacity(0.2)),
+                                       border: Border.all(color: AppColors.success.withValues(alpha: 0.2)),
                                      ),
                                      child: Text(
                                        AppLocalizations.of(context)!.get('statusActive'), 

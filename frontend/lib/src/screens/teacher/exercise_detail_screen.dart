@@ -76,6 +76,19 @@ class ExerciseDetailScreen extends StatelessWidget {
               const SizedBox(height: 10),
               Chip(label: Text(exercise.type!), backgroundColor: Colors.blue.shade50),
             ],
+            if (exercise.equipments.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                children: exercise.equipments.map((e) => 
+                  Chip(
+                    label: Text(e.name, style: const TextStyle(fontSize: 12)), 
+                    backgroundColor: Colors.orange.shade50,
+                    visualDensity: VisualDensity.compact,
+                  )
+                ).toList(),
+              )
+            ]
           ],
         ),
       ),
@@ -88,14 +101,42 @@ class ExerciseDetailScreen extends StatelessWidget {
       children: [
         Text('Valores por Defecto', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 10),
+        
+        // Métrica Label
+        if (exercise.metricType != 'REPS')
+            Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Chip(
+                    label: Text('Métrica: ${exercise.metricType}'), 
+                    backgroundColor: Colors.purple.shade50,
+                    avatar: Icon(
+                        exercise.metricType == 'TIME' ? Icons.timer : Icons.directions_run, 
+                        size: 16, color: Colors.purple
+                    ),
+                ),
+            ),
+
         Wrap(
           spacing: 16,
           runSpacing: 10,
           children: [
-            _buildInfoCard('Series', exercise.sets?.toString() ?? '-'),
-            _buildInfoCard('Reps', exercise.reps ?? '-'),
-            _buildInfoCard('Carga', exercise.load ?? '-'),
-            _buildInfoCard('Descanso', exercise.rest ?? '-'),
+             _buildInfoCard('Series', exercise.sets?.toString() ?? exercise.defaultSets?.toString() ?? '-'),
+             _buildInfoCard('Descanso', exercise.rest ?? '-'),
+             
+             if (exercise.metricType == 'REPS') ...[
+                _buildInfoCard('Reps', exercise.reps ?? '-'),
+                _buildInfoCard('Carga', exercise.load ?? '-'),
+                if (exercise.minReps != null) _buildInfoCard('Min Reps', exercise.minReps.toString()),
+                if (exercise.maxReps != null) _buildInfoCard('Max Reps', exercise.maxReps.toString()),
+             ] else if (exercise.metricType == 'TIME') ...[
+                _buildInfoCard('Tiempo', exercise.defaultTime != null ? '${exercise.defaultTime}s' : '-'),
+                if (exercise.minTime != null) _buildInfoCard('Min T', '${exercise.minTime}s'),
+                if (exercise.maxTime != null) _buildInfoCard('Max T', '${exercise.maxTime}s'),
+             ] else if (exercise.metricType == 'DISTANCE') ...[
+                _buildInfoCard('Distancia', exercise.defaultDistance != null ? '${exercise.defaultDistance}m' : '-'),
+                if (exercise.minDistance != null) _buildInfoCard('Min Dist', '${exercise.minDistance}m'),
+                if (exercise.maxDistance != null) _buildInfoCard('Max Dist', '${exercise.maxDistance}m'),
+             ]
           ],
         ),
       ],

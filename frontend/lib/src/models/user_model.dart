@@ -31,6 +31,7 @@ class User {
   final bool? isActive;
   final String? membershipStartDate;
   final String? membershipExpirationDate;
+  final bool? paysMembership;
 
   // Professor Specific
   final String? specialty;
@@ -69,6 +70,7 @@ class User {
     this.isActive,
     this.membershipStartDate,
     this.membershipExpirationDate,
+    this.paysMembership,
     this.specialty,
     this.internalNotes,
     this.adminNotes,
@@ -103,6 +105,7 @@ class User {
       isActive: json['isActive'],
       membershipStartDate: json['membershipStartDate'],
       membershipExpirationDate: json['membershipExpirationDate'],
+      paysMembership: json['paysMembership'],
       specialty: json['specialty'],
       internalNotes: json['internalNotes'],
       adminNotes: json['adminNotes'],
@@ -138,6 +141,7 @@ class User {
       isActive: isActive,
       membershipStartDate: membershipStartDate,
       membershipExpirationDate: membershipExpirationDate,
+      paysMembership: paysMembership,
       specialty: specialty,
       internalNotes: internalNotes,
       adminNotes: adminNotes,
@@ -171,6 +175,7 @@ class User {
       'isActive': isActive,
       'membershipStartDate': membershipStartDate,
       'membershipExpirationDate': membershipExpirationDate,
+      'paysMembership': paysMembership,
       'specialty': specialty,
       'internalNotes': internalNotes,
       'adminNotes': adminNotes,

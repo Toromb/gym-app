@@ -183,8 +183,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                child: _buildProfessorSection()
             ),
             if (_user!.role == AppRoles.admin) _buildSectionCard(
-               title: 'Información Administrativa',
-               icon: Icons.admin_panel_settings_outlined,
+               title: 'Bloc de Notas',
+               icon: Icons.edit_note,
                child: _buildAdminSection()
             ),
           ],
@@ -293,12 +293,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Expanded(
               child: _isEditing 
                 ? DropdownButtonFormField<String>(
-                    value: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
+                    initialValue: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
                     decoration: InputDecoration(
                        labelText: 'Género',
                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                        filled: true,
-                       fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                       fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     ),
                     items: const [
                         DropdownMenuItem(value: 'M', child: Text('Masculino')),
@@ -394,17 +394,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
+<<<<<<< HEAD
             color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           child: Row(
             children: [
+=======
+            color: _getPaymentColor(_user!).withAlpha(25), // Use helper for color
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _getPaymentColor(_user!)),
+          ),
+          child: Row(
+            children: [
+               Icon(_getPaymentIcon(_user!), color: _getPaymentColor(_user!)),
+               const SizedBox(width: 12),
+>>>>>>> origin/main
                Expanded(
                  child: Column(
                    crossAxisAlignment: CrossAxisAlignment.start,
                    children: [
+<<<<<<< HEAD
                       PaymentStatusBadge(status: _user!.paymentStatus, isEditable: false),
+=======
+                      Text('Estado: ${_getPaymentText(_user!)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+>>>>>>> origin/main
                       if (_user!.membershipExpirationDate != null)
                          Padding(
                            padding: const EdgeInsets.only(top: 8.0),
@@ -444,7 +459,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 8),
         _buildPermissionItem('Puede crear planes'),
         _buildPermissionItem('Puede asignar planes a alumnos'),
-        _buildPermissionItem('Puede crear usuarios alumno'),
+        _buildPermissionItem('Puede crear y editar ejercicios'),
       ],
     );
   }
@@ -467,7 +482,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
          _buildTextFieldWithLabel(
-          label: 'Notas Administrativas',
+          label: 'Mis Notas',
           controller: _adminNotesController,
           readOnly: !_isEditing,
           maxLines: 3,
@@ -480,7 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           contentPadding: EdgeInsets.zero,
           leading: Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
             child: const Icon(Icons.security, color: Colors.blue),
           ),
           title: const Text('Acceso Total al Sistema', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
@@ -508,9 +523,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
         prefixIcon: icon != null ? Icon(icon, size: 20) : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
-        fillColor: readOnly ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3) : Theme.of(context).colorScheme.surface,
+        fillColor: readOnly ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Theme.of(context).colorScheme.surface,
       ),
     );
+  }
+
+  Color _getPaymentColor(User user) {
+    if (user.paymentStatus == 'overdue') return Colors.red;
+    if (user.paymentStatus == 'pending') return Colors.amber;
+    return Colors.green;
+  }
+
+  IconData _getPaymentIcon(User user) {
+    if (user.paymentStatus == 'overdue') return Icons.error_outline;
+    if (user.paymentStatus == 'pending') return Icons.warning_amber_rounded;
+    return Icons.check_circle_outline;
+  }
+
+  String _getPaymentText(User user) {
+    if (user.paymentStatus == 'overdue') return 'Vencida';
+    if (user.paymentStatus == 'pending') return 'Por Vencer / Pendiente';
+    return 'Al Día';
   }
 
 }

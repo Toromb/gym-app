@@ -4,10 +4,15 @@ import 'package:flutter/services.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/gyms_provider.dart';
+<<<<<<< HEAD
 import '../../models/user_model.dart';
 import '../../models/gym_model.dart';
 import '../../services/auth_service.dart';
 import '../admin/edit_user_screen.dart';
+=======
+
+import '../../screens/admin/add_user_screen.dart';
+>>>>>>> origin/main
 
 class GymAdminsScreen extends StatefulWidget {
   const GymAdminsScreen({super.key});
@@ -32,6 +37,7 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
      context.read<UserProvider>().fetchUsers(role: AppRoles.admin, gymId: _selectedGymId);
   }
 
+<<<<<<< HEAD
   void _showAddAdminDialog() {
        final gyms = context.read<GymsProvider>().gyms;
        if (gyms.isEmpty) {
@@ -40,6 +46,9 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
        
        showDialog(context: context, builder: (ctx) => _AddAdminDialog(gyms: gyms, onSave: _fetchAdmins));
   }
+=======
+
+>>>>>>> origin/main
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +56,16 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
       appBar: AppBar(
         title: const Text('Manage Gym Admins'),
         actions: [
-          IconButton(icon: const Icon(Icons.add), onPressed: _showAddAdminDialog),
+          IconButton(
+            icon: const Icon(Icons.add), 
+            onPressed: () async {
+               await Navigator.push(
+                 context, 
+                 MaterialPageRoute(builder: (_) => const AddUserScreen(lockedRole: AppRoles.admin))
+               );
+               _fetchAdmins();
+            }
+          ),
         ],
       ),
       body: Column(
@@ -63,7 +81,7 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                   ),
-                  value: _selectedGymId,
+                  initialValue: _selectedGymId,
                   items: [
                     const DropdownMenuItem<String?>(
                         value: null, child: Text('All Gyms')),
@@ -92,6 +110,7 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
                            itemBuilder: (context, index) {
                                final admin = admins[index];
                                return ListTile(
+<<<<<<< HEAD
                                     title: Row(
                                       children: [
                                         Text(admin.name),
@@ -194,6 +213,52 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
                                         ),
                                       ],
                                     ),
+=======
+                                   title: Text(admin.name),
+                                   subtitle: Text('${admin.email}\nGym: ${admin.gymName ?? "N/A"}'),
+                                   trailing: Row(
+                                     mainAxisSize: MainAxisSize.min,
+                                     children: [
+                                       IconButton(
+                                         icon: const Icon(Icons.edit, color: Colors.blue),
+                                         onPressed: () async {
+                                           await Navigator.push(
+                                             context,
+                                             MaterialPageRoute(builder: (_) => AddUserScreen(userToEdit: admin, lockedRole: AppRoles.admin)),
+                                           );
+                                           _fetchAdmins();
+                                         },
+                                       ),
+                                       IconButton(
+                                           icon: const Icon(Icons.delete, color: Colors.red),
+                                           onPressed: () async {
+                                               final confirm = await showDialog<bool>(
+                                                  context: context,
+                                                  builder: (ctx) => AlertDialog(
+                                                    title: const Text('Confirmar Eliminación'),
+                                                    content: Text('¿Está seguro que desea eliminar al administrador ${admin.name}?'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () => Navigator.pop(ctx, false),
+                                                        child: const Text('Cancelar'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () => Navigator.pop(ctx, true),
+                                                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                                        child: const Text('Eliminar'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                               );
+                                               
+                                               if (confirm == true) {
+                                                  await provider.deleteUser(admin.id);
+                                               }
+                                           },
+                                       ),
+                                     ],
+                                   ),
+>>>>>>> origin/main
                                );
                            },
                        );
@@ -206,11 +271,8 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
   }
 }
 
-class _AddAdminDialog extends StatefulWidget {
-    final List<Gym> gyms;
-    final VoidCallback onSave;
-    const _AddAdminDialog({required this.gyms, required this.onSave});
 
+<<<<<<< HEAD
     @override
     State<_AddAdminDialog> createState() => _AddAdminDialogState();
 }
@@ -272,3 +334,5 @@ class _AddAdminDialogState extends State<_AddAdminDialog> {
         );
     }
 }
+=======
+>>>>>>> origin/main

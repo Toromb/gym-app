@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
-import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
+<<<<<<< HEAD
 import '../../services/auth_service.dart';
 import 'package:flutter/services.dart';
 import '../../models/plan_model.dart';
+=======
+>>>>>>> origin/main
 import '../../models/user_model.dart'; // Import User model for type checking
 import 'add_user_screen.dart';
 import 'edit_user_screen.dart';
@@ -62,7 +64,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
           // Filter Logic
           final filteredUsers = users.where((u) {
-            final matchesSearch = (u.firstName + ' ' + u.lastName).toLowerCase().contains(_searchQuery.toLowerCase()) || 
+            final matchesSearch = ('${u.firstName} ${u.lastName}').toLowerCase().contains(_searchQuery.toLowerCase()) || 
                                   u.email.toLowerCase().contains(_searchQuery.toLowerCase());
             
             if (!matchesSearch) return false;
@@ -131,7 +133,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
               filled: true,
-              fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             ),
             onChanged: (val) {
               setState(() {
@@ -141,13 +143,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _filterStatus,
+            initialValue: _filterStatus,
             decoration: InputDecoration(
               labelText: 'Estado de Cuota',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
               filled: true,
-              fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             ),
             items: const [
               DropdownMenuItem(value: 'all', child: Text('Todos')),
@@ -209,31 +211,32 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
     return users.map((user) {
       return Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2), // Compact margin
         elevation: 0,
         shape: RoundedRectangleBorder(
            borderRadius: BorderRadius.circular(12),
            side: BorderSide(color: colorScheme.outlineVariant),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Compact padding
           child: Column(
             children: [
                Row(
                  children: [
                     CircleAvatar(
                       backgroundColor: colorScheme.primary,
-                      radius: 24,
+                      radius: 20, // Smaller avatar
                       child: Text(
                         user.firstName.isNotEmpty ? user.firstName[0].toUpperCase() : '?',
                         style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+<<<<<<< HEAD
                             Row(
                               children: [
                                 Flexible(
@@ -262,6 +265,12 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                                 ),
                               ],
                             ),
+=======
+                           Text(
+                             '${user.firstName} ${user.lastName}',
+                             style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold), // Smaller title
+                           ),
+>>>>>>> origin/main
                            Text(
                              user.email,
                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
@@ -290,7 +299,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                  Container(
                    padding: const EdgeInsets.all(8),
                    decoration: BoxDecoration(
-                     color: colorScheme.secondaryContainer.withOpacity(0.3),
+                     color: colorScheme.secondaryContainer.withValues(alpha: 0.3),
                      borderRadius: BorderRadius.circular(8),
                    ),
                    child: Row(
@@ -309,6 +318,10 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                  children: [
                      // View Details
                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        iconSize: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                         icon: const Icon(Icons.visibility_outlined),
                         tooltip: 'Ver Detalles',
                         onPressed: () {
@@ -320,20 +333,36 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                             );
                         },
                       ),
+                      const SizedBox(width: 12),
                      
                      if ((isProfeView || isAdmin) && user.role == 'alumno') ...[
-                        if (isAdmin) 
+                        if (isAdmin) ...[
                          IconButton(
+                           visualDensity: VisualDensity.compact,
+                           iconSize: 20,
+                           padding: EdgeInsets.zero,
+                           constraints: const BoxConstraints(),
                            icon: const Icon(Icons.person_add_alt),
                            tooltip: 'Asignar Profesor',
                            onPressed: () => _showAssignProfessorDialog(context, user),
                          ),
+                         const SizedBox(width: 12),
+                        ],
                         IconButton(
+                          visualDensity: VisualDensity.compact,
+                          iconSize: 20,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                           icon: const Icon(Icons.assignment_add),
                           tooltip: 'Asignar Plan',
                           onPressed: () => _showAssignPlanDialog(context, user.id),
                         ),
+                        const SizedBox(width: 12),
                         IconButton(
+                          visualDensity: VisualDensity.compact,
+                          iconSize: 20,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                           icon: const Icon(Icons.list_alt),
                           tooltip: 'Gestionar Planes',
                           onPressed: () {
@@ -345,8 +374,10 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                             );
                           },
                         ),
+                        const SizedBox(width: 12),
                      ],
                      
+<<<<<<< HEAD
                       if (isAdmin)
                         PopupMenuButton<String>(
                           icon: const Icon(Icons.vpn_key),
@@ -396,6 +427,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                         ),
 
                       IconButton(
+=======
+                     IconButton(
+                       visualDensity: VisualDensity.compact,
+                       iconSize: 20,
+                       padding: EdgeInsets.zero,
+                       constraints: const BoxConstraints(),
+>>>>>>> origin/main
                        icon: const Icon(Icons.edit_outlined),
                        tooltip: 'Editar',
                        onPressed: () {
@@ -407,8 +445,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                          );
                        },
                      ),
+                     const SizedBox(width: 12),
                      
                       IconButton(
+                       visualDensity: VisualDensity.compact,
+                       iconSize: 20,
+                       padding: EdgeInsets.zero,
+                       constraints: const BoxConstraints(),
                        icon: Icon(Icons.delete_outline, color: colorScheme.error),
                        tooltip: 'Eliminar',
                        onPressed: () async {
@@ -485,14 +528,26 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
               child: const Text('Cancelar'),
             ),
             TextButton(
-              onPressed: () async {
+                onPressed: () async {
                 if (selectedPlanId != null) {
-                   final success = await context.read<PlanProvider>().assignPlan(selectedPlanId!, studentId);
+                   final error = await context.read<PlanProvider>().assignPlan(selectedPlanId!, studentId);
                    if (context.mounted) {
                      Navigator.pop(context);
-                     ScaffoldMessenger.of(context).showSnackBar(
-                       SnackBar(content: Text(success ? 'Plan assigned successfully' : 'Failed to assign plan')),
-                     );
+                     if (error == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Plan asignado exitosamente'), 
+                            backgroundColor: Colors.green
+                          ),
+                        );
+                     } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(error),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                     }
                    }
                 }
               },
@@ -565,7 +620,7 @@ class _AssignProfessorDialogState extends State<_AssignProfessorDialog> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                         DropdownButtonFormField<String>(
-                             value: _professors.any((p) => p.id == _selectedProfessorId) ? _selectedProfessorId : null,
+                             initialValue: _professors.any((p) => p.id == _selectedProfessorId) ? _selectedProfessorId : null,
                              decoration: const InputDecoration(
                                  labelText: 'Seleccionar Profesor',
                              ),
