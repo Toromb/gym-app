@@ -20,7 +20,6 @@ class AddUserScreen extends StatefulWidget {
 class _AddUserScreenState extends State<AddUserScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController(); 
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -228,7 +227,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                  // Membership options for Professor
                  if (_selectedRole == AppRoles.profe) ...[
                       SwitchListTile(
-                        title: const Text('Membresía Paga'),
+                        title: const Text('¿Paga Membresía?'),
                         subtitle: const Text('Define si este profesor abona membresía del sistema'),
                         value: _paysMembership,
                         onChanged: (val) => setState(() => _paysMembership = val),
@@ -274,10 +273,6 @@ class _AddUserScreenState extends State<AddUserScreen> {
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Email'),
                   validator: (value) => value!.isEmpty ? 'Requerido' : null,
-                ),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Contraseña'),
                 ),
                 TextFormField(
                   controller: _phoneController,
@@ -336,16 +331,14 @@ class _AddUserScreenState extends State<AddUserScreen> {
                                     'membershipStartDate': _membershipDateController.text.isNotEmpty ? _membershipDateController.text : null,
                                     'paysMembership': _paysMembership,
                                 };
-                                if (_passwordController.text.isNotEmpty) {
-                                    data['password'] = _passwordController.text;
-                                }
+
 
                                 success = await context.read<UserProvider>().updateUser(widget.userToEdit!.id, data);
                             } else {
                                 // CREATE MODE
                                 success = await context.read<UserProvider>().addUser(
                                   email: _emailController.text,
-                                  password: _passwordController.text.isEmpty ? '123456' : _passwordController.text,
+                                  // Password not sent, handled by backend generator + email
                                   firstName: _firstNameController.text,
                                   lastName: _lastNameController.text,
                                   phone: _phoneController.text,

@@ -14,7 +14,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _ageController = TextEditingController();
   final _genderController = TextEditingController();
@@ -70,12 +69,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Email'),
-                  validator: (value) => value!.isEmpty ? 'Requerido' : null,
-                ),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Contraseña'),
-                  obscureText: true,
                   validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
                 Row(
@@ -148,7 +141,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                             setState(() => _isLoading = true);
                             final success = await context.read<UserProvider>().addStudent(
                                   email: _emailController.text,
-                                  password: _passwordController.text,
+                                  // Password not sent, handled by backend
                                   firstName: _firstNameController.text,
                                   lastName: _lastNameController.text,
                                   phone: _phoneController.text,

@@ -39,8 +39,25 @@ export class User {
   email: string;
 
   @Exclude()
-  @Column({ select: false })
-  passwordHash: string;
+  @Column({ type: 'varchar', select: false, nullable: true })
+  passwordHash: string | null;
+
+  @Exclude()
+  @Column({ type: 'varchar', nullable: true, select: false })
+  activationTokenHash: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  activationTokenExpires: Date | null;
+
+  @Exclude()
+  @Column({ type: 'varchar', nullable: true, select: false })
+  resetTokenHash: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetTokenExpires: Date | null;
+
+  @Column({ default: false })
+  isActive: boolean;
 
   @Column({ nullable: true })
   phone: string;
@@ -75,9 +92,6 @@ export class User {
 
   @Column({ type: 'text', nullable: true })
   personalComment: string;
-
-  @Column({ default: true })
-  isActive: boolean;
 
   @Column({ type: 'date', nullable: true })
   membershipStartDate: Date;

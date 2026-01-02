@@ -22,7 +22,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   late TextEditingController _ageController;
   late TextEditingController _notesController;
   late TextEditingController _lastPaymentDateController;
-  late TextEditingController _passwordController;
+  late TextEditingController _membershipDateController; // Added membership start date controller
   
   late String _selectedRole;
   late String _selectedGender;
@@ -45,7 +45,9 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _ageController = TextEditingController(text: widget.user.age?.toString() ?? '');
     _notesController = TextEditingController(text: widget.user.notes ?? '');
     _lastPaymentDateController = TextEditingController(text: widget.user.lastPaymentDate ?? '');
-    _passwordController = TextEditingController(); // Empty default
+    
+    // Handle Membership Start Date
+    _membershipDateController = TextEditingController(text: widget.user.membershipStartDate?.split('T')[0] ?? '');
     
     _selectedRole = widget.user.role;
     _selectedProfessorId = widget.user.professorId;
@@ -105,7 +107,6 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _ageController.dispose();
     _notesController.dispose();
     _lastPaymentDateController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
@@ -162,12 +163,44 @@ class _EditUserScreenState extends State<EditUserScreen> {
                  // Membership options for Professor
                  if (_selectedRole.toLowerCase() == UserRoles.profe.toLowerCase()) ...[
                       SwitchListTile(
-                        title: const Text('Membresía Paga'),
+                        title: const Text('¿Paga Membresía?'),
                         subtitle: const Text('Define si este profesor abona membresía del sistema'),
                         value: _paysMembership,
                         onChanged: (val) => setState(() => _paysMembership = val),
                       ),
                       const SizedBox(height: 16),
+                 ],
+
+                 if (_paysMembership) ...[
+                     TextFormField(
+                       controller: _membershipDateController,
+                       decoration: const InputDecoration(
+                         labelText: 'Fecha Inicio Membresía (YYYY-MM-DD)',
+                         hintText: 'Selecciona la fecha',
+                         suffixIcon: Icon(Icons.calendar_today),
+                       ),
+                       readOnly: true,
+                       onTap: () async {
+                           final DateTime? picked = await showDatePicker(
+                             context: context,
+                             initialDate: DateTime.now(),
+                             firstDate: DateTime(2000),
+                             lastDate: DateTime(2101),
+                           );
+                           if (picked != null) {
+                             setState(() {
+                               _membershipDateController.text = picked.toIso8601String().split('T')[0];
+                             });
+                           }
+                       },
+                       validator: (value) {
+                           if (_paysMembership) {
+                              return value == null || value.isEmpty ? 'Requerido si paga membresía' : null;
+                           }
+                           return null;
+                       },
+                     ),
+                     const SizedBox(height: 16),
                  ],
 
                 TextFormField(
@@ -186,14 +219,6 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
                 // Password Field - One instance only
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nueva Contraseña (Opcional)',
-                    helperText: 'Dejar vacío para mantener la actual',
-                  ),
-                  obscureText: true,
-                ),
                 TextFormField(
                   controller: _phoneController,
                   decoration: const InputDecoration(labelText: 'Teléfono'),
@@ -274,15 +299,14 @@ class _EditUserScreenState extends State<EditUserScreen> {
                               'gender': _selectedGender,
                               'notes': _notesController.text,
                               'paymentStatus': _paymentStatus,
+                              'paymentStatus': _paymentStatus,
                               'lastPaymentDate': _lastPaymentDateController.text.isEmpty ? null : _lastPaymentDateController.text,
+                              'membershipStartDate': _membershipDateController.text.isNotEmpty ? _membershipDateController.text : null,
                               // Send professorId (null if explicitly unassigned)
                               'professorId': _selectedProfessorId,
                               'paysMembership': _paysMembership, 
                             };
                             
-                            if (_passwordController.text.isNotEmpty) {
-                                updateData['password'] = _passwordController.text;
-                            }
 
                             final success = await context.read<UserProvider>().updateUser(
                                   widget.user.id,

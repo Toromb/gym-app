@@ -4,6 +4,9 @@ import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
+import '../../services/auth_service.dart';
+import 'package:flutter/services.dart';
+import '../../models/plan_model.dart';
 import '../../models/user_model.dart'; // Import User model for type checking
 import 'add_user_screen.dart';
 import 'edit_user_screen.dart';
@@ -230,10 +233,34 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                           Text(
-                             '${user.firstName} ${user.lastName}',
-                             style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold), // Smaller title
-                           ),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    '${user.firstName} ${user.lastName}',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: (user.isActive == true) ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: (user.isActive == true) ? Colors.green : Colors.orange, width: 0.5),
+                                  ),
+                                  child: Text(
+                                    (user.isActive == true) ? 'Activo' : 'Pendiente',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: (user.isActive == true) ? Colors.green : Colors.orange,
+                                      fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                            Text(
                              user.email,
                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
@@ -340,6 +367,48 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                         const SizedBox(width: 12),
                      ],
                      
+                      if (isAdmin)
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.vpn_key),
+                          tooltip: 'Opciones de Cuenta',
+                          onSelected: (value) async {
+                             final authService = AuthService(); // Instantiate locally
+                             String? token;
+                             String path = '';
+                             
+                             if (value == 'activation') {
+                                token = await authService.generateActivationToken(user.id);
+                             } else if (value == 'reset') {
+                                token = await authService.generateResetToken(user.id);
+                             }
+
+                             if (token != null && context.mounted) {
+                                final String link = (value == 'activation')
+                                    ? authService.getActivationUrl(token)
+                                    : authService.getResetUrl(token);
+
+                                await Clipboard.setData(ClipboardData(text: link));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Enlace copiado al portapapeles')),
+                                );
+                             } else if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Error al generar enlace'), backgroundColor: Colors.red),
+                                );
+                             }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'activation',
+                              child: Text('Copiar Link Activación'),
+                            ),
+                             const PopupMenuItem(
+                              value: 'reset',
+                              child: Text('Copiar Link Recuperación'),
+                            ),
+                          ],
+                        ),
+
                      IconButton(
                        visualDensity: VisualDensity.compact,
                        iconSize: 20,

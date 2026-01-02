@@ -1,0 +1,158 @@
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +6ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mServeStaticModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +19ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mNotificationsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmCoreModule dependencies initialized[39m[38;5;3m +69ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPaymentsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStatsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mGymsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mExercisesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mGymScheduleModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPlansModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 22452  - [39m31/12/2025, 13:06:18 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+--- Inspecting Admins ---
+Found 2 admins.
+Checking Admin: admin@gym.com (4115d4a9-d7ce-4286-9355-aca083327c02)
+findOneByEmail RESULT: User {
+  id: '4115d4a9-d7ce-4286-9355-aca083327c02',
+  firstName: 'Admin',
+  lastName: 'User',
+  email: 'admin@gym.com',
+  passwordHash: '$2b$10$KIPFkfU5qttJl6V972kzpOOMDU31ETt8vyQd7SCkfj7POMUqPPOxq',
+  activationTokenHash: undefined,
+  activationTokenExpires: null,
+  resetTokenHash: undefined,
+  resetTokenExpires: null,
+  isActive: true,
+  phone: null,
+  age: null,
+  gender: null,
+  notes: null,
+  height: null,
+  trainingGoal: null,
+  professorObservations: null,
+  initialWeight: null,
+  currentWeight: null,
+  weightUpdateDate: null,
+  personalComment: null,
+  membershipStartDate: null,
+  membershipExpirationDate: null,
+  specialty: null,
+  internalNotes: null,
+  adminNotes: null,
+  role: 'admin',
+  paymentStatus: 'pending',
+  paysMembership: true,
+  lastPaymentDate: null,
+  createdAt: 2025-12-24T07:44:38.905Z,
+  updatedAt: 2025-12-24T07:44:38.905Z,
+  studentPlans: undefined,
+  professor: undefined,
+  students: undefined,
+  gym: Gym {
+    id: '78ed2d60-46d3-4a04-ad9d-cda86ce3361b',
+    businessName: 'Default Gym',
+    address: 'System',
+    phone: null,
+    email: 'system@default.com',
+    status: 'active',
+    suspensionReason: null,
+    subscriptionPlan: 'basic',
+    expirationDate: null,
+    maxProfiles: 1000,
+    logoUrl: null,
+    primaryColor: null,
+    secondaryColor: null,
+    welcomeMessage: null,
+    openingHours: null,
+    paymentAlias: null,
+    paymentCbu: null,
+    paymentAccountName: null,
+    paymentBankName: null,
+    paymentNotes: null,
+    createdAt: 2025-12-24T07:44:38.805Z,
+    updatedAt: 2025-12-24T07:44:38.805Z,
+    users: undefined
+  }
+}
+PasswordHash present? true
+PaymentStatus calculated: pending
+---------------------------
+Checking Admin: admin@prueba.com (09903f9a-78d6-4799-9977-8a138731fbb6)
+findOneByEmail RESULT: User {
+  id: '09903f9a-78d6-4799-9977-8a138731fbb6',
+  firstName: 'prueba',
+  lastName: 'admin',
+  email: 'admin@prueba.com',
+  passwordHash: '$2b$10$6/JhdEyLdwOudnkkVYBmBOG1Py/dp5a7lOVWK2UtxLaXUohgosD5a',
+  activationTokenHash: undefined,
+  activationTokenExpires: null,
+  resetTokenHash: undefined,
+  resetTokenExpires: null,
+  isActive: true,
+  phone: '123123123',
+  age: 34,
+  gender: 'M',
+  notes: '',
+  height: null,
+  trainingGoal: null,
+  professorObservations: null,
+  initialWeight: null,
+  currentWeight: null,
+  weightUpdateDate: null,
+  personalComment: null,
+  membershipStartDate: null,
+  membershipExpirationDate: null,
+  specialty: null,
+  internalNotes: null,
+  adminNotes: null,
+  role: 'admin',
+  paymentStatus: 'pending',
+  paysMembership: true,
+  lastPaymentDate: null,
+  createdAt: 2025-12-26T07:01:17.490Z,
+  updatedAt: 2025-12-26T07:01:17.490Z,
+  studentPlans: undefined,
+  professor: undefined,
+  students: undefined,
+  gym: Gym {
+    id: '37488b6c-3352-4691-b4c6-8a3c4980b71b',
+    businessName: 'Prueba',
+    address: 'GYM',
+    phone: null,
+    email: 'prueba@prueba.com',
+    status: 'active',
+    suspensionReason: null,
+    subscriptionPlan: 'basic',
+    expirationDate: null,
+    maxProfiles: 50,
+    logoUrl: null,
+    primaryColor: null,
+    secondaryColor: null,
+    welcomeMessage: null,
+    openingHours: null,
+    paymentAlias: null,
+    paymentCbu: null,
+    paymentAccountName: null,
+    paymentBankName: null,
+    paymentNotes: null,
+    createdAt: 2025-12-26T07:00:21.962Z,
+    updatedAt: 2025-12-26T07:00:21.962Z,
+    users: undefined
+  }
+}
+PasswordHash present? true
+PaymentStatus calculated: pending
+---------------------------

@@ -25,9 +25,12 @@ class AuthProvider with ChangeNotifier {
     final result = await _authService.login(email, password);
     
     if (result is Map<String, dynamic>) {
+      print('AuthProvider login result: $result'); // Debug log
       _token = result['access_token'];
       if (result['user'] != null) {
         _user = User.fromJson(result['user']);
+      } else {
+        print('AuthProvider Error: User object is NULL in login response');
       }
       _isAuthenticated = true;
       notifyListeners();
@@ -44,6 +47,10 @@ class AuthProvider with ChangeNotifier {
     _user = null;
     notifyListeners();
   }
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    await _authService.changePassword(currentPassword, newPassword);
+  }
+
   void updateGym(Gym updatedGym) {
      if (_user != null) {
         _user = _user!.copyWith(gym: updatedGym);

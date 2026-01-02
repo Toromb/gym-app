@@ -16,7 +16,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'src/localization/app_localizations.dart';
 import 'src/providers/theme_provider.dart';
 
-// Trigger Reload
+import 'src/screens/public/activate_account_screen.dart';
+
 void main() {
   runApp(
     MultiProvider(
@@ -120,6 +121,31 @@ class MyApp extends StatelessWidget {
             );
           },
           home: auth.isAuthenticated ? const HomeScreen() : const LoginScreen(),
+          onGenerateRoute: (settings) {
+            // Handle /activate-account?token=...
+            // Handle /reset-password?token=...
+            final uri = Uri.parse(settings.name ?? '');
+            
+            if (uri.path == '/activate-account') {
+              final token = uri.queryParameters['token'];
+              return MaterialPageRoute(
+                builder: (_) => ActivateAccountScreen(token: token, mode: 'activate'),
+              );
+            }
+            
+            if (uri.path == '/reset-password') {
+              final token = uri.queryParameters['token'];
+              return MaterialPageRoute(
+                builder: (_) => ActivateAccountScreen(token: token, mode: 'reset'),
+              );
+            }
+
+            if (uri.path == '/login') {
+               return MaterialPageRoute(builder: (_) => const LoginScreen());
+            }
+
+            return null; // Let home take precedence or default
+          },
         );
       },
     );

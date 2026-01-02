@@ -7,6 +7,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Exclude } from 'class-transformer';
 
 export enum GymPlan {
   BASIC = 'basic', // 0-50
@@ -95,6 +96,7 @@ export class Gym {
   @UpdateDateColumn()
   updatedAt: Date;
 
+  @Exclude()
   @OneToMany(() => User, (user) => user.gym)
   users: User[];
 }
