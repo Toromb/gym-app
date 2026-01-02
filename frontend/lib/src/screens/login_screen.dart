@@ -147,27 +147,16 @@ class _LoginScreenState extends State<LoginScreen> {
                               
                               if (!mounted) return;
                               setState(() => _isLoading = false);
-<<<<<<< HEAD
                               if (errorMsg == null && mounted) {
                                 // Clear stale data
-=======
-                              
-                              if (errorMsg == null) {
-                                // Clear stale data from previous users (e.g. Admin -> Profe)
->>>>>>> origin/main
                                 context.read<UserProvider>().clear();
                                 
-<<<<<<< HEAD
                                 // Explicitly navigate to HomeScreen
                                 Navigator.of(context).pushAndRemoveUntil(
                                   MaterialPageRoute(builder: (_) => const HomeScreen()),
                                   (route) => false
                                 );
                               } else if (mounted) {
-=======
-                                // Success - Logic handled by AuthWrapper
-                              } else {
->>>>>>> origin/main
                                   final isInvalidCreds = errorMsg == 'invalidCredentials';
                                   final displayMsg = isInvalidCreds 
                                       ? AppLocalizations.of(context)!.invalidCredentials

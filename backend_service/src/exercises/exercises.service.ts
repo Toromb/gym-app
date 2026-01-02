@@ -8,6 +8,7 @@ import { CreateExerciseDto, ExerciseMuscleDto } from './dto/create-exercise.dto'
 import { User } from '../users/entities/user.entity';
 import { UpdateExerciseDto } from './dto/update-exercise.dto';
 import { Equipment } from './entities/equipment.entity';
+import { BASE_EXERCISES } from './constants/base-exercises';
 
 @Injectable()
 export class ExercisesService {
@@ -230,6 +231,40 @@ export class ExercisesService {
   }
 
   async cloneBaseExercises(gym: any): Promise<void> {
-    console.log('Clone Base Exercises Not Implemented via Service update');
+    const allMuscles = await this.musclesRepository.find();
+    const muscleMap = new Map<string, Muscle>();
+    allMuscles.forEach(m => muscleMap.set(m.name, m));
+
+    for (const base of BASE_EXERCISES) {
+      // 1. Create Exercise
+      const exercise = this.exercisesRepository.create({
+        name: base.name,
+        description: base.description,
+        videoUrl: '',
+        imageUrl: '',
+        metricType: 'REPS',
+        gym: gym,
+        muscleGroup: base.muscles.find(m => m.role === 'PRIMARY')?.name || undefined
+      });
+
+      // Valid casting to ensure it's treated as a single entity
+      const saved = (await this.exercisesRepository.save(exercise)) as Exercise;
+
+      // 2. Create ExerciseMuscles
+      for (const m of base.muscles) {
+        const muscleEntity = muscleMap.get(m.name);
+        if (muscleEntity) {
+          const em = this.exerciseMuscleRepository.create({
+            exercise: saved,
+            muscle: muscleEntity,
+            role: m.role as MuscleRole,
+            loadPercentage: m.loadPercentage
+          });
+          await this.exerciseMuscleRepository.save(em);
+        } else {
+          console.warn(`[cloneBaseExercises] Muscle not found: ${m.name}`);
+        }
+      }
+    }
   }
 }

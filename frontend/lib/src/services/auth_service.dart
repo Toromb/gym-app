@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../utils/constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -98,8 +101,8 @@ class AuthService {
     }
   }
 
-  Future<String?> generateActivationLink(String userId) async {
-     final token = await _readToken();
+  Future<String?> generateActivationToken(String userId) async {
+     final token = await getToken();
      if (token == null) return null;
 
      final url = '$baseUrl/auth/generate-activation-link';
@@ -123,8 +126,8 @@ class AuthService {
      }
   }
 
-  Future<String?> generateResetLink(String userId) async {
-     final token = await _readToken();
+  Future<String?> generateResetToken(String userId) async {
+     final token = await getToken();
      if (token == null) return null;
 
      final url = '$baseUrl/auth/generate-reset-link';
@@ -146,5 +149,40 @@ class AuthService {
        debugPrint('Error generating reset link: $e');
        return null;
      }
+  }
+
+  String getActivationUrl(String token) {
+    String origin = Uri.base.origin;
+    // Fallback for non-web or weird environments, though typically Uri.base.origin is safe in Flutter Web
+    if (origin.isEmpty || origin == 'null') origin = 'http://localhost:3000';
+    return '$origin/#/activate-account?token=$token';
+  }
+
+  String getResetUrl(String token) {
+    String origin = Uri.base.origin;
+    if (origin.isEmpty || origin == 'null') origin = 'http://localhost:3000';
+    return '$origin/#/reset-password?token=$token';
+  }
+
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    final token = await getToken();
+    if (token == null) throw ApiException('No authenticated session');
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/change-password'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      }),
+    );
+
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      final body = jsonDecode(response.body);
+      throw ApiException(body['message'] ?? 'Error changing password');
+    }
   }
 }

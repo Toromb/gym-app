@@ -394,32 +394,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-<<<<<<< HEAD
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           child: Row(
             children: [
-=======
-            color: _getPaymentColor(_user!).withAlpha(25), // Use helper for color
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _getPaymentColor(_user!)),
-          ),
-          child: Row(
-            children: [
-               Icon(_getPaymentIcon(_user!), color: _getPaymentColor(_user!)),
-               const SizedBox(width: 12),
->>>>>>> origin/main
                Expanded(
                  child: Column(
                    crossAxisAlignment: CrossAxisAlignment.start,
                    children: [
-<<<<<<< HEAD
                       PaymentStatusBadge(status: _user!.paymentStatus, isEditable: false),
-=======
-                      Text('Estado: ${_getPaymentText(_user!)}', style: const TextStyle(fontWeight: FontWeight.bold)),
->>>>>>> origin/main
                       if (_user!.membershipExpirationDate != null)
                          Padding(
                            padding: const EdgeInsets.only(top: 8.0),
@@ -431,7 +416,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         )
-
       ],
     );
   }
@@ -528,22 +512,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Color _getPaymentColor(User user) {
-    if (user.paymentStatus == 'overdue') return Colors.red;
-    if (user.paymentStatus == 'pending') return Colors.amber;
-    return Colors.green;
-  }
 
-  IconData _getPaymentIcon(User user) {
-    if (user.paymentStatus == 'overdue') return Icons.error_outline;
-    if (user.paymentStatus == 'pending') return Icons.warning_amber_rounded;
-    return Icons.check_circle_outline;
-  }
-
-  String _getPaymentText(User user) {
-    if (user.paymentStatus == 'overdue') return 'Vencida';
-    if (user.paymentStatus == 'pending') return 'Por Vencer / Pendiente';
-    return 'Al Día';
-  }
 
 }

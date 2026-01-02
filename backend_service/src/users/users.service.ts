@@ -18,28 +18,21 @@ export class UsersService {
     private gymsService: GymsService,
   ) { }
 
-<<<<<<< HEAD
-    async create(createUserDto: CreateUserDto, creator?: User): Promise<User> {
-        const { password, gymId, professorId, ...rest } = createUserDto;
-
-        let passwordHash = null;
-        let isActive = false;
-
-        if (password) {
-            passwordHash = await bcrypt.hash(password, 10);
-            isActive = true; // If created with password, assume active (or respect DTO)
-        }
-
-        // Respect DTO isActive if provided, otherwise default to logic above
-        if (createUserDto.isActive !== undefined) {
-            isActive = createUserDto.isActive;
-        }
-=======
   async create(createUserDto: CreateUserDto, creator?: User): Promise<User> {
     const { password, gymId, professorId, ...rest } = createUserDto;
-    const passwordToHash = password || '123456'; // Default password
-    const passwordHash = await bcrypt.hash(passwordToHash, 10);
->>>>>>> origin/main
+
+    let passwordHash = null;
+    let isActive = false;
+
+    if (password) {
+      passwordHash = await bcrypt.hash(password, 10);
+      isActive = true;
+    }
+
+    // Respect DTO isActive if provided, otherwise default to logic above
+    if (createUserDto.isActive !== undefined) {
+      isActive = createUserDto.isActive;
+    }
 
     let gym = null;
     if (gymId) {
@@ -56,18 +49,11 @@ export class UsersService {
       });
     }
 
-<<<<<<< HEAD
-        const user = this.usersRepository.create({
-            ...rest,
-            passwordHash: passwordHash as any, // TypeORM nullable
-            isActive,
-            professor: professor || undefined,
-            gym: gym || undefined,
-=======
     const user = this.usersRepository.create({
       ...rest,
-      passwordHash,
-      professor: professor || undefined, // TypeORM create usually prefers undefined over null for "not set", but allows null for "empty relation"
+      passwordHash: passwordHash as any,
+      isActive,
+      professor: professor || undefined,
       gym: gym || undefined,
     });
     return this.usersRepository.save(user);
@@ -101,14 +87,8 @@ export class UsersService {
 
     // Inject computed status
     return users.map((u) => {
-      // TS ignore or DTO usage would be cleaner, but modifying entity is fine for JSON serialization if @AfterLoad not used
-      // Actually, typeorm entities are objects.
-      // TS ignore or DTO usage would be cleaner, but modifying entity is fine for JSON serialization if @AfterLoad not used
-      // Actually, typeorm entities are objects.
-
       // Calculate status for everyone, handling exemption inside the method
       u.paymentStatus = this.calculatePaymentStatus(u) as any;
-
       return u;
     });
   }
@@ -148,6 +128,15 @@ export class UsersService {
     return user;
   }
 
+  async findOneWithSecrets(id: string): Promise<User | null> {
+    const user = await this.usersRepository.createQueryBuilder('user')
+      .addSelect('user.passwordHash')
+      .where('user.id = :id', { id })
+      .getOne();
+
+    return user;
+  }
+
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.findOne(id);
     if (!user) {
@@ -165,7 +154,6 @@ export class UsersService {
       } else {
         user.professor = await this.usersRepository.findOne({
           where: { id: professorId },
->>>>>>> origin/main
         });
       }
     }
@@ -213,68 +201,20 @@ export class UsersService {
     const now = new Date();
     let targetMonth: Date;
 
-    // Determine the target month for the new expiration.
-    // Rule:
-    // 1. If currently expired (or null expiration), the new expiration should be NEXT month from TODAY (but respecting anchor day).
-    //    Actually, more fair:
-    //    - If expired Long ago: Restart cycle from Today? --> User said "The date is determined by start date".
-    //    - Strict interpretation: If I started on Jan 5th, I always pay for "5th to 5th".
-    //      If I pay on March 10th (late), I am arguably paying for "March 5th - April 5th" (retroactive) OR "April 5th - May 5th"?
-    //      Most gyms do: "You pay for the upcoming month".
-    //      If I am expired, and I pay today (March 10), and my anchor is 5.
-    //      Should it expire April 5 (less than a month)? Or May 5?
-    //      Let's assume "Next occurence of Anchor Day that is at least ~28 days away?"
-    //      OR simpler: "One month from the *Current Expiration Date* if it's in the future".
-    //      "One month from *Today* aligned to Anchor" if it's in the past.
-
-    // Plan:
-    // A. If user has active expiration in future -> Add 1 month to THAT date.
-    // B. If user is expired -> Calculate next occurrence of Anchor Day that is at least 1 month from Last Valid Period?
-    //    Or simply: New Expiration = (Today + 1 Month) aligned to Anchor Day.
-
-    // Let's go with a robust approach for "Cycle Maintenance":
-
     const validExpiration = user.membershipExpirationDate
       ? new Date(user.membershipExpirationDate)
       : null;
 
     if (validExpiration && validExpiration > now) {
       // Case A: Not expired yet. Extend from current expiration.
-      // e.g. Expires April 5. Paid today (March 20). New Exp: May 5.
       targetMonth = new Date(validExpiration);
       targetMonth.setMonth(targetMonth.getMonth() + 1);
     } else {
       // Case B: Expired or First Time.
-      // We want the new expiration to be in the future, respecting the anchor day.
-      // Start from Today. Move to next month. Set Day.
       targetMonth = new Date(now);
       targetMonth.setMonth(targetMonth.getMonth() + 1);
-
-      // Adjust day
-      // If resulting month has fewer days than anchorDay (e.g. Feb 28 vs 30), JS auto-adjusts to Mar 2.
-      // We usually want to stick to the month.
-      // setDate handles overflow, but let's try to set strictly.
       targetMonth.setDate(anchorDay);
-
-      // If the adjustment pushed us deeper (e.g. Feb 30 -> Mar 2), and we wanted Feb end...
-      // Complexity: standardized 30 days or calendar strict?
-      // Simple JS setDate is usually accepted behavior for simple apps.
-      // BUT, if Today is Jan 30, Anchor is 5.
-      // targetMonth (Feb 30) -> March 2. Set Day 5 -> March 5.
-      // Result: Paid Jan 30, Expire March 5. (> 1 month). Correct.
-
-      // What if Today is Jan 20. Anchor is 25.
-      // targetMonth (Feb 20). Set Day 25. -> Feb 25.
-      // Result: Paid Jan 20. Expire Feb 25. (1 month + 5 days). OK.
     }
-
-    // Final Safeguard: Ensure day matches Anchor (unless month doesn't have it)
-    // We trust JS setMonth/setDate logic to be "good enough" for MVP.
-    // Just ensuring we use the Anchor Day is the key requirement.
-
-    // Refined Logic for "Start Date Determines Date":
-    // We strictly take the Year/Month we calculated, and FORCE the day to be AnchorDay.
-    // (Handling the Feb 28 issue: if Anchor is 31, and we are in Feb, expires Feb 28/29).
 
     const year = targetMonth.getFullYear();
     const month = targetMonth.getMonth();
@@ -292,113 +232,84 @@ export class UsersService {
   }
 
   // Helper to compute status on the fly
-  // Note: This logic could be used to populate a virtual field or DTO
   calculatePaymentStatus(user: User): 'paid' | 'overdue' | 'pending' {
     // 1. Check if user is exempt
     if (user.paysMembership === false) {
-      console.log(`[CalcStatus] User ${user.email} EXEMPT (paysMembership=false)`);
       return 'paid';
-    } else {
-      console.log(`[CalcStatus] User ${user.email} Check: Exp=${user.membershipExpirationDate}, Now=${new Date().toISOString()}`);
     }
 
-    // 2. If no expiration date, treat as pending (or whatever default)
-    if (!user.membershipExpirationDate) return 'pending';
+    // 2. Check if membership is explicitly valid (Expiration Date in the future)
+    if (user.membershipExpirationDate) {
+      const now = new Date();
+      const exp = new Date(user.membershipExpirationDate);
+      now.setHours(0, 0, 0, 0);
+      exp.setHours(0, 0, 0, 0);
+
+      if (exp >= now) {
+        return 'paid';
+      }
+    }
+
+    // 3. Fallback Logic: Calculate based on Cycle Start
+    // Logic:
+    // - Cycle anchor is the day of membershipStartDate.
+    // - If we are within 10 days of the current cycle start -> Pending.
+    // - If we are past 10 days -> Overdue.
+
+    if (!user.membershipStartDate) {
+      // No start date -> treat as Pending (Waiting for setup)
+      return 'pending';
+    }
 
     const now = new Date();
-    const exp = new Date(user.membershipExpirationDate);
-
-    // Normalize to YYYY-MM-DD to avoid time issues
+    // Normalize to start of day
     now.setHours(0, 0, 0, 0);
-    exp.setHours(0, 0, 0, 0);
 
-    const diffTime = now.getTime() - exp.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const startDate = new Date(user.membershipStartDate);
+    const anchorDay = startDate.getDate();
 
-    // diffDays is negative if expiration is in future.
-    // e.g. Exp is Jan 10. Now is Jan 1. diffDays = 1 - 10 = -9.
+    // Determine "Current Cycle Start"
+    // Construct a date with Current Month/Year and Anchor Day
+    let cycleStart = new Date(now.getFullYear(), now.getMonth(), anchorDay);
 
-    // 1. Future (Safe): More than 10 days before expiration.
-    if (diffDays < -10) return 'paid';
-
-    // 2. Pending Window: 
-    // - Upcoming Expiration (e.g. -10 to 0)
-    // - Grace Period (e.g. 0 to 10)
-    if (diffDays <= 10) return 'pending';
-
-<<<<<<< HEAD
-    async countAll(): Promise<number> {
-        return this.usersRepository.count();
+    // If constructed cycleStart is in the future relative to today,
+    // it means the current cycle actually started last month.
+    // Example: Today is Feb 5th. Anchor is 20th.
+    // constructed = Feb 20th (Future).
+    // Actual current cycle start = Jan 20th.
+    if (cycleStart > now) {
+      cycleStart.setMonth(cycleStart.getMonth() - 1);
     }
 
-    async markAsPaid(id: string): Promise<User> {
-        const user = await this.findOne(id);
-        if (!user) throw new Error('User not found');
+    // Safety for edge case where anchor day doesn't exist in previous month (e.g. 31st)
+    // JS setMonth handles this by rolling over, but we want the last day of that month.
+    // However, for 'cycleStart', JS's auto-rollover is often acceptable or we can strict clamp.
+    // Let's rely on standard JS Date behavior which is robust enough for "approximate monthly cycles".
 
-        const referenceDate = user.membershipExpirationDate ? new Date(user.membershipExpirationDate) : new Date(user.membershipStartDate);
+    // Calculate days elapsed in current cycle
+    const diffTime = now.getTime() - cycleStart.getTime();
+    const daysInCycle = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-        const now = new Date();
-
-        // If reference date is invalid or in the PAST, start from TODAY
-        if (isNaN(referenceDate.getTime()) || referenceDate < now) {
-            user.membershipExpirationDate = new Date(now.setMonth(now.getMonth() + 1));
-        } else {
-            // Valid future date: Increment by 1 month to extend
-            referenceDate.setMonth(referenceDate.getMonth() + 1);
-            user.membershipExpirationDate = referenceDate;
-        }
-
-        // Also update LastPaymentDate
-        user.lastPaymentDate = new Date().toISOString().split('T')[0];
-
-        await this.usersRepository.save(user);
-        return this.findOne(id) as Promise<User>; // Re-fetch to compute status
+    if (daysInCycle > 10) {
+      return 'overdue';
+    } else {
+      return 'pending';
     }
-
-    // Helper to compute status on the fly
-    // Note: This logic could be used to populate a virtual field or DTO
-    calculatePaymentStatus(expirationDate: Date | string): 'paid' | 'overdue' | 'pending' {
-        if (!expirationDate) return 'pending'; // Or handle as they wish
-
-        const now = new Date();
-        const exp = new Date(expirationDate);
-
-        // Normalize to YYYY-MM-DD to avoid time issues
-        now.setHours(0, 0, 0, 0);
-        exp.setHours(0, 0, 0, 0);
-
-        const diffTime = now.getTime() - exp.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays <= 0) return 'paid'; // Green
-        if (diffDays <= 10) return 'pending'; // Yellow (reusing pending as "Por vencer" maps to 'Yellow') -> Wait, user said Yellow is Por Vencer. Pending usually means unpaid initially.
-        // Let's map to existing Enum? 
-        // PaymentStatus: PENDING, PAID, OVERDUE.
-        // Green -> PAID
-        // Yellow -> PENDING (Por vencer/Grace Period)
-        // Red -> OVERDUE
-
-        return 'overdue';
-    }
-
-    async findOneByActivationTokenHash(hash: string): Promise<User | null> {
-        return this.usersRepository.findOne({
-            where: { activationTokenHash: hash },
-        });
-    }
-
-    async findOneByResetTokenHash(hash: string): Promise<User | null> {
-        return this.usersRepository.findOne({
-            where: { resetTokenHash: hash },
-        });
-    }
-
-    async updateTokens(id: string, updates: Partial<User>): Promise<void> {
-        await this.usersRepository.update(id, updates);
-    }
-=======
-    // 3. Overdue: More than 10 days past expiration.
-    return 'overdue';
   }
->>>>>>> origin/main
+
+  async findOneByActivationTokenHash(hash: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { activationTokenHash: hash },
+    });
+  }
+
+  async findOneByResetTokenHash(hash: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { resetTokenHash: hash },
+    });
+  }
+
+  async updateTokens(id: string, updates: Partial<User>): Promise<void> {
+    await this.usersRepository.update(id, updates);
+  }
 }

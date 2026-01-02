@@ -47,6 +47,10 @@ class AuthProvider with ChangeNotifier {
     _user = null;
     notifyListeners();
   }
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    await _authService.changePassword(currentPassword, newPassword);
+  }
+
   void updateGym(Gym updatedGym) {
      if (_user != null) {
         _user = _user!.copyWith(gym: updatedGym);

@@ -96,12 +96,7 @@ export class Gym {
   @UpdateDateColumn()
   updatedAt: Date;
 
-<<<<<<< HEAD
-    @Exclude()
-    @OneToMany(() => User, (user) => user.gym)
-    users: User[];
-=======
+  @Exclude()
   @OneToMany(() => User, (user) => user.gym)
   users: User[];
->>>>>>> origin/main
 }

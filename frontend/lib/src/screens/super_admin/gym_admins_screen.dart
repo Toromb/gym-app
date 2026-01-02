@@ -4,15 +4,10 @@ import 'package:flutter/services.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/gyms_provider.dart';
-<<<<<<< HEAD
 import '../../models/user_model.dart';
 import '../../models/gym_model.dart';
 import '../../services/auth_service.dart';
-import '../admin/edit_user_screen.dart';
-=======
-
 import '../../screens/admin/add_user_screen.dart';
->>>>>>> origin/main
 
 class GymAdminsScreen extends StatefulWidget {
   const GymAdminsScreen({super.key});
@@ -37,18 +32,7 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
      context.read<UserProvider>().fetchUsers(role: AppRoles.admin, gymId: _selectedGymId);
   }
 
-<<<<<<< HEAD
-  void _showAddAdminDialog() {
-       final gyms = context.read<GymsProvider>().gyms;
-       if (gyms.isEmpty) {
-           context.read<GymsProvider>().fetchGyms();
-       }
-       
-       showDialog(context: context, builder: (ctx) => _AddAdminDialog(gyms: gyms, onSave: _fetchAdmins));
-  }
-=======
 
->>>>>>> origin/main
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +94,6 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
                            itemBuilder: (context, index) {
                                final admin = admins[index];
                                return ListTile(
-<<<<<<< HEAD
                                     title: Row(
                                       children: [
                                         Text(admin.name),
@@ -140,11 +123,12 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
                                         IconButton(
                                           icon: const Icon(Icons.edit_outlined),
                                           tooltip: 'Editar',
-                                          onPressed: () {
-                                            Navigator.push(
+                                          onPressed: () async {
+                                            await Navigator.push(
                                               context,
-                                              MaterialPageRoute(builder: (context) => EditUserScreen(user: admin)),
-                                            ).then((_) => _fetchAdmins()); 
+                                              MaterialPageRoute(builder: (_) => AddUserScreen(userToEdit: admin, lockedRole: AppRoles.admin)),
+                                            );
+                                            _fetchAdmins();
                                           },
                                         ),
                                         PopupMenuButton<String>(
@@ -156,18 +140,15 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
                                              String path = '';
                                              
                                              if (value == 'activation') {
-                                                token = await authService.generateActivationLink(admin.id);
-                                                path = '/activate-account';
+                                                token = await authService.generateActivationToken(admin.id);
                                              } else if (value == 'reset') {
-                                                token = await authService.generateResetLink(admin.id);
-                                                path = '/reset-password';
+                                                token = await authService.generateResetToken(admin.id);
                                              }
 
                                              if (token != null && context.mounted) {
-                                                String origin = Uri.base.origin;
-                                                if (origin.isEmpty) origin = 'https://gym-app.com';
-                                                
-                                                final link = '$origin/#$path?token=$token';
+                                                final String link = (value == 'activation')
+                                                    ? authService.getActivationUrl(token)
+                                                    : authService.getResetUrl(token);
                                                 
                                                 await Clipboard.setData(ClipboardData(text: link));
                                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -213,52 +194,6 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
                                         ),
                                       ],
                                     ),
-=======
-                                   title: Text(admin.name),
-                                   subtitle: Text('${admin.email}\nGym: ${admin.gymName ?? "N/A"}'),
-                                   trailing: Row(
-                                     mainAxisSize: MainAxisSize.min,
-                                     children: [
-                                       IconButton(
-                                         icon: const Icon(Icons.edit, color: Colors.blue),
-                                         onPressed: () async {
-                                           await Navigator.push(
-                                             context,
-                                             MaterialPageRoute(builder: (_) => AddUserScreen(userToEdit: admin, lockedRole: AppRoles.admin)),
-                                           );
-                                           _fetchAdmins();
-                                         },
-                                       ),
-                                       IconButton(
-                                           icon: const Icon(Icons.delete, color: Colors.red),
-                                           onPressed: () async {
-                                               final confirm = await showDialog<bool>(
-                                                  context: context,
-                                                  builder: (ctx) => AlertDialog(
-                                                    title: const Text('Confirmar Eliminación'),
-                                                    content: Text('¿Está seguro que desea eliminar al administrador ${admin.name}?'),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () => Navigator.pop(ctx, false),
-                                                        child: const Text('Cancelar'),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () => Navigator.pop(ctx, true),
-                                                        style: TextButton.styleFrom(foregroundColor: Colors.red),
-                                                        child: const Text('Eliminar'),
-                                                      ),
-                                                    ],
-                                                  ),
-                                               );
-                                               
-                                               if (confirm == true) {
-                                                  await provider.deleteUser(admin.id);
-                                               }
-                                           },
-                                       ),
-                                     ],
-                                   ),
->>>>>>> origin/main
                                );
                            },
                        );
@@ -272,67 +207,4 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
 }
 
 
-<<<<<<< HEAD
-    @override
-    State<_AddAdminDialog> createState() => _AddAdminDialogState();
-}
 
-class _AddAdminDialogState extends State<_AddAdminDialog> {
-    final _emailCtrl = TextEditingController();
-    final _firstCtrl = TextEditingController();
-    final _lastCtrl = TextEditingController();
-    String? _gymId;
-
-    @override
-    Widget build(BuildContext context) {
-        return AlertDialog(
-            title: const Text('Add Gym Admin'),
-            content: SingleChildScrollView(
-                child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                        DropdownButtonFormField<String>(
-                            hint: const Text('Select Gym'),
-                            items: widget.gyms.map<DropdownMenuItem<String>>((g) => DropdownMenuItem(value: g.id, child: Text(g.businessName))).toList(),
-                            onChanged: (v) => setState(() => _gymId = v),
-                        ),
-                        TextField(controller: _firstCtrl, decoration: const InputDecoration(labelText: 'First Name')),
-                        TextField(controller: _lastCtrl, decoration: const InputDecoration(labelText: 'Last Name')),
-                        TextField(controller: _emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
-                    ],
-                ),
-            ),
-            actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-                ElevatedButton(
-                    onPressed: () async {
-                        if (_gymId == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select a Gym')));
-                            return;
-                        }
-                        
-                        final provider = context.read<UserProvider>();
-                        
-                        final success = await provider.addUser(
-                            email: _emailCtrl.text,
-                            firstName: _firstCtrl.text,
-                            lastName: _lastCtrl.text,
-                            role: AppRoles.admin,
-                            gymId: _gymId,
-                        );
-
-                        if (success) {
-                            widget.onSave();
-                            Navigator.pop(context);
-                        } else {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to create admin')));
-                        }
-                    },
-                    child: const Text('Create'),
-                )
-            ],
-        );
-    }
-}
-=======
->>>>>>> origin/main

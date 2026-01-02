@@ -107,25 +107,8 @@ async function bootstrap() {
     const gymExercises = await exercisesService.findAll(defaultGym.id);
     if (gymExercises.length === 0) {
       console.log('⚠️ Alerta: Default Gym no tiene ejercicios. Forzando población...');
-      // Optional: Force populate if Gym existed before migration
-      // Initialize Base Exercises for Default Gym if missing
-      for (const baseEx of BASE_EXERCISES) {
-        await exercisesService.createForGym(
-          {
-            name: baseEx.name,
-            description: baseEx.description,
-            muscles: baseEx.muscles.map(m => ({
-              muscleId: m.name,
-              role: m.role as any,
-              loadPercentage: m.loadPercentage
-            })),
-            videoUrl: '',
-            imageUrl: '',
-          } as any,
-          defaultGym
-        );
-      }
-      console.log('✅ Ejercicios base inyectados a Default Gym.');
+      await exercisesService.cloneBaseExercises(defaultGym);
+      console.log('✅ Ejercicios base inyectados a Default Gym vía cloneBaseExercises.');
     } else {
       console.log(`✅ Default Gym ya tiene ${gymExercises.length} ejercicios propios.`);
     }

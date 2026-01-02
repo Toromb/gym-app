@@ -4,12 +4,9 @@ import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
-<<<<<<< HEAD
 import '../../services/auth_service.dart';
 import 'package:flutter/services.dart';
 import '../../models/plan_model.dart';
-=======
->>>>>>> origin/main
 import '../../models/user_model.dart'; // Import User model for type checking
 import 'add_user_screen.dart';
 import 'edit_user_screen.dart';
@@ -236,7 +233,6 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-<<<<<<< HEAD
                             Row(
                               children: [
                                 Flexible(
@@ -265,12 +261,6 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                                 ),
                               ],
                             ),
-=======
-                           Text(
-                             '${user.firstName} ${user.lastName}',
-                             style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold), // Smaller title
-                           ),
->>>>>>> origin/main
                            Text(
                              user.email,
                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
@@ -377,7 +367,6 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                         const SizedBox(width: 12),
                      ],
                      
-<<<<<<< HEAD
                       if (isAdmin)
                         PopupMenuButton<String>(
                           icon: const Icon(Icons.vpn_key),
@@ -388,22 +377,16 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                              String path = '';
                              
                              if (value == 'activation') {
-                                token = await authService.generateActivationLink(user.id);
-                                path = '/activate-account';
+                                token = await authService.generateActivationToken(user.id);
                              } else if (value == 'reset') {
-                                token = await authService.generateResetLink(user.id);
-                                path = '/reset-password';
+                                token = await authService.generateResetToken(user.id);
                              }
 
                              if (token != null && context.mounted) {
-                                // Construct Link
-                                // Use Uri.base.origin for web, or a placeholder for app if not configured
-                                String origin = Uri.base.origin;
-                                if (origin.isEmpty) origin = 'https://gym-app.com'; // Fallback
-                                
-                                // Defaulting to Hash Strategy (#) for Flutter Web compatibility
-                                final link = '$origin/#$path?token=$token';
-                                
+                                final String link = (value == 'activation')
+                                    ? authService.getActivationUrl(token)
+                                    : authService.getResetUrl(token);
+
                                 await Clipboard.setData(ClipboardData(text: link));
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Enlace copiado al portapapeles')),
@@ -426,14 +409,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                           ],
                         ),
 
-                      IconButton(
-=======
                      IconButton(
                        visualDensity: VisualDensity.compact,
                        iconSize: 20,
                        padding: EdgeInsets.zero,
                        constraints: const BoxConstraints(),
->>>>>>> origin/main
                        icon: const Icon(Icons.edit_outlined),
                        tooltip: 'Editar',
                        onPressed: () {

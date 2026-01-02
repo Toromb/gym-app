@@ -227,7 +227,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                  // Membership options for Professor
                  if (_selectedRole == AppRoles.profe) ...[
                       SwitchListTile(
-                        title: const Text('Membresía Paga'),
+                        title: const Text('¿Paga Membresía?'),
                         subtitle: const Text('Define si este profesor abona membresía del sistema'),
                         value: _paysMembership,
                         onChanged: (val) => setState(() => _paysMembership = val),
@@ -331,9 +331,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                                     'membershipStartDate': _membershipDateController.text.isNotEmpty ? _membershipDateController.text : null,
                                     'paysMembership': _paysMembership,
                                 };
-                                if (_passwordController.text.isNotEmpty) {
-                                    data['password'] = _passwordController.text;
-                                }
+
 
                                 success = await context.read<UserProvider>().updateUser(widget.userToEdit!.id, data);
                             } else {

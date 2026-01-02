@@ -94,6 +94,102 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                 );
               },
             ),
+            const SizedBox(height: 16),
+            _buildDashboardCard(
+              context,
+              icon: Icons.security,
+              title: 'Seguridad',
+              subtitle: 'Cambiar contraseña de acceso',
+              onTap: () => _showChangePasswordDialog(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showChangePasswordDialog(BuildContext context) {
+    final currentController = TextEditingController();
+    final newController = TextEditingController();
+    final confirmController = TextEditingController(); // Added confirm controller
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Cambiar Contraseña'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: currentController,
+                decoration: const InputDecoration(labelText: 'Contraseña Actual'),
+                obscureText: true,
+              ),
+              TextField(
+                controller: newController,
+                decoration: const InputDecoration(labelText: 'Nueva Contraseña (min 6 chars)'),
+                obscureText: true,
+              ),
+              TextField(
+                controller: confirmController, // Confirm field
+                decoration: const InputDecoration(labelText: 'Confirmar Nueva Contraseña'),
+                obscureText: true,
+              ),
+              if (isLoading) const Padding(
+                padding: EdgeInsets.only(top: 10),
+                child: LinearProgressIndicator(),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isLoading ? null : () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: isLoading ? null : () async {
+                 // Validation
+                 if (newController.text.length < 6) {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                     const SnackBar(content: Text('La nueva contraseña debe tener al menos 6 caracteres')),
+                   );
+                   return;
+                 }
+                 if (newController.text != confirmController.text) {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                     const SnackBar(content: Text('Las contraseñas no coinciden')),
+                   );
+                   return;
+                 }
+                 
+                 setState(() => isLoading = true);
+                 try {
+                   await context.read<AuthProvider>().changePassword(
+                     currentController.text,
+                     newController.text
+                   );
+                   if (context.mounted) {
+                     Navigator.pop(context); // Close dialog
+                     ScaffoldMessenger.of(context).showSnackBar(
+                       const SnackBar(content: Text('✅ Contraseña actualizada correctamente')),
+                     );
+                   }
+                 } catch (e) {
+                   if (context.mounted) {
+                     ScaffoldMessenger.of(context).showSnackBar(
+                       SnackBar(content: Text('Error: ${e.toString()}')),
+                     );
+                   }
+                 } finally {
+                   if (context.mounted) {
+                      setState(() => isLoading = false);
+                   }
+                 }
+              },
+              child: const Text('Cambiar'),
+            ),
           ],
         ),
       ),

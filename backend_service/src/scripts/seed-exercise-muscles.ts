@@ -95,58 +95,53 @@ export async function seedExerciseMuscles(dataSource: DataSource) {
     console.log('🔗 Starting Exercise-Muscle Mapping Seed...');
 
     for (const map of mappings) {
-        // 1. Find Exercise
-        const exercise = await exerciseRepo.createQueryBuilder('exercise')
+        // 1. Find ALL Exercises with this name (across all gyms)
+        const exercises = await exerciseRepo.createQueryBuilder('exercise')
             .leftJoinAndSelect('exercise.exerciseMuscles', 'exerciseMuscles')
-            .where('LOWER(exercise.name) = LOWER(:name)', { name: map.exercise })
-            .getOne();
+            .where('LOWER(exercise.name) = LOWER(:name)', { name: map.exercise.toLowerCase() })
+            .getMany();
 
-        if (!exercise) {
-            console.log(`⚠️ [SKIP] Exercise "${map.exercise}" not found.`);
+        if (exercises.length === 0) {
+            console.log(`⚠️ [SKIP] No exercises found with name "${map.exercise}".`);
             continue;
         }
 
-        // 2. Check if already has muscles
-        if (exercise.exerciseMuscles && exercise.exerciseMuscles.length > 0) {
-            const totalLoad = exercise.exerciseMuscles.reduce((sum, em) => sum + em.loadPercentage, 0);
+        console.log(`Processing "${map.exercise}" (${exercises.length} hits)...`);
 
-            if (totalLoad === 100) {
-                console.log(`✅ [SKIP] Exercise "${exercise.name}" is valid (100% load).`);
-                continue;
-            } else {
-                console.log(`⚠️ [REPAIR] Exercise "${exercise.name}" has invalid load (${totalLoad}%). Re-seeding...`);
-                // Delete existing to re-create correctly
-                await exerciseMuscleRepo.delete({ exercise: { id: exercise.id } });
-            }
-        }
-
-        console.log(`Processing "${exercise.name}"...`);
-        let primaryMuscleName = '';
-
-        for (const item of map.muscles) {
-            const muscle = await muscleRepo.findOne({ where: { name: item.name } });
-            if (!muscle) {
-                console.error(`  ❌ Muscle "${item.name}" not found!`);
+        for (const exercise of exercises) {
+            // 2. Check if already has muscles
+            if (exercise.exerciseMuscles && exercise.exerciseMuscles.length > 0) {
+                // STRICT SAFETY: If it has ANY data, we do not touch it.
+                // Even if it's mathematically "wrong" (e.g. 50%), we respect the user's data.
+                console.log(`🛑 [SKIP] Exercise "${exercise.name}" (ID: ${exercise.id}) already has data. Preserving.`);
                 continue;
             }
 
-            if (item.role === MuscleRole.PRIMARY) {
-                primaryMuscleName = muscle.name;
+            let primaryMuscleName = '';
+
+            for (const item of map.muscles) {
+                const muscle = await muscleRepo.findOne({ where: { name: item.name } });
+                if (!muscle) {
+                    console.error(`  ❌ Muscle "${item.name}" not found!`);
+                    continue;
+                }
+
+                if (item.role === MuscleRole.PRIMARY) {
+                    primaryMuscleName = muscle.name;
+                }
+
+                await exerciseMuscleRepo.save(exerciseMuscleRepo.create({
+                    exercise: exercise,
+                    muscle: muscle,
+                    role: item.role,
+                    loadPercentage: item.load,
+                }));
             }
 
-            await exerciseMuscleRepo.save(exerciseMuscleRepo.create({
-                exercise: exercise,
-                muscle: muscle,
-                role: item.role,
-                loadPercentage: item.load,
-            }));
-            console.log(`  ➕ Mapped "${muscle.name}" (${item.load}%)`);
-        }
-
-        // 3. Sync Legacy muscleGroup if missing
-        if (!exercise.muscleGroup && primaryMuscleName) {
-            console.log(`  🔧 Syncing Legacy muscleGroup to "${primaryMuscleName}"`);
-            await exerciseRepo.update(exercise.id, { muscleGroup: primaryMuscleName });
+            // 3. Sync Legacy muscleGroup if missing
+            if (!exercise.muscleGroup && primaryMuscleName) {
+                await exerciseRepo.update(exercise.id, { muscleGroup: primaryMuscleName });
+            }
         }
     }
     console.log('🏁 Mapping Seed Completed.');
