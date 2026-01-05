@@ -36,9 +36,11 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
       backgroundColor: Theme.of(context).colorScheme.surface, // Use theme surface instead of fixed grey
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.all(24.0),
           child: Card(
             elevation: 8,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
