@@ -21,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false, // FIX Round 10: Disable auto-resize prevents framework conflicts
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -35,12 +35,15 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      backgroundColor: Theme.of(context).colorScheme.surface, // Use theme surface instead of fixed grey
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.all(24.0),
+      backgroundColor: Theme.of(context).colorScheme.surface, 
+      body: Padding(
+        // Verify Round 10: Manually apply bottom inset
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.all(24.0),
           child: Card(
             elevation: 8,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -186,6 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+      ),
       ),
       ),
     );
