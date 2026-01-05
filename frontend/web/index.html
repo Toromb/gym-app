@@ -63,6 +63,36 @@
 
 <body>
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // FIX Round 9: Force Viewport Recalculation (JS Mitigation)
+    // Addresses Chrome Android 'Back Button' keyboard dismiss bug.
+
+    // 1. Force layout update on visual viewport resize
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        // Sync body height to visual viewport height
+        document.body.style.minHeight = window.visualViewport.height + 'px';
+
+        // Force scroll to top if keyboard just closed (height increased)
+        // This mitigates the "stuck" state
+        if (window.visualViewport.height > 400) { // Arbitrary small threshold to detect closed keyboard
+          document.body.scrollTop = 0;
+          document.documentElement.scrollTop = 0;
+        }
+      });
+    }
+
+    // 2. Force scroll reset on input blur (fallback)
+    document.addEventListener('focusout', (event) => {
+      // Only trigger if an input lost focus (likely keyboard closing)
+      if (['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          document.body.scrollTop = 0;
+        }, 100);
+      }
+    });
+  </script>
 </body>
 
 </html>
