@@ -24,32 +24,27 @@
   <meta name="description" content="A new Flutter project.">
   <style>
     /* 
-      Fix: "Nuclear Option" for Mobile Viewport
-      Use position: fixed to absolutely prevent the browser from scrolling
-      the document body when the virtual keyboard appears.
-      Combined with interactive-widget=resizes-content, this forces a 
-      visual viewport resize (which Flutter handles) instead of a scroll.
+      Fix Round 7: Natural Scroll Strategy
+      Based on user research: Avoid fixed heights and unscrollable containers.
+      1. Use min-height: 100dvh to allow content to grow.
+      2. Enable overflow-y: auto to let browser handle the scroll when keyboard appears.
+      3. Set background colors to mask any potential overscroll.
     */
     html {
       height: 100%;
-      width: 100%;
       background-color: #F8FAFC;
     }
 
     body {
-      position: fixed;
-      /* CRITICAL: Prevents scroll drift */
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      min-height: 100dvh;
+      /* Dynamic minimum height */
       background-color: #F8FAFC;
-      overflow: hidden;
       margin: 0;
       padding: 0;
-      overscroll-behavior: none;
-      touch-action: none;
-      /* Disable browser gestures */
+      overflow-x: hidden;
+      /* Prevent horizontal scroll */
+      overflow-y: auto;
+      /* Allow vertical scroll (Critical for keyboard) */
     }
   </style>
 
