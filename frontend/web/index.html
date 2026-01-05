@@ -20,16 +20,36 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="description" content="A new Flutter project.">
   <style>
-    html,
+    /* 
+      Fix: "Nuclear Option" for Mobile Viewport
+      Use position: fixed to absolutely prevent the browser from scrolling
+      the document body when the virtual keyboard appears.
+      Combined with interactive-widget=resizes-content, this forces a 
+      visual viewport resize (which Flutter handles) instead of a scroll.
+    */
+    html {
+      height: 100%;
+      width: 100%;
+      background-color: #F8FAFC;
+    }
+
     body {
-      height: 100dvh;
+      position: fixed;
+      /* CRITICAL: Prevents scroll drift */
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #F8FAFC;
       overflow: hidden;
       margin: 0;
       padding: 0;
       overscroll-behavior: none;
+      touch-action: none;
+      /* Disable browser gestures */
     }
   </style>
 
@@ -48,14 +68,6 @@
 
 <body>
   <script src="flutter_bootstrap.js" async></script>
-  <script>
-    // Prevent default browser scrolling behavior on mobile
-    window.addEventListener('scroll', function () {
-      if (window.scrollY !== 0) {
-        window.scrollTo(0, 0);
-      }
-    });
-  </script>
 </body>
 
 </html>
