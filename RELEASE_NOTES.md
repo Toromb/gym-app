@@ -1,24 +1,23 @@
-# Release Notes - v1.2.7
+# Release Notes - v1.2.8
 
 **Date:** 2026-01-05
-**Tag:** `v1.2.7`
+**Tag:** `v1.2.8`
 
 ## 🐛 Bug Fixes
 
-### Mobile Keyboard Whitespace (Round 7 - Natural Scroll)
-- **Issue:** Fixed 100% height and disabled scrolling caused viewport resizing issues in Chrome Android ("Keyboard overlap").
+### Mobile Keyboard Whitespace (Round 8 - Final Robust Fix)
+- **Issue:** Android "Back" button to dismiss keyboard leaves residual whitespace. Gesture dismiss works fine.
+- **Root Cause:** Inconsistency in Android IME dismiss events affecting Flutter layout.
 - **Fix:** 
-    - **Strategy:** "Natural Scroll" (Recommended by user research).
-    - **CSS:** `min-height: 100dvh` ensures full viewport coverage but allows growth.
-    - **CSS:** `overflow-y: auto` allows the browser to handle content displacement naturally when the keyboard appears.
-    - **CSS:** `overflow-x: hidden` prevents horizontal shift.
-    - **Theme:** Matched html/body background color to app theme (`#F8FAFC`).
+    - **Flutter:** Wrapped Login body in `SafeArea` to handle system insets properly.
+    - **Flutter:** Added `keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag` to `SingleChildScrollView`. This allows users to intuitively dismiss the keyboard by scrolling, which is known to trigger a correct layout rebuild.
+    - **Continued Support:** Retains `resizeToAvoidBottomInset: true` and the Natural Scroll (v1.2.7) web config.
 
 ## 📦 Deployment Guidance
 
 **Frontend-only Update:**
 ```bash
 git fetch --tags
-git checkout v1.2.7
+git checkout v1.2.8
 docker compose --env-file .env.prod -f infra/docker-compose.prod.yml up -d --build frontend
 ```
