@@ -20,12 +20,15 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="A new Flutter project.">
   <style>
+    html,
     body {
-      inset: 0;
+      height: 100dvh;
       overflow: hidden;
+      margin: 0;
+      padding: 0;
       overscroll-behavior: none;
     }
   </style>
@@ -45,6 +48,14 @@
 
 <body>
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // Prevent default browser scrolling behavior on mobile
+    window.addEventListener('scroll', function () {
+      if (window.scrollY !== 0) {
+        window.scrollTo(0, 0);
+      }
+    });
+  </script>
 </body>
 
 </html>
