@@ -239,7 +239,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                       ),
                       
                       const SizedBox(height: 4),
-                      if ((widget.execution.videoUrl ?? widget.execution.exercise?.videoUrl) != null)
+                      if ((widget.execution.videoUrl?.isNotEmpty ?? false) || (widget.execution.exercise?.videoUrl?.isNotEmpty ?? false))
                         InkWell(
                           onTap: () => _launchVideo(context, (widget.execution.videoUrl ?? widget.execution.exercise?.videoUrl)!),
                           child: Row(
@@ -458,7 +458,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   Future<void> _launchVideo(BuildContext context, String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
