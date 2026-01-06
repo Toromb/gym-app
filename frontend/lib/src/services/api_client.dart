@@ -70,7 +70,7 @@ class ApiClient {
       case 503:
         throw ServerException();
       default:
-        throw ApiException('Unknown Error', response.statusCode);
+        throw ApiException('Unknown Error (Status: ${response.statusCode})', response.statusCode);
     }
   }
 
