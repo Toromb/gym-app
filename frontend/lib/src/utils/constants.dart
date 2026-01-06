@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 // Use 10.0.2.2 for Android emulator, localhost for web/iOS/Windows
 String get baseUrl {
   if (kReleaseMode) {
-    return 'https://tugymflow.com';
+    return 'https://tugymflow.com/api';
   }
 
   if (kIsWeb) {
