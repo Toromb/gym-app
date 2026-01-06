@@ -41,7 +41,7 @@ class ApiClient {
     };
   }
 
-  dynamic _processResponse(http.Response response) {
+  dynamic _processResponse(http.Response response, Uri url) {
     if (kDebugMode) {
       debugPrint('API Response [${response.statusCode}]: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}...');
     }
@@ -70,7 +70,7 @@ class ApiClient {
       case 503:
         throw ServerException();
       default:
-        throw ApiException('Unknown Error (Status: ${response.statusCode})', response.statusCode);
+        throw ApiException('Unknown Error (Status: ${response.statusCode}) URL: $url', response.statusCode);
     }
   }
 
@@ -82,7 +82,7 @@ class ApiClient {
 
     try {
       final response = await _client.get(url, headers: headers).timeout(_timeout);
-      return _processResponse(response);
+      return _processResponse(response, url);
     } on SocketException {
       throw NetworkException('No Internet Connection');
     } on TimeoutException {
@@ -103,7 +103,7 @@ class ApiClient {
       final response = await _client
           .post(url, headers: headers, body: jsonEncode(body))
           .timeout(_timeout);
-      return _processResponse(response);
+      return _processResponse(response, url);
     } on SocketException {
       throw NetworkException('No Internet Connection');
     } on TimeoutException {
@@ -124,7 +124,7 @@ class ApiClient {
       final response = await _client
           .put(url, headers: headers, body: jsonEncode(body))
           .timeout(_timeout);
-      return _processResponse(response);
+      return _processResponse(response, url);
     } on SocketException {
       throw NetworkException('No Internet Connection');
     } on TimeoutException {
@@ -143,7 +143,7 @@ class ApiClient {
 
     try {
       final response = await _client.delete(url, headers: headers).timeout(_timeout);
-      return _processResponse(response);
+      return _processResponse(response, url);
     } on SocketException {
       throw NetworkException('No Internet Connection');
     } on TimeoutException {
@@ -163,7 +163,7 @@ class ApiClient {
       final response = await _client
           .patch(url, headers: headers, body: jsonEncode(body))
           .timeout(_timeout);
-      return _processResponse(response);
+      return _processResponse(response, url);
     } on SocketException {
       throw NetworkException('No Internet Connection');
     } on TimeoutException {
