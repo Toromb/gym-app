@@ -218,69 +218,79 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Compact padding
           child: Column(
             children: [
-               Row(
+               Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
                  children: [
-                    CircleAvatar(
-                      backgroundColor: colorScheme.primary,
-                      radius: 20, // Smaller avatar
-                      child: Text(
-                        user.firstName.isNotEmpty ? user.firstName[0].toUpperCase() : '?',
-                        style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    '${user.firstName} ${user.lastName}',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: (user.isActive == true) ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: (user.isActive == true) ? Colors.green : Colors.orange, width: 0.5),
-                                  ),
-                                  child: Text(
-                                    (user.isActive == true) ? 'Activo' : 'Pendiente',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: (user.isActive == true) ? Colors.green : Colors.orange,
-                                      fontWeight: FontWeight.bold
+                   Row(
+                     children: [
+                        CircleAvatar(
+                          backgroundColor: colorScheme.primary,
+                          radius: 20, // Smaller avatar
+                          child: Text(
+                            user.firstName.isNotEmpty ? user.firstName[0].toUpperCase() : '?',
+                            style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        '${user.firstName} ${user.lastName}',
+                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: (user.isActive == true) ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(color: (user.isActive == true) ? Colors.green : Colors.orange, width: 0.5),
+                                      ),
+                                      child: Text(
+                                        (user.isActive == true) ? 'Activo' : 'Pendiente',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: (user.isActive == true) ? Colors.green : Colors.orange,
+                                          fontWeight: FontWeight.bold
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                           Text(
-                             user.email,
-                             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-                           ),
-                        ],
-                      ),
-                    ),
-                    if (isAdmin && (user.role == 'alumno' || user.role == 'profe')) 
-                      PaymentStatusBadge(
-                        status: user.paymentStatus,
-                        isEditable: true,
-                        onMarkAsPaid: () async {
-                             final success = await context.read<UserProvider>().markUserAsPaid(user.id);
-                             if (context.mounted) {
-                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                   content: Text(success ? 'Pago actualizado' : 'Error al actualizar'),
-                                   backgroundColor: success ? Colors.green : Colors.red,
-                                 ));
-                             }
-                        },
+                               Text(
+                                 user.email,
+                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                               ),
+                            ],
+                          ),
+                        ),
+                     ],
+                   ),
+                   if (isAdmin && (user.role == 'alumno' || user.role == 'profe')) 
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(top: 8),
+                        alignment: Alignment.centerRight,
+                        child: PaymentStatusBadge(
+                          status: user.paymentStatus,
+                          isEditable: true,
+                          onMarkAsPaid: () async {
+                               final success = await context.read<UserProvider>().markUserAsPaid(user.id);
+                               if (context.mounted) {
+                                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                     content: Text(success ? 'Pago actualizado' : 'Error al actualizar'),
+                                     backgroundColor: success ? Colors.green : Colors.red,
+                                   ));
+                               }
+                          },
+                        ),
                       ),
                  ],
                ),
@@ -303,161 +313,164 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                ],
                const SizedBox(height: 12),
                const Divider(),
-               Row(
-                 mainAxisAlignment: MainAxisAlignment.end,
-                 children: [
-                     // View Details
-                     IconButton(
-                        visualDensity: VisualDensity.compact,
-                        iconSize: 20,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: const Icon(Icons.visibility_outlined),
-                        tooltip: 'Ver Detalles',
-                        onPressed: () {
-                           Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => UserDetailScreen(user: user),
-                              ),
-                            );
-                        },
-                      ),
-                      const SizedBox(width: 12),
-                     
-                     if ((isProfeView || isAdmin) && user.role == 'alumno') ...[
-                        if (isAdmin) ...[
-                         IconButton(
-                           visualDensity: VisualDensity.compact,
-                           iconSize: 20,
-                           padding: EdgeInsets.zero,
-                           constraints: const BoxConstraints(),
-                           icon: const Icon(Icons.person_add_alt),
-                           tooltip: 'Asignar Profesor',
-                           onPressed: () => _showAssignProfessorDialog(context, user),
-                         ),
-                         const SizedBox(width: 12),
-                        ],
-                        IconButton(
+               SingleChildScrollView(
+                 scrollDirection: Axis.horizontal,
+                 child: Row(
+                   mainAxisAlignment: MainAxisAlignment.end,
+                   children: [
+                       // View Details
+                       IconButton(
                           visualDensity: VisualDensity.compact,
                           iconSize: 20,
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
-                          icon: const Icon(Icons.assignment_add),
-                          tooltip: 'Asignar Plan',
-                          onPressed: () => _showAssignPlanDialog(context, user.id),
-                        ),
-                        const SizedBox(width: 12),
-                        IconButton(
-                          visualDensity: VisualDensity.compact,
-                          iconSize: 20,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: const Icon(Icons.list_alt),
-                          tooltip: 'Gestionar Planes',
+                          icon: const Icon(Icons.visibility_outlined),
+                          tooltip: 'Ver Detalles',
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => StudentPlansScreen(student: user),
-                              ),
-                            );
+                             Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => UserDetailScreen(user: user),
+                                ),
+                              );
                           },
                         ),
                         const SizedBox(width: 12),
-                     ],
-                     
-                      if (isAdmin)
-                        PopupMenuButton<String>(
-                          icon: const Icon(Icons.vpn_key),
-                          tooltip: 'Opciones de Cuenta',
-                          onSelected: (value) async {
-                             final authService = AuthService(); // Instantiate locally
-                             String? token;
-                             String path = '';
-                             
-                             if (value == 'activation') {
-                                token = await authService.generateActivationToken(user.id);
-                             } else if (value == 'reset') {
-                                token = await authService.generateResetToken(user.id);
-                             }
-
-                             if (token != null && context.mounted) {
-                                final String link = (value == 'activation')
-                                    ? authService.getActivationUrl(token)
-                                    : authService.getResetUrl(token);
-
-                                await Clipboard.setData(ClipboardData(text: link));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Enlace copiado al portapapeles')),
-                                );
-                             } else if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Error al generar enlace'), backgroundColor: Colors.red),
-                                );
-                             }
-                          },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'activation',
-                              child: Text('Copiar Link Activación'),
-                            ),
-                             const PopupMenuItem(
-                              value: 'reset',
-                              child: Text('Copiar Link Recuperación'),
-                            ),
+                       
+                       if ((isProfeView || isAdmin) && user.role == 'alumno') ...[
+                          if (isAdmin) ...[
+                           IconButton(
+                             visualDensity: VisualDensity.compact,
+                             iconSize: 20,
+                             padding: EdgeInsets.zero,
+                             constraints: const BoxConstraints(),
+                             icon: const Icon(Icons.person_add_alt),
+                             tooltip: 'Asignar Profesor',
+                             onPressed: () => _showAssignProfessorDialog(context, user),
+                           ),
+                           const SizedBox(width: 12),
                           ],
-                        ),
-
-                     IconButton(
-                       visualDensity: VisualDensity.compact,
-                       iconSize: 20,
-                       padding: EdgeInsets.zero,
-                       constraints: const BoxConstraints(),
-                       icon: const Icon(Icons.edit_outlined),
-                       tooltip: 'Editar',
-                       onPressed: () {
-                         Navigator.push(
-                           context,
-                           MaterialPageRoute(
-                             builder: (context) => EditUserScreen(user: user),
-                           ),
-                         );
-                       },
-                     ),
-                     const SizedBox(width: 12),
-                     
-                      IconButton(
-                       visualDensity: VisualDensity.compact,
-                       iconSize: 20,
-                       padding: EdgeInsets.zero,
-                       constraints: const BoxConstraints(),
-                       icon: Icon(Icons.delete_outline, color: colorScheme.error),
-                       tooltip: 'Eliminar',
-                       onPressed: () async {
-                         final confirm = await showDialog<bool>(
-                           context: context,
-                           builder: (ctx) => AlertDialog(
-                             title: const Text('¿Eliminar Usuario?'),
-                             content: const Text('Esta acción no se puede deshacer.'),
-                             actions: [
-                               TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
-                               FilledButton(
-                                 style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
-                                 onPressed: () => Navigator.of(ctx).pop(true), 
-                                 child: const Text('Eliminar')
-                               ),
-                             ],
-                           ),
-                         );
-                         
-                         if (confirm == true && context.mounted) {
-                           context.read<UserProvider>().deleteUser(user.id);
-                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usuario eliminado')));
-                         }
-                       },
-                     ),
-                 ],
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            iconSize: 20,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(Icons.assignment_add),
+                            tooltip: 'Asignar Plan',
+                            onPressed: () => _showAssignPlanDialog(context, user.id),
+                          ),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            iconSize: 20,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(Icons.list_alt),
+                            tooltip: 'Gestionar Planes',
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => StudentPlansScreen(student: user),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                       ],
+                       
+                        if (isAdmin)
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.vpn_key),
+                            tooltip: 'Opciones de Cuenta',
+                            onSelected: (value) async {
+                               final authService = AuthService(); // Instantiate locally
+                               String? token;
+                               String path = '';
+                               
+                               if (value == 'activation') {
+                                  token = await authService.generateActivationToken(user.id);
+                               } else if (value == 'reset') {
+                                  token = await authService.generateResetToken(user.id);
+                               }
+  
+                               if (token != null && context.mounted) {
+                                  final String link = (value == 'activation')
+                                      ? authService.getActivationUrl(token)
+                                      : authService.getResetUrl(token);
+  
+                                  await Clipboard.setData(ClipboardData(text: link));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Enlace copiado al portapapeles')),
+                                  );
+                               } else if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Error al generar enlace'), backgroundColor: Colors.red),
+                                  );
+                               }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'activation',
+                                child: Text('Copiar Link Activación'),
+                              ),
+                               const PopupMenuItem(
+                                value: 'reset',
+                                child: Text('Copiar Link Recuperación'),
+                              ),
+                            ],
+                          ),
+  
+                       IconButton(
+                         visualDensity: VisualDensity.compact,
+                         iconSize: 20,
+                         padding: EdgeInsets.zero,
+                         constraints: const BoxConstraints(),
+                         icon: const Icon(Icons.edit_outlined),
+                         tooltip: 'Editar',
+                         onPressed: () {
+                           Navigator.push(
+                             context,
+                             MaterialPageRoute(
+                               builder: (context) => EditUserScreen(user: user),
+                             ),
+                           );
+                         },
+                       ),
+                       const SizedBox(width: 12),
+                       
+                        IconButton(
+                         visualDensity: VisualDensity.compact,
+                         iconSize: 20,
+                         padding: EdgeInsets.zero,
+                         constraints: const BoxConstraints(),
+                         icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                         tooltip: 'Eliminar',
+                         onPressed: () async {
+                           final confirm = await showDialog<bool>(
+                             context: context,
+                             builder: (ctx) => AlertDialog(
+                               title: const Text('¿Eliminar Usuario?'),
+                               content: const Text('Esta acción no se puede deshacer.'),
+                               actions: [
+                                 TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+                                 FilledButton(
+                                   style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
+                                   onPressed: () => Navigator.of(ctx).pop(true), 
+                                   child: const Text('Eliminar')
+                                 ),
+                               ],
+                             ),
+                           );
+                           
+                           if (confirm == true && context.mounted) {
+                             context.read<UserProvider>().deleteUser(user.id);
+                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usuario eliminado')));
+                           }
+                         },
+                       ),
+                   ],
+                 ),
                )
             ],
           ),
