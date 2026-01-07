@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 
 // Use 10.0.2.2 for Android emulator, localhost for web/iOS/Windows
 String get baseUrl {
+  return 'https://tugymflow.com/api'; // FORCED FOR PRODUCTION DEBUGGING
+  /*
   if (kReleaseMode) {
     return 'https://tugymflow.com/api';
   }
@@ -26,4 +28,5 @@ String get baseUrl {
       return 'http://10.0.2.2:3001';
   }
   return 'http://localhost:3001';
+  */
 }

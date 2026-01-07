@@ -185,7 +185,7 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
                                         onPressed: (ex.videoUrl != null && ex.videoUrl!.isNotEmpty) ? () async {
                                            final uri = Uri.parse(ex.videoUrl!);
                                            if (await canLaunchUrl(uri)) {
-                                             await launchUrl(uri);
+                                             await launchUrl(uri, mode: LaunchMode.externalApplication);
                                            } else {
                                              if (context.mounted) {
                                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo abrir el enlace: ${ex.videoUrl}')));

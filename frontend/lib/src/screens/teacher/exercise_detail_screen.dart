@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/plan_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'create_exercise_screen.dart'; // For edit navigation
 
 class ExerciseDetailScreen extends StatelessWidget {
@@ -192,9 +193,17 @@ class ExerciseDetailScreen extends StatelessWidget {
             leading: const Icon(Icons.video_library, color: Colors.red),
             title: const Text('Ver Video de Instrucción'),
             subtitle: Text(exercise.videoUrl!),
-            onTap: () {
-               // Launch URL logic (url_launcher package would be needed)
-               // currently just showing the link
+            onTap: () async {
+               if (exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty) {
+                 final uri = Uri.parse(exercise.videoUrl!);
+                 if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                 } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open video link')));
+                    }
+                 }
+               }
             },
          ),
       ],
