@@ -166,7 +166,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -241,7 +241,9 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                 const SizedBox(height: 80), 
               ],
             ),
+            ),
           ),
+
       floatingActionButton: !widget.readOnly 
         ? Padding(
             padding: const EdgeInsets.only(bottom: 20.0), // Extra safety for FAB

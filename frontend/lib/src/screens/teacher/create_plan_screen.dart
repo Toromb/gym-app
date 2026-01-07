@@ -438,112 +438,150 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  ListTile(
-                                    title: Text(day.title ?? 'Día ${day.dayOfWeek}'),
-                                    subtitle: Padding(
-                                      padding: const EdgeInsets.only(top: 8.0),
-                                      child: Row(
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Day Header Row: Title + Actions
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Text("Objetivo: ", style: TextStyle(fontWeight: FontWeight.bold)),
-                                          const SizedBox(width: 8),
-                                          DropdownButton<TrainingIntent>(
-                                            value: day.trainingIntent,
-                                            isDense: true,
-                                            underline: Container(height: 1, color: Colors.grey),
-                                            items: TrainingIntent.values.map((intent) {
-                                              return DropdownMenuItem(
-                                                value: intent,
-                                                child: Text(intent.label),
-                                              );
-                                            }).toList(),
-                                            onChanged: (newIntent) {
-                                              if (newIntent != null) {
-                                                setState(() {
-                                                   _weeks[weekIndex].days[dayIndex] = PlanDay(
-                                                     id: day.id,
-                                                     title: day.title,
-                                                     dayOfWeek: day.dayOfWeek,
-                                                     order: day.order,
-                                                     dayNotes: day.dayNotes,
-                                                     exercises: day.exercises,
-                                                     trainingIntent: newIntent,
-                                                   );
-                                                });
-                                              }
-                                            },
+                                          Text(
+                                            day.title ?? 'Día ${day.dayOfWeek}',
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                          ),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(Icons.add_circle, color: Colors.blue),
+                                                onPressed: () => _addOrEditExercise(weekIndex, dayIndex),
+                                                tooltip: 'Agregar Ejercicio',
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                                onPressed: () => _removeDay(weekIndex, dayIndex),
+                                                tooltip: 'Eliminar Día',
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.add_circle, color: Colors.blue),
-                                          onPressed: () => _addOrEditExercise(weekIndex, dayIndex),
-                                          tooltip: 'Agregar Ejercicio',
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete, color: Colors.redAccent),
-                                          onPressed: () => _removeDay(weekIndex, dayIndex),
-                                          tooltip: 'Eliminar Día',
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (day.exercises.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 16.0, bottom: 8),
-                                      child: Column(
-                                        children: day.exercises.asMap().entries.map((exEntry) {
-                                          final exIndex = exEntry.key;
-                                          final ex = exEntry.value;
-                                          return Card(
-                                            child: ListTile(
-                                              dense: true,
-                                              title: Text(
-                                                  ex.exercise?.metricType == 'TIME' ? '${ex.exercise?.name ?? "Unknown"}: ${ex.sets} x ${ex.targetTime ?? "-"}s'
-                                                  : ex.exercise?.metricType == 'DISTANCE' ? '${ex.exercise?.name ?? "Unknown"}: ${ex.sets} x ${ex.targetDistance ?? "-"}m'
-                                                  : '${ex.exercise?.name ?? "Unknown"}: ${ex.sets}x${ex.reps}'
-                                              ),
-                                              subtitle: Text(
-                                                '${ex.exercise?.metricType == 'REPS' && ex.suggestedLoad != null ? " ${ex.suggestedLoad}kg |" : ""}'
-                                                '${ex.rest != null ? " Rest: ${ex.rest}" : ""}'
-                                                '${ex.notes != null && ex.notes!.isNotEmpty ? "\n📝 ${ex.notes}" : ""}',
-                                              ),
-                                              trailing: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  if (ex.videoUrl != null && ex.videoUrl!.isNotEmpty)
-                                                    IconButton(
-                                                      icon: const Icon(Icons.play_circle_fill, size: 24, color: Colors.red),
-                                                      tooltip: 'Ver Video',
-                                                      onPressed: () async {
-                                                        final url = Uri.parse(ex.videoUrl!);
-                                                        if (await canLaunchUrl(url)) {
-                                                          await launchUrl(url);
-                                                        } else {
-                                                          ScaffoldMessenger.of(context).showSnackBar(
-                                                            const SnackBar(content: Text('No se pudo abrir la URL del video')),
-                                                          );
-                                                        }
-                                                      },
-                                                    ),
-                                                  IconButton(
-                                                    icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
-                                                    onPressed: () => _addOrEditExercise(weekIndex, dayIndex, ex, exIndex),
-                                                  ),
-                                                  IconButton(
-                                                    icon: const Icon(Icons.close, size: 20, color: Colors.red),
-                                                    onPressed: () => _removeExercise(weekIndex, dayIndex, exIndex),
-                                                  ),
-                                                ],
-                                              ),
+                                      
+                                      // Objective Row (Independent line)
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 8.0), // Spacing asked by user
+                                        child: Row(
+                                          children: [
+                                            const Text("Objetivo: ", style: TextStyle(fontWeight: FontWeight.bold)),
+                                            const SizedBox(width: 8),
+                                            DropdownButton<TrainingIntent>(
+                                              value: day.trainingIntent,
+                                              isDense: true,
+                                              underline: Container(height: 1, color: Colors.grey),
+                                              items: TrainingIntent.values.map((intent) {
+                                                return DropdownMenuItem(
+                                                  value: intent,
+                                                  child: Text(intent.label),
+                                                );
+                                              }).toList(),
+                                              onChanged: (newIntent) {
+                                                if (newIntent != null) {
+                                                  setState(() {
+                                                     _weeks[weekIndex].days[dayIndex] = PlanDay(
+                                                       id: day.id,
+                                                       title: day.title,
+                                                       dayOfWeek: day.dayOfWeek,
+                                                       order: day.order,
+                                                       dayNotes: day.dayNotes,
+                                                       exercises: day.exercises,
+                                                       trainingIntent: newIntent,
+                                                     );
+                                                  });
+                                                }
+                                              },
                                             ),
-                                          );
-                                        }).toList(),
+                                          ],
+                                        ),
                                       ),
-                                    ),
+
+                                      // Exercises List
+                                      if (day.exercises.isNotEmpty)
+                                        Column(
+                                          children: day.exercises.asMap().entries.map((exEntry) {
+                                            final exIndex = exEntry.key;
+                                            final ex = exEntry.value;
+                                            return Card(
+                                              margin: const EdgeInsets.symmetric(vertical: 4),
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(12.0),
+                                                child: Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.start, // Align to top
+                                                  children: [
+                                                    // Content Section (Expanded to force wrapping)
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                              ex.exercise?.metricType == 'TIME' ? '${ex.exercise?.name ?? "Unknown"}: ${ex.sets} x ${ex.targetTime ?? "-"}s'
+                                                              : ex.exercise?.metricType == 'DISTANCE' ? '${ex.exercise?.name ?? "Unknown"}: ${ex.sets} x ${ex.targetDistance ?? "-"}m'
+                                                              : '${ex.exercise?.name ?? "Unknown"}: ${ex.sets}x${ex.reps}',
+                                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                                          ),
+                                                          const SizedBox(height: 4),
+                                                          Text(
+                                                            '${ex.exercise?.metricType == 'REPS' && ex.suggestedLoad != null ? " ${ex.suggestedLoad}kg |" : ""}'
+                                                            '${ex.rest != null ? " Rest: ${ex.rest}" : ""}'
+                                                            '${ex.notes != null && ex.notes!.isNotEmpty ? "\n📝 ${ex.notes}" : ""}',
+                                                            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    
+                                                    // Actions Section (Fixed width, no Wrap)
+                                                    Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        if (ex.videoUrl != null && ex.videoUrl!.isNotEmpty)
+                                                          IconButton(
+                                                            constraints: const BoxConstraints(), // Compact
+                                                            padding: const EdgeInsets.all(4),
+                                                            icon: const Icon(Icons.play_circle_fill, size: 24, color: Colors.red),
+                                                            tooltip: 'Ver Video',
+                                                            onPressed: () async {
+                                                              final url = Uri.parse(ex.videoUrl!);
+                                                              if (await canLaunchUrl(url)) {
+                                                                await launchUrl(url);
+                                                              } else {
+                                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                                  const SnackBar(content: Text('No se pudo abrir la URL del video')),
+                                                                );
+                                                              }
+                                                            },
+                                                          ),
+                                                        IconButton(
+                                                          constraints: const BoxConstraints(),
+                                                          padding: const EdgeInsets.all(4),
+                                                          icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
+                                                          onPressed: () => _addOrEditExercise(weekIndex, dayIndex, ex, exIndex),
+                                                        ),
+                                                        IconButton(
+                                                          constraints: const BoxConstraints(),
+                                                          padding: const EdgeInsets.all(4),
+                                                          icon: const Icon(Icons.close, size: 20, color: Colors.red),
+                                                          onPressed: () => _removeExercise(weekIndex, dayIndex, exIndex),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                    ],
+                                  ),
                                 ],
                               );
                             }),
@@ -572,6 +610,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 100), // Bottom padding for scrolling
                 ],
               ),
               isActive: _currentStep >= 1,
@@ -624,5 +663,3 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
     );
   }
 }
-
-

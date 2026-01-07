@@ -80,6 +80,7 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
                 : _getFilteredExercises().isEmpty
                     ? const Center(child: Text('No hay ejercicios registrados.'))
                     : ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 100),
                         itemCount: _getFilteredExercises().length,
                         itemBuilder: (context, index) {
                           final ex = _getFilteredExercises()[index];

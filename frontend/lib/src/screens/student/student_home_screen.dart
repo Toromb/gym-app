@@ -190,6 +190,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           );
         },
       ),
+      ),
     );
   }
 

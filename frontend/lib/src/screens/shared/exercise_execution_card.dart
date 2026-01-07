@@ -305,9 +305,11 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                                  child: Text(
                                    em.muscle.name,
                                    style: TextStyle(
-                                     fontSize: 10,
-                                     fontWeight: isPrimary ? FontWeight.bold : FontWeight.normal,
-                                     color: isPrimary ? color : Colors.grey[700],
+                                     fontSize: 11,
+                                     fontWeight: isPrimary ? FontWeight.w900 : FontWeight.w500,
+                                     color: isPrimary 
+                                         ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : color)
+                                         : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[300] : Colors.grey[700]),
                                    ),
                                  ),
                                );
