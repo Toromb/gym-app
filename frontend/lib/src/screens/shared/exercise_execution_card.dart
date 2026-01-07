@@ -305,9 +305,9 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                                  child: Text(
                                    em.muscle.name,
                                    style: TextStyle(
-                                     fontSize: 10,
-                                     fontWeight: isPrimary ? FontWeight.bold : FontWeight.normal,
-                                     color: isPrimary ? color : Colors.grey[700],
+                                     fontSize: 11, // Increased from 10
+                                     fontWeight: isPrimary ? FontWeight.w900 : FontWeight.w500, // Increased weight
+                                     color: isPrimary ? color.withValues(alpha: 1.0) : Colors.grey[800], // Ensure full opacity for text
                                    ),
                                  ),
                                );
@@ -443,9 +443,13 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
         labelText: '$label (Sugg: $hint)', 
         floatingLabelBehavior: FloatingLabelBehavior.always,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        contentPadding: const EdgeInsets.only(left: 8, top: 12, bottom: 12, right: 30), // Increased right padding to prevent overlap
         isDense: true,
-        suffixIcon: Icon(icon, size: 16, color: Colors.grey),
+        suffixIcon: Padding(
+           padding: const EdgeInsets.only(right: 8.0),
+           child: Icon(icon, size: 16, color: Colors.grey),
+        ),
+        suffixIconConstraints: const BoxConstraints(maxHeight: 40, maxWidth: 40),
       ),
       style: const TextStyle(fontWeight: FontWeight.bold),
 

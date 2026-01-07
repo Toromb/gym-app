@@ -127,6 +127,7 @@ class AppLocalizations {
       'reps': 'Reps',
       'load': 'Carga',
       'watchVideo': 'Ver Video',
+      'addExercise': 'Agregar Ejercicios',
       'notes': 'Notas',
       
       // --- Admin / Management ---
@@ -156,6 +157,7 @@ class AppLocalizations {
     'en': {
       // English Fallback
       'appTitle': 'GymFlow',
+      'addExercise': 'Add Exercise',
       'loginTitle': 'Login',
       // ... (Can populate later if needed, primarily focused on ES)
     },
