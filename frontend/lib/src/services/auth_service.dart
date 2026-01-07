@@ -152,15 +152,33 @@ class AuthService {
   }
 
   String getActivationUrl(String token) {
-    String origin = kIsWeb ? Uri.base.origin : 'https://tugymflow.com';
-    // Fallback if origin is weird on web
-    if (origin.isEmpty || origin == 'null' || origin.contains('localhost')) origin = 'https://tugymflow.com';
+    String origin;
+    if (kIsWeb) {
+       origin = Uri.base.origin;
+    } else {
+       // For Android/iOS app, we want to point to the Web App for activation
+       origin = 'https://tugymflow.com';
+    }
+    
+    // Fallback/Localhost handling
+    if (origin.isEmpty || origin == 'null') {
+        origin = kReleaseMode ? 'https://tugymflow.com' : 'http://localhost:3000';
+    }
+    
     return '$origin/#/activate-account?token=$token';
   }
 
   String getResetUrl(String token) {
-    String origin = kIsWeb ? Uri.base.origin : 'https://tugymflow.com';
-    if (origin.isEmpty || origin == 'null' || origin.contains('localhost')) origin = 'https://tugymflow.com';
+    String origin;
+    if (kIsWeb) {
+       origin = Uri.base.origin;
+    } else {
+       origin = 'https://tugymflow.com';
+    }
+
+    if (origin.isEmpty || origin == 'null') {
+         origin = kReleaseMode ? 'https://tugymflow.com' : 'http://localhost:3000';
+    }
     return '$origin/#/reset-password?token=$token';
   }
 

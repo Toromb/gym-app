@@ -61,6 +61,7 @@ class _PlansListScreenState extends State<PlansListScreen> {
           final sortedKeys = groupedPlans.keys.toList()..sort();
 
           return ListView.builder(
+            padding: const EdgeInsets.only(bottom: 100),
             itemBuilder: (context, index) {
               // Header index
               if (index == 0) {

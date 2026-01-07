@@ -109,6 +109,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                 _buildSectionHeader(context, 'Alumnos', students.length),
                 Expanded(
                   child: ListView(
+                    padding: const EdgeInsets.only(bottom: 100),
                     children: _buildUserListWidgets(context, students, false, true),
                   ),
                 ),
