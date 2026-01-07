@@ -41,15 +41,19 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestionar Usuarios'),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddUserScreen()),
-          );
-        },
-        child: const Icon(Icons.add),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_add),
+            tooltip: 'Agregar Usuario',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddUserScreen()),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Consumer<UserProvider>(
         builder: (context, userProvider, _) {
@@ -388,6 +392,10 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                                String? token;
                                String path = '';
                                
+                               ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Generando enlace...'), duration: Duration(seconds: 1)),
+                               );
+
                                if (value == 'activation') {
                                   token = await authService.generateActivationToken(user.id);
                                } else if (value == 'reset') {
@@ -400,10 +408,14 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                                       : authService.getResetUrl(token);
   
                                   await Clipboard.setData(ClipboardData(text: link));
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Enlace copiado al portapapeles')),
-                                  );
+                                  if (context.mounted) {
+                                     ScaffoldMessenger.of(context).removeCurrentSnackBar(); // Remove "Generating..."
+                                     ScaffoldMessenger.of(context).showSnackBar(
+                                       const SnackBar(content: Text('Enlace copiado al portapapeles'), backgroundColor: Colors.green),
+                                     );
+                                  }
                                } else if (context.mounted) {
+                                  ScaffoldMessenger.of(context).removeCurrentSnackBar();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text('Error al generar enlace'), backgroundColor: Colors.red),
                                   );
