@@ -152,15 +152,15 @@ class AuthService {
   }
 
   String getActivationUrl(String token) {
-    String origin = Uri.base.origin;
-    // Fallback for non-web or weird environments, though typically Uri.base.origin is safe in Flutter Web
-    if (origin.isEmpty || origin == 'null') origin = 'http://localhost:3000';
+    String origin = kIsWeb ? Uri.base.origin : 'https://tugymflow.com';
+    // Fallback if origin is weird on web
+    if (origin.isEmpty || origin == 'null' || origin.contains('localhost')) origin = 'https://tugymflow.com';
     return '$origin/#/activate-account?token=$token';
   }
 
   String getResetUrl(String token) {
-    String origin = Uri.base.origin;
-    if (origin.isEmpty || origin == 'null') origin = 'http://localhost:3000';
+    String origin = kIsWeb ? Uri.base.origin : 'https://tugymflow.com';
+    if (origin.isEmpty || origin == 'null' || origin.contains('localhost')) origin = 'https://tugymflow.com';
     return '$origin/#/reset-password?token=$token';
   }
 
