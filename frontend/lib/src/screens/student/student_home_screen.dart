@@ -57,7 +57,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           ),
         ],
       ),
-      body: Consumer<PlanProvider>(
+      body: SafeArea(
+        child: Consumer<PlanProvider>(
         builder: (context, planProvider, child) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -183,6 +184,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     );
                   },
                 ),
+                const SizedBox(height: 100), // Added bottom spacing for "breathing room"
               ],
             ),
           );

@@ -164,7 +164,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         title: Text(widget.day.title ?? 'Día ${widget.day.dayOfWeek}'),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,7 +229,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _handleAddExercise,
                         icon: const Icon(Icons.add),
-                        label: const Text('Add Exercise'),
+                        label: Text(AppLocalizations.of(context)!.get('addExercise')),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -242,11 +243,14 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             ),
           ),
       floatingActionButton: !widget.readOnly 
-        ? FloatingActionButton.extended(
-            onPressed: _handleFinishWorkout,
-            label: Text(AppLocalizations.of(context)!.get('finishWorkout')),
-            icon: const Icon(Icons.check_circle),
-            backgroundColor: Colors.green,
+        ? Padding(
+            padding: const EdgeInsets.only(bottom: 20.0), // Extra safety for FAB
+            child: FloatingActionButton.extended(
+              onPressed: _handleFinishWorkout,
+              label: Text(AppLocalizations.of(context)!.get('finishWorkout')),
+              icon: const Icon(Icons.check_circle),
+              backgroundColor: Colors.green,
+            ),
           )
         : null,
     );
