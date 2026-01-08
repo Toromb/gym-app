@@ -238,23 +238,33 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                     ),
                   ),
 
-                const SizedBox(height: 80), 
+                const SizedBox(height: 100), // Ensures scroll space
               ],
             ),
             ),
           ),
 
-      floatingActionButton: !widget.readOnly 
-        ? Padding(
-            padding: const EdgeInsets.only(bottom: 20.0), // Extra safety for FAB
-            child: FloatingActionButton.extended(
-              onPressed: _handleFinishWorkout,
-              label: Text(AppLocalizations.of(context)!.get('finishWorkout')),
-              icon: const Icon(Icons.check_circle),
-              backgroundColor: Colors.green,
-            ),
-          )
-        : null,
+      bottomNavigationBar: !widget.readOnly
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton.icon(
+                  onPressed: _handleFinishWorkout,
+                  icon: const Icon(Icons.check_circle),
+                  label: Text(AppLocalizations.of(context)!.get('finishWorkout')),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 4,
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
   }
 

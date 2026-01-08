@@ -55,6 +55,8 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
             notes: e.notes,
             videoUrl: e.videoUrl,
             order: e.order,
+            targetTime: e.targetTime,
+            targetDistance: e.targetDistance,
             equipments: e.equipments, // Preserve equipments
           )).toList(),
         )).toList(),

@@ -71,7 +71,7 @@ async function runTest() {
         const exDetailId = originalPlan.weeks[0].days[0].exercises[0].id;
 
         // ASSIGN PLAN
-        await plansService.assignPlan(plan.id, std.id, prof.id);
+        await plansService.assignPlan(plan.id, std.id, prof);
 
         // 3. Start Session (Creates Snapshot with 3 Sets)
         // SIMULATE PROFESSOR PREVIEW (Student = Prof)
@@ -121,6 +121,46 @@ async function runTest() {
             log('Session Sync SUCCESS! Snapshot updated to 5. ✅', 'SUCCESS');
         } else {
             throw new Error(`Session Sync FAILED. Expected 5, got ${newSets}`);
+        }
+
+        // 5.5. Test Time Sync Update
+        log('--- Testing Time Sync Update ---', 'INFO');
+        // Update Time to 60s
+        const updateDtoTime: any = {
+            name: 'Updated Plan Time',
+            weeks: [{
+                id: weekId,
+                weekNumber: 1,
+                days: [{
+                    id: dayId,
+                    dayOfWeek: 1,
+                    order: 1,
+                    exercises: [{
+                        id: exDetailId,
+                        exerciseId: exercise.id,
+                        sets: 5,
+                        reps: '10',
+                        targetTime: 60, // NEW TIME
+                        order: 1
+                    }]
+                }]
+            }]
+        };
+
+        await plansService.update(plan.id, updateDtoTime, prof);
+        log('Plan Updated with Time 60s.', 'INFO');
+
+        const sessionTime = await sessionService.findOne(session.id);
+        if (!sessionTime) throw new Error('Session not found time');
+
+        log(`Reloaded Session Snapshot Time: ${sessionTime.exercises[0].targetTimeSnapshot}`, 'INFO');
+
+        if (sessionTime.exercises[0].targetTimeSnapshot === 60) {
+            log('Time Sync SUCCESS! Snapshot updated to 60. ✅', 'SUCCESS');
+        } else {
+            // throw new Error(`Time Sync FAILED. Expected 60, got ${sessionTime.exercises[0].targetTimeSnapshot}`);
+            // Just log error for now to continue structure test? No, fail hard.
+            throw new Error(`Time Sync FAILED. Expected 60, got ${sessionTime.exercises[0].targetTimeSnapshot}`);
         }
 
         // 6. Test Structural Sync (Add Exercise)

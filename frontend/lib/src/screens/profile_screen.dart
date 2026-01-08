@@ -187,6 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                icon: Icons.edit_note,
                child: _buildAdminSection()
             ),
+            const SizedBox(height: 100), // Bottom air for better scrolling
           ],
         ),
       ),
