@@ -19,7 +19,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   late TextEditingController _phoneController;
-  late TextEditingController _ageController;
+  late TextEditingController _birthDateController;
   late TextEditingController _notesController;
   late TextEditingController _lastPaymentDateController;
   late TextEditingController _membershipDateController; // Added membership start date controller
@@ -42,7 +42,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _firstNameController = TextEditingController(text: widget.user.firstName);
     _lastNameController = TextEditingController(text: widget.user.lastName);
     _phoneController = TextEditingController(text: widget.user.phone ?? '');
-    _ageController = TextEditingController(text: widget.user.age?.toString() ?? '');
+    _birthDateController = TextEditingController(text: widget.user.birthDate ?? '');
     _notesController = TextEditingController(text: widget.user.notes ?? '');
     _lastPaymentDateController = TextEditingController(text: widget.user.lastPaymentDate ?? '');
     
@@ -104,7 +104,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _phoneController.dispose();
-    _ageController.dispose();
+    _birthDateController.dispose();
     _notesController.dispose();
     _lastPaymentDateController.dispose();
     super.dispose();
@@ -224,10 +224,35 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   decoration: const InputDecoration(labelText: 'Teléfono'),
                 ),
                 TextFormField(
-                  controller: _ageController,
-                  decoration: const InputDecoration(labelText: 'Edad'),
-                  keyboardType: TextInputType.number,
+                  controller: _birthDateController,
+                  decoration: const InputDecoration(
+                    labelText: 'Fecha de Nacimiento',
+                    hintText: 'YYYY-MM-DD',
+                    suffixIcon: Icon(Icons.calendar_today),
+                  ),
+                  readOnly: true,
+                  onTap: () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime(2000),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                         _birthDateController.text = picked.toIso8601String().split('T')[0];
+                      });
+                    }
+                  },
                 ),
+                if (widget.user.age != null)
+                   Padding(
+                     padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                     child: Align(
+                       alignment: Alignment.centerLeft,
+                       child: Text("Edad actual: ${widget.user.age} años", style: const TextStyle(fontWeight: FontWeight.bold)),
+                     ),
+                   ),
                 DropdownButtonFormField<String>(
                   initialValue: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
                   decoration: const InputDecoration(labelText: 'Sexo'),
@@ -295,7 +320,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                               'firstName': _firstNameController.text,
                               'lastName': _lastNameController.text,
                               'phone': _phoneController.text,
-                              'age': int.tryParse(_ageController.text),
+                              'birthDate': _birthDateController.text.isEmpty ? null : _birthDateController.text,
                               'gender': _selectedGender,
                               'notes': _notesController.text,
                               'paymentStatus': _paymentStatus,

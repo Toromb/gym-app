@@ -20,6 +20,7 @@ class UserDetailScreen extends StatelessWidget {
             _buildDetailRow('Email', user.email),
             _buildDetailRow('Teléfono', user.phone ?? 'N/A'),
             _buildDetailRow('Edad', user.age?.toString() ?? 'N/A'),
+            _buildDetailRow('Fecha Nacimiento', user.birthDate ?? 'N/A'),
             _buildDetailRow('Género', user.gender ?? 'N/A'),
             _buildDetailRow('Rol', user.role.toUpperCase()),
             

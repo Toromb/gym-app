@@ -21,7 +21,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Controllers for editable fields
   late TextEditingController _phoneController;
-  late TextEditingController _ageController;
+  late TextEditingController _birthDateController;
   late TextEditingController _heightController;
   
   // Student controllers
@@ -58,7 +58,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _initControllers(User user) {
     _phoneController = TextEditingController(text: user.phone ?? '');
-    _ageController = TextEditingController(text: user.age?.toString() ?? '');
+    _birthDateController = TextEditingController(text: user.birthDate ?? '');
     _heightController = TextEditingController(text: user.height?.toString() ?? '');
     
     _currentWeightController = TextEditingController(text: user.currentWeight?.toString() ?? '');
@@ -75,7 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     _phoneController.dispose();
-    _ageController.dispose();
+    _birthDateController.dispose();
     _heightController.dispose();
     _currentWeightController.dispose();
     _personalCommentController.dispose();
@@ -90,7 +90,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final data = <String, dynamic>{
       'phone': _phoneController.text,
-      'age': int.tryParse(_ageController.text),
+      'birthDate': _birthDateController.text.isEmpty ? null : _birthDateController.text,
       'height': double.tryParse(_heightController.text),
       'gender': _selectedGender, 
     };
@@ -283,10 +283,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Expanded(
               child: _buildTextFieldWithLabel(
-                 label: 'Edad',
-                 controller: _ageController,
-                 readOnly: !_isEditing,
-                 keyboardType: TextInputType.number,
+                 label: 'Fecha Nacimiento',
+                 controller: _birthDateController,
+                 readOnly: true, // Profile edit often simpler, or implement DatePicker here too. Let's start with ReadOnly or DatePicker.
+                 // For now, let's make it consistent with Add/Edit User screens and allow editing via DatePicker if specificed,
+                 // but typically ProfileScreen implies self-edit.
+                 // To implement DatePicker cleanly:
+                 onTap: _isEditing ? () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime(2000),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                         _birthDateController.text = picked.toIso8601String().split('T')[0];
+                      });
+                    }
+                 } : null,
               ),
             ),
             const SizedBox(width: 16),
@@ -496,12 +511,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     int maxLines = 1,
     TextInputType? keyboardType,
     IconData? icon,
+    VoidCallback? onTap,
   }) {
     return TextField(
       controller: controller,
       readOnly: readOnly,
+      enabled: !readOnly, // Prevent focus and selection style when not editing
       maxLines: maxLines,
       keyboardType: keyboardType,
+      onTap: onTap,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: icon != null ? Icon(icon, size: 20) : null,

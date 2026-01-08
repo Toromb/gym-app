@@ -14,7 +14,7 @@ class User {
   final String firstName;
   final String lastName;
   final String? phone;
-  final int? age;
+  final String? birthDate;
   final String? gender;
   final String? notes;
   final String? paymentStatus;
@@ -55,7 +55,7 @@ class User {
     required this.firstName,
     required this.lastName,
     this.phone,
-    this.age,
+    this.birthDate,
     this.gender,
     this.notes,
     this.paymentStatus,
@@ -82,6 +82,21 @@ class User {
 
   String get name => '$firstName $lastName';
 
+  int? get age {
+    if (birthDate == null) return null;
+    try {
+      final dob = DateTime.parse(birthDate!);
+      final now = DateTime.now();
+      int age = now.year - dob.year;
+      if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+        age--;
+      }
+      return age;
+    } catch (e) {
+      return null;
+    }
+  }
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'],
@@ -90,7 +105,7 @@ class User {
       firstName: json['firstName'] ?? '',
       lastName: json['lastName'] ?? '',
       phone: json['phone'],
-      age: json['age'],
+      birthDate: json['birthDate'],
       gender: json['gender'],
       notes: json['notes'],
       paymentStatus: json['paymentStatus'],
@@ -126,7 +141,7 @@ class User {
       firstName: firstName,
       lastName: lastName,
       phone: phone,
-      age: age,
+      birthDate: birthDate,
       gender: gender,
       notes: notes,
       paymentStatus: paymentStatus,
@@ -160,7 +175,7 @@ class User {
       'firstName': firstName,
       'lastName': lastName,
       'phone': phone,
-      'age': age,
+      'birthDate': birthDate,
       'gender': gender,
       'notes': notes,
       'paymentStatus': paymentStatus,

@@ -62,8 +62,8 @@ export class User {
   @Column({ nullable: true })
   phone: string;
 
-  @Column({ nullable: true })
-  age: number;
+  @Column({ type: 'date', nullable: true })
+  birthDate: Date;
 
   @Column({ nullable: true })
   gender: string;

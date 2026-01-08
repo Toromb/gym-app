@@ -17,12 +17,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscureText = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true, // Restore default behavior
       appBar: AppBar(
+        // ... (rest of AppBar)
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -49,6 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                   // ... (Logo part)
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -66,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontSize: 32, // Larger
                         ),
                   ),
-                  Text(AppLocalizations.of(context)!.loginTitle, style: const TextStyle(color: Colors.grey)), // 'Sign in to continue' -> 'Iniciar Sesión' text below welcome
+                  Text(AppLocalizations.of(context)!.loginTitle, style: const TextStyle(color: Colors.grey)), 
                   const SizedBox(height: 32),
                   TextField(
                     controller: _emailController,
@@ -84,8 +87,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       labelText: AppLocalizations.of(context)!.passwordLabel,
                       prefixIcon: const Icon(Icons.lock_outline),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureText = !_obscureText;
+                          });
+                        },
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: _obscureText,
+
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) async {
                         setState(() => _isLoading = true);

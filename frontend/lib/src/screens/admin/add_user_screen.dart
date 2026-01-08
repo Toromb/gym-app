@@ -23,7 +23,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _ageController = TextEditingController();
+  final _birthDateController = TextEditingController();
   final _notesController = TextEditingController();
   final _membershipDateController = TextEditingController();
   final _weightController = TextEditingController();
@@ -54,7 +54,8 @@ class _AddUserScreenState extends State<AddUserScreen> {
       _firstNameController.text = u.firstName;
       _lastNameController.text = u.lastName;
       _phoneController.text = u.phone ?? '';
-      _ageController.text = u.age?.toString() ?? '';
+      _phoneController.text = u.phone ?? '';
+      _birthDateController.text = u.birthDate ?? '';
       _notesController.text = u.notes ?? '';
       _selectedRole = u.role;
       _selectedGender = u.gender ?? 'M';
@@ -279,9 +280,26 @@ class _AddUserScreenState extends State<AddUserScreen> {
                   decoration: const InputDecoration(labelText: 'Teléfono'),
                 ),
                 TextFormField(
-                  controller: _ageController,
-                  decoration: const InputDecoration(labelText: 'Edad'),
-                  keyboardType: TextInputType.number,
+                  controller: _birthDateController,
+                  decoration: const InputDecoration(
+                    labelText: 'Fecha de Nacimiento',
+                    hintText: 'YYYY-MM-DD',
+                    suffixIcon: Icon(Icons.calendar_today),
+                  ),
+                  readOnly: true,
+                  onTap: () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime(2000),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                         _birthDateController.text = picked.toIso8601String().split('T')[0];
+                      });
+                    }
+                  },
                 ),
                 if (_selectedRole == AppRoles.alumno)
                   TextFormField(
@@ -320,7 +338,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                                     'lastName': _lastNameController.text,
                                     'email': _emailController.text, // Should we allow email edit? Maybe not backend supported yet but ok.
                                     'phone': _phoneController.text,
-                                    'age': int.tryParse(_ageController.text),
+                                    'birthDate': _birthDateController.text.isEmpty ? null : _birthDateController.text,
                                     'gender': _selectedGender,
                                     'notes': _notesController.text,
                                     // Role usually not editable freely but let's send it
@@ -342,7 +360,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                                   firstName: _firstNameController.text,
                                   lastName: _lastNameController.text,
                                   phone: _phoneController.text,
-                                  age: int.tryParse(_ageController.text),
+                                  birthDate: _birthDateController.text.isEmpty ? null : _birthDateController.text,
                                   gender: _selectedGender,
                                   notes: _notesController.text,
                                   role: _selectedRole,

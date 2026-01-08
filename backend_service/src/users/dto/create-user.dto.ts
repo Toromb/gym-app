@@ -34,8 +34,8 @@ export class CreateUserDto {
   phone?: string;
 
   @IsOptional()
-  @IsInt()
-  age?: number;
+  @IsDateString()
+  birthDate?: string;
 
   @IsOptional()
   @IsString()

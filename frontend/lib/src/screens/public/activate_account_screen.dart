@@ -34,7 +34,11 @@ class _ActivateAccountScreenState extends State<ActivateAccountScreen> {
   String? _errorMessage;
   String? _successMessage;
 
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
+
   Future<void> _submit() async {
+    // ... (rest of _submit)
     if (!_formKey.currentState!.validate()) return;
     if (widget.token == null || widget.token!.isEmpty) {
       setState(() => _errorMessage = 'Token inválido o faltante');
@@ -109,8 +113,20 @@ class _ActivateAccountScreenState extends State<ActivateAccountScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
-                      decoration: const InputDecoration(labelText: 'Nueva Contraseña'),
-                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Nueva Contraseña',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
+                      obscureText: _obscurePassword,
                       validator: (value) {
                          if (value == null || value.length < 6) return 'Mínimo 6 caracteres';
                          return null;
@@ -119,8 +135,20 @@ class _ActivateAccountScreenState extends State<ActivateAccountScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _confirmController,
-                      decoration: const InputDecoration(labelText: 'Confirmar Contraseña'),
-                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Confirmar Contraseña',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscureConfirm = !_obscureConfirm;
+                            });
+                          },
+                        ),
+                      ),
+                      obscureText: _obscureConfirm,
                       validator: (value) {
                          if (value != _passwordController.text) return 'Las contraseñas no coinciden';
                          return null;

@@ -22,7 +22,7 @@ import { UserRole } from './entities/user.entity';
 @Controller('users')
 @UseGuards(AuthGuard('jwt'))
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto, @Request() req: any) {
@@ -105,7 +105,7 @@ export class UsersController {
     if (!user) throw new NotFoundException('User not found');
 
     // Define allowed fields per role
-    const allowedFields: string[] = ['phone', 'age', 'gender', 'height'];
+    const allowedFields: string[] = ['phone', 'birthDate', 'gender', 'height'];
 
     if (userRole === UserRole.ALUMNO) {
       allowedFields.push('currentWeight', 'personalComment');
