@@ -494,4 +494,26 @@ export class TrainingSessionsService {
     await this.sessionExerciseRepo.save(newExercise);
     return newExercise;
   }
+
+  // 5. Delete Session Exercise
+  async deleteSessionExercise(exerciseExecId: string): Promise<void> {
+    const sessionExercise = await this.sessionExerciseRepo.findOne({
+      where: { id: exerciseExecId },
+      relations: ['session'],
+    });
+
+    if (!sessionExercise) {
+      throw new NotFoundException('Session exercise not found');
+    }
+
+    // Optional: Check if session is COMPLETED? Usually we might allow deleting even then if admin/profe.
+    // For now, no strict status check unless requested.
+
+    await this.sessionExerciseRepo.remove(sessionExercise);
+
+    // Sync Load if it was part of a session
+    if (sessionExercise.session) {
+      await this._trySyncLoad(sessionExercise.session.id);
+    }
+  }
 }

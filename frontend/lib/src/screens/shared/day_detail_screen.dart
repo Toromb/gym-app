@@ -74,8 +74,39 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   Future<void> _handleFinishWorkout() async {
     DateTime? picked;
     
+    // Fix: Validar ejercicios incompletos
+    if (widget.planId != 'FREE_SESSION') { 
+        // Logic: For Free Session, maybe we don't care? Or yes? 
+        // User Requirement: "Si el usuario intenta finalizar el entrenamiento y hay ejercicios incompletos..."
+        // Applicability: Both? "Training Session" implies Plan, but logic applies generally.
+        // Let's check provider session.
+        final currentSession = context.read<PlanProvider>().currentSession;
+        if (currentSession != null) {
+            final hasIncomplete = currentSession.exercises.any((e) => !e.isCompleted);
+            if (hasIncomplete) {
+                final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                        title: const Text('Ejercicios incompletos'),
+                        content: const Text('Hay ejercicios sin completar. ¿Estás seguro de que deseas finalizar?'),
+                        actions: [
+                            TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancelar'),
+                            ),
+                            TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('Finalizar'),
+                            ),
+                        ],
+                    ),
+                );
+                if (confirm != true) return;
+            }
+        }
+    }
+
     // Fix: Enforce TODAY for ALL sessions (Free & Plan)
-    // User requirement: "Al finalizar el entrenamiento del día, la fecha debe ser únicamente el día actual."
     picked = DateTime.now();
 
     if (picked != null && mounted) {
@@ -220,7 +251,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                   return _buildExerciseCard(context, exExec, index + 1, widget.readOnly);
                 }),
                 
-                if (!widget.readOnly)
+                // Fix: Hide Add Exercise button for Plan Sessions
+                if (!widget.readOnly && widget.planId == 'FREE_SESSION')
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     child: Center(
@@ -284,6 +316,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         index: index,
         intent: widget.day.trainingIntent,
         readOnly: readOnly,
+        canDelete: !readOnly && widget.planId == 'FREE_SESSION', // Only allowed in Free Session
       );
   }
 

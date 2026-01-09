@@ -10,6 +10,7 @@ import {
   Query,
   BadRequestException,
   ForbiddenException,
+  Delete,
 } from '@nestjs/common';
 import { TrainingSessionsService } from './training-sessions.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -51,6 +52,16 @@ export class TrainingSessionsController {
     @Body() body: any,
   ) {
     return this.sessionsService.updateExercise(exerciseExecId, body);
+  }
+
+  // DELETE /executions/exercises/:id
+  @Delete('exercises/:id')
+  async deleteExercise(
+    @Request() req: any,
+    @Param('id') exerciseExecId: string
+  ) {
+    // TODO: Add authorization check if needed (e.g. only owner or profe)
+    return this.sessionsService.deleteSessionExercise(exerciseExecId);
   }
 
   // PATCH /executions/:id/complete

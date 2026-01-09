@@ -375,7 +375,37 @@ class PlanProvider with ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('Error adding exercise: $e');
+    }
+  }
+
+  Future<void> deleteSessionExercise(String sessionExerciseId) async {
+    if (_currentSession == null) return;
+    
+    // 1. Optimistic Update (Local State)
+    final updatedList = _currentSession!.exercises.where((e) => e.id != sessionExerciseId).toList();
+    _currentSession = _currentSession!.copyWith(exercises: updatedList);
+    notifyListeners();
+    
+    // 2. Persist to Local Cache
+    await _localStorage.saveSession(_currentSession!.toJson());
+
+    try {
+      // 3. Queue Request
+      final request = {
+          'id': const Uuid().v4(),
+          'method': 'DELETE',
+          'endpoint': '/executions/exercises/$sessionExerciseId',
+          'body': {}, 
+          'timestamp': DateTime.now().toIso8601String(),
+      };
+      
+      await _localStorage.addToQueue(request);
+      
+      // 4. Trigger Sync
+      _syncService.triggerSync();
+      
+    } catch (e) {
+      debugPrint('Error deleting session exercise: $e');
     }
   }
 

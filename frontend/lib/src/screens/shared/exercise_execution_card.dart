@@ -8,13 +8,14 @@ import '../../localization/app_localizations.dart';
 import '../../models/plan_model.dart';
 import '../../utils/swap_exercise_logic.dart';
 import 'swap_confirmation_dialog.dart';
-import '../../providers/auth_provider.dart'; // Import AuthProvider
+import '../../providers/auth_provider.dart';
 
 class ExerciseExecutionCard extends StatefulWidget {
   final SessionExercise execution;
   final int index;
   final TrainingIntent intent;
   final bool readOnly;
+  final bool canDelete;
 
   const ExerciseExecutionCard({
     super.key,
@@ -22,6 +23,7 @@ class ExerciseExecutionCard extends StatefulWidget {
     required this.index,
     this.intent = TrainingIntent.GENERAL,
     this.readOnly = false,
+    this.canDelete = false,
   });
 
   @override
@@ -62,12 +64,6 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   void didUpdateWidget(ExerciseExecutionCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.execution != oldWidget.execution) {
-       // Update controllers if the underlying execution data changed
-       // We only update if the USER hasn't typed? Or do we overwrite?
-       // Since this is a sync from backend, we generally want to reflect it.
-       // However, to avoid overriding user typing, one might check if focused.
-       // But for this issue (sync), let's update.
-       
        final newSets = widget.execution.setsDone?.toString() ?? widget.execution.targetSetsSnapshot?.toString() ?? '';
        if (_setsController.text != newSets) {
           _setsController.text = newSets;
@@ -83,7 +79,6 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
           _weightController.text = newWeight;
        }
        
-       // Also update completion state
        if (widget.execution.isCompleted != oldWidget.execution.isCompleted) {
           _isCompleted = widget.execution.isCompleted;
        }
@@ -194,12 +189,12 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                   ),
                 const SizedBox(width: 12),
                 
-                // Name & Video & Swap
+                // Name & Video & Swap & Delete
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Name + Inline Swap Button
+                      // Name + Inline Swap Button + Delete Button
                       Text.rich(
                         TextSpan(
                           children: [
@@ -212,7 +207,21 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                                 color: _isCompleted ? Colors.green : Theme.of(context).textTheme.bodyLarge?.color,
                               ),
                             ),
-                            if (!readOnly && (widget.execution.exercise?.muscles.any((m) => m.role == 'PRIMARY') ?? false))
+                            if (!readOnly && widget.canDelete)
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: IconButton(
+                                    icon: const Icon(Icons.delete_outline, color: Colors.grey, size: 20),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    tooltip: 'Eliminar ejercicio',
+                                    onPressed: () => _confirmDelete(context),
+                                  ),
+                                ),
+                              ),
+                            if (!readOnly && !widget.canDelete && (widget.execution.exercise?.muscles.any((m) => m.role == 'PRIMARY') ?? false))
                               WidgetSpan(
                                 alignment: PlaceholderAlignment.middle,
                                 child: Padding(
@@ -503,7 +512,6 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                 return const Text('Error loading exercises');
               }
               final fullList = snapshot.data ?? [];
-              // Filter out the current exercise so it doesn't appear as an option
               final list = fullList.where((e) => e.id != widget.execution.exercise?.id).toList();
 
               if (list.isEmpty) {
@@ -556,16 +564,13 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   }
 
   Future<void> _performSwap(Exercise newEx) async {
-    // 1. Get User Weight (if Student)
     final authValues = context.read<AuthProvider>();
     double? userWeight;
     
-    // Check if current user is student and has weight
-    if (authValues.user?.role == 'alumno') { // Or check logic more robustly if needed
+    if (authValues.user?.role == 'alumno') { 
          userWeight = authValues.user?.currentWeight ?? authValues.user?.initialWeight;
     }
 
-    // 2. Calculate Suggestions
     final suggestion = SwapExerciseLogic.calculate(
       oldExercise: widget.execution.exercise!, 
       newExercise: newEx,
@@ -574,7 +579,6 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
       userBodyWeight: userWeight,
     );
 
-    // 2. Show Confirmation Dialog
     if (!mounted) return;
     
     final confirmed = await showDialog<Map<String, String>>(
@@ -588,48 +592,68 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
 
     if (confirmed == null) return; 
 
-  // 3. Apply Changes
-  final updateData = {
-    'exercise': {
-      'id': newEx.id,
-      'muscles': newEx.muscles,
-      'equipments': newEx.equipments,
-      'metricType': newEx.metricType, // Vital: Pass metricType if needed by backend, though backend fetches exercise.
-    },
-    'exerciseNameSnapshot': newEx.name,
-    'videoUrl': newEx.videoUrl,
-    'planExerciseId': null, 
+    final updateData = {
+      'exercise': {
+        'id': newEx.id,
+        'muscles': newEx.muscles,
+        'equipments': newEx.equipments,
+        'metricType': newEx.metricType, 
+      },
+      'exerciseNameSnapshot': newEx.name,
+      'videoUrl': newEx.videoUrl,
+      'planExerciseId': null, 
+      
+      'targetSetsSnapshot': int.tryParse(confirmed['sets']!),
+      
+      'targetRepsSnapshot': newEx.metricType == 'REPS' ? confirmed['reps'] : null,
+      'targetWeightSnapshot': newEx.metricType == 'REPS' ? confirmed['weight'] : null,
+      
+      'targetTimeSnapshot': newEx.metricType == 'TIME' ? int.tryParse(confirmed['time']!) : null,
+      'targetDistanceSnapshot': newEx.metricType == 'DISTANCE' ? double.tryParse(confirmed['distance']!) : null,
+      
+    };
     
-    // Common
-    'targetSetsSnapshot': int.tryParse(confirmed['sets']!),
+    final success = await context.read<PlanProvider>().updateSessionExercise(widget.execution.id, updateData);
     
-    // REPS
-    'targetRepsSnapshot': newEx.metricType == 'REPS' ? confirmed['reps'] : null,
-    'targetWeightSnapshot': newEx.metricType == 'REPS' ? confirmed['weight'] : null,
-    
-    // TIME
-    'targetTimeSnapshot': newEx.metricType == 'TIME' ? int.tryParse(confirmed['time']!) : null,
-    // DISTANCE
-    'targetDistanceSnapshot': newEx.metricType == 'DISTANCE' ? double.tryParse(confirmed['distance']!) : null,
-    
-  };
-  
-  final success = await context.read<PlanProvider>().updateSessionExercise(widget.execution.id, updateData);
-  
-  if (success && mounted) {
-     setState(() {
-        _metricType = newEx.metricType; // Reset logic for UI
-        _setsController.text = confirmed['sets']!;
-        
-        if (newEx.metricType == 'REPS') {
-            _repsController.text = confirmed['reps']!;
-            _weightController.text = confirmed['weight']!;
-        } else if (newEx.metricType == 'TIME') {
-            _timeController.text = confirmed['time']!;
-        } else if (newEx.metricType == 'DISTANCE') {
-            _distanceController.text = confirmed['distance']!;
-        }
-     });
+    if (success && mounted) {
+       setState(() {
+          _metricType = newEx.metricType; 
+          _setsController.text = confirmed['sets']!;
+          
+          if (newEx.metricType == 'REPS') {
+              _repsController.text = confirmed['reps']!;
+              _weightController.text = confirmed['weight']!;
+          } else if (newEx.metricType == 'TIME') {
+              _timeController.text = confirmed['time']!;
+          } else if (newEx.metricType == 'DISTANCE') {
+              _distanceController.text = confirmed['distance']!;
+          }
+       });
+    }
   }
-}
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar ejercicio'),
+        content: const Text('¿Estás seguro de que deseas eliminar este ejercicio de la sesión?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+       await context.read<PlanProvider>().deleteSessionExercise(widget.execution.id);
+    }
+  }
 }
