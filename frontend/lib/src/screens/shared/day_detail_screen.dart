@@ -74,18 +74,9 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   Future<void> _handleFinishWorkout() async {
     DateTime? picked;
     
-    // Fix: If Free Session, enforce TODAY (no picker)
-    if (widget.planId == 'FREE_SESSION') {
-        picked = DateTime.now();
-    } else {
-        picked = await showDatePicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime(2020),
-          lastDate: DateTime(2030),
-          helpText: AppLocalizations.of(context)!.get('confirmCompletion'),
-        );
-    }
+    // Fix: Enforce TODAY for ALL sessions (Free & Plan)
+    // User requirement: "Al finalizar el entrenamiento del día, la fecha debe ser únicamente el día actual."
+    picked = DateTime.now();
 
     if (picked != null && mounted) {
       final dateStr = DateFormat('yyyy-MM-dd').format(picked);
@@ -93,8 +84,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           // If we are in standard mode, we have _currentSession in provider
           // We need to pass the ID.
           final currentSession = context.read<PlanProvider>().currentSession;
-          if (currentSession != null) {
-              await context.read<PlanProvider>().completeSession(dateStr);
+           if (currentSession != null) {
+              await context.read<PlanProvider>().completeSession(dateStr, dayId: widget.day.id);
           }
         
         if (mounted) {

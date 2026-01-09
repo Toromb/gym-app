@@ -379,37 +379,57 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-  Future<void> completeSession(String date) async {
+  Future<void> completeSession(String date, {String? dayId}) async {
     if (_currentSession == null) return;
     
-    // 1. Optimistic Local Update
+    // 1. Optimistic Local Update (Session Status)
     _currentSession = _currentSession!.copyWith(status: 'COMPLETED');
     notifyListeners();
     
-    // 2. Persist Cache (with COMPLETED status, so if they reopen, it shows done or clears?)
-    // Usually on completion we might wanna clear cache or keep it as history.
-    // Let's keep it for now.
+    // 2. Optimistic Local Update (Assignment Progress - Critical for Next Workout)
+    if (dayId != null && activeAssignment != null) {
+        // Find current assignment index
+        final index = _assignments.indexWhere((a) => a.id == activeAssignment!.id);
+        if (index != -1) {
+            final assignment = _assignments[index];
+            final newProgress = Map<String, dynamic>.from(assignment.progress);
+            
+            // Ensure structure
+            if (newProgress['days'] == null) newProgress['days'] = {};
+            final daysMap = Map<String, dynamic>.from(newProgress['days']);
+            
+            // Mark day as completed
+            daysMap[dayId!] = {
+                'completed': true,
+                'date': date
+            };
+            newProgress['days'] = daysMap;
+            
+            // Update Assignment
+            final updatedAssignment = assignment.copyWithProgress(newProgress: newProgress);
+            _assignments[index] = updatedAssignment;
+            notifyListeners();
+            debugPrint('✅ Optimistically updated Assignment Progress for day $dayId');
+        }
+    }
+
+    // 3. Persist Cache
     await _localStorage.saveSession(_currentSession!.toJson());
 
     try {
-      // 3. Queue Request
+      // 4. Queue Request
       final request = {
           'id': const Uuid().v4(),
           'method': 'PATCH', 
           'endpoint': '/executions/${_currentSession!.id}/complete',
-          'body': {'date': date},
+          'body': {'date': date}, // Note: Backend handles linking result to StudentPlan via Plan Service legacy sync
           'timestamp': DateTime.now().toIso8601String(),
       };
       
       await _localStorage.addToQueue(request);
 
-      // 4. Trigger Sync
+      // 5. Trigger Sync
       _syncService.triggerSync();
-      
-      // 5. Clear Cache? 
-      // If we clear cache now, and sync fails, effectively user can't see "Active Session" anymore.
-      // Maybe we clear cache only if we move away from screen?
-      // Ideally, startSession checks cache. If cache is COMPLETED, it might safely ignore it or show "Last session finished".
       
     } catch (e) {
        debugPrint('Error completing session logic: $e');
