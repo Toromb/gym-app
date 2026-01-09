@@ -142,8 +142,27 @@ export class TrainingSessionsService {
 
       } else {
         // Case B: Free Session (No Plan)
-        // TODO: Logic for Free Session (Create empty session, allow user to add exercises)
-        // For now, we return empty session.
+        // Check for existing IN_PROGRESS Free Session for this date
+        const existingFree = await this.sessionRepo.findOne({
+          where: {
+            student: { id: userId },
+            source: 'FREE',
+            date: finalDate, // Only resume *today's* free session? Or any? Usually today.
+            status: ExecutionStatus.IN_PROGRESS,
+          },
+          relations: [
+            'exercises',
+            'exercises.exercise',
+            'exercises.exercise.exerciseMuscles',
+            'exercises.exercise.exerciseMuscles.muscle',
+            'exercises.exercise.equipments',
+          ],
+        });
+
+        if (existingFree) {
+          return existingFree;
+        }
+
         const newSession = this.sessionRepo.create({
           student: { id: userId } as User,
           plan: null,
