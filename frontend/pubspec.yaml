@@ -2,7 +2,7 @@ name: gym_app
 description: A new Flutter project.
 # Cache bust for UI Polish 2
 publish_to: 'none'
-version: 1.2.35+1
+version: 1.2.35+34
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -27,6 +27,11 @@ dependencies:
   # Add other dependencies as needed
 
   collection: any
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  connectivity_plus: ^6.1.5
+  internet_connection_checker: ^3.0.1
+  uuid: ^4.5.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

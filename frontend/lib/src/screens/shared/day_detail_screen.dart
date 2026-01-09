@@ -72,13 +72,20 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   }
 
   Future<void> _handleFinishWorkout() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      helpText: AppLocalizations.of(context)!.get('confirmCompletion'),
-    );
+    DateTime? picked;
+    
+    // Fix: If Free Session, enforce TODAY (no picker)
+    if (widget.planId == 'FREE_SESSION') {
+        picked = DateTime.now();
+    } else {
+        picked = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          helpText: AppLocalizations.of(context)!.get('confirmCompletion'),
+        );
+    }
 
     if (picked != null && mounted) {
       final dateStr = DateFormat('yyyy-MM-dd').format(picked);
