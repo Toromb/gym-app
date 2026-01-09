@@ -47,6 +47,18 @@ class TrainingSession {
       dayKey: dayKey,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'date': date,
+      'plan': planId, 
+      'source': source,
+      'status': status,
+      'dayKey': dayKey,
+      'exercises': exercises.map((e) => e.toJson()).toList(),
+    };
+  }
 }
 
 class SessionExercise {
@@ -105,15 +117,21 @@ class SessionExercise {
     String? exerciseNameSnapshot,
     String? videoUrl,
     List<Equipment>? equipmentsSnapshot,
+    // Added snapshots
+    int? targetSetsSnapshot,
+    String? targetRepsSnapshot,
+    String? targetWeightSnapshot,
+    int? targetTimeSnapshot,
+    double? targetDistanceSnapshot,
   }) {
     return SessionExercise(
       id: id,
       exerciseNameSnapshot: exerciseNameSnapshot ?? this.exerciseNameSnapshot,
-      targetSetsSnapshot: targetSetsSnapshot,
-      targetRepsSnapshot: targetRepsSnapshot,
-      targetWeightSnapshot: targetWeightSnapshot,
-      targetTimeSnapshot: targetTimeSnapshot,
-      targetDistanceSnapshot: targetDistanceSnapshot,
+      targetSetsSnapshot: targetSetsSnapshot ?? this.targetSetsSnapshot,
+      targetRepsSnapshot: targetRepsSnapshot ?? this.targetRepsSnapshot,
+      targetWeightSnapshot: targetWeightSnapshot ?? this.targetWeightSnapshot,
+      targetTimeSnapshot: targetTimeSnapshot ?? this.targetTimeSnapshot,
+      targetDistanceSnapshot: targetDistanceSnapshot ?? this.targetDistanceSnapshot,
       videoUrl: videoUrl ?? this.videoUrl,
       equipmentsSnapshot: equipmentsSnapshot ?? this.equipmentsSnapshot,
       exercise: exercise ?? this.exercise,
@@ -172,5 +190,26 @@ class SessionExercise {
       isCompleted: false,
       setsDone: pe.sets.toString(), 
     );
+  }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'exerciseNameSnapshot': exerciseNameSnapshot,
+      'targetSetsSnapshot': targetSetsSnapshot,
+      'targetRepsSnapshot': targetRepsSnapshot,
+      'targetWeightSnapshot': targetWeightSnapshot,
+      'targetTimeSnapshot': targetTimeSnapshot,
+      'targetDistanceSnapshot': targetDistanceSnapshot,
+      'videoUrl': videoUrl,
+      'equipmentsSnapshot': equipmentsSnapshot.map((e) => e.toJson()).toList(),
+      'exercise': exercise?.toJson(),
+      'isCompleted': isCompleted,
+      'setsDone': setsDone,
+      'repsDone': repsDone,
+      'weightUsed': weightUsed,
+      'timeSpent': timeSpent,
+      'distanceCovered': distanceCovered,
+      'notes': notes,
+    };
   }
 }

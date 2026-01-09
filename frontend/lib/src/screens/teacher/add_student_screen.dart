@@ -145,7 +145,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                                   firstName: _firstNameController.text,
                                   lastName: _lastNameController.text,
                                   phone: _phoneController.text,
-                                  age: int.tryParse(_ageController.text),
+                                  // age: int.tryParse(_ageController.text),
+
                                   gender: _genderController.text,
                                   notes: _notesController.text,
                                   initialWeight: double.tryParse(_weightController.text), // Add initial weight

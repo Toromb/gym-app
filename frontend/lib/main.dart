@@ -18,7 +18,16 @@ import 'src/providers/theme_provider.dart';
 
 import 'src/screens/public/activate_account_screen.dart';
 
-void main() {
+import 'package:hive_flutter/hive_flutter.dart';
+import 'src/services/local_storage_service.dart';
+import 'src/services/sync_service.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await LocalStorageService().init();
+  SyncService().init();
+  
   runApp(
     MultiProvider(
       providers: [

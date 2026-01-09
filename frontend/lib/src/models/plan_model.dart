@@ -14,6 +14,12 @@ class Equipment {
       name: json['name'],
     );
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+    };
+  }
 }
 
 class Muscle {
@@ -40,6 +46,15 @@ class Muscle {
       order: json['order'] ?? 0,
     );
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'region': region,
+      'bodySide': bodySide,
+      'order': order,
+    };
+  }
 }
 
 class ExerciseMuscle {
@@ -59,6 +74,13 @@ class ExerciseMuscle {
       role: json['role'],
       muscle: Muscle.fromJson(json['muscle']),
     );
+  }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'role': role,
+      'muscle': muscle.toJson(),
+    };
   }
 }
 
@@ -159,6 +181,35 @@ class Exercise {
       minDistance: json['minDistance'] != null ? (json['minDistance'] as num).toDouble() : null,
       maxDistance: json['maxDistance'] != null ? (json['maxDistance'] as num).toDouble() : null,
     );
+  }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'videoUrl': videoUrl,
+      'imageUrl': imageUrl,
+      'muscleGroup': muscleGroup,
+      'type': type,
+      'sets': sets,
+      'reps': reps,
+      'rest': rest,
+      'load': load,
+      'notes': notes,
+      'loadFactor': loadFactor,
+      'defaultSets': defaultSets,
+      'minReps': minReps,
+      'maxReps': maxReps,
+      'exerciseMuscles': muscles.map((e) => e.toJson()).toList(), // API expects 'exerciseMuscles' usually? or 'muscles'? Factory uses 'exerciseMuscles'.
+      'equipments': equipments.map((e) => e.toJson()).toList(), 
+      'metricType': metricType,
+      'defaultTime': defaultTime,
+      'minTime': minTime,
+      'maxTime': maxTime,
+      'defaultDistance': defaultDistance,
+      'minDistance': minDistance,
+      'maxDistance': maxDistance,
+    };
   }
 }
 
