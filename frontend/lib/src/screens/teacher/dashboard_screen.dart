@@ -8,9 +8,25 @@ import 'exercises_list_screen.dart';
 import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
 import '../../widgets/payment_status_badge.dart';
+import '../../providers/gym_schedule_provider.dart';
+import '../../models/gym_schedule_model.dart';
 
-class TeacherDashboardScreen extends StatelessWidget {
+class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
+
+  @override
+  State<TeacherDashboardScreen> createState() => _TeacherDashboardScreenState();
+}
+
+class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<GymScheduleProvider>().fetchSchedule();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +165,7 @@ class TeacherDashboardScreen extends StatelessWidget {
             _buildDashboardCard(
               context,
               title: AppLocalizations.of(context)!.get('gymSchedule'),
-              subtitle: 'Horarios de atención',
+              subtitle: _getTodayScheduleText(context),
               icon: Icons.access_time,
               onTap: () {
                 Navigator.push(
@@ -175,6 +191,49 @@ class TeacherDashboardScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getTodayScheduleText(BuildContext context) {
+      final schedules = context.watch<GymScheduleProvider>().schedules;
+      if (schedules.isEmpty) return 'Horarios de atención'; // Default fallback
+
+      final now = DateTime.now();
+      String dayKey = '';
+      switch (now.weekday) {
+          case 1: dayKey = 'MONDAY'; break;
+          case 2: dayKey = 'TUESDAY'; break;
+          case 3: dayKey = 'WEDNESDAY'; break;
+          case 4: dayKey = 'THURSDAY'; break;
+          case 5: dayKey = 'FRIDAY'; break;
+          case 6: dayKey = 'SATURDAY'; break;
+          case 7: dayKey = 'SUNDAY'; break;
+      }
+
+      // Find schedule or return default closed
+      final todaySchedule = schedules.firstWhere(
+        (s) => s.dayOfWeek == dayKey, 
+        orElse: () => GymSchedule(id: 0, dayOfWeek: dayKey, isClosed: true)
+      );
+      
+      // Get localized day name
+      final loc = AppLocalizations.of(context)!;
+      String dayName = '';
+      switch (dayKey) {
+        case 'MONDAY': dayName = loc.get('day_monday'); break;
+        case 'TUESDAY': dayName = loc.get('day_tuesday'); break;
+        case 'WEDNESDAY': dayName = loc.get('day_wednesday'); break;
+        case 'THURSDAY': dayName = loc.get('day_thursday'); break;
+        case 'FRIDAY': dayName = loc.get('day_friday'); break;
+        case 'SATURDAY': dayName = loc.get('day_saturday'); break;
+        case 'SUNDAY': dayName = loc.get('day_sunday'); break;
+        default: dayName = dayKey;
+      }
+
+      if (todaySchedule.isClosed || todaySchedule.displayHours == 'Closed') {
+          return 'Hoy $dayName: CERRADO';
+      }
+      
+      return 'Hoy $dayName: ${todaySchedule.displayHours}';
   }
 
   Widget _buildDashboardCard(BuildContext context,

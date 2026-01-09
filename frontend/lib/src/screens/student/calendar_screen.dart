@@ -216,16 +216,31 @@ class _CalendarScreenState extends State<CalendarScreen> {
             leading: const Icon(Icons.check_circle, color: Colors.green),
             title: Text(AppLocalizations.of(context)!.get('workoutCompleted'), style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green[800])),
             subtitle: Text('${execution.exercises.length} ${AppLocalizations.of(context)!.get('exercisesCount')}'),
-            children: execution.exercises.map((ex) => ListTile(
+            children: execution.exercises.map((ex) {
+              String metricText = '';
+              // Determine metric based on data presence or exercise type if available
+              // Priority: Time > Distance > Reps
+              
+              if (ex.timeSpent != null && ex.timeSpent!.isNotEmpty && ex.timeSpent != '0' && ex.timeSpent != '00:00') {
+                 metricText = '${AppLocalizations.of(context)!.get('time')}: ${ex.timeSpent}';
+              } else if (ex.distanceCovered != null && ex.distanceCovered! > 0) {
+                 metricText = '${AppLocalizations.of(context)!.get('distance')}: ${ex.distanceCovered} m'; // User asked for "Metros"
+              } else {
+                 // Default to Reps/Load
+                 metricText = '${AppLocalizations.of(context)!.get('sets')}: ${ex.setsDone}/${ex.targetSetsSnapshot ?? "?"} • ${AppLocalizations.of(context)!.get('reps')}: ${ex.repsDone ?? ex.targetRepsSnapshot ?? "-"} • ${AppLocalizations.of(context)!.get('load')}: ${ex.weightUsed ?? ex.targetWeightSnapshot ?? "-"}';
+              }
+
+              return ListTile(
               title: Text(ex.exerciseNameSnapshot, style: const TextStyle(fontWeight: FontWeight.w500)),
               subtitle: Text(
-                '${AppLocalizations.of(context)!.get('sets')}: ${ex.setsDone}/${ex.targetSetsSnapshot ?? "?"} • ${AppLocalizations.of(context)!.get('reps')}: ${ex.repsDone ?? ex.targetRepsSnapshot ?? "-"} • ${AppLocalizations.of(context)!.get('load')}: ${ex.weightUsed ?? ex.targetWeightSnapshot ?? "-"}',
+                metricText,
                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               trailing: ex.isCompleted 
                  ? const Icon(Icons.check, size: 16, color: Colors.green) 
                  : const Icon(Icons.close, size: 16, color: Colors.red),
-            )).toList(),
+            );
+            }).toList(),
           ),
         );
       },

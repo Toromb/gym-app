@@ -286,14 +286,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: _buildTextFieldWithLabel(
                  label: 'Fecha Nacimiento',
                  controller: _birthDateController,
-                 readOnly: true, // Profile edit often simpler, or implement DatePicker here too. Let's start with ReadOnly or DatePicker.
-                 // For now, let's make it consistent with Add/Edit User screens and allow editing via DatePicker if specificed,
-                 // but typically ProfileScreen implies self-edit.
-                 // To implement DatePicker cleanly:
+                 readOnly: true, // Always readOnly because we use onTap for picker
+                 enabled: _isEditing, // Only enabled for interaction when editing
                  onTap: _isEditing ? () async {
+                    DateTime initialDate = DateTime(2000);
+                    if (_birthDateController.text.isNotEmpty) {
+                      try {
+                        initialDate = DateTime.parse(_birthDateController.text);
+                      } catch (_) {}
+                    }
+                    
                     final DateTime? picked = await showDatePicker(
                       context: context,
-                      initialDate: DateTime(2000),
+                      initialDate: initialDate,
                       firstDate: DateTime(1900),
                       lastDate: DateTime.now(),
                     );
@@ -509,6 +514,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String label,
     required TextEditingController controller,
     bool readOnly = false,
+    bool? enabled, // Added parameter
     int maxLines = 1,
     TextInputType? keyboardType,
     IconData? icon,
@@ -517,7 +523,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return TextField(
       controller: controller,
       readOnly: readOnly,
-      enabled: !readOnly, // Prevent focus and selection style when not editing
+      enabled: enabled ?? !readOnly, // Use explicit enabled if provided, else derive from readOnly
       maxLines: maxLines,
       keyboardType: keyboardType,
       onTap: onTap,

@@ -7,11 +7,26 @@ import '../teacher/exercises_list_screen.dart';
 import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
 import 'gym_config_screen.dart';
+import '../../providers/gym_schedule_provider.dart';
+import '../../models/gym_schedule_model.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
   @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<GymScheduleProvider>().fetchSchedule();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
@@ -148,7 +163,7 @@ class AdminDashboardScreen extends StatelessWidget {
             _buildDashboardCard(
               context,
               title: 'Horarios del Gimnasio',
-              subtitle: 'Configurar horarios de apertura',
+              subtitle: _getTodayScheduleText(context),
               icon: Icons.access_time, 
               onTap: () {
                 Navigator.push(
@@ -188,6 +203,54 @@ class AdminDashboardScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getTodayScheduleText(BuildContext context) {
+      final schedules = context.watch<GymScheduleProvider>().schedules;
+      if (schedules.isEmpty) return 'Configurar horarios de apertura'; // Fallback
+
+      final now = DateTime.now();
+      String dayKey = '';
+      switch (now.weekday) {
+          case 1: dayKey = 'MONDAY'; break;
+          case 2: dayKey = 'TUESDAY'; break;
+          case 3: dayKey = 'WEDNESDAY'; break;
+          case 4: dayKey = 'THURSDAY'; break;
+          case 5: dayKey = 'FRIDAY'; break;
+          case 6: dayKey = 'SATURDAY'; break;
+          case 7: dayKey = 'SUNDAY'; break;
+      }
+
+      // Find schedule or return default closed
+      final todaySchedule = schedules.firstWhere(
+        (s) => s.dayOfWeek == dayKey, 
+        orElse: () => GymSchedule(id: 0, dayOfWeek: dayKey, isClosed: true)
+      );
+      
+      // Get localized day name
+      // Note: We might not have access to AppLocalizations in Admin context if not careful, but it should be there.
+      // Reuse logic or simple map if needed. Assuming AppLocalizations works.
+      String dayName = dayKey; 
+      // Reuse Student Home simple logic if no localization context easily available? 
+      // Admin dashboard already uses AppLocalizations elsewhere? No, it uses hardcoded strings in this file.
+      // So I'll just use a simple map for Admin to be safe, or try AppLocalizations if available.
+      // Actually AdminDashboard doesn't import AppLocalizations. I should avoid adding a dependency if not needed.
+      // I'll use a simple Spanish map for now since existing text is Spanish.
+      switch (dayKey) {
+        case 'MONDAY': dayName = 'Lunes'; break;
+        case 'TUESDAY': dayName = 'Martes'; break;
+        case 'WEDNESDAY': dayName = 'Miércoles'; break;
+        case 'THURSDAY': dayName = 'Jueves'; break;
+        case 'FRIDAY': dayName = 'Viernes'; break;
+        case 'SATURDAY': dayName = 'Sábado'; break;
+        case 'SUNDAY': dayName = 'Domingo'; break;
+      }
+
+      if (todaySchedule.isClosed || todaySchedule.displayHours == 'Closed') {
+          return 'Hoy $dayName: CERRADO';
+      }
+      
+      return 'Hoy $dayName: ${todaySchedule.displayHours}';
   }
 
   Widget _buildDashboardCard(BuildContext context,

@@ -327,7 +327,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           // If result is true, it means completed. Refresh history to update this card.
           if (!mounted) return;
           if (result == true) {
-              context.read<PlanProvider>().fetchMyHistory();
+              // We rely on optimistic updates for the assignment progress to avoid race conditions 
+              // with the backend. Do NOT fetchMyHistory() immediately here.
               context.read<PlanProvider>().computeWeeklyStats();
               context.read<PlanProvider>().computeMonthlyStats();
           }

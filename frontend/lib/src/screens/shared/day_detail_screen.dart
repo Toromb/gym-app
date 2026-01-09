@@ -75,34 +75,29 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     DateTime? picked;
     
     // Fix: Validar ejercicios incompletos
-    if (widget.planId != 'FREE_SESSION') { 
-        // Logic: For Free Session, maybe we don't care? Or yes? 
-        // User Requirement: "Si el usuario intenta finalizar el entrenamiento y hay ejercicios incompletos..."
-        // Applicability: Both? "Training Session" implies Plan, but logic applies generally.
-        // Let's check provider session.
-        final currentSession = context.read<PlanProvider>().currentSession;
-        if (currentSession != null) {
-            final hasIncomplete = currentSession.exercises.any((e) => !e.isCompleted);
-            if (hasIncomplete) {
-                final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                        title: const Text('Ejercicios incompletos'),
-                        content: const Text('Hay ejercicios sin completar. ¿Estás seguro de que deseas finalizar?'),
-                        actions: [
-                            TextButton(
-                                onPressed: () => Navigator.pop(ctx, false),
-                                child: const Text('Cancelar'),
-                            ),
-                            TextButton(
-                                onPressed: () => Navigator.pop(ctx, true),
-                                child: const Text('Finalizar'),
-                            ),
-                        ],
-                    ),
-                );
-                if (confirm != true) return;
-            }
+    // Fix: Validar ejercicios incompletos
+    final currentSession = context.read<PlanProvider>().currentSession;
+    if (currentSession != null) {
+        final hasIncomplete = currentSession.exercises.any((e) => !e.isCompleted);
+        if (hasIncomplete) {
+            final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                    title: const Text('Ejercicios incompletos'),
+                    content: const Text('Hay ejercicios sin completar. ¿Estás seguro de que deseas finalizar?'),
+                    actions: [
+                        TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancelar'),
+                        ),
+                        TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Finalizar'),
+                        ),
+                    ],
+                ),
+            );
+            if (confirm != true) return;
         }
     }
 
