@@ -9,6 +9,7 @@ import '../profile_screen.dart';
 import 'gym_config_screen.dart';
 import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
+import 'manage_equipments_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -156,6 +157,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const ExercisesListScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildDashboardCard(
+              context,
+              title: 'Gestionar Equipamiento',
+              subtitle: 'Equipos, máquinas y accesorios',
+              icon: Icons.category, 
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ManageEquipmentsScreen()),
                 );
               },
             ),

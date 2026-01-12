@@ -83,6 +83,7 @@ class SessionExercise {
   final String? timeSpent; 
   final double? distanceCovered;
   final String? notes;
+  final double? addedWeight; // Lastre
 
   SessionExercise({
     required this.id,
@@ -102,6 +103,7 @@ class SessionExercise {
     this.timeSpent,
     this.distanceCovered,
     this.notes,
+    this.addedWeight,
   });
 
   SessionExercise copyWith({
@@ -123,6 +125,7 @@ class SessionExercise {
     String? targetWeightSnapshot,
     int? targetTimeSnapshot,
     double? targetDistanceSnapshot,
+    double? addedWeight,
   }) {
     return SessionExercise(
       id: id,
@@ -142,6 +145,7 @@ class SessionExercise {
       timeSpent: timeSpent ?? this.timeSpent,
       distanceCovered: distanceCovered ?? this.distanceCovered,
       notes: notes ?? this.notes,
+      addedWeight: addedWeight ?? this.addedWeight,
     );
   }
 
@@ -168,6 +172,7 @@ class SessionExercise {
       timeSpent: json['timeSpent'],
       distanceCovered: json['distanceCovered'] != null ? (json['distanceCovered'] as num).toDouble() : null,
       notes: json['notes'],
+      addedWeight: json['addedWeight'] != null ? (json['addedWeight'] as num).toDouble() : null,
     );
   }
 
@@ -210,6 +215,7 @@ class SessionExercise {
       'timeSpent': timeSpent,
       'distanceCovered': distanceCovered,
       'notes': notes,
+      'addedWeight': addedWeight,
     };
   }
 }

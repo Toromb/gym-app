@@ -249,8 +249,61 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                   
                   // CONDITIONAL FIELDS
                   if (metricType == 'REPS') ...[
-                      TextField(controller: repsController, decoration: const InputDecoration(labelText: 'Repeticiones')),
-                      TextField(controller: loadController, decoration: const InputDecoration(labelText: 'Peso (kg)')),
+                      TextField(
+                        controller: repsController,
+                        decoration: const InputDecoration(labelText: 'Repeticiones'),
+                      ),
+                      Builder(
+                        builder: (context) {
+                          // Determine if Body Weight is active
+                          bool isBodyWeight = false;
+                           // Check selected specific equipments first
+                          if (selectedPlanEquipments.any((e) => e.isBodyWeight)) {
+                            isBodyWeight = true;
+                          } else if (selectedPlanEquipments.isEmpty && selectedExercise!.equipments.any((e) => e.isBodyWeight)) {
+                             // If no specific equipments selected, fallback to exercise defaults? 
+                             // Logic in app seems to be: if specific list is empty, use exercise defaults (implied?). 
+                             // But checking how execution card works: it uses `execution.equipments`.
+                             // In CreatePlanScreen, we initialize `selectedPlanEquipments` from existing. 
+                             // If it's a new exercise, `selectedPlanEquipments` starts empty? 
+                             // Actually line 205: `selectedPlanEquipments = [];` when changing exercise.
+                             // So unticked means NONE? Or does backend default to exercise equipments?
+                             // Backend `create` for PlanExercise saves the list.
+                             
+                             // Let's rely on the toggles. If the user hasn't toggled anything, `selectedPlanEquipments` is empty.
+                             // But wait, the chips below show `selectedExercise!.equipments`.
+                             // And `onSelected` adds/removes from `selectedPlanEquipments`.
+                             // If the user selects nothing, `selectedPlanEquipments` is empty.
+                             // Does that mean "No Equipment"? Or "All Default Equipment"?
+                             // In `backend_service/src/plans/training-sessions.service.ts`:
+                             // `equipmentsSnapshot: planEx.equipments`
+                             // If it's empty, it's empty.
+                             
+                             // However, for UX here: if the Exercise ITSELF has Body Weight (e.g. Pull Ups), 
+                             // users might not explicitly select distinct equipments if the default is correct.
+                             // But the chips seem to imply you select what you use.
+                             // If "Peso Corporal" is a default equipment of "Dominadas", it will appear in chips.
+                             // If I don't select it, is it not Body Weight?
+                             // Usually "Body Weight" equipment is inherent to the exercise.
+                             
+                             // Let's look at `isBodyWeight` logic in `ExerciseExecutionCard`:
+                             // `_isBodyWeight = widget.execution.exercise?.equipments?.any((e) => e.isBodyWeight) ?? false;`
+                             // It checks the EXERCISE equipments.
+                             // AND `widget.execution.equipmentsSnapshot`.
+                             
+                             // So if the Exercise has it, it IS body weight.
+                             isBodyWeight = true;
+                          }
+                          
+                          return TextField(
+                            controller: loadController, 
+                            decoration: InputDecoration(
+                              labelText: isBodyWeight ? 'Lastre (kg)' : 'Peso (kg)',
+                              helperText: isBodyWeight ? 'Se sumará al peso corporal' : null,
+                            )
+                          );
+                        }
+                      ),
                   ] else if (metricType == 'TIME') ...[
                       TextField(controller: timeController, decoration: const InputDecoration(labelText: 'Tiempo Objetivo (segundos)'), keyboardType: TextInputType.number),
                   ] else if (metricType == 'DISTANCE') ...[

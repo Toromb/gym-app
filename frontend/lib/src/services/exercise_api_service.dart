@@ -13,9 +13,10 @@ class ExerciseService {
       return [];
   }
 
-  Future<List<Exercise>> getExercises({String? muscleId, List<String>? equipmentIds}) async {
+  Future<List<Exercise>> getExercises({String? muscleId, String? role, List<String>? equipmentIds}) async {
     final uri = Uri(path: '/exercises', queryParameters: {
       if (muscleId != null) 'muscleId': muscleId,
+      if (role != null) 'role': role,
       if (equipmentIds != null && equipmentIds.isNotEmpty) 'equipmentIds': equipmentIds,
     });
 

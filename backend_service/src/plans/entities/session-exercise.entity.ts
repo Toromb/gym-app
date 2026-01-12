@@ -62,7 +62,10 @@ export class SessionExercise {
   repsDone: string;
 
   @Column({ nullable: true })
-  weightUsed: string;
+  weightUsed: string; // Total Effective Load (BodyWeight + AddedWeight)
+
+  @Column({ nullable: true, type: 'float' })
+  addedWeight: number; // Only the extra weight (Lastre)
 
   @Column({ nullable: true })
   timeSpent: string;

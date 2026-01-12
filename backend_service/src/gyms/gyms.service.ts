@@ -5,6 +5,7 @@ import { Gym, GymStatus } from './entities/gym.entity';
 import { CreateGymDto } from './dto/create-gym.dto';
 import { UpdateGymDto } from './dto/update-gym.dto';
 import { ExercisesService } from '../exercises/exercises.service';
+import { EquipmentsService } from '../exercises/equipments.service';
 import { BASE_EXERCISES } from '../exercises/constants/base-exercises';
 
 @Injectable()
@@ -13,17 +14,20 @@ export class GymsService {
     @InjectRepository(Gym)
     private gymsRepository: Repository<Gym>,
     private exercisesService: ExercisesService,
+    private equipmentsService: EquipmentsService,
   ) { }
 
   async create(createGymDto: CreateGymDto) {
     const gym = this.gymsRepository.create(createGymDto);
     const savedGym = await this.gymsRepository.save(gym);
 
-    // Initialize Base Exercises
-    console.log(`[GymsService] Creating Base Exercises for Gym: ${savedGym.id} (${savedGym.businessName})`);
+    // Initialize Base Exercises & Equipments
+    console.log(`[GymsService] Initializing Gym: ${savedGym.id} (${savedGym.businessName})`);
 
-    // Asynchronous but awaited to ensure data consistency for first login
-    await this.exercisesService.cloneBaseExercises(savedGym);
+    await Promise.all([
+      this.exercisesService.cloneBaseExercises(savedGym),
+      this.equipmentsService.initializeGymEquipments(savedGym),
+    ]);
 
     return savedGym;
   }

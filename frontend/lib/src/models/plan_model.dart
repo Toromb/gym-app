@@ -5,19 +5,30 @@ import 'user_model.dart';
 class Equipment {
   final String id;
   final String name;
+  final bool isBodyWeight;
+  final bool isEditable;
 
-  Equipment({required this.id, required this.name});
+  Equipment({
+    required this.id,
+    required this.name,
+    this.isBodyWeight = false,
+    this.isEditable = true,
+  });
 
   factory Equipment.fromJson(Map<String, dynamic> json) {
     return Equipment(
       id: json['id'],
       name: json['name'],
+      isBodyWeight: json['isBodyWeight'] ?? false,
+      isEditable: json['isEditable'] ?? true,
     );
   }
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
+      'isBodyWeight': isBodyWeight,
+      'isEditable': isEditable,
     };
   }
 }

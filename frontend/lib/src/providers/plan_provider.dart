@@ -29,9 +29,9 @@ class PlanProvider with ChangeNotifier {
 
   // Exercise Service
   final ExerciseService _exerciseService = ExerciseService();
-  Future<List<Exercise>> fetchExercises({String? muscleId, List<String>? equipmentIds}) async {
+  Future<List<Exercise>> fetchExercises({String? muscleId, String? role, List<String>? equipmentIds}) async {
     try {
-      return await _exerciseService.getExercises(muscleId: muscleId, equipmentIds: equipmentIds);
+      return await _exerciseService.getExercises(muscleId: muscleId, role: role, equipmentIds: equipmentIds);
     } catch (e) {
       debugPrint('Error fetching exercises: $e');
       return [];
@@ -39,7 +39,7 @@ class PlanProvider with ChangeNotifier {
   }
 
   // Legacy/Convenience wrapper
-  Future<List<Exercise>> fetchExercisesByMuscle(String muscleId) => fetchExercises(muscleId: muscleId);
+  Future<List<Exercise>> fetchExercisesByMuscle(String muscleId) => fetchExercises(muscleId: muscleId, role: 'PRIMARY');
 
   int _weeklyWorkoutCount = 0;
   int get weeklyWorkoutCount => _weeklyWorkoutCount;
@@ -291,6 +291,7 @@ class PlanProvider with ChangeNotifier {
                     weightUsed: updates['weightUsed'],
                     timeSpent: updates['timeSpent'], // Added timeSpent
                     distanceCovered: updates['distanceCovered'], // Added distanceCovered
+                    addedWeight: updates['addedWeight'], // Added Lastre
                     notes: updates['notes'],
                     // Handle Swap Exercise updates
                     exercise: updates['exercise'] != null ? Exercise(

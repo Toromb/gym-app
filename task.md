@@ -68,3 +68,17 @@
 ## Maintenance & UX Improvements
 - [x] **Membership Logic**: Strict anchor date calculation (Start Date determines expiration day).
 - [x] **Student Features**: Restart Plan button (Cycle reset).
+
+## Gym-Specific Features (Equipment & Body Weight)
+- [x] **Backend: Equipment Management**
+    - [x] Create `Equipment` Entity (Gy-specific, flags)
+    - [x] `EquipmentsService` (Initialize defaults, CRUD)
+    - [x] Exercise Logic: Body Weight Load Calculation
+- [x] **Frontend: Management & Execution**
+    - [x] `ManageEquipmentsScreen` (Admin)
+    - [x] `ExerciseExecutionCard` (Body Weight + "Lastre" input)
+    - [x] Verification: Fix Compilation & Run in Chrome
+    - [x] Bug Fix: Ensure "Peso Corporal" visibility for existing gyms (Lazy Check)
+    - [x] Logic Refinement: TrainingSessionsService body weight fallback
+    - [x] Fix: Swap Suggestion Logic (Primary Role Filter)
+    - [x] Feature: Config Lastre for Body Weight (Plan & Session)

@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EquipmentsService } from './equipments.service';
 import { ExercisesService } from './exercises.service';
 import { ExercisesController } from './exercises.controller';
 import { Exercise } from './entities/exercise.entity';
@@ -14,7 +15,7 @@ import { UsersModule } from '../users/users.module';
     forwardRef(() => UsersModule),
   ],
   controllers: [ExercisesController],
-  providers: [ExercisesService],
-  exports: [ExercisesService],
+  providers: [ExercisesService, EquipmentsService],
+  exports: [ExercisesService, EquipmentsService],
 })
 export class ExercisesModule { }

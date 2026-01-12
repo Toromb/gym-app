@@ -121,6 +121,11 @@ export class TrainingSessionsService {
               targetSetsSnapshot: planEx.sets,
               targetRepsSnapshot: planEx.reps,
               targetWeightSnapshot: planEx.suggestedLoad,
+              // If Body Weight, pre-fill addedWeight from plan load (interpreted as lastre)
+              addedWeight: (planEx.exercise.equipments?.some(e => e.isBodyWeight) || planEx.equipments?.some(e => e.isBodyWeight))
+                && planEx.suggestedLoad
+                ? parseFloat(planEx.suggestedLoad)
+                : 0,
               targetTimeSnapshot: planEx.targetTime,
               targetDistanceSnapshot: planEx.targetDistance,
               videoUrl: planEx.videoUrl || planEx.exercise.videoUrl,
@@ -188,6 +193,7 @@ export class TrainingSessionsService {
   ): Promise<SessionExercise> {
     const sessionEx = await this.sessionExerciseRepo.findOne({
       where: { id: exerciseId },
+      relations: ['session', 'exercise', 'exercise.equipments', 'equipmentsSnapshot'],
     });
 
     if (!sessionEx)
@@ -201,9 +207,37 @@ export class TrainingSessionsService {
       if (!sessionEx.repsDone) {
         sessionEx.repsDone = sessionEx.targetRepsSnapshot ?? '';
       }
-      if (!sessionEx.weightUsed) {
-        sessionEx.weightUsed = sessionEx.targetWeightSnapshot ?? '';
+
+      // WEIGHT LOGIC: Check if it's Body Weight
+      const isBodyWeight = sessionEx.exercise?.equipments?.some(e => e.isBodyWeight)
+        || sessionEx.equipmentsSnapshot?.some(e => e.isBodyWeight);
+
+      if (isBodyWeight) {
+        // Fetch User Weight
+        const sessionWithUser = await this.sessionRepo.findOne({
+          where: { id: sessionEx.session.id },
+          relations: ['student'],
+        });
+        const currentWeight = sessionWithUser?.student?.currentWeight || sessionWithUser?.student?.initialWeight || 0;
+        const addedWeight = updateData.addedWeight || sessionEx.addedWeight || 0;
+
+        // Total Load = Body + Added
+        sessionEx.weightUsed = (currentWeight + addedWeight).toString();
+        // Ensure addedWeight is saved
+        if (updateData.addedWeight !== undefined) sessionEx.addedWeight = updateData.addedWeight;
+      } else {
+        // Standard Logic
+        if (!sessionEx.weightUsed) {
+          sessionEx.weightUsed = sessionEx.targetWeightSnapshot ?? '';
+        }
       }
+    }
+
+
+    // Protect weightUsed from overwrite for Body Weight exercises
+    // The backend calculation above should determine the final value.
+    if (sessionEx.exercise?.equipments?.some(e => e.isBodyWeight) || sessionEx.equipmentsSnapshot?.some(e => e.isBodyWeight)) {
+      delete updateData.weightUsed;
     }
 
     Object.assign(sessionEx, updateData);
@@ -485,6 +519,9 @@ export class TrainingSessionsService {
       targetSetsSnapshot: settings.sets || exercise.defaultSets || 3,
       targetRepsSnapshot: settings.reps || '10-12',
       targetWeightSnapshot: settings.weight,
+      addedWeight: (exercise.equipments?.some(e => e.isBodyWeight) && settings.weight)
+        ? parseFloat(settings.weight)
+        : 0,
       equipmentsSnapshot: exercise.equipments,
       videoUrl: exercise.videoUrl,
       order: session.exercises.length + 1,

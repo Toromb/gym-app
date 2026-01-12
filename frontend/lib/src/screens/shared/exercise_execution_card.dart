@@ -42,6 +42,10 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   // DISTANCE Mode
   late TextEditingController _distanceController;
 
+  // BODY WEIGHT Mode
+  late TextEditingController _addedWeightController;
+  bool _isBodyWeight = false;
+
   late String _metricType;
   
   @override
@@ -50,6 +54,10 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     _isCompleted = widget.execution.isCompleted;
     _metricType = widget.execution.exercise?.metricType ?? 'REPS';
     
+    // Check Body Weight
+    _isBodyWeight = widget.execution.equipmentsSnapshot.any((e) => e.isBodyWeight) 
+                 || (widget.execution.exercise?.equipments.any((e) => e.isBodyWeight) ?? false);
+
     _setsController = TextEditingController(text: widget.execution.setsDone?.toString() ?? widget.execution.targetSetsSnapshot?.toString() ?? '');
     
     // Initialize specific controllers
@@ -58,6 +66,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     
     _timeController = TextEditingController(text: widget.execution.timeSpent ?? widget.execution.targetTimeSnapshot?.toString() ?? '');
     _distanceController = TextEditingController(text: widget.execution.distanceCovered?.toString() ?? widget.execution.targetDistanceSnapshot?.toString() ?? '');
+    _addedWeightController = TextEditingController(text: widget.execution.addedWeight?.toString() ?? '');
   }
 
   @override
@@ -82,6 +91,14 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
        if (widget.execution.isCompleted != oldWidget.execution.isCompleted) {
           _isCompleted = widget.execution.isCompleted;
        }
+       
+       final newAddedWeight = widget.execution.addedWeight?.toString() ?? '';
+       if (_addedWeightController.text != newAddedWeight) {
+           _addedWeightController.text = newAddedWeight;
+       }
+       
+       _isBodyWeight = widget.execution.equipmentsSnapshot.any((e) => e.isBodyWeight) 
+                 || (widget.execution.exercise?.equipments.any((e) => e.isBodyWeight) ?? false);
     }
   }
 
@@ -92,6 +109,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     _setsController.dispose();
     _timeController.dispose();
     _distanceController.dispose();
+    _addedWeightController.dispose();
     super.dispose();
   }
 
@@ -142,6 +160,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
       'timeSpent': _timeController.text,
       // DISTANCE
       'distanceCovered': double.tryParse(_distanceController.text),
+      // BODY WEIGHT
+      'addedWeight': double.tryParse(_addedWeightController.text),
     };
   }
 
@@ -401,15 +421,53 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildInputMetric(
-                      context, 
-                      controller: _weightController, 
-                      label: AppLocalizations.of(context)!.get('load'),
-                      hint: widget.execution.targetWeightSnapshot ?? '-',
-                      icon: Icons.fitness_center,
-                    ),
-                  ),
+                  const SizedBox(width: 16),
+                  
+                  if (_isBodyWeight) ...[
+                      // Body Weight UI
+                      Expanded(
+                        child: Consumer<AuthProvider>(
+                            builder: (ctx, auth, _) {
+                                final weight = auth.user?.currentWeight ?? auth.user?.initialWeight ?? 0;
+                                return TextField(
+                                    controller: TextEditingController(text: '$weight kg'),
+                                    readOnly: true,
+                                    decoration: InputDecoration(
+                                        labelText: 'Peso Corp.',
+                                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                                        isDense: true,
+                                        suffixIcon: const Icon(Icons.person, size: 16, color: Colors.grey),
+                                        suffixIconConstraints: const BoxConstraints(maxHeight: 40, maxWidth: 40),
+                                    ),
+                                    style: const TextStyle(color: Colors.grey),
+                                );
+                            }
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildInputMetric(
+                          context, 
+                          controller: _addedWeightController, 
+                          label: 'Lastre (kg)', 
+                          hint: '0',
+                          icon: Icons.add_circle_outline,
+                        ),
+                      ),
+                  ] else ...[
+                      // Standard Load UI
+                      Expanded(
+                        child: _buildInputMetric(
+                          context, 
+                          controller: _weightController, 
+                          label: AppLocalizations.of(context)!.get('load'),
+                          hint: widget.execution.targetWeightSnapshot ?? '-',
+                          icon: Icons.fitness_center,
+                        ),
+                      ),
+                  ]
                 ] else if (_metricType == 'TIME') ...[
                    Expanded(
                     flex: 2, 

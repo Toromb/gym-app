@@ -8,6 +8,7 @@ import { CreateExerciseDto, ExerciseMuscleDto } from './dto/create-exercise.dto'
 import { User } from '../users/entities/user.entity';
 import { UpdateExerciseDto } from './dto/update-exercise.dto';
 import { Equipment } from './entities/equipment.entity';
+import { EquipmentsService } from './equipments.service';
 import { BASE_EXERCISES } from './constants/base-exercises';
 
 @Injectable()
@@ -21,6 +22,8 @@ export class ExercisesService {
     private exerciseMuscleRepository: Repository<ExerciseMuscle>,
     @InjectRepository(Equipment)
     private equipmentRepository: Repository<Equipment>,
+    @Inject(forwardRef(() => EquipmentsService))
+    private equipmentsService: EquipmentsService,
     private dataSource: DataSource,
   ) { }
 
@@ -117,7 +120,7 @@ export class ExercisesService {
     return this.findAllFiltered({ gymId, muscleId });
   }
 
-  async findAllFiltered(options: { gymId?: string; muscleId?: string; equipmentIds?: string[] }): Promise<Exercise[]> {
+  async findAllFiltered(options: { gymId?: string; muscleId?: string; role?: string; equipmentIds?: string[] }): Promise<Exercise[]> {
     const query = this.exercisesRepository.createQueryBuilder('exercise')
       .leftJoinAndSelect('exercise.exerciseMuscles', 'exerciseMuscle')
       .leftJoinAndSelect('exerciseMuscle.muscle', 'muscle')
@@ -131,12 +134,16 @@ export class ExercisesService {
     }
 
     if (options.muscleId) {
-      query.andWhere('exercise.id IN ' +
-        query.subQuery()
-          .select('em.exerciseId')
-          .from(ExerciseMuscle, 'em')
-          .where('em.muscleId = :mId')
-          .getQuery(), { mId: options.muscleId });
+      const subQuery = query.subQuery()
+        .select('em.exerciseId')
+        .from(ExerciseMuscle, 'em')
+        .where('em.muscleId = :mId', { mId: options.muscleId });
+
+      if (options.role) {
+        subQuery.andWhere('em.role = :role', { role: options.role });
+      }
+
+      query.andWhere('exercise.id IN ' + subQuery.getQuery());
     }
 
     if (options.equipmentIds && options.equipmentIds.length > 0) {
@@ -157,10 +164,17 @@ export class ExercisesService {
     });
   }
 
-  async findAllEquipments(): Promise<Equipment[]> {
-    return this.equipmentRepository.find({
-      order: { name: 'ASC' }
-    });
+  async findAllEquipments(gymId?: string): Promise<Equipment[]> {
+    if (!gymId) return [];
+    return this.equipmentsService.findAll(gymId);
+  }
+
+  async createEquipment(name: string, gymId: string): Promise<Equipment> {
+    return this.equipmentsService.create(name, gymId);
+  }
+
+  async removeEquipment(id: string, gymId: string): Promise<void> {
+    return this.equipmentsService.remove(id, gymId);
   }
 
   async findOne(id: string): Promise<Exercise | null> {

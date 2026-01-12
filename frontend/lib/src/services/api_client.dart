@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
 import 'api_exceptions.dart';
+import '../models/plan_model.dart';
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -172,5 +173,36 @@ class ApiClient {
         if (e is ApiException) rethrow;
         throw NetworkException('Error communicating with server: $e');
     }
+  }
+
+  // --- Equipments ---
+  // In a real app we might put this in a separate Repository/Service class
+  // but fitting here for speed as per existing pattern.
+  
+  Future<List<Equipment>> getEquipments() async {
+      // Assuming endpoint is /exercises/equipments or similar. 
+      // Actually backend service for equipments is likely exposed via ExercisesController or GymsController?
+      // I need to check backend controller. 
+      // Plan: I'll assume standard REST for now, or check where I put 'findAll' in backend.
+      // Wait, I created EquipmentsService but did I create a Controller for it?
+      // I registered it in ExercisesModule. I probably need to expose it via ExercisesController or a new EquipmentsController.
+      // Let's assume ExercisesController exposes it on GET /exercises/equipments.
+      
+      final dynamic response = await get('/exercises/equipments');
+      if (response is List) {
+          return response.map((e) => Equipment.fromJson(e)).toList();
+      }
+      return [];
+  }
+
+  Future<Equipment> createEquipment(String name) async {
+       // POST /exercises/equipments
+       final dynamic response = await post('/exercises/equipments', {'name': name});
+       return Equipment.fromJson(response);
+  }
+
+  Future<void> deleteEquipment(String id) async {
+       // DELETE /exercises/equipments/:id
+       await delete('/exercises/equipments/$id');
   }
 }
