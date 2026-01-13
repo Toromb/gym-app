@@ -152,10 +152,10 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
       } catch (_) {}
     }
 
-    final setsController = TextEditingController(text: existingExercise?.sets.toString() ?? '3');
-    final repsController = TextEditingController(text: existingExercise?.reps ?? '10');
+    final setsController = TextEditingController(text: existingExercise?.sets.toString() ?? '');
+    final repsController = TextEditingController(text: existingExercise?.reps ?? '');
     final loadController = TextEditingController(text: existingExercise?.suggestedLoad ?? '');
-    final restController = TextEditingController(text: existingExercise?.rest ?? '60s');
+    final restController = TextEditingController(text: existingExercise?.rest ?? '');
     
     // New Controllers
     final timeController = TextEditingController(text: existingExercise?.targetTime?.toString() ?? '');
@@ -260,7 +260,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                            // Check selected specific equipments first
                           if (selectedPlanEquipments.any((e) => e.isBodyWeight)) {
                             isBodyWeight = true;
-                          } else if (selectedPlanEquipments.isEmpty && selectedExercise!.equipments.any((e) => e.isBodyWeight)) {
+                          } else if (selectedPlanEquipments.isEmpty && selectedExercise != null && selectedExercise!.equipments.any((e) => e.isBodyWeight)) {
                              // If no specific equipments selected, fallback to exercise defaults? 
                              // Logic in app seems to be: if specific list is empty, use exercise defaults (implied?). 
                              // But checking how execution card works: it uses `execution.equipments`.

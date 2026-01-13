@@ -60,8 +60,8 @@ export class TrainingSessionsController {
     @Request() req: any,
     @Param('id') exerciseExecId: string
   ) {
-    // TODO: Add authorization check if needed (e.g. only owner or profe)
-    return this.sessionsService.deleteSessionExercise(exerciseExecId);
+    // Authorization logic moved to service
+    return this.sessionsService.deleteSessionExercise(exerciseExecId, req.user);
   }
 
   // PATCH /executions/:id/complete

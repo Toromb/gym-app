@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThanOrEqual } from 'typeorm';
@@ -17,6 +18,8 @@ import { StudentPlan } from './entities/student-plan.entity';
 import { MuscleLoadService } from '../stats/muscle-load.service';
 import { StatsService } from '../stats/stats.service';
 import { SessionSynchronizer } from './utils/session-synchronizer';
+import { UsersService } from '../users/users.service';
+import { UserRole } from '../users/entities/user.entity';
 
 @Injectable()
 export class TrainingSessionsService {
@@ -35,6 +38,7 @@ export class TrainingSessionsService {
     private exerciseRepo: Repository<Exercise>,
     private readonly muscleLoadService: MuscleLoadService,
     private readonly statsService: StatsService,
+    private readonly usersService: UsersService,
   ) { }
 
   // 1. Start or Resume Session
@@ -341,7 +345,8 @@ export class TrainingSessionsService {
       }
     }
 
-    // TODO: Call StatsService.updateStats(userId) here
+    // Update Stats
+    await this.statsService.updateStats(userId);
 
     return saved;
   }
@@ -533,18 +538,43 @@ export class TrainingSessionsService {
   }
 
   // 5. Delete Session Exercise
-  async deleteSessionExercise(exerciseExecId: string): Promise<void> {
+  async deleteSessionExercise(exerciseExecId: string, requester: any): Promise<void> {
     const sessionExercise = await this.sessionExerciseRepo.findOne({
       where: { id: exerciseExecId },
-      relations: ['session'],
+      relations: ['session', 'session.student', 'session.student.gym', 'exercise'], // Include gym and exercise
     });
 
     if (!sessionExercise) {
       throw new NotFoundException('Session exercise not found');
     }
 
-    // Optional: Check if session is COMPLETED? Usually we might allow deleting even then if admin/profe.
-    // For now, no strict status check unless requested.
+    const session = sessionExercise.session;
+    const student = session.student;
+
+    // --- SECURITY CHECK ---
+    const requesterFull = await this.usersService.findOne(requester.id);
+    if (!requesterFull) throw new ForbiddenException('User not found');
+
+    const role = requesterFull.role;
+
+    if (role === UserRole.SUPER_ADMIN) {
+      // Allow all
+    } else if (role === UserRole.ADMIN || role === UserRole.PROFE) {
+      // Must be same gym
+      if (requesterFull.gym?.id !== student.gym?.id) {
+        throw new ForbiddenException('You can only manage sessions for students in your Gym');
+      }
+    } else {
+      // Student
+      if (requesterFull.id !== student.id) {
+        throw new ForbiddenException('You cannot manage other students sessions');
+      }
+
+      // Business Rule: Student CANNOT delete assigned exercises (from Plan)
+      if (sessionExercise.planExerciseId) {
+        throw new ForbiddenException('No puedes borrar ejercicios asignados por tu plan');
+      }
+    }
 
     await this.sessionExerciseRepo.remove(sessionExercise);
 

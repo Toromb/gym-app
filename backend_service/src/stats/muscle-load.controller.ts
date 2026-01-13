@@ -1,10 +1,14 @@
-import { Controller, Get, Param, Req, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Param, Req, UseGuards, ForbiddenException, Inject } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MuscleLoadService } from './muscle-load.service';
+import { UsersService } from '../users/users.service';
 
-@Controller('students') // Extend user/students route or separate? spec said /students/:id/muscle-loads
+@Controller('students')
 export class MuscleLoadController {
-    constructor(private readonly muscleLoadService: MuscleLoadService) { }
+    constructor(
+        private readonly muscleLoadService: MuscleLoadService,
+        private readonly usersService: UsersService,
+    ) { }
 
     @Get('me/muscle-loads')
     @UseGuards(AuthGuard('jwt'))
@@ -21,12 +25,18 @@ export class MuscleLoadController {
         if (user.role === 'admin' || user.role === 'super_admin') {
             // Allow
         } else if (user.role === 'profe') {
-            // TODO: Strict check if student belongs to Professor's gym or is assigned?
-            // MVP: Allow if same Gym? or just Allow for now.
-            // Spec: "PROF: permitido solo para alumnos del mismo gym"
-            // Need to fetch student to check gym.
-            // Skipping complex check for Phase 2 MVP, assuming frontend protects or AuthGuard ensures basic validity.
-            // Secure way: Service check.
+            // Strict Check: Professor must belong to same Gym as Student
+            const requestingUser = await this.usersService.findOne(user.id);
+            const targetStudent = await this.usersService.findOne(studentId);
+
+            if (!requestingUser || !targetStudent) {
+                throw new ForbiddenException('User not found');
+            }
+
+            if (requestingUser.gym?.id !== targetStudent.gym?.id) {
+                throw new ForbiddenException('You can only view stats for students in your Gym');
+            }
+
         } else if (user.id !== studentId) {
             throw new ForbiddenException('You can only view your own stats');
         }
