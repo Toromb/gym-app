@@ -71,6 +71,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                   decoration: const InputDecoration(labelText: 'Email'),
                   validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
+                /*
+                // Handled by Onboarding
                 Row(
                   children: [
                     Expanded(
@@ -118,6 +120,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     ),
                   ],
                 ),
+                */
                 TextFormField(
                   controller: _membershipDateController,
                   decoration: const InputDecoration(
