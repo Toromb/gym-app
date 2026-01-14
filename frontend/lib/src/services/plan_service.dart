@@ -111,12 +111,13 @@ class PlanService {
 
   // --- EXECUTION ENGINE API ---
 
-  Future<TrainingSession?> startSession(String? planId, int? weekNumber, int? dayOrder, {String? date}) async {
+  Future<TrainingSession?> startSession(String? planId, int? weekNumber, int? dayOrder, {String? date, String? freeTrainingId}) async {
      final response = await _api.post('/executions/start', {
         'planId': planId,
         'weekNumber': weekNumber,
         'dayOrder': dayOrder,
         'date': date,
+        'freeTrainingId': freeTrainingId,
      });
      return TrainingSession.fromJson(response);
   }

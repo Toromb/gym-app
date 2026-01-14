@@ -10,6 +10,7 @@ import 'gym_config_screen.dart';
 import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
 import 'manage_equipments_screen.dart';
+import 'free_training/manage_free_trainings_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -144,6 +145,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const PlansListScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildDashboardCard(
+              context,
+              title: 'Entrenamientos Libres',
+              subtitle: 'Gestionar rutinas públicas',
+              icon: Icons.repeat,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ManageFreeTrainingsScreen()),
                 );
               },
             ),

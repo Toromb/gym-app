@@ -9,7 +9,9 @@ import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
 import '../../widgets/payment_status_badge.dart';
 import '../../providers/gym_schedule_provider.dart';
+import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
+import '../student/free_training/free_training_selector_screen.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -158,6 +160,19 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const ExercisesListScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildDashboardCard(
+              context,
+              title: 'Entrenamiento Libre',
+              subtitle: 'Realizar rutina sin plan',
+              icon: Icons.timer,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const FreeTrainingSelectorScreen(isAdminMode: false)),
                 );
               },
             ),

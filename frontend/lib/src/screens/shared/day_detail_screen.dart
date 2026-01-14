@@ -10,21 +10,23 @@ import 'exercise_execution_card.dart';
 import 'exercise_selection_dialog.dart';
 
 class DayDetailScreen extends StatefulWidget {
-  final PlanDay day;
-  final String planId;
-  final int weekNumber;
+  final PlanDay? day; // Nullable
+  final String? planId; // Nullable
+  final int? weekNumber; // Nullable
   final bool readOnly; 
   final String? studentId;
   final String? assignedAt;
+  final String? freeTrainingId; // NEW
 
   const DayDetailScreen({
     super.key, 
-    required this.day,
-    required this.planId,
-    required this.weekNumber,
+    this.day,
+    this.planId,
+    this.weekNumber,
     this.readOnly = false,
     this.studentId,
     this.assignedAt,
+    this.freeTrainingId,
   });
 
   @override
@@ -42,20 +44,30 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     if (_isInit) {
       if (!widget.readOnly) {
          WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.read<PlanProvider>().startSession(
-            widget.planId, 
-            widget.weekNumber, 
-            widget.day.order
-          );
+          // If freeTrainingId is present, start session with it
+          if (widget.freeTrainingId != null) {
+              context.read<PlanProvider>().startSession(
+                null, 
+                null, 
+                null,
+                freeTrainingId: widget.freeTrainingId
+              );
+          } else if (widget.planId != null && widget.weekNumber != null && widget.day != null) {
+              context.read<PlanProvider>().startSession(
+                widget.planId, 
+                widget.weekNumber, 
+                widget.day!.order
+              );
+          }
         });
-      } else if (widget.readOnly && widget.studentId != null) {
-          debugPrint('DayDetailScreen: Fetching session for student ${widget.studentId}, Plan ${widget.planId}, W${widget.weekNumber} D${widget.day.order}');
+      } else if (widget.readOnly && widget.studentId != null && widget.planId != null && widget.day != null) {
+          debugPrint('DayDetailScreen: Fetching session for student ${widget.studentId}, Plan ${widget.planId}, W${widget.weekNumber} D${widget.day!.order}');
           setState(() => _isLoadingReadOnly = true);
           context.read<PlanProvider>().fetchStudentSession(
             studentId: widget.studentId!,
-            planId: widget.planId,
-            week: widget.weekNumber,
-            day: widget.day.order,
+            planId: widget.planId!,
+            week: widget.weekNumber!,
+            day: widget.day!.order,
             startDate: widget.assignedAt,
           ).then((session) {
              debugPrint('DayDetailScreen: Fetched session: ${session?.id ?? "NULL"}');
@@ -74,7 +86,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   Future<void> _handleFinishWorkout() async {
     DateTime? picked;
     
-    // Fix: Validar ejercicios incompletos
     // Fix: Validar ejercicios incompletos
     final currentSession = context.read<PlanProvider>().currentSession;
     if (currentSession != null) {
@@ -111,7 +122,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           // We need to pass the ID.
           final currentSession = context.read<PlanProvider>().currentSession;
            if (currentSession != null) {
-              await context.read<PlanProvider>().completeSession(dateStr, dayId: widget.day.id);
+              await context.read<PlanProvider>().completeSession(dateStr, dayId: widget.day?.id);
           }
         
         if (mounted) {
@@ -147,8 +158,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         if (_readOnlySession != null) {
             exercisesToRender = _readOnlySession!.exercises;
             status = 'ALUMNO REGISTRO: ${_readOnlySession!.status}'; 
-        } else {
-            exercisesToRender = widget.day.exercises.map((pe) => SessionExercise.fromPlanExercise(pe)).toList();
+        } else if (widget.day != null) {
+            exercisesToRender = widget.day!.exercises.map((pe) => SessionExercise.fromPlanExercise(pe)).toList();
             status = 'SIN DATOS';
         }
     } else {
@@ -158,7 +169,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                  return const Scaffold(body: Center(child: CircularProgressIndicator()));
             }
              return Scaffold(
-                 appBar: AppBar(title: Text(widget.day.title ?? 'Día ${widget.day.dayOfWeek}')),
+                 appBar: AppBar(title: Text(widget.day?.title ?? 'Entrenamiento')),
                  body: Center(
                    child: Column(
                      mainAxisAlignment: MainAxisAlignment.center,
@@ -166,11 +177,20 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                        Text(AppLocalizations.of(context)!.get('errorLoadExecution')),
                        ElevatedButton(
                          onPressed: () {
-                            context.read<PlanProvider>().startSession(
-                              widget.planId, 
-                              widget.weekNumber, 
-                              widget.day.order
-                            );
+                            if (widget.freeTrainingId != null) {
+                                context.read<PlanProvider>().startSession(
+                                  null, 
+                                  null, 
+                                  null,
+                                  freeTrainingId: widget.freeTrainingId
+                                );
+                            } else {
+                                context.read<PlanProvider>().startSession(
+                                  widget.planId, 
+                                  widget.weekNumber, 
+                                  widget.day!.order
+                                );
+                            }
                          }, 
                          child: const Text('Retry')
                        )
@@ -185,7 +205,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.day.title ?? 'Día ${widget.day.dayOfWeek}'),
+        title: Text(widget.day?.title ?? (widget.freeTrainingId != null ? 'Entrenamiento Libre' : 'Día ${widget.day?.dayOfWeek}')),
         elevation: 0,
       ),
       body: SafeArea(
@@ -219,7 +239,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                   ],
                 ),
                 // NEW: Training Intent Badge
-                if (widget.day.trainingIntent != null)
+                if (widget.day?.trainingIntent != null)
                   Container(
                     margin: const EdgeInsets.only(top: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -229,7 +249,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                       border: Border.all(color: Colors.purple.shade200),
                     ),
                     child: Text(
-                      widget.day.trainingIntent.label,
+                      widget.day!.trainingIntent!.label,
                       style: TextStyle(color: Colors.purple.shade900, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -247,7 +267,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                 }),
                 
                 // Fix: Hide Add Exercise button for Plan Sessions
-                if (!widget.readOnly && widget.planId == 'FREE_SESSION')
+                if (!widget.readOnly && (widget.planId == 'FREE_SESSION' || widget.freeTrainingId != null))
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     child: Center(
@@ -309,9 +329,9 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         key: ValueKey(exExec.id),
         execution: exExec, 
         index: index,
-        intent: widget.day.trainingIntent,
+        intent: widget.day?.trainingIntent ?? TrainingIntent.GENERAL,
         readOnly: readOnly,
-        canDelete: !readOnly && widget.planId == 'FREE_SESSION', // Only allowed in Free Session
+        canDelete: !readOnly && (widget.planId == 'FREE_SESSION' || widget.freeTrainingId != null), // Only allowed in Free Session
       );
   }
 

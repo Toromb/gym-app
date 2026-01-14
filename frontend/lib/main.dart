@@ -31,7 +31,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()..tryAutoLogin()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProxyProvider<AuthProvider, PlanProvider>(
           create: (_) => PlanProvider(),
@@ -129,7 +129,19 @@ class MyApp extends StatelessWidget {
               child: child!,
             );
           },
-          home: auth.isAuthenticated ? const HomeScreen() : const LoginScreen(),
+          home: () {
+             if (auth.status == AuthStatus.loading || auth.status == AuthStatus.unknown) {
+               return const Scaffold(
+                 body: Center(
+                   child: CircularProgressIndicator(),
+                 ),
+               );
+             }
+             if (auth.isAuthenticated) {
+                return const HomeScreen();
+             }
+             return const LoginScreen();
+          }(),
           onGenerateRoute: (settings) {
             // Handle /activate-account?token=...
             // Handle /reset-password?token=...

@@ -17,7 +17,8 @@ import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
 import 'package:intl/intl.dart';
 import 'muscle_flow_screen.dart';
-import 'onboarding_screen.dart';
+import 'muscle_flow_screen.dart';
+import 'free_training/free_training_selector_screen.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -32,22 +33,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // 1. Check Onboarding Status (Students Only)
-      // We rely on AuthProvider to check and store the flag.
-      final auth = context.read<AuthProvider>();
-      if (auth.user?.role == 'alumno') {
-           // We explicitly call check (which fetches from API)
-           await auth.checkOnboardingStatus();
-           if (!auth.isOnboarded) {
-               if (!mounted) return;
-               Navigator.of(context).pushReplacement(
-                   MaterialPageRoute(builder: (_) => const OnboardingScreen())
-               );
-               return; // Stop loading other things
-           }
-      }
-
       // 2. Load Dashboard Data (Only if onboarded)
+      // Since we are here, we are onboarded (guaranteed by HomeScreen)
       final provider = context.read<PlanProvider>();
       provider.fetchMyHistory();
       provider.computeWeeklyStats();
@@ -167,23 +154,16 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DayDetailScreen(
-                          day: PlanDay(
-                            order: 0, 
-                            dayOfWeek: 0, 
-                            title: 'Entrenamiento Libre',
-                            exercises: []
-                          ),
-                          planId: 'FREE_SESSION',
-                          weekNumber: 0,
-                        )
+                        builder: (context) => const FreeTrainingSelectorScreen()
                       ),
                     ).then((result) {
-                       if (result == true) {
-                          context.read<PlanProvider>().fetchMyHistory();
-                          context.read<PlanProvider>().computeWeeklyStats();
-                          context.read<PlanProvider>().computeMonthlyStats();
-                       }
+                       // Reload stats in case they finished a session
+                       // Actually selector navigates to DayDetail, which might finish session.
+                       // Returning from selector might not strictly mean finish, 
+                       // but refreshing stats is harmless.
+                       context.read<PlanProvider>().fetchMyHistory();
+                       context.read<PlanProvider>().computeWeeklyStats();
+                       context.read<PlanProvider>().computeMonthlyStats();
                     });
                   },
                 ),

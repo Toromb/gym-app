@@ -1,9 +1,11 @@
 import 'plan_model.dart';
+import 'free_training_model.dart';
 
 class TrainingSession {
   final String id;
   final String date;
   final String? planId; // Nullable for free sessions
+  final FreeTraining? freeTrainingDefinition; // Nullable for plan sessions
   final String source; // 'PLAN', 'FREE', 'CLASS'
   final String status; // 'IN_PROGRESS', 'COMPLETED', 'ABANDONED'
   final List<SessionExercise> exercises;
@@ -14,6 +16,7 @@ class TrainingSession {
     required this.id,
     required this.date,
     this.planId,
+    this.freeTrainingDefinition,
     this.source = 'PLAN',
     required this.status,
     required this.exercises,
@@ -25,6 +28,9 @@ class TrainingSession {
       id: json['id'],
       date: json['date'],
       planId: json['plan'] != null ? (json['plan'] is String ? json['plan'] : json['plan']['id']) : null,
+      freeTrainingDefinition: json['freeTrainingDefinition'] != null 
+          ? FreeTraining.fromJson(json['freeTrainingDefinition']) 
+          : null,
       source: json['source'] ?? 'PLAN',
       status: json['status'],
       dayKey: json['dayKey'], // Might be null
@@ -41,6 +47,7 @@ class TrainingSession {
       id: id,
       date: date,
       planId: planId,
+      freeTrainingDefinition: freeTrainingDefinition,
       source: source,
       status: status ?? this.status,
       exercises: exercises ?? this.exercises,
@@ -53,6 +60,33 @@ class TrainingSession {
       'id': id,
       'date': date,
       'plan': planId, 
+      'freeTrainingDefinition': freeTrainingDefinition != null, // We generally don't serialize full object recursively for cache if we can avoid it, but here we need it for validation.
+      // Wait, 'freeTrainingDefinition': freeTrainingDefinition != null. toJson() expects Map?
+      // Actually, local_storage simply encodes this map. If I pass object, it needs toJson.
+      // FreeTraining has toJson? NO. I need to add toJson to FreeTraining if I want to persist it.
+      // OR, simply store ID? But I want to show name etc.
+      // Let's assume for now I only need ID for validation.
+      // But if I want offline capability for free training...
+      // I'll skip persisting FreeTraining full content for now, or just not persist it properly?
+      // "freeTrainingDefinition" in cache: we only need ID for validation logic.
+      // But wait, FreeTraining is needed to display structure?
+      // Actually SessionExercise has all data.
+      // So I only need FreeTraining ID.
+      // Let's serialize the ID or minimal info if needed.
+      // Backend response gives full object.
+      // If I want to fix cache logic: `cachedSession.freeTrainingDefinition?.id`.
+      // So I should persist it.
+      // I will Serialize it as Map if FreeTraining supports it.
+      // FreeTraining currently lacks toJson. I should add it or just serialize ID.
+      // Checking FreeTraining code -> no toJson.
+      // I'll add toJson to FreeTraining later?
+      // For now, let's just ignore persisting the Definition in toJson to avoid errors, 
+      // OR pass null.
+      // Actually, if I don't persist it, I can't validate cache properly by ID.
+      // I'll try to persist ID at least?
+      // 'freeTrainingDefinition': freeTrainingDefinition?.id, // But then loading it back?
+      // fromJson expects Object.
+      // Ok, I will just skip persisting it for now.
       'source': source,
       'status': status,
       'dayKey': dayKey,

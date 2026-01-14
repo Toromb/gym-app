@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThanOrEqual } from 'typeorm';
@@ -20,6 +21,7 @@ import { StatsService } from '../stats/stats.service';
 import { SessionSynchronizer } from './utils/session-synchronizer';
 import { UsersService } from '../users/users.service';
 import { UserRole } from '../users/entities/user.entity';
+import { FreeTrainingDefinition } from './entities/free-training-definition.entity';
 
 @Injectable()
 export class TrainingSessionsService {
@@ -36,6 +38,8 @@ export class TrainingSessionsService {
     private planExerciseRepo: Repository<PlanExercise>,
     @InjectRepository(Exercise)
     private exerciseRepo: Repository<Exercise>,
+    @InjectRepository(FreeTrainingDefinition)
+    private freeTrainingRepo: Repository<FreeTrainingDefinition>,
     private readonly muscleLoadService: MuscleLoadService,
     private readonly statsService: StatsService,
     private readonly usersService: UsersService,
@@ -48,6 +52,7 @@ export class TrainingSessionsService {
     weekNumber?: number,
     dayOrder?: number,
     date?: string, // YYYY-MM-DD
+    freeTrainingId?: string,
   ): Promise<TrainingSession> {
     try {
       const finalDate = date || new Date().toISOString().split('T')[0];
@@ -58,10 +63,6 @@ export class TrainingSessionsService {
 
         const dayKey = `W${weekNumber}-D${dayOrder}`;
 
-        // Check if there is an IN_PROGRESS session to resume
-        // We allow multiple COMPLETED sessions, but only one IN_PROGRESS per dayKey usually?
-        // Or just resume the latest one if it's today? 
-        // Let's resume any IN_PROGRESS session for this day/plan to avoid abandonment spam.
         const existingInProgress = await this.sessionRepo.findOne({
           where: {
             student: { id: userId },
@@ -144,46 +145,87 @@ export class TrainingSessionsService {
         newSession.exercises = sessionExercises;
         await this.sessionRepo.save(newSession);
 
-        // Reload to ensure relations
+        const reloaded = await this.findOne(newSession.id);
+        if (!reloaded) throw new NotFoundException('Error creating session');
+        return reloaded;
+
+      } else if (freeTrainingId) {
+        // Case B: Free Training Session
+
+        // 1. Check for existing IN_PROGRESS for this FreeTraining today? 
+        // Actually, user might want to repeat? But let's check to avoid dupes on accidental clicks.
+        const existingFree = await this.sessionRepo.findOne({
+          where: {
+            student: { id: userId },
+            freeTrainingDefinition: { id: freeTrainingId }, // Check relation
+            date: finalDate,
+            status: ExecutionStatus.IN_PROGRESS,
+            source: 'FREE'
+          },
+          relations: [
+            'freeTrainingDefinition',
+            'exercises',
+            'exercises.exercise',
+          ],
+        });
+
+        if (existingFree) {
+          const loaded = await this.findOne(existingFree.id);
+          if (!loaded) throw new NotFoundException('Session not found');
+          return loaded;
+        }
+
+        // 2. Load Definition
+        const freeDef = await this.freeTrainingRepo.findOne({
+          where: { id: freeTrainingId },
+          relations: ['exercises', 'exercises.exercise', 'exercises.equipments'] // Load deeply
+        });
+        if (!freeDef) throw new NotFoundException('Free Training Definition not found');
+
+        // 3. Create Session
+        const newSession = this.sessionRepo.create({
+          student: { id: userId },
+          plan: null,
+          freeTrainingDefinition: freeDef,
+          date: finalDate,
+          dayKey: null,
+          weekNumber: null,
+          dayOrder: null,
+          source: 'FREE',
+          status: ExecutionStatus.IN_PROGRESS,
+          exercises: [],
+        } as any) as unknown as TrainingSession;
+
+        // 4. Snapshot Exercises
+        // Map from FreeTrainingDefinitionExercise -> SessionExercise
+        // Notes: ftEx doesn't have targetTime/Distance usually unless we add them to entity. Assuming Reps based for now.
+        const sessionExercises: SessionExercise[] = freeDef.exercises.map((ftEx) => {
+          return this.sessionExerciseRepo.create({
+            exercise: ftEx.exercise,
+            exerciseNameSnapshot: ftEx.exercise.name,
+            targetSetsSnapshot: ftEx.sets || ftEx.exercise.defaultSets || 3,
+            targetRepsSnapshot: ftEx.reps || '10',
+            targetWeightSnapshot: ftEx.suggestedLoad,
+            addedWeight: 0,
+            videoUrl: ftEx.videoUrl || ftEx.exercise.videoUrl,
+            equipmentsSnapshot: ftEx.equipments ?? [],
+            order: ftEx.order,
+            isCompleted: false,
+            // TODO: If we add time/distance to FT Def, map here.
+          });
+        });
+
+        newSession.exercises = sessionExercises;
+        await this.sessionRepo.save(newSession);
+
         const reloaded = await this.findOne(newSession.id);
         if (!reloaded) throw new NotFoundException('Error creating session');
         return reloaded;
 
       } else {
-        // Case B: Free Session (No Plan)
-        // Check for existing IN_PROGRESS Free Session for this date
-        const existingFree = await this.sessionRepo.findOne({
-          where: {
-            student: { id: userId },
-            source: 'FREE',
-            date: finalDate, // Only resume *today's* free session? Or any? Usually today.
-            status: ExecutionStatus.IN_PROGRESS,
-          },
-          relations: [
-            'exercises',
-            'exercises.exercise',
-            'exercises.exercise.exerciseMuscles',
-            'exercises.exercise.exerciseMuscles.muscle',
-            'exercises.exercise.equipments',
-          ],
-        });
-
-        if (existingFree) {
-          return existingFree;
-        }
-
-        const newSession = this.sessionRepo.create({
-          student: { id: userId } as User,
-          plan: null,
-          date: finalDate,
-          source: 'FREE',
-          status: ExecutionStatus.IN_PROGRESS,
-          exercises: [],
-        });
-
-        await this.sessionRepo.save(newSession);
-        return newSession;
+        throw new BadRequestException('Either planId or freeTrainingId must be provided');
       }
+
     } catch (e) {
       console.error('Error starting session:', e);
       throw e;

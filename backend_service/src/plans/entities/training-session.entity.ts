@@ -11,6 +11,8 @@ import { User } from '../../users/entities/user.entity';
 import { Plan } from './plan.entity';
 import { SessionExercise } from './session-exercise.entity';
 
+import { FreeTrainingDefinition } from './free-training-definition.entity';
+
 export enum ExecutionStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
@@ -27,6 +29,10 @@ export class TrainingSession {
 
   @ManyToOne(() => Plan, { onDelete: 'CASCADE', nullable: true })
   plan: Plan | null;
+
+  @ManyToOne(() => FreeTrainingDefinition, { nullable: true, onDelete: 'SET NULL' })
+  freeTrainingDefinition: FreeTrainingDefinition | null;
+
 
   @Column({ type: 'date' })
   date: string; // YYYY-MM-DD

@@ -171,7 +171,7 @@ class PlanProvider with ChangeNotifier {
 
   // --- EXECUTION ENGINE START (OFFLINE-AWARE) ---
 
-  Future<void> startSession(String? planId, int? weekNumber, int? dayOrder) async {
+  Future<void> startSession(String? planId, int? weekNumber, int? dayOrder, {String? freeTrainingId}) async {
     _currentSession = null; 
     _isLoading = true;
     notifyListeners();
@@ -198,10 +198,17 @@ class PlanProvider with ChangeNotifier {
          // VALIDATION: Ensure cached session matches the INTENT (Plan vs Free)
          bool matchesIntent = false;
          
-         if (planId == 'FREE_SESSION') {
-             // Expecting a Free Session
-             // cachedSession should have source='FREE' OR planId=null
-             if (cachedSession.source == 'FREE' || cachedSession.planId == null) {
+         if (freeTrainingId != null) {
+             // Expecting specific Free Training
+             // Note: If definition wasn't persisted, this might be null and cause cache miss, which is safe.
+             if (cachedSession.freeTrainingDefinition?.id == freeTrainingId) {
+                 matchesIntent = true;
+             }
+         } else if (planId == 'FREE_SESSION') {
+             // Expecting a GENERIC Free Session (no template)
+             // cachedSession should have source='FREE' and NO definition (or ignore it?)
+             // Let's match if source is FREE.
+             if (cachedSession.source == 'FREE') {
                  matchesIntent = true;
              }
          } else {
@@ -217,7 +224,7 @@ class PlanProvider with ChangeNotifier {
              useCache = true;
              debugPrint('✅ Loaded cached session (Initial): ${_currentSession?.id}');
          } else {
-             debugPrint('⚠️ Cache Mismatch: Cached=${cachedSession.id} (Plan=${cachedSession.planId}, Src=${cachedSession.source}) vs Requested=$planId');
+             debugPrint('⚠️ Cache Mismatch: Cached=${cachedSession.id} (Plan=${cachedSession.planId}, Src=${cachedSession.source}) vs Requested=$planId / Free=$freeTrainingId');
          }
     }
 
@@ -252,7 +259,7 @@ class PlanProvider with ChangeNotifier {
       final dateStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
       final String? effectivePlanId = (planId == 'FREE_SESSION') ? null : planId;
 
-      final serverSession = await _planService.startSession(effectivePlanId, weekNumber, dayOrder, date: dateStr);
+      final serverSession = await _planService.startSession(effectivePlanId, weekNumber, dayOrder, date: dateStr, freeTrainingId: freeTrainingId);
       
       if (serverSession != null) {
           // If we were using cache, only overwrite if server is "fresher" or we had no pending changes.

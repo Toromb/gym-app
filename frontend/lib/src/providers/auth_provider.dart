@@ -6,7 +6,12 @@ import '../services/onboarding_service.dart';
 import '../services/user_service.dart';
 import '../services/api_client.dart';
 
+enum AuthStatus { unknown, unauthenticated, authenticated, loading }
+
 class AuthProvider with ChangeNotifier {
+  AuthStatus _status = AuthStatus.unknown;
+  AuthStatus get status => _status;
+
   bool _isAuthenticated = false;
   String? _token;
   User? _user;
@@ -47,6 +52,45 @@ class AuthProvider with ChangeNotifier {
     } else {
        return result.toString(); // Error message
     }
+  }
+
+  Future<void> tryAutoLogin() async {
+    _status = AuthStatus.loading;
+    notifyListeners();
+
+    final token = await _authService.getToken();
+    if (token == null) {
+      _status = AuthStatus.unauthenticated;
+      _isAuthenticated = false;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      // Validate token by fetching profile
+      // Note: We need to set the token in ApiClient or ensure UserService uses it. 
+      // ApiClient reads generically from storage so it should be fine as AuthService saved it there.
+      final user = await _userService.getProfile();
+      if (user != null) {
+        _token = token;
+        _user = user;
+        _isAuthenticated = true;
+        _status = AuthStatus.authenticated;
+        
+        // Check onboarding if needed
+        await checkOnboardingStatus(); 
+      } else {
+        // Token invalid or user not found
+        _status = AuthStatus.unauthenticated;
+        _isAuthenticated = false;
+        await _authService.logout(); // Clear invalid token
+      }
+    } catch (e) {
+      print('AutoLogin Error: $e');
+      _status = AuthStatus.unauthenticated;
+      _isAuthenticated = false;
+    }
+    notifyListeners();
   }
 
   Future<void> logout() async {

@@ -5,6 +5,7 @@ import 'teacher/dashboard_screen.dart';
 import 'student/student_home_screen.dart';
 import 'super_admin/super_admin_dashboard.dart';
 import 'admin/admin_dashboard_screen.dart';
+import 'student/onboarding_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -20,6 +21,10 @@ class HomeScreen extends StatelessWidget {
         } else if (auth.role == 'profe') {
           return const TeacherDashboardScreen();
         } else {
+          // Default to student, but check onboarding
+          if (!auth.isOnboarded) {
+             return const OnboardingScreen();
+          }
           return const StudentHomeScreen();
         }
       },
