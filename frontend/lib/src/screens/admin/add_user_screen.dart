@@ -275,48 +275,54 @@ class _AddUserScreenState extends State<AddUserScreen> {
                   decoration: const InputDecoration(labelText: 'Email'),
                   validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: const InputDecoration(labelText: 'Teléfono'),
-                ),
-                TextFormField(
-                  controller: _birthDateController,
-                  decoration: const InputDecoration(
-                    labelText: 'Fecha de Nacimiento',
-                    hintText: 'YYYY-MM-DD',
-                    suffixIcon: Icon(Icons.calendar_today),
+                if (widget.userToEdit != null || _selectedRole != AppRoles.alumno) ...[
+                  TextFormField(
+                    controller: _phoneController,
+                    decoration: const InputDecoration(labelText: 'Teléfono'),
                   ),
-                  readOnly: true,
-                  onTap: () async {
-                    final DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime(2000),
-                      firstDate: DateTime(1900),
-                      lastDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                         _birthDateController.text = picked.toIso8601String().split('T')[0];
-                      });
-                    }
-                  },
-                ),
-                if (_selectedRole == AppRoles.alumno)
+                  TextFormField(
+                    controller: _birthDateController,
+                    decoration: const InputDecoration(
+                      labelText: 'Fecha de Nacimiento',
+                      hintText: 'YYYY-MM-DD',
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    readOnly: true,
+                    onTap: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime(2000),
+                        firstDate: DateTime(1900),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                           _birthDateController.text = picked.toIso8601String().split('T')[0];
+                        });
+                      }
+                    },
+                  ),
+                ],
+                
+                // Weight: Show only if editing a student (hidden during creation)
+                if (_selectedRole == AppRoles.alumno && widget.userToEdit != null)
                   TextFormField(
                     controller: _weightController,
                     decoration: const InputDecoration(labelText: 'Peso Inicial (kg)'),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedGender,
-                  decoration: const InputDecoration(labelText: 'Sexo'),
-                  items: const [
-                    DropdownMenuItem(value: 'M', child: Text('Masculino')),
-                    DropdownMenuItem(value: 'F', child: Text('Femenino')),
-                    DropdownMenuItem(value: 'O', child: Text('Otro')),
-                  ],
-                  onChanged: (value) => setState(() => _selectedGender = value!),
-                ),
+
+                if (widget.userToEdit != null || _selectedRole != AppRoles.alumno)
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedGender,
+                    decoration: const InputDecoration(labelText: 'Sexo'),
+                    items: const [
+                      DropdownMenuItem(value: 'M', child: Text('Masculino')),
+                      DropdownMenuItem(value: 'F', child: Text('Femenino')),
+                      DropdownMenuItem(value: 'O', child: Text('Otro')),
+                    ],
+                    onChanged: (value) => setState(() => _selectedGender = value!),
+                  ),
                 TextFormField(
                   controller: _notesController,
                   decoration: const InputDecoration(labelText: 'Notas'),

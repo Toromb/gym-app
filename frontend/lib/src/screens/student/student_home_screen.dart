@@ -17,6 +17,7 @@ import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
 import 'package:intl/intl.dart';
 import 'muscle_flow_screen.dart';
+import 'onboarding_screen.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -28,10 +29,25 @@ class StudentHomeScreen extends StatefulWidget {
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
   @override
-
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // 1. Check Onboarding Status (Students Only)
+      // We rely on AuthProvider to check and store the flag.
+      final auth = context.read<AuthProvider>();
+      if (auth.user?.role == 'alumno') {
+           // We explicitly call check (which fetches from API)
+           await auth.checkOnboardingStatus();
+           if (!auth.isOnboarded) {
+               if (!mounted) return;
+               Navigator.of(context).pushReplacement(
+                   MaterialPageRoute(builder: (_) => const OnboardingScreen())
+               );
+               return; // Stop loading other things
+           }
+      }
+
+      // 2. Load Dashboard Data (Only if onboarded)
       final provider = context.read<PlanProvider>();
       provider.fetchMyHistory();
       provider.computeWeeklyStats();

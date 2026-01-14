@@ -6,10 +6,12 @@ import {
   UpdateDateColumn,
   OneToMany,
   ManyToOne,
+  OneToOne,
 } from 'typeorm';
 import { StudentPlan } from '../../plans/entities/student-plan.entity';
 import { Exclude } from 'class-transformer';
 import { Gym } from '../../gyms/entities/gym.entity';
+import { OnboardingProfile } from './onboarding-profile.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -153,4 +155,7 @@ export class User {
     onDelete: 'CASCADE',
   })
   gym: Gym;
+
+  @OneToOne(() => OnboardingProfile, (profile) => profile.user)
+  onboardingProfile: OnboardingProfile;
 }

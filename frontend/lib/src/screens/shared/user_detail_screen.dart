@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
 import '../../constants/app_constants.dart';
+import '../../services/onboarding_service.dart';
+import '../../services/api_client.dart';
+import '../../models/onboarding_model.dart';
 
 class UserDetailScreen extends StatelessWidget {
   final User user;
@@ -36,7 +39,39 @@ class UserDetailScreen extends StatelessWidget {
                _buildDetailRow('Peso Inicial', user.initialWeight != null ? '${user.initialWeight} kg' : 'N/A'),
               _buildDetailRow('Peso Actual', user.currentWeight != null ? '${user.currentWeight} kg' : 'N/A'),
               _buildDetailRow('Altura', user.height != null ? '${user.height} cm' : 'N/A'),
-              _buildDetailRow('Objetivo', user.trainingGoal ?? 'N/A'),
+              
+              // Onboarding Section
+              const Divider(height: 30),
+              _buildSectionHeader(context, 'Perfil Inicial (Onboarding)'),
+              FutureBuilder<OnboardingProfile?>(
+                  future: OnboardingService(ApiClient()).getUserOnboarding(user.id),
+                  builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                          return Text('Error cargando perfil: ${snapshot.error}');
+                      }
+                      final profile = snapshot.data;
+                      if (profile == null) {
+                          return const Text('El usuario no ha completado el onboarding.', style: TextStyle(fontStyle: FontStyle.italic));
+                      }
+                      return Column(
+                          children: [
+                              _buildDetailRow('Objetivo', _translateGoal(profile.goal)),
+                              if (profile.goalDetails != null) _buildDetailRow('Detalles Objetivo', profile.goalDetails!),
+                              _buildDetailRow('Experiencia', _translateExperience(profile.experience)),
+                              _buildDetailRow('Nivel Actividad', _translateActivity(profile.activityLevel)),
+                              _buildDetailRow('Frecuencia Deseada', _translateFrequency(profile.desiredFrequency) ?? 'N/A'),
+                              _buildDetailRow('Lesiones', profile.injuries.isNotEmpty ? profile.injuries.join(', ') : 'Ninguna'),
+                              if (profile.injuryDetails != null) _buildDetailRow('Detalles Lesión', profile.injuryDetails!),
+                              _buildDetailRow('¿Puede recostarse y levantarse solo?', profile.canLieDown ? 'Sí' : 'No'),
+                              _buildDetailRow('¿Puede arrodillarse y levantarse solo?', profile.canKneel ? 'Sí' : 'No'),
+                              if (profile.preferences != null) _buildDetailRow('Preferencias', profile.preferences!),
+                          ],
+                      );
+                  }
+              ),
             ],
 
             if (user.role == AppRoles.profe) ...[
@@ -112,4 +147,47 @@ class UserDetailScreen extends StatelessWidget {
   }
 
 
+  String _translateGoal(String goal) {
+      switch (goal) {
+          case 'musculation': return 'Musculación';
+          case 'health': return 'Salud';
+          case 'cardio': return 'Cardio';
+          case 'mixed': return 'Mixto';
+          case 'mobility': return 'Movilidad';
+          case 'sport': return 'Deporte';
+          case 'rehab': return 'Rehabilitación';
+          default: return goal;
+      }
+  }
+
+  String _translateExperience(String exp) {
+     switch (exp) {
+         case 'none': return 'Ninguna';
+         case 'less_than_year': return '< 1 año';
+         case 'more_than_year': return '> 1 año';
+         case 'current': return 'Actual';
+         default: return exp;
+     }
+  }
+  
+  String _translateActivity(String act) {
+      switch (act) {
+          case 'sedentary': return 'Sedentario';
+          case 'light': return 'Leve';
+          case 'moderate': return 'Moderada';
+          case 'high': return 'Alta';
+          default: return act;
+      }
+  }
+
+  String? _translateFrequency(String? freq) {
+      if (freq == null) return null;
+       switch (freq) {
+          case 'once_per_week': return '1x Sem';
+          case 'twice_per_week': return '2x Sem';
+          case 'three_times_per_week': return '3x Sem';
+          case 'four_or_more': return '4+ Sem';
+          default: return freq;
+      }
+  }
 }

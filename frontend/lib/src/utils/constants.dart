@@ -24,7 +24,7 @@ String get baseUrl {
   }
 
   if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000'; // Changed default to 3000 to match backend
+      return 'http://10.0.2.2:3001'; // Changed default to 3001 to match backend
   }
-  return 'http://localhost:3000';
+  return 'http://localhost:3001';
 }
