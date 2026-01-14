@@ -47,6 +47,7 @@ class AuthProvider with ChangeNotifier {
         print('AuthProvider Error: User object is NULL in login response');
       }
       _isAuthenticated = true;
+      await checkOnboardingStatus(); // Ensure status is checked on explicit login
       notifyListeners();
       return null; // Success (no error)
     } else {
