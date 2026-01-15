@@ -118,6 +118,7 @@ export class MuscleLoadService {
         });
 
         const result = [];
+        const newStates: MuscleLoadState[] = [];
 
         for (const muscle of allMuscles) {
             let currentState = states.find((s) => s.muscleId === muscle.id);
@@ -206,7 +207,7 @@ export class MuscleLoadService {
             newState.currentLoad = currentLoad;
             newState.lastComputedDate = targetDateIso;
 
-            await this.stateRepo.save(newState); // Upsert
+            newStates.push(newState);
 
             result.push({
                 muscleId: muscle.id,
@@ -215,6 +216,11 @@ export class MuscleLoadService {
                 load: currentLoad,
                 status: this.getStatus(currentLoad)
             });
+        }
+
+        // Batch Save
+        if (newStates.length > 0) {
+            await this.stateRepo.save(newStates);
         }
 
         return {
