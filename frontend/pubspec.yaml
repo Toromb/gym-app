@@ -2,7 +2,7 @@ name: gym_app
 description: A new Flutter project.
 # Cache bust for UI Polish 2
 publish_to: 'none'
-version: 1.5.1+46
+version: 1.5.2+47
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
