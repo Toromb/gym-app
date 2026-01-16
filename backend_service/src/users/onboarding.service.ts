@@ -52,6 +52,7 @@ export class OnboardingService {
                 userUpdates.currentWeight = dto.weight;
                 userUpdates.weightUpdateDate = new Date();
             }
+            if (dto.goal) userUpdates.trainingGoal = dto.goal; // Sync goal to User entity
 
             await queryRunner.manager.update(User, userId, userUpdates);
 

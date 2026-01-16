@@ -12,6 +12,7 @@ import { Muscle } from '../exercises/entities/muscle.entity';
 import { ExerciseMuscle } from '../exercises/entities/exercise-muscle.entity';
 import { UserStats } from './entities/user-stats.entity';
 import { TrainingSession } from '../plans/entities/training-session.entity';
+import { User } from '../users/entities/user.entity';
 import { StatsService } from './stats.service';
 
 @Module({
@@ -22,7 +23,8 @@ import { StatsService } from './stats.service';
       Muscle,
       ExerciseMuscle,
       UserStats, // Added
-      TrainingSession // Added for StatsService queries
+      TrainingSession, // Added for StatsService queries
+      User, // Added for StatsService (weight info)
     ]),
     UsersModule,
     GymsModule,

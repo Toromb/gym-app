@@ -20,4 +20,16 @@ class StatsService {
     final response = await _api.get('/students/$studentId/muscle-loads');
     return _parseList(response, (json) => MuscleLoad.fromJson(json));
   }
+  
+  Future<UserProgress> getProgress() async {
+    final response = await _api.get('/stats/progress');
+    print('DEBUG: getProgress response: $response'); // Use print for now to ensure visibility in standard output
+    return UserProgress.fromJson(response ?? {});
+  }
+
+  Future<UserProgress> getStudentProgress(String userId) async {
+    final response = await _api.get('/stats/progress/$userId');
+    print('DEBUG: getStudentProgress response: $response');
+    return UserProgress.fromJson(response ?? {});
+  }
 }

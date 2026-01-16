@@ -4,11 +4,13 @@ import {
   UseGuards,
   ForbiddenException,
   Request,
+  Param,
 } from '@nestjs/common';
 import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from '../users/users.service';
 import { GymsService } from '../gyms/gyms.service';
+import { StatsService } from './stats.service';
 import { UserRole } from '../users/entities/user.entity';
 
 @Controller('stats')
@@ -17,7 +19,26 @@ export class StatsController {
   constructor(
     private readonly usersService: UsersService,
     private readonly gymsService: GymsService,
-  ) {}
+    private readonly statsService: StatsService,
+  ) { }
+
+  @Get('progress')
+  async getMyProgress(@Request() req: any) {
+    return this.statsService.getProgress(req.user.id);
+  }
+
+  @Get('progress/:userId')
+  async getUserProgress(@Request() req: any, @Param('userId') userId: string) {
+    // Check permissions: User must be PROFE, ADMIN, SUPER_ADMIN or the user themselves
+    const requestingUser = req.user;
+    if (
+      requestingUser.role === UserRole.ALUMNO &&
+      requestingUser.id !== userId
+    ) {
+      throw new ForbiddenException('You can only view your own progress');
+    }
+    return this.statsService.getProgress(userId);
+  }
 
   @Get()
   async getPlatformStats(@Request() req: any) {

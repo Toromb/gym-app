@@ -9,7 +9,9 @@ import {
   UseGuards,
   Request,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { ExercisesService } from './exercises.service';
 import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
@@ -60,6 +62,7 @@ export class ExercisesController {
   }
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
   async findAll(
     @Request() req: any,
     @Query('muscleId') muscleId?: string,

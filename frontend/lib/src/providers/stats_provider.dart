@@ -98,4 +98,26 @@ class StatsProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // --- Profile Progress ---
+  UserProgress? _progress;
+  UserProgress? get progress => _progress;
+
+  Future<void> fetchProgress({String? userId}) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      if (userId != null) {
+          _progress = await _statsService.getStudentProgress(userId);
+      } else {
+          _progress = await _statsService.getProgress();
+      }
+    } catch (e) {
+      _error = 'Error fetching progress: $e';
+      debugPrint(_error);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

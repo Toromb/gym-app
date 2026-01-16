@@ -44,3 +44,105 @@ class MuscleLoad {
     );
   }
 }
+
+class UserProgress {
+  final WeightStats weight;
+  final VolumeStats volume;
+  final WorkoutStats workouts;
+
+  UserProgress({
+    required this.weight,
+    required this.volume,
+    required this.workouts,
+  });
+
+  factory UserProgress.fromJson(Map<String, dynamic> json) {
+    return UserProgress(
+      weight: WeightStats.fromJson(json['weight'] ?? {}),
+      volume: VolumeStats.fromJson(json['volume'] ?? {}),
+      workouts: WorkoutStats.fromJson(json['workouts'] ?? {}),
+    );
+  }
+}
+
+class WeightStats {
+  final double initial;
+  final double current;
+  final double change;
+
+  WeightStats({
+    required this.initial,
+    required this.current,
+    required this.change,
+  });
+
+  factory WeightStats.fromJson(Map<String, dynamic> json) {
+    return WeightStats(
+      initial: (json['initial'] as num?)?.toDouble() ?? 0.0,
+      current: (json['current'] as num?)?.toDouble() ?? 0.0,
+      change: (json['change'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}
+
+class VolumeStats {
+  final double lifetime;
+  final double thisWeek;
+  final double thisMonth;
+  final List<VolumePoint> chart;
+
+  VolumeStats({
+    required this.lifetime,
+    required this.thisWeek,
+    required this.thisMonth,
+    required this.chart,
+  });
+
+  factory VolumeStats.fromJson(Map<String, dynamic> json) {
+    return VolumeStats(
+      lifetime: (json['lifetime'] as num?)?.toDouble() ?? 0.0,
+      thisWeek: (json['thisWeek'] as num?)?.toDouble() ?? 0.0,
+      thisMonth: (json['thisMonth'] as num?)?.toDouble() ?? 0.0,
+      chart: (json['chart'] as List?)
+          ?.map((e) => VolumePoint.fromJson(e))
+          .toList() ?? [],
+    );
+  }
+}
+
+class VolumePoint {
+  final String date;
+  final double volume;
+
+  VolumePoint({required this.date, required this.volume});
+
+  factory VolumePoint.fromJson(Map<String, dynamic> json) {
+    return VolumePoint(
+      date: json['date'] ?? '',
+      volume: (json['volume'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}
+
+class WorkoutStats {
+  final int total;
+  final int thisMonth;
+  final int thisWeek;
+  final double weeklyAverage;
+
+  WorkoutStats({
+    required this.total, 
+    required this.thisMonth, 
+    required this.thisWeek,
+    required this.weeklyAverage,
+  });
+
+  factory WorkoutStats.fromJson(Map<String, dynamic> json) {
+    return WorkoutStats(
+      total: json['total'] ?? 0,
+      thisMonth: json['thisMonth'] ?? 0,
+      thisWeek: json['thisWeek'] ?? 0,
+      weeklyAverage: (json['weeklyAverage'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}

@@ -19,6 +19,7 @@ import 'package:intl/intl.dart';
 import 'muscle_flow_screen.dart';
 import 'muscle_flow_screen.dart';
 import 'free_training/free_training_selector_screen.dart';
+import 'profile/profile_progress_screen.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -45,6 +46,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('DEBUG: StudentHomeScreen build called - V1.1');
     final app_models.User? user = context.watch<AuthProvider>().user;
 
     return Scaffold(
@@ -103,18 +105,17 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     );
                   },
                 ),
-                  const SizedBox(height: 16),
+                const SizedBox(height: 16),
+                const SizedBox(height: 16),
                 _buildDashboardCard(
                   context,
-                  title: 'Historial de entrenamiento',
-                  subtitle: planProvider.monthlyWorkoutCount > 0 
-                      ? 'Entrenamientos este mes: ${planProvider.monthlyWorkoutCount}'
-                      : AppLocalizations.of(context)!.get('workoutHistorySub'),
-                  icon: Icons.calendar_month,
+                  title: 'Mi Progreso',
+                  subtitle: 'Evolución de peso, volumen y carga.',
+                  icon: Icons.show_chart,
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const CalendarScreen()),
+                      MaterialPageRoute(builder: (context) => const ProfileProgressScreen()),
                     );
                   },
                 ),
