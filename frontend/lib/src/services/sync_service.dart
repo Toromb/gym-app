@@ -14,7 +14,7 @@ class SyncService {
   final _storage = LocalStorageService();
   final _api = ApiClient();
   
-  bool _isSyncing = false;
+
   StreamSubscription? _connectivitySubscription;
 
   void init() {
@@ -32,24 +32,37 @@ class SyncService {
     _connectivitySubscription?.cancel();
   }
 
-  Future<void> triggerSync() async {
-    if (_isSyncing) return;
+  Future<List<Map<String, dynamic>>>? _syncFuture;
 
+  Future<List<Map<String, dynamic>>> triggerSync() async {
+    if (_syncFuture != null) return _syncFuture!;
+
+    _syncFuture = _processQueue();
+    // We await it here so that triggerSync itself waits, 
+    // but the future is also stored in _syncFuture for other callers.
+    try {
+      return await _syncFuture!;
+    } finally {
+      // Ensure we clear the future even if error, so next call can try again
+      _syncFuture = null;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _processQueue() async {
+    final List<Map<String, dynamic>> results = [];
+    
     // Double check real internet
     bool hasInternet = await InternetConnectionChecker.instance.hasConnection;
     if (!hasInternet) {
       if (kDebugMode) print('⚠️ Network connected but no Internet access.');
-      return;
+      return results;
     }
 
-    _isSyncing = true;
-    
     try {
       final queue = _storage.getQueue();
       if (queue.isEmpty) {
         if (kDebugMode) print('✅ Sync Queue is empty.');
-        _isSyncing = false;
-        return;
+        return results;
       }
 
       if (kDebugMode) print('🔄 Processing Sync Queue (${queue.length} items)...');
@@ -57,10 +70,6 @@ class SyncService {
       // Process items one by one (FIFO)
       // Note: We read the *current* queue status. If new items are added while syncing, they are appended.
       // We will loop until queue is empty or error occurs.
-      
-      // We iterate by index 0 always, removing on success.
-      // If we used a for loop on `queue`, modifying the list (remove) would be tricky if re-reading.
-      // Better:
       
       int processedCount = 0;
       
@@ -74,21 +83,23 @@ class SyncService {
         final body = item['body'];
 
         bool success = false;
+        dynamic response;
+
         try {
           if (kDebugMode) print('📤 Sending: $method $endpoint');
           
           switch (method.toUpperCase()) {
             case 'POST':
-              await _api.post(endpoint, body);
+              response = await _api.post(endpoint, body);
               break;
             case 'PUT':
-              await _api.put(endpoint, body);
+              response = await _api.put(endpoint, body);
               break;
             case 'PATCH':
-              await _api.patch(endpoint, body);
+              response = await _api.patch(endpoint, body);
               break;
             case 'DELETE':
-              await _api.delete(endpoint);
+              response = await _api.delete(endpoint);
               break;
             default:
               if (kDebugMode) print('❌ Unknown method $method. Discarding.');
@@ -96,6 +107,14 @@ class SyncService {
               break;
           }
           success = true;
+          
+          if (response != null) {
+              results.add({
+                  'method': method,
+                  'endpoint': endpoint,
+                  'response': response
+              });
+          }
           
         } catch (e) {
           if (kDebugMode) print('❌ Sync Error for $endpoint: $e');
@@ -129,8 +148,8 @@ class SyncService {
 
     } catch (e) {
        if (kDebugMode) print('❌ Critical Sync Error: $e');
-    } finally {
-      _isSyncing = false;
     }
+    
+    return results;
   }
 }

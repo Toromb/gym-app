@@ -50,13 +50,20 @@ class _GymScheduleScreenState extends State<GymScheduleScreen> {
             ),
         ],
       ),
-      body: scheduleProvider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : scheduleProvider.error != null
-              ? Center(child: Text(scheduleProvider.error!))
-              : _isEditing
-                  ? _buildEditList(context)
-                  : _buildViewList(scheduleProvider.schedules),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+             constraints: const BoxConstraints(maxWidth: 800),
+             child: scheduleProvider.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : scheduleProvider.error != null
+                  ? Center(child: Text(scheduleProvider.error!))
+                  : _isEditing
+                      ? _buildEditList(context)
+                      : _buildViewList(scheduleProvider.schedules),
+          ),
+        ),
+      ),
       floatingActionButton: _isEditing
           ? FloatingActionButton(
               child: const Icon(Icons.save),

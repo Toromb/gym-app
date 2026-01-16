@@ -51,15 +51,6 @@ warning - The left operand can't be null, so the right operand is never executed
    info - Don't invoke 'print' in production code - lib\src\providers\gym_schedule_provider.dart:50:7 - avoid_print
    info - Empty catch block - lib\src\providers\plan_provider.dart:385:17 - empty_catches
 warning - The '!' will have no effect because the receiver can't be null - lib\src\providers\plan_provider.dart:444:26 - unnecessary_non_null_assertion
-   info - Don't invoke 'print' in production code - lib\src\providers\plan_provider.dart:658:11 - avoid_print
-   info - Don't invoke 'print' in production code - lib\src\providers\plan_provider.dart:661:11 - avoid_print
-   info - Don't invoke 'print' in production code - lib\src\providers\plan_provider.dart:663:11 - avoid_print
-   info - Don't invoke 'print' in production code - lib\src\providers\plan_provider.dart:666:11 - avoid_print
-   info - Don't invoke 'print' in production code - lib\src\providers\plan_provider.dart:672:11 - avoid_print
-   info - Don't invoke 'print' in production code - lib\src\providers\plan_provider.dart:675:15 - avoid_print
-   info - Don't invoke 'print' in production code - lib\src\providers\plan_provider.dart:677:19 - avoid_print
-   info - Don't invoke 'print' in production code - lib\src\providers\plan_provider.dart:680:19 - avoid_print
-   info - Don't invoke 'print' in production code - lib\src\providers\plan_provider.dart:684:7 - avoid_print
    info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:30:9 - avoid_print
    info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:82:7 - avoid_print
    info - Don't invoke 'print' in production code - lib\src\providers\user_provider.dart:130:7 - avoid_print
@@ -225,13 +216,12 @@ warning - The receiver can't be 'null' because of short-circuiting, so the null-
    info - Unnecessary braces in a string interpolation - lib\src\screens\student\student_home_screen.dart:241:40 - unnecessary_brace_in_string_interps
    info - Don't use 'BuildContext's across async gaps - lib\src\screens\student\student_home_screen.dart:258:32 - use_build_context_synchronously
    info - Don't use 'BuildContext's across async gaps - lib\src\screens\student\student_home_screen.dart:292:54 - use_build_context_synchronously
-  error - The method 'UserLevel' isn't defined for the type '_StudentHomeScreenState' - lib\src\screens\student\student_home_screen.dart:303:51 - undefined_method
    info - Don't use 'BuildContext's across async gaps - lib\src\screens\student\student_home_screen.dart:385:27 - use_build_context_synchronously
    info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:433:55 - use_build_context_synchronously
-   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:480:15 - use_build_context_synchronously
-   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:481:15 - use_build_context_synchronously
-   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:484:15 - use_build_context_synchronously
-warning - The declaration '_infoRow' isn't referenced - lib\src\screens\student\student_home_screen.dart:714:10 - unused_element
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:477:41 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\student\student_home_screen.dart:498:19 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\src\screens\student\student_home_screen.dart:499:19 - use_build_context_synchronously
+warning - The declaration '_infoRow' isn't referenced - lib\src\screens\student\student_home_screen.dart:730:10 - unused_element
 warning - The value of the local variable 'isActive' isn't used - lib\src\screens\student\student_plans_list_screen.dart:55:31 - unused_local_variable
 warning - Unused import: '../../models/user_model.dart' - lib\src\screens\super_admin\gym_admins_screen.dart:7:8 - unused_import
 warning - Unused import: '../../models/gym_model.dart' - lib\src\screens\super_admin\gym_admins_screen.dart:8:8 - unused_import
@@ -286,4 +276,4 @@ warning - Unused import: 'package:flutter/material.dart' - lib\test_compile.dart
    info - Can't use a relative path to import a library in 'lib' - test\unit\swap_logic_test.dart:4:8 - avoid_relative_lib_imports
    info - Can't use a relative path to import a library in 'lib' - test\unit\swap_logic_test.dart:5:8 - avoid_relative_lib_imports
 
-263 issues found. (ran in 1.4s)
+253 issues found. (ran in 1.4s)

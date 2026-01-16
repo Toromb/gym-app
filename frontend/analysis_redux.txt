@@ -225,7 +225,6 @@ warning - The receiver can't be 'null' because of short-circuiting, so the null-
    info - Unnecessary braces in a string interpolation - lib\src\screens\student\student_home_screen.dart:241:40 - unnecessary_brace_in_string_interps
    info - Don't use 'BuildContext's across async gaps - lib\src\screens\student\student_home_screen.dart:258:32 - use_build_context_synchronously
    info - Don't use 'BuildContext's across async gaps - lib\src\screens\student\student_home_screen.dart:292:54 - use_build_context_synchronously
-  error - The method 'UserLevel' isn't defined for the type '_StudentHomeScreenState' - lib\src\screens\student\student_home_screen.dart:303:51 - undefined_method
    info - Don't use 'BuildContext's across async gaps - lib\src\screens\student\student_home_screen.dart:385:27 - use_build_context_synchronously
    info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:433:55 - use_build_context_synchronously
    info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\src\screens\student\student_home_screen.dart:480:15 - use_build_context_synchronously
@@ -286,4 +285,4 @@ warning - Unused import: 'package:flutter/material.dart' - lib\test_compile.dart
    info - Can't use a relative path to import a library in 'lib' - test\unit\swap_logic_test.dart:4:8 - avoid_relative_lib_imports
    info - Can't use a relative path to import a library in 'lib' - test\unit\swap_logic_test.dart:5:8 - avoid_relative_lib_imports
 
-263 issues found. (ran in 1.4s)
+262 issues found. (ran in 1.7s)

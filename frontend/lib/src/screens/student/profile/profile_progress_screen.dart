@@ -13,6 +13,7 @@ import '../../../theme/app_theme.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:collection/collection.dart'; // Import for firstWhereOrNull
 import '../calendar_screen.dart'; // Import CalendarScreen for embedding
+import 'package:intl/intl.dart'; // For date formatting
 
 class ProfileProgressScreen extends StatefulWidget {
   final String? userId; // Optional: If null, shows current user's progress
@@ -432,30 +433,71 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
        return const Card(child: Padding(padding: EdgeInsets.all(16), child: Text("No hay datos recientes de volumen.")));
      }
 
+    // Calculate dynamic maxY for visual breathing room
+    double maxVal = volumeStats.chart.map((e) => e.volume).reduce((a, b) => a > b ? a : b);
+    if (maxVal == 0) maxVal = 100;
+    
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      shadowColor: Colors.black12,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Volumen semanal – Últimas 4 semanas',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              'Volumen Semanal',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const Text(
-              'Cada barra representa el volumen total de una semana.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+             const SizedBox(height: 4),
+            Text(
+              'Tendencia de las últimas 4 semanas',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             AspectRatio(
-              aspectRatio: 1.7,
+              aspectRatio: 1.5,
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
-                  maxY: volumeStats.chart.map((e) => e.volume).reduce((a, b) => a > b ? a : b) * 1.2,
-                  barTouchData: BarTouchData(enabled: false),
+                  maxY: maxVal * 1.2,
+                  barTouchData: BarTouchData(
+                    enabled: true,
+                    touchTooltipData: BarTouchTooltipData(
+                      tooltipBgColor: Theme.of(context).colorScheme.inverseSurface,
+                      tooltipRoundedRadius: 8,
+                      tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      tooltipMargin: 8,
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final dateStr = volumeStats.chart[group.x.toInt()].date;
+                        // Parse date (YYYY-MM-DD)
+                        DateTime startDate;
+                        try {
+                          startDate = DateTime.parse(dateStr);
+                        } catch (e) {
+                          startDate = DateTime.now();
+                        }
+                        final endDate = startDate.add(const Duration(days: 6));
+                        
+                        // Format: dd/MM a dd/MM
+                        final startFmt = DateFormat('dd/MM').format(startDate);
+                        final endFmt = DateFormat('dd/MM').format(endDate);
+                        final rangeStr = '$startFmt a $endFmt';
+
+                        return BarTooltipItem(
+                          '${_formatSmartVolume(rod.toY)}\n',
+                          TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold, fontSize: 14),
+                          children: [
+                             TextSpan(
+                               text: rangeStr,
+                               style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.normal),
+                             ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
                   titlesData: FlTitlesData(
                     show: true,
                     bottomTitles: AxisTitles(
@@ -465,25 +507,63 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                           const style = TextStyle(
                             color: Colors.grey,
                             fontWeight: FontWeight.bold,
-                            fontSize: 10,
+                            fontSize: 12,
                           );
                           if (value.toInt() < volumeStats.chart.length) {
                               final dateStr = volumeStats.chart[value.toInt()].date;
-                              final dateLabel = dateStr.length >= 5 ? dateStr.substring(5) : dateStr;
-                              return SideTitleWidget(
-                                axisSide: meta.axisSide,
-                                child: Text(dateLabel, style: style),
-                              );
+                              
+                              // Parse and format to dd/MM
+                              try {
+                                 final date = DateTime.parse(dateStr);
+                                 final dateLabel = DateFormat('dd/MM').format(date);
+                                 return SideTitleWidget(
+                                   axisSide: meta.axisSide,
+                                   space: 8,
+                                   child: Text(dateLabel, style: style),
+                                 );
+                              } catch (e) {
+                                return const SizedBox.shrink();
+                              }
                           }
                           return const SizedBox.shrink();
                         },
                       ),
                     ),
-                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        getTitlesWidget: (value, meta) {
+                           if (value == 0) return const SizedBox.shrink();
+                           // K formatting
+                           String text;
+                           if (value >= 1000) {
+                             text = '${(value / 1000).toStringAsFixed(0)}k';
+                           } else {
+                             text = value.toInt().toString();
+                           }
+                           return SideTitleWidget(
+                             axisSide: meta.axisSide, 
+                             space: 4, 
+                             child: Text(text, style: const TextStyle(color: Colors.grey, fontSize: 10))
+                           );
+                        },
+                      ),
+                    ),
                     topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
-                  gridData: const FlGridData(show: false),
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: maxVal / 5, // ~5 grid lines
+                    getDrawingHorizontalLine: (value) {
+                      return FlLine(
+                        color: Colors.grey.withOpacity(0.1),
+                        strokeWidth: 1,
+                      );
+                    },
+                  ),
                   borderData: FlBorderData(show: false),
                   barGroups: volumeStats.chart.asMap().entries.map((entry) {
                     return BarChartGroupData(
@@ -491,9 +571,21 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                       barRods: [
                         BarChartRodData(
                           toY: entry.value.volume,
-                          color: Theme.of(context).colorScheme.primary,
-                          width: 16,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          gradient: LinearGradient(
+                            colors: [
+                              Theme.of(context).colorScheme.primary,
+                              Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                            ],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                          ),
+                          width: 20,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                          backDrawRodData: BackgroundBarChartRodData(
+                             show: true,
+                             toY: maxVal * 1.2,
+                             color: Colors.grey.withOpacity(0.05),
+                          ),
                         )
                       ],
                     );

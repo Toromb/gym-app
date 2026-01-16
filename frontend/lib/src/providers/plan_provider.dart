@@ -417,6 +417,10 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
+  // Sync Future Tracker
+  Future<List<Map<String, dynamic>>>? _activeSyncRequest;
+
+  // 3. Complete Session
   Future<void> completeSession(String date, {String? dayId}) async {
     if (_currentSession == null) return;
     
@@ -424,7 +428,7 @@ class PlanProvider with ChangeNotifier {
     _currentSession = _currentSession!.copyWith(status: 'COMPLETED');
     notifyListeners();
     
-    // 2. Optimistic Local Update (Assignment Progress - Critical for Next Workout)
+    // 2. Optimistic Local Update (Assignment Progress)
     if (dayId != null && activeAssignment != null) {
         // Find current assignment index
         final index = _assignments.indexWhere((a) => a.id == activeAssignment!.id);
@@ -460,14 +464,16 @@ class PlanProvider with ChangeNotifier {
           'id': const Uuid().v4(),
           'method': 'PATCH', 
           'endpoint': '/executions/${_currentSession!.id}/complete',
-          'body': {'date': date}, // Note: Backend handles linking result to StudentPlan via Plan Service legacy sync
+          'body': {'date': date}, 
           'timestamp': DateTime.now().toIso8601String(),
       };
       
       await _localStorage.addToQueue(request);
 
-      // 5. Trigger Sync
-      _syncService.triggerSync();
+      // 5. Trigger Sync (and hold future)
+      _activeSyncRequest = _syncService.triggerSync();
+      // We do NOT await here to keep UI responsive (Optimistic).
+      // But we captured the future so result can be retrieved later.
       
     } catch (e) {
        debugPrint('Error completing session logic: $e');
@@ -642,6 +648,42 @@ class PlanProvider with ChangeNotifier {
       debugPrint('Error fetching student session: $e');
       return null;
     }
+  }
+
+  Future<Map<String, dynamic>?> waitForPendingUpdates() async {
+      List<Map<String, dynamic>> results;
+      
+      // If there was an active sync initiated by completeSession, wait for it.
+      if (_activeSyncRequest != null) {
+          results = await _activeSyncRequest!;
+          _activeSyncRequest = null; 
+          
+          // Race Condition Check: Did we get the completion result?
+          bool found = results.any((r) => (r['endpoint'] as String).endsWith('/complete'));
+          
+          if (!found) {
+             final queue = _localStorage.getQueue();
+             if (queue.isNotEmpty) {
+                 // The item might have been added just as the previous sync finished.
+                 // Trigger a fresh sync to pick it up.
+                 results = await _syncService.triggerSync();
+             }
+          }
+      } else {
+          results = await _syncService.triggerSync();
+      }
+      
+      // Look for completion response
+      for (final result in results) {
+          final endpoint = result['endpoint'] as String;
+          if (endpoint.endsWith('/complete') && result['response'] != null) {
+              final response = result['response'];
+              if (response is Map<String, dynamic> && response.containsKey('stats')) {
+                  return response['stats'] as Map<String, dynamic>;
+              }
+          }
+      }
+      return null;
   }
 
   void clear() {

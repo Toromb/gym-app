@@ -170,51 +170,56 @@ class _FreeTrainingSelectorScreenState extends State<FreeTrainingSelectorScreen>
 
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            // Custom App Bar Area
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: _prevPage,
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        title,
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Column(
+              children: [
+                // Custom App Bar Area
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: _prevPage,
                       ),
-                    ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            title,
+                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                       SizedBox(width: 48, child: _currentStep > 0 ? IconButton(icon: const Icon(Icons.refresh), onPressed: _reset) : null),
+                    ],
                   ),
-                   SizedBox(width: 48, child: _currentStep > 0 ? IconButton(icon: const Icon(Icons.refresh), onPressed: _reset) : null),
-                ],
-              ),
+                ),
+                
+                // Progress Bar (Approximation 0..4)
+                LinearProgressIndicator(
+                  value: (_currentStep + 1) / 5.0,
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
+                ),
+      
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(), // Disable swipe to enforce flow
+                    children: [
+                      _buildTypeStep(theme),
+                      _buildLevelStep(theme),
+                      _buildSectorStep(theme), // Split Step
+                      _buildCardioStep(theme), // Split Step
+                      _buildResultsStep(theme),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            
-            // Progress Bar (Approximation 0..4)
-            LinearProgressIndicator(
-              value: (_currentStep + 1) / 5.0,
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
-            ),
-
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(), // Disable swipe to enforce flow
-                children: [
-                  _buildTypeStep(theme),
-                  _buildLevelStep(theme),
-                  _buildSectorStep(theme), // Split Step
-                  _buildCardioStep(theme), // Split Step
-                  _buildResultsStep(theme),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

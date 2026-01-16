@@ -143,52 +143,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
           )
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(colorScheme),
-            const SizedBox(height: 24),
-            _buildSectionCard(
-               title: 'Información Personal',
-               icon: Icons.person_outline,
-               child: _buildCommonSection(),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildHeader(colorScheme),
+                const SizedBox(height: 24),
+                _buildSectionCard(
+                   title: 'Información Personal',
+                   icon: Icons.person_outline,
+                   child: _buildCommonSection(),
+                ),
+                const SizedBox(height: 16),
+                _buildSectionCard(
+                  title: 'Configuración',
+                  icon: Icons.settings_outlined,
+                  child: Consumer<ThemeProvider>(
+                    builder: (context, themeProvider, _) {
+                      return SwitchListTile(
+                        title: const Text('Modo Oscuro'),
+                        secondary: Icon(themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode),
+                        value: themeProvider.isDarkMode,
+                        onChanged: (val) => themeProvider.toggleTheme(val),
+                        contentPadding: EdgeInsets.zero,
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (_user!.role == AppRoles.alumno) _buildSectionCard(
+                   title: 'Información del Alumno',
+                   icon: Icons.school_outlined,
+                   child: _buildStudentSection()
+                ),
+                if (_user!.role == AppRoles.profe) _buildSectionCard(
+                   title: 'Información Profesional',
+                   icon: Icons.work_outline,
+                   child: _buildProfessorSection()
+                ),
+                if (_user!.role == AppRoles.admin) _buildSectionCard(
+                   title: 'Bloc de Notas',
+                   icon: Icons.edit_note,
+                   child: _buildAdminSection()
+                ),
+                const SizedBox(height: 100), // Bottom air for better scrolling
+              ],
             ),
-            const SizedBox(height: 16),
-            _buildSectionCard(
-              title: 'Configuración',
-              icon: Icons.settings_outlined,
-              child: Consumer<ThemeProvider>(
-                builder: (context, themeProvider, _) {
-                  return SwitchListTile(
-                    title: const Text('Modo Oscuro'),
-                    secondary: Icon(themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode),
-                    value: themeProvider.isDarkMode,
-                    onChanged: (val) => themeProvider.toggleTheme(val),
-                    contentPadding: EdgeInsets.zero,
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (_user!.role == AppRoles.alumno) _buildSectionCard(
-               title: 'Información del Alumno',
-               icon: Icons.school_outlined,
-               child: _buildStudentSection()
-            ),
-            if (_user!.role == AppRoles.profe) _buildSectionCard(
-               title: 'Información Profesional',
-               icon: Icons.work_outline,
-               child: _buildProfessorSection()
-            ),
-            if (_user!.role == AppRoles.admin) _buildSectionCard(
-               title: 'Bloc de Notas',
-               icon: Icons.edit_note,
-               child: _buildAdminSection()
-            ),
-            const SizedBox(height: 100), // Bottom air for better scrolling
-          ],
+          ),
         ),
       ),
     );

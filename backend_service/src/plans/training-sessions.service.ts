@@ -335,7 +335,7 @@ export class TrainingSessionsService {
     sessionId: string,
     userId: string,
     finalDate: string,
-  ): Promise<TrainingSession> {
+  ): Promise<any> {
     const session = await this.sessionRepo.findOne({
       where: { id: sessionId, student: { id: userId } },
       relations: ['plan'],
@@ -388,9 +388,9 @@ export class TrainingSessionsService {
     }
 
     // Update Stats
-    await this.statsService.updateStats(userId);
+    const newStats = await this.statsService.updateStats(userId);
 
-    return saved;
+    return { session: saved, stats: newStats } as any; // Cast to any or update return type signature if strict
   }
 
   // 4. Get Calendar

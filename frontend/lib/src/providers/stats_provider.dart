@@ -120,4 +120,9 @@ class StatsProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void setDirectProgress(UserProgress newProgress) {
+    _progress = newProgress;
+    notifyListeners();
+  }
 }

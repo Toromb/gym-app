@@ -66,6 +66,20 @@ class UserProgress {
       level: LevelStats.fromJson(json['level'] ?? {}),
     );
   }
+
+  UserProgress copyWith({
+    WeightStats? weight,
+    VolumeStats? volume,
+    WorkoutStats? workouts,
+    LevelStats? level,
+  }) {
+    return UserProgress(
+      weight: weight ?? this.weight,
+      volume: volume ?? this.volume,
+      workouts: workouts ?? this.workouts,
+      level: level ?? this.level,
+    );
+  }
 }
 
 class WeightStats {

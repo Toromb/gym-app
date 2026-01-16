@@ -209,85 +209,90 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         elevation: 0,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-            padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: SingleChildScrollView(
+                padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      AppLocalizations.of(context)!.get('trainingSession'),
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.get('trainingSession'),
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        if (!widget.readOnly && status == 'COMPLETED')
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: status == 'COMPLETED' ? Colors.green[100] : Colors.blue[100],
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              color: status == 'COMPLETED' ? Colors.green[900] : Colors.blue[900],
+                              fontWeight: FontWeight.bold
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    if (!widget.readOnly && status == 'COMPLETED')
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: status == 'COMPLETED' ? Colors.green[100] : Colors.blue[100],
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        status,
-                        style: TextStyle(
-                          color: status == 'COMPLETED' ? Colors.green[900] : Colors.blue[900],
-                          fontWeight: FontWeight.bold
+                    // NEW: Training Intent Badge
+                    if (widget.day?.trainingIntent != null)
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.purple.shade200),
+                        ),
+                        child: Text(
+                          widget.day!.trainingIntent!.label,
+                          style: TextStyle(color: Colors.purple.shade900, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ),
+      
+                    const SizedBox(height: 8),
+                    Text(
+                      '${exercisesToRender.length} ${AppLocalizations.of(context)!.get('exercisesToComplete')}',
+                      style: TextStyle(color: Colors.grey[600]),
                     ),
+                    const SizedBox(height: 24),
+                    ...exercisesToRender.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final exExec = entry.value;
+                      return _buildExerciseCard(context, exExec, index + 1, widget.readOnly);
+                    }),
+                    
+                    // Fix: Hide Add Exercise button for Plan Sessions
+                    if (!widget.readOnly && (widget.planId == 'FREE_SESSION' || widget.freeTrainingId != null))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: OutlinedButton.icon(
+                            onPressed: _handleAddExercise,
+                            icon: const Icon(Icons.add),
+                            label: Text(AppLocalizations.of(context)!.get('addExercise')),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            ),
+                          ),
+                        ),
+                      ),
+      
+                    const SizedBox(height: 100), // Ensures scroll space
                   ],
                 ),
-                // NEW: Training Intent Badge
-                if (widget.day?.trainingIntent != null)
-                  Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.purple.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.purple.shade200),
-                    ),
-                    child: Text(
-                      widget.day!.trainingIntent!.label,
-                      style: TextStyle(color: Colors.purple.shade900, fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-
-                const SizedBox(height: 8),
-                Text(
-                  '${exercisesToRender.length} ${AppLocalizations.of(context)!.get('exercisesToComplete')}',
-                  style: TextStyle(color: Colors.grey[600]),
                 ),
-                const SizedBox(height: 24),
-                ...exercisesToRender.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final exExec = entry.value;
-                  return _buildExerciseCard(context, exExec, index + 1, widget.readOnly);
-                }),
-                
-                // Fix: Hide Add Exercise button for Plan Sessions
-                if (!widget.readOnly && (widget.planId == 'FREE_SESSION' || widget.freeTrainingId != null))
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: Center(
-                      child: OutlinedButton.icon(
-                        onPressed: _handleAddExercise,
-                        icon: const Icon(Icons.add),
-                        label: Text(AppLocalizations.of(context)!.get('addExercise')),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                const SizedBox(height: 100), // Ensures scroll space
-              ],
-            ),
-            ),
           ),
+        ),
+      ),
 
       bottomNavigationBar: !widget.readOnly
           ? SafeArea(

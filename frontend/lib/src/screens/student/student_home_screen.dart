@@ -74,192 +74,270 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         ],
       ),
       body: SafeArea(
-        child: Consumer<PlanProvider>(
-        builder: (context, planProvider, child) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                 _buildHeader(user),
-                const SizedBox(height: 24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Consumer<PlanProvider>(
+            builder: (context, planProvider, child) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                     _buildHeader(user),
+                    const SizedBox(height: 24),
 
-                // PROGRESS SUMMARY (Simple Text)
-                if (planProvider.weeklyWorkoutCount > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: Text(
-                      'Has entrenado ${planProvider.weeklyWorkoutCount} ${planProvider.weeklyWorkoutCount == 1 ? "día" : "días"} esta semana. ¡Seguí así!',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold
+                    // PROGRESS SUMMARY (Simple Text)
+                    if (planProvider.weeklyWorkoutCount > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Text(
+                          'Has entrenado ${planProvider.weeklyWorkoutCount} ${planProvider.weeklyWorkoutCount == 1 ? "día" : "días"} esta semana. ¡Seguí así!',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
 
-                // --- NEXT WORKOUT SECTION ---
-                _buildNextWorkoutCard(context, planProvider),
-                const SizedBox(height: 24),
-                // ----------------------------
+                    // --- NEXT WORKOUT SECTION ---
+                    _buildNextWorkoutCard(context, planProvider),
+                    const SizedBox(height: 24),
+                    // ----------------------------
 
-                _buildDashboardCard(
-                  context,
-                  title: 'Mi rutina', // Renamed from "Planes"
-                  subtitle: planProvider.nextWorkout != null && planProvider.nextWorkout!['assignment'] != null
-                      ? 'Plan activo: ${(planProvider.nextWorkout!['assignment'] as StudentAssignment).plan.name}'
-                      : AppLocalizations.of(context)!.get('myPlansSub'),
-                  icon: Icons.fitness_center,
-                  onTap: () {
-                    Navigator.push(
+                    _buildDashboardCard(
                       context,
-                      MaterialPageRoute(builder: (context) => const StudentPlansListScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                
-                // --- MI PROGRESO (Level Summary) ---
-                Consumer<StatsProvider>(
-                  builder: (context, stats, child) {
-                    Widget? subtitleWidget;
-                    String? subtitleText = 'Evolución de peso, volumen y carga.';
-
-                    final progress = stats.progress;
-                    if (progress != null) {
-                        final level = progress.level;
-                        final currentExp = level.exp;
-                        // Manual Thresholds (Same as ProfileProgressScreen to avoid heavy logic import)
-                        int getNext(int exp) {
-                          if (exp < 100) return 100;
-                          if (exp < 300) return 300;
-                          if (exp < 1300) return 1300;
-                          if (exp < 3000) return 3000;
-                          if (exp < 6000) return 6000;
-                          if (exp < 10000) return 10000;
-                          if (exp < 16000) return 16000;
-                          if (exp < 30000) return 30000;
-                          if (exp < 50000) return 50000;
-                          return 1000000;
-                        }
-                        int getPrev(int exp) {
-                          if (exp < 100) return 0;
-                          if (exp < 300) return 100;
-                          if (exp < 1300) return 300;
-                          if (exp < 3000) return 1300;
-                          if (exp < 6000) return 3000;
-                          if (exp < 10000) return 6000;
-                          if (exp < 16000) return 10000;
-                          if (exp < 30000) return 16000;
-                          if (exp < 50000) return 30000;
-                          return 50000;
-                        }
-                        
-                        final nextExp = getNext(currentExp);
-                        final prevExp = getPrev(currentExp);
-                        final range = nextExp - prevExp;
-                        final p = range > 0 ? ((currentExp - prevExp) / range).clamp(0.0, 1.0) : 1.0;
-                        
-                        // Difficulty (Optional text)
-                        String diff = "Novato";
-                        if (level.current >= 10) diff = "Medio";
-                        if (level.current >= 30) diff = "Difícil";
-                        if (level.current >= 50) diff = "Muy Difícil";
-
-                        subtitleText = null;
-                        subtitleWidget = Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                             Text('Nivel ${level.current} • $diff', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.primary)),
-                             const SizedBox(height: 6),
-                             ClipRRect(
-                               borderRadius: BorderRadius.circular(4),
-                               child: LinearProgressIndicator(
-                                 value: p,
-                                 minHeight: 6,
-                                 backgroundColor: Colors.grey[300],
-                                 valueColor: AlwaysStoppedAnimation(Theme.of(context).colorScheme.primary),
-                               ),
-                             ),
-                             const SizedBox(height: 4),
-                             Text('${currentExp} / $nextExp XP', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-                          ],
-                        );
-                    }
-
-                    return _buildDashboardCard(
-                      context,
-                      title: 'Mi Progreso',
-                      subtitle: subtitleText,
-                      subtitleWidget: subtitleWidget,
-                      icon: Icons.show_chart,
+                      title: 'Mi rutina', // Renamed from "Planes"
+                      subtitle: planProvider.nextWorkout != null && planProvider.nextWorkout!['assignment'] != null
+                          ? 'Plan activo: ${(planProvider.nextWorkout!['assignment'] as StudentAssignment).plan.name}'
+                          : AppLocalizations.of(context)!.get('myPlansSub'),
+                      icon: Icons.fitness_center,
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const ProfileProgressScreen()),
-                        ).then((_) {
-                           // Refresh functionality on return if needed
-                           context.read<StatsProvider>().fetchProgress();
+                          MaterialPageRoute(builder: (context) => const StudentPlansListScreen()),
+                        ).then((_) async {
+                           // 1. Flush Queue & Get Result
+                           print('DEBUG: StudentHomeScreen - Waiting for updates...');
+                           final newStatsMap = await context.read<PlanProvider>().waitForPendingUpdates();
+                           print('DEBUG: StudentHomeScreen - Got stats map: $newStatsMap');
+                           
+                           if (context.mounted) {
+                               if (newStatsMap != null) {
+                                   print('DEBUG: Direct Update Route');
+                                   // DIRECT UPDATE: We got the stats from the backend transaction!
+                                   // Map structure from backend: { totalExperience: ..., currentLevel: ... }
+                                   // Frontend UserProgress structure needs adaptation if backend format differs.
+                                   // Backend 'stats.service.ts' returns simple object in updateStats/save.
+                                   // Frontend 'StatsModel' (UserProgress) expects: level: { current, exp }, etc.
+                                   // Wait, backend 'updateStats' returns the RAW entity (UserStats).
+                                   // Frontend expects the composite 'getProgress' structure.
+                                   // Ah. I returned RAW entity from backend.
+                                   
+                                   // FIX: I should have returned getProgress() from backend or handle simple mapping here.
+                                   // Let's rely on simple mapping here to avoid re-fetching everything.
+                                   final rawStats = newStatsMap;
+                                   final currentLevel = rawStats['currentLevel'] as int? ?? 1;
+                                   final currentExp = rawStats['totalExperience'] as int? ?? 0;
+                                   
+                                   print('DEBUG: Updating to Level $currentLevel, Exp $currentExp');
+
+                                   // Create partial or synthetic progress object
+                                   // Since we don't have the full volumetrics, maybe we should just set the level info?
+                                   // Or, we can trigger a fetch if we strictly want full data, BUT
+                                   // The user cares about the "Mi Progreso" card visually updating.
+                                   // That card reads `stats.progress?.level`.
+                                   
+                                   // Let's reconstruct or patch current progress.
+                                   // If we have previous progress, copy it.
+                                   final oldProgress = context.read<StatsProvider>().progress;
+                                   if (oldProgress != null) {
+                                       final newProgress = oldProgress.copyWith(
+                                           level: LevelStats(current: currentLevel, exp: currentExp)
+                                       );
+                                       context.read<StatsProvider>().setDirectProgress(newProgress);
+                                   } else {
+                                        // Fetch if we had nothing (safe fallback)
+                                        context.read<StatsProvider>().fetchProgress();
+                                   }
+                                   
+                               } else {
+                                   print('DEBUG: Fallback Route (Fetch)');
+                                   // Fallback if no stats returned (e.g. offline or other endpoint)
+                                   context.read<StatsProvider>().fetchProgress();
+                               }
+
+                               // Always refresh dashboard charts
+                               context.read<PlanProvider>().computeWeeklyStats();
+                           }
                         });
                       },
-                    );
-                  }
-                ),
-                
-                 const SizedBox(height: 16),
-                  _buildDashboardCard(
-                  context,
-                  title: AppLocalizations.of(context)!.get('gymSchedule'),
-                  subtitle: _getTodayScheduleText(context),
-                  icon: Icons.access_time,
-                  onTap: () {
-                    Navigator.push(
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // --- MI PROGRESO (Level Summary) ---
+                    Consumer<StatsProvider>(
+                      builder: (context, stats, child) {
+                        Widget? subtitleWidget;
+                        String? subtitleText = 'Evolución de peso, volumen y carga.';
+
+                        final progress = stats.progress;
+                        if (progress != null) {
+                            final level = progress.level;
+                            final currentExp = level.exp;
+                            // Manual Thresholds (Same as ProfileProgressScreen to avoid heavy logic import)
+                            int getNext(int exp) {
+                              if (exp < 100) return 100;
+                              if (exp < 300) return 300;
+                              if (exp < 1300) return 1300;
+                              if (exp < 3000) return 3000;
+                              if (exp < 6000) return 6000;
+                              if (exp < 10000) return 10000;
+                              if (exp < 16000) return 16000;
+                              if (exp < 30000) return 30000;
+                              if (exp < 50000) return 50000;
+                              return 1000000;
+                            }
+                            int getPrev(int exp) {
+                              if (exp < 100) return 0;
+                              if (exp < 300) return 100;
+                              if (exp < 1300) return 300;
+                              if (exp < 3000) return 1300;
+                              if (exp < 6000) return 3000;
+                              if (exp < 10000) return 6000;
+                              if (exp < 16000) return 10000;
+                              if (exp < 30000) return 16000;
+                              if (exp < 50000) return 30000;
+                              return 50000;
+                            }
+                            
+                            final nextExp = getNext(currentExp);
+                            final prevExp = getPrev(currentExp);
+                            final range = nextExp - prevExp;
+                            final p = range > 0 ? ((currentExp - prevExp) / range).clamp(0.0, 1.0) : 1.0;
+                            
+                            // Difficulty (Optional text)
+                            String diff = "Principiante";
+                            if (level.current >= 10) diff = "Medio";
+                            if (level.current >= 30) diff = "Difícil";
+                            if (level.current >= 50) diff = "Muy Difícil";
+
+                            subtitleText = null;
+                            subtitleWidget = Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                 Text('Nivel ${level.current} • $diff', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.primary)),
+                                 const SizedBox(height: 6),
+                                 ClipRRect(
+                                   borderRadius: BorderRadius.circular(4),
+                                   child: LinearProgressIndicator(
+                                     value: p,
+                                     minHeight: 6,
+                                     backgroundColor: Colors.grey[300],
+                                     valueColor: AlwaysStoppedAnimation(Theme.of(context).colorScheme.primary),
+                                   ),
+                                 ),
+                                 const SizedBox(height: 4),
+                                 Text('${currentExp} / $nextExp XP', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                              ],
+                            );
+                        }
+
+                        return _buildDashboardCard(
+                          context,
+                          title: 'Mi Progreso',
+                          subtitle: subtitleText,
+                          subtitleWidget: subtitleWidget,
+                          icon: Icons.show_chart,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const ProfileProgressScreen()),
+                            ).then((_) {
+                               // Refresh functionality on return if needed
+                               context.read<StatsProvider>().fetchProgress();
+                            });
+                          },
+                        );
+                      }
+                    ),
+                    
+                     const SizedBox(height: 16),
+                      _buildDashboardCard(
                       context,
-                      MaterialPageRoute(builder: (context) => const GymScheduleScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildDashboardCard(
-                  context,
-                  title: 'Entrenamiento Libre',
-                  subtitle: 'Iniciá una sesión sin plan asignado.',
-                  icon: Icons.add_circle_outline_rounded,
-                  onTap: () {
-                    Navigator.push(
+                      title: AppLocalizations.of(context)!.get('gymSchedule'),
+                      subtitle: _getTodayScheduleText(context),
+                      icon: Icons.access_time,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const GymScheduleScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDashboardCard(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const FreeTrainingSelectorScreen()
-                      ),
-                    ).then((result) {
-                       // Reload stats in case they finished a session
-                       // Actually selector navigates to DayDetail, which might finish session.
-                       // Returning from selector might not strictly mean finish, 
-                       // but refreshing stats is harmless.
-                       context.read<PlanProvider>().fetchMyHistory();
-                       context.read<PlanProvider>().computeWeeklyStats();
-                       context.read<PlanProvider>().computeMonthlyStats();
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildDashboardCard(
-                  context,
-                  title: AppLocalizations.of(context)!.get('profileTitle'),
-                  subtitle: AppLocalizations.of(context)!.get('profileSub'),
-                  icon: Icons.person,
-                  onTap: () {
-                    Navigator.push(
+                      title: 'Entrenamiento Libre',
+                      subtitle: 'Iniciá una sesión sin plan asignado.',
+                      icon: Icons.add_circle_outline_rounded,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const FreeTrainingSelectorScreen()
+                          ),
+                        ).then((result) async {
+                           // 1. Flush Queue & Get Result
+                           final newStatsMap = await context.read<PlanProvider>().waitForPendingUpdates();
+                           
+                           if (context.mounted) {
+                               if (newStatsMap != null) {
+                                   final rawStats = newStatsMap;
+                                   final currentLevel = rawStats['currentLevel'] as int? ?? 1;
+                                   final currentExp = rawStats['totalExperience'] as int? ?? 0;
+                                   
+                                   final oldProgress = context.read<StatsProvider>().progress;
+                                   if (oldProgress != null) {
+                                       final newProgress = oldProgress.copyWith(
+                                           level: LevelStats(current: currentLevel, exp: currentExp)
+                                       );
+                                       context.read<StatsProvider>().setDirectProgress(newProgress);
+                                   } else {
+                                        context.read<StatsProvider>().fetchProgress();
+                                   }
+                               } else {
+                                   context.read<StatsProvider>().fetchProgress();
+                               }
+                               
+                               context.read<PlanProvider>().fetchMyHistory();
+                               context.read<PlanProvider>().computeWeeklyStats();
+                               context.read<PlanProvider>().computeMonthlyStats();
+                           }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDashboardCard(
                       context,
-                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                    );
-                  },
+                      title: AppLocalizations.of(context)!.get('profileTitle'),
+                      subtitle: AppLocalizations.of(context)!.get('profileSub'),
+                      icon: Icons.person,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 100), // Added bottom spacing for "breathing room"
+                  ],
                 ),
-                const SizedBox(height: 100), // Added bottom spacing for "breathing room"
-              ],
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+          ),
+        ),
       ),
     );
   }
@@ -393,14 +471,33 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             ),
           );
 
-          // If result is true, it means completed. Refresh history to update this card.
-          // If result is true, it means completed. Refresh history to update this card.
           if (!mounted) return;
           if (result == true) {
-              // We rely on optimistic updates for the assignment progress to avoid race conditions 
-              // with the backend. Do NOT fetchMyHistory() immediately here.
-              context.read<PlanProvider>().computeWeeklyStats();
-              context.read<PlanProvider>().computeMonthlyStats();
+              // 1. Flush Queue & Get Result
+              final newStatsMap = await context.read<PlanProvider>().waitForPendingUpdates();
+              
+              if (context.mounted) {
+                  if (newStatsMap != null) {
+                      final rawStats = newStatsMap;
+                      final currentLevel = rawStats['currentLevel'] as int? ?? 1;
+                      final currentExp = rawStats['totalExperience'] as int? ?? 0;
+                      
+                      final oldProgress = context.read<StatsProvider>().progress;
+                      if (oldProgress != null) {
+                          final newProgress = oldProgress.copyWith(
+                              level: LevelStats(current: currentLevel, exp: currentExp)
+                          );
+                          context.read<StatsProvider>().setDirectProgress(newProgress);
+                      } else {
+                          context.read<StatsProvider>().fetchProgress();
+                      }
+                  } else {
+                      await context.read<StatsProvider>().fetchProgress();
+                  }
+
+                  context.read<PlanProvider>().computeWeeklyStats();
+                  context.read<PlanProvider>().computeMonthlyStats();
+              }
           }
         },
         borderRadius: BorderRadius.circular(16),

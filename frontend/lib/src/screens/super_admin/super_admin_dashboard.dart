@@ -32,77 +32,82 @@ class SuperAdminDashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 10),
-            Text(
-              'Panel de Super Admin',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                color: theme.colorScheme.primary, // Theme aware
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              'Gestión global de la plataforma',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant, // Theme aware
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            _buildDashboardCard(
-              context,
-              icon: Icons.fitness_center,
-              title: 'Gestionar Gimnasios',
-              subtitle: 'Ver, crear y editar gimnasios registrados',
-              onTap: () {
-                 if (context.mounted) {
-                   Navigator.push(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10),
+                Text(
+                  'Panel de Super Admin',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: theme.colorScheme.primary, // Theme aware
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'Gestión global de la plataforma',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant, // Theme aware
+                  ),
+                ),
+                const SizedBox(height: 30),
+      
+                _buildDashboardCard(
+                  context,
+                  icon: Icons.fitness_center,
+                  title: 'Gestionar Gimnasios',
+                  subtitle: 'Ver, crear y editar gimnasios registrados',
+                  onTap: () {
+                     if (context.mounted) {
+                       Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const GymsListScreen()),
+                        );
+                     }
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildDashboardCard(
+                  context,
+                  icon: Icons.admin_panel_settings,
+                  title: 'Gestionar Admins',
+                  subtitle: 'Administrar cuentas de administradores',
+                  onTap: () {
+                    Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const GymsListScreen()),
+                      MaterialPageRoute(builder: (_) => const GymAdminsScreen())
                     );
-                 }
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildDashboardCard(
-              context,
-              icon: Icons.admin_panel_settings,
-              title: 'Gestionar Admins',
-              subtitle: 'Administrar cuentas de administradores',
-              onTap: () {
-                Navigator.push(
+                  },
+                ),
+                const SizedBox(height: 16),
+                 _buildDashboardCard(
                   context,
-                  MaterialPageRoute(builder: (_) => const GymAdminsScreen())
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-             _buildDashboardCard(
-              context,
-              icon: Icons.analytics,
-              title: 'Estadísticas de Plataforma',
-              subtitle: 'Métricas globales y rendimiento',
-               onTap: () {
-                Navigator.push(
+                  icon: Icons.analytics,
+                  title: 'Estadísticas de Plataforma',
+                  subtitle: 'Métricas globales y rendimiento',
+                   onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PlatformStatsScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildDashboardCard(
                   context,
-                  MaterialPageRoute(builder: (_) => const PlatformStatsScreen()),
-                );
-              },
+                  icon: Icons.security,
+                  title: 'Seguridad',
+                  subtitle: 'Cambiar contraseña de acceso',
+                  onTap: () => _showChangePasswordDialog(context),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            _buildDashboardCard(
-              context,
-              icon: Icons.security,
-              title: 'Seguridad',
-              subtitle: 'Cambiar contraseña de acceso',
-              onTap: () => _showChangePasswordDialog(context),
-            ),
-          ],
+          ),
         ),
       ),
     );

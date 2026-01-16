@@ -47,187 +47,192 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-             // Header Section
-             Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                   // User Info - Flex 3
-                   Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                             Text(
-                               'Bienvenido,', 
-                               style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: Colors.grey)
-                             ),
-                             Text(
-                               user?.firstName ?? 'Admin',
-                               style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                             ),
-                        ],
-                      ),
-                   ),
-
-                   // Logo (Center) - Flex 2
-                   Expanded(
-                     flex: 2,
-                     child: Center(
-                       child: user?.gym?.logoUrl != null
-                           ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                      user!.gym!.logoUrl!.startsWith('http') 
-                                          ? user.gym!.logoUrl! 
-                                          : 'http://localhost:3001${user.gym!.logoUrl}',
-                                      height: 80, 
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (c,e,s) => const SizedBox.shrink(),
-                                   ),
-                             )
-                           : const SizedBox.shrink(),
-                     ),
-                   ),
-
-                   // Gym Info (Right) - Flex 3
-                   Expanded(
-                      flex: 3,
-                      child: user?.gym != null 
-                        ? Container(
-                         margin: const EdgeInsets.only(left: 4),
-                         child: Column(
-                           crossAxisAlignment: CrossAxisAlignment.end,
-                           children: [
-                               Text(
-                                   user!.gym!.businessName, 
-                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colorScheme.primary), 
-                                   textAlign: TextAlign.end,
-                                   overflow: TextOverflow.ellipsis,
-                                   maxLines: 2,
-                               ),
-                               const SizedBox(height: 2),
-                               if (user.gym!.address.isNotEmpty)
-                                   Text(user.gym!.address, style: TextStyle(fontSize: 11, color: colorScheme.secondary), textAlign: TextAlign.end), 
-                           ],
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                 // Header Section
+                 Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                       // User Info - Flex 3
+                       Expanded(
+                          flex: 3,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                                 Text(
+                                   'Bienvenido,', 
+                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: Colors.grey)
+                                 ),
+                                 Text(
+                                   user?.firstName ?? 'Admin',
+                                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                                 ),
+                            ],
+                          ),
+                       ),
+      
+                       // Logo (Center) - Flex 2
+                       Expanded(
+                         flex: 2,
+                         child: Center(
+                           child: user?.gym?.logoUrl != null
+                               ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                          user!.gym!.logoUrl!.startsWith('http') 
+                                              ? user.gym!.logoUrl! 
+                                              : 'http://localhost:3001${user.gym!.logoUrl}',
+                                          height: 80, 
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (c,e,s) => const SizedBox.shrink(),
+                                       ),
+                                 )
+                               : const SizedBox.shrink(),
                          ),
-                      )
-                      : const SizedBox.shrink()
-                   )
-                ],
-             ),
-            const SizedBox(height: 32),
-            
-            _buildDashboardCard(
-              context,
-              title: 'Gestionar Usuarios',
-              subtitle: 'Altas, bajas y modificaciones',
-              icon: Icons.people,
-              onTap: () {
-                Navigator.push(
+                       ),
+      
+                       // Gym Info (Right) - Flex 3
+                       Expanded(
+                          flex: 3,
+                          child: user?.gym != null 
+                            ? Container(
+                             margin: const EdgeInsets.only(left: 4),
+                             child: Column(
+                               crossAxisAlignment: CrossAxisAlignment.end,
+                               children: [
+                                   Text(
+                                       user!.gym!.businessName, 
+                                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colorScheme.primary), 
+                                       textAlign: TextAlign.end,
+                                       overflow: TextOverflow.ellipsis,
+                                       maxLines: 2,
+                                   ),
+                                   const SizedBox(height: 2),
+                                   if (user.gym!.address.isNotEmpty)
+                                       Text(user.gym!.address, style: TextStyle(fontSize: 11, color: colorScheme.secondary), textAlign: TextAlign.end), 
+                               ],
+                             ),
+                          )
+                          : const SizedBox.shrink()
+                       )
+                    ],
+                 ),
+                const SizedBox(height: 32),
+                
+                _buildDashboardCard(
                   context,
-                  MaterialPageRoute(builder: (context) => const ManageUsersScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-
-            _buildDashboardCard(
-              context,
-              title: 'Biblioteca de Planes',
-              subtitle: 'Crear y editar planes base',
-              icon: Icons.library_books,
-              onTap: () {
-                Navigator.push(
+                  title: 'Gestionar Usuarios',
+                  subtitle: 'Altas, bajas y modificaciones',
+                  icon: Icons.people,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ManageUsersScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+      
+                _buildDashboardCard(
                   context,
-                  MaterialPageRoute(builder: (context) => const PlansListScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildDashboardCard(
-              context,
-              title: 'Entrenamientos Libres',
-              subtitle: 'Gestionar rutinas públicas',
-              icon: Icons.repeat,
-              onTap: () {
-                Navigator.push(
+                  title: 'Biblioteca de Planes',
+                  subtitle: 'Crear y editar planes base',
+                  icon: Icons.library_books,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const PlansListScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildDashboardCard(
                   context,
-                  MaterialPageRoute(builder: (context) => const ManageFreeTrainingsScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildDashboardCard(
-              context,
-              title: 'Biblioteca de Ejercicios',
-              subtitle: 'Gestionar ejercicios disponibles',
-              icon: Icons.fitness_center,
-              onTap: () {
-                Navigator.push(
+                  title: 'Entrenamientos Libres',
+                  subtitle: 'Gestionar rutinas públicas',
+                  icon: Icons.repeat,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ManageFreeTrainingsScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildDashboardCard(
                   context,
-                  MaterialPageRoute(builder: (context) => const ExercisesListScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildDashboardCard(
-              context,
-              title: 'Gestionar Equipamiento',
-              subtitle: 'Equipos, máquinas y accesorios',
-              icon: Icons.category, 
-              onTap: () {
-                Navigator.push(
+                  title: 'Biblioteca de Ejercicios',
+                  subtitle: 'Gestionar ejercicios disponibles',
+                  icon: Icons.fitness_center,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ExercisesListScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildDashboardCard(
                   context,
-                  MaterialPageRoute(builder: (context) => const ManageEquipmentsScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildDashboardCard(
-              context,
-              title: 'Horarios del Gimnasio',
-              subtitle: _getTodayScheduleText(context),
-              icon: Icons.access_time, 
-              onTap: () {
-                Navigator.push(
+                  title: 'Gestionar Equipamiento',
+                  subtitle: 'Equipos, máquinas y accesorios',
+                  icon: Icons.category, 
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ManageEquipmentsScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildDashboardCard(
                   context,
-                  MaterialPageRoute(builder: (context) => const GymScheduleScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildDashboardCard(
-              context,
-              title: 'Configuración del Gym',
-              subtitle: 'Logo, nombre y mensajes',
-              icon: Icons.settings,
-              onTap: () {
-                Navigator.push(
+                  title: 'Horarios del Gimnasio',
+                  subtitle: _getTodayScheduleText(context),
+                  icon: Icons.access_time, 
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const GymScheduleScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildDashboardCard(
                   context,
-                  MaterialPageRoute(builder: (context) => const GymConfigScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-             _buildDashboardCard(
-              context,
-              title: 'Mi Perfil',
-              subtitle: 'Tus datos personales',
-              icon: Icons.person,
-              onTap: () {
-                Navigator.push(
+                  title: 'Configuración del Gym',
+                  subtitle: 'Logo, nombre y mensajes',
+                  icon: Icons.settings,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const GymConfigScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                 _buildDashboardCard(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                );
-              },
+                  title: 'Mi Perfil',
+                  subtitle: 'Tus datos personales',
+                  icon: Icons.person,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    );
+                  },
+                ),
+                // Add more admin features here
+              ],
             ),
-            // Add more admin features here
-          ],
+          ),
         ),
       ),
     );
