@@ -23,22 +23,85 @@ export class StatsService {
                 student: { id: userId },
                 status: ExecutionStatus.COMPLETED,
             },
+            relations: ['exercises'],
             order: { date: 'DESC' },
         });
 
-        const count = history.length;
+        // 2. Identify Pending Sessions for EXP
+        const pendings = history.filter(s => !s.processedForExp);
 
-        // 2. Calculate Weekly (Current Week)
+        // 3. Process Pending EXP
+        let stats = await this.statsRepo.findOne({ where: { userId } });
+        if (!stats) {
+            stats = this.statsRepo.create({ userId, totalExperience: 0, currentLevel: 1 });
+        }
+
+        // Ensure defaults
+        if (stats.totalExperience === undefined) stats.totalExperience = 0;
+        if (stats.currentLevel === undefined) stats.currentLevel = 1;
+
+        // Current Week Buffer info
         const now = new Date();
         const d = new Date(now);
         const day = d.getDay();
-        const diff = d.getDate() - day + (day == 0 ? -6 : 1); // Monday
+        const diff = d.getDate() - day + (day == 0 ? -6 : 1);
         const monday = new Date(d.setDate(diff));
         monday.setHours(0, 0, 0, 0);
 
-        const weekly = history.filter(h => new Date(h.date) >= monday).length;
+        // Calculate Weekly Workouts (All time, not just pending)
+        const weeklyCount = history.filter(h => new Date(h.date) >= monday).length;
 
-        // 3. Calculate Streak (Consecutive)
+        // Bonus Logic Check
+        // Week Key: "YYYY-WW"
+        const getWeekKey = (date: Date) => {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+            return `${d.getUTCFullYear()}-${weekNo}`;
+        };
+        const currentWeekKey = getWeekKey(new Date());
+
+        for (const session of pendings) {
+            // A. Volume EXP
+            const vol = this._calculateVolume(session);
+            const expVol = Math.floor(vol / 1000);
+
+            // B. Session EXP
+            const expSession = 10;
+
+            // C. Bonus EXP
+            // Rules: If weekly count >= 3 AND bonus not yet applied for THIS week.
+            // But wait, we are iterating pendings. If we have multiple pendings for this week, we check state.
+            // The 'weeklyCount' variable is static for the "now" moment. 
+            // Better: Check if the session itself contributed to hitting the 3-mark? 
+            // Simplification V1: If CURRENT weekly count is >= 3 and we haven't given bonus yet, give it now.
+            // Tricky edge case: Bulk upload of 3 sessions. All are pending.
+            // We just award once.
+
+            let expBonus = 0;
+            if (weeklyCount >= 3 && stats.lastBonusWeek !== currentWeekKey) {
+                expBonus = 20;
+                stats.lastBonusWeek = currentWeekKey;
+            }
+
+            stats.totalExperience += (expVol + expSession + expBonus);
+            session.processedForExp = true;
+        }
+
+        // 4. Update Level
+        stats.currentLevel = this._calculateLevel(stats.totalExperience);
+
+        // 5. Save Sessions (processed status)
+        if (pendings.length > 0) {
+            await this.sessionRepo.save(pendings);
+        }
+
+        // 6. Recalculate Standard Stats (Streak, Counts) - Existing Logic
+        const count = history.length;
+
+        // ... streak logic ...
         let streak = 0;
         const todayStr = new Date().toISOString().split('T')[0];
         const yesterday = new Date();
@@ -50,17 +113,13 @@ export class StatsService {
         })));
 
         if (uniqueDates.length > 0) {
-            // If most recent is today or yesterday, streak is alive
             if (uniqueDates[0] === todayStr || uniqueDates[0] === yesterdayStr) {
                 streak = 1;
                 let checkDate = new Date(uniqueDates[0]);
-
                 for (let i = 1; i < uniqueDates.length; i++) {
                     const prevDate = new Date(uniqueDates[i]);
-
                     const diffTime = Math.abs(checkDate.getTime() - prevDate.getTime());
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
                     if (diffDays === 1) {
                         streak++;
                         checkDate = prevDate;
@@ -71,14 +130,8 @@ export class StatsService {
             }
         }
 
-        // 4. Save
-        let stats = await this.statsRepo.findOne({ where: { userId } });
-        if (!stats) {
-            stats = this.statsRepo.create({ userId });
-        }
-
         stats.workoutCount = count;
-        stats.weeklyWorkouts = weekly;
+        stats.weeklyWorkouts = weeklyCount;
         stats.currentStreak = streak;
         if (history.length > 0) {
             const last = history[0];
@@ -88,12 +141,72 @@ export class StatsService {
         return this.statsRepo.save(stats);
     }
 
+    // Helper: Calculate Level from EXP
+    private _calculateLevel(exp: number): number {
+        // Thresholds (Cumulative)
+        // 1: 0
+        // 5: 100
+        // 10: 300
+        // 20: 1300
+        // ...
+        // Let's implement a formula or lookup. 
+        // User spec: 1->0, 5->100, 10->300, 20->1300, 30->3000, 40->6000, 50->10000.
+        // Simple piecewise check for V1.
+
+        if (exp < 100) return 1 + Math.floor(exp / 25); // 1..4
+        if (exp < 300) return 5 + Math.floor((exp - 100) / 40); // 5..9
+        if (exp < 1300) return 10 + Math.floor((exp - 300) / 100); // 10..19
+        if (exp < 3000) return 20 + Math.floor((exp - 1300) / 170); // 20..29
+        if (exp < 6000) return 30 + Math.floor((exp - 3000) / 300); // 30..39
+        if (exp < 10000) return 40 + Math.floor((exp - 6000) / 400); // 40..49
+        if (exp < 16000) return 50 + Math.floor((exp - 10000) / 600); // 50..59
+        if (exp < 30000) return 60 + Math.floor((exp - 16000) / 700); // 60..79
+        if (exp < 50000) return 80 + Math.floor((exp - 30000) / 1000); // 80..99
+
+        return 100 + Math.floor((exp - 50000) / 2000); // 100+
+    }
+
+    _calculateVolume(session: TrainingSession): number {
+        let vol = 0;
+        if (!session.exercises) return 0;
+
+        for (const ex of session.exercises) {
+            if (!ex.isCompleted) continue;
+
+            const parse = (str: string) => {
+                if (!str) return [];
+                return str.toString().split(',').map(s => parseFloat(s.trim()) || 0);
+            };
+
+            const sets = parse(ex.setsDone);
+            const reps = parse(ex.repsDone);
+            let weights = parse(ex.weightUsed);
+
+            let count = Math.max(sets.length, reps.length, weights.length);
+            if (sets.length === 1 && sets[0] > count) {
+                count = sets[0];
+            }
+
+            for (let i = 0; i < count; i++) {
+                const r = reps[i] !== undefined ? reps[i] : (reps[0] || 0);
+                const w = weights[i] !== undefined ? weights[i] : (weights[0] || 0);
+                vol += r * w;
+            }
+        }
+        return vol;
+    }
+
     async getProgress(userId: string) {
-        // 1. Fetch User for Weight Info
+        // 1. Fetch User
         const user = await this.userRepo.findOne({ where: { id: userId } });
         if (!user) throw new Error('User not found');
 
-        // 2. Fetch All Completed Sessions with Exercises
+        // 2. Fetch UserStats for Level info
+        const stats = await this.statsRepo.findOne({ where: { userId } });
+        const currentLevel = stats?.currentLevel || 1;
+        const totalExp = stats?.totalExperience || 0;
+
+        // 3. Fetch All Completed Sessions
         const sessions = await this.sessionRepo.find({
             where: {
                 student: { id: userId },
@@ -103,106 +216,64 @@ export class StatsService {
             order: { date: 'ASC' },
         });
 
-        // 3. Calculate Volume
+        // 4. Calculate Volumes
         let lifetimeVolume = 0;
         const volumeHistory: { date: string; volume: number }[] = [];
-
-        // Helper to parse volume from a session
-        const calculateSessionVolume = (session: TrainingSession) => {
-            let vol = 0;
-            if (!session.exercises) return 0;
-
-            for (const ex of session.exercises) {
-                if (!ex.isCompleted) continue;
-
-                // Parse sets, reps, weight
-                // Formats: "10,10,10" or "10"
-                const parse = (str: string) => {
-                    if (!str) return [];
-                    return str.toString().split(',').map(s => parseFloat(s.trim()) || 0);
-                };
-
-                const sets = parse(ex.setsDone);
-                const reps = parse(ex.repsDone);
-                // Priority: weightUsed (Total), then addedWeight (Lastre), then 0.
-                // Note: user might input just '10', implying constant weight for all sets.
-                let weights = parse(ex.weightUsed);
-
-                // Fallback logic if weights array is empty but addedWeight exists?
-                // For now, adhere to scope "Simple Parse"
-
-                // Identify max updated length (should be sets count)
-                // Fix: If setsDone is a single number (e.g. "3"), it represents the iteration count.
-                // If it's a list (e.g. "10,12,10"), the length is the count.
-                let count = Math.max(sets.length, reps.length, weights.length);
-                if (sets.length === 1 && sets[0] > count) {
-                    count = sets[0];
-                }
-
-                for (let i = 0; i < count; i++) {
-                    const r = reps[i] !== undefined ? reps[i] : (reps[0] || 0);
-                    const w = weights[i] !== undefined ? weights[i] : (weights[0] || 0);
-                    // Standard Volume = Reps * Weight
-                    vol += r * w;
-                }
-            }
-            return vol;
-        };
-
-        // Monthly aggregation map
-        const monthlyVolume = new Map<string, number>(); // Key: YYYY-MM-Week
+        const monthlyVolume = new Map<string, number>();
         let thisWeekVolume = 0;
         let thisMonthVolume = 0;
 
-        // Filter for chart: Last 4 Weeks
         const now = new Date();
         const fourWeeksAgo = new Date();
         fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-
-        // Helper for "This Week" check
         const d = new Date(now);
         const day = d.getDay();
-        const diff = d.getDate() - day + (day == 0 ? -6 : 1); // Monday
+        const diff = d.getDate() - day + (day == 0 ? -6 : 1);
         const monday = new Date(d.setDate(diff));
         monday.setHours(0, 0, 0, 0);
 
         for (const session of sessions) {
-            const vol = calculateSessionVolume(session);
+            const vol = this._calculateVolume(session);
             lifetimeVolume += vol;
-
             const date = new Date(session.date);
 
-            // This Month calculation
             if (date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
                 thisMonthVolume += vol;
             }
-
-            // This Week calculation
             if (date >= monday) {
                 thisWeekVolume += vol;
             }
-
-            // Chart Data (Last 4 weeks)
             if (date >= fourWeeksAgo) {
-                // Group by Week? Or just by Session?
-                // Spec: "Volume Chart showing volume per week".
-                // Let's get "Week Number" or "Start of Week Date"
                 const sDay = date.getDay();
-                const sDiff = date.getDate() - sDay + (sDay == 0 ? -6 : 1); // Monday
+                const sDiff = date.getDate() - sDay + (sDay == 0 ? -6 : 1);
                 const sMonday = new Date(date.setDate(sDiff));
-                const key = sMonday.toISOString().split('T')[0]; // YYYY-MM-DD (Monday)
-
+                const key = sMonday.toISOString().split('T')[0];
                 const current = monthlyVolume.get(key) || 0;
                 monthlyVolume.set(key, current + vol);
             }
         }
 
-        // Convert Map to Array
         const chartData = Array.from(monthlyVolume.entries())
             .map(([date, vol]) => ({ date, volume: vol }))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+        // 5. Calculate Average/Total
+        const weeklyAverage = (() => {
+            if (sessions.length === 0) return 0;
+            const firstSession = new Date(sessions[0].date);
+            const now = new Date();
+            const diffTime = Math.abs(now.getTime() - firstSession.getTime());
+            const diffWeeks = diffTime / (1000 * 60 * 60 * 24 * 7);
+            const weeks = Math.max(1, diffWeeks);
+            return parseFloat((sessions.length / weeks).toFixed(1));
+        })();
+
         return {
+            level: {
+                current: currentLevel,
+                exp: totalExp,
+                // Optional: nextLevelExp logic here or frontend
+            },
             weight: {
                 initial: user.initialWeight || 0,
                 current: user.currentWeight || 0,
@@ -216,33 +287,13 @@ export class StatsService {
             },
             workouts: {
                 total: sessions.length,
-                // "Days trained this month"
                 thisMonth: sessions.filter(s => {
                     const d = new Date(s.date);
                     const n = new Date();
                     return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear();
                 }).length,
-                // "Days trained this week" (Logic from updateStats)
-                thisWeek: sessions.filter(s => {
-                    const now = new Date();
-                    const d = new Date(now);
-                    const day = d.getDay();
-                    const diff = d.getDate() - day + (day == 0 ? -6 : 1); // Monday
-                    const monday = new Date(d.setDate(diff));
-                    monday.setHours(0, 0, 0, 0);
-                    return new Date(s.date) >= monday;
-                }).length,
-                weeklyAverage: (() => {
-                    if (sessions.length === 0) return 0;
-                    const firstSession = new Date(sessions[0].date); // Sessions are ordered ASC
-                    const now = new Date();
-                    const diffTime = Math.abs(now.getTime() - firstSession.getTime());
-                    const diffWeeks = diffTime / (1000 * 60 * 60 * 24 * 7);
-                    // Avoid division by small numbers if first session was just now. 
-                    // Min 1 week denominator to avoid inflated averages for new users.
-                    const weeks = Math.max(1, diffWeeks);
-                    return parseFloat((sessions.length / weeks).toFixed(1));
-                })()
+                thisWeek: sessions.filter(s => new Date(s.date) >= monday).length,
+                weeklyAverage: weeklyAverage
             }
         };
     }

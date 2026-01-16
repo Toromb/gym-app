@@ -59,6 +59,9 @@ export class TrainingSession {
   @Column({ type: 'timestamp', nullable: true })
   finishedAt: Date | null;
 
+  @Column({ default: false })
+  processedForExp: boolean;
+
   @Column({ type: 'json', nullable: true })
   details: any; // Flexible field for future use
 

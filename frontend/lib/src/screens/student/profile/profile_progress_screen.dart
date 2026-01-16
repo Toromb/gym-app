@@ -146,6 +146,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                 const SizedBox(height: 24),
                 _safelyBuild(() => const CalendarScreen(isEmbedded: true)), // Embedded Calendar
                 const SizedBox(height: 24),
+                _safelyBuild(() => _buildLevelCard(progress.level)), // New Level Card
+                const SizedBox(height: 24),
                 _safelyBuild(() => _buildStatusCards(progress)),
                 const SizedBox(height: 24),
                 _safelyBuild(() => _buildVolumeChart(progress.volume)),
@@ -274,7 +276,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
       icon: Icons.fitness_center,
       color: Colors.blue,
       content: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, // Centered
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center, // Added Center
         children: [
           _buildDataLine('${workouts.thisWeek}', 'Esta Semana', isPrimary: true),
           const SizedBox(height: 4),
@@ -290,7 +293,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
       icon: Icons.line_weight, 
       color: Colors.green,
       content: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, // Centered
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center, // Added Center
         children: [
           _buildDataLine(_formatSmartVolume(volume.thisWeek), 'Esta Semana', isPrimary: true),
           const SizedBox(height: 4),
@@ -313,14 +317,15 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
       icon: Icons.monitor_weight,
       color: Colors.orange,
       content: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, // Centered
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center, // Added Center
         children: [
           _buildDataLine('${weight.current} Kg', 'Actual', isPrimary: true),
           const SizedBox(height: 4),
           _buildDataLine('${initial} Kg', 'Inicial'),
           const SizedBox(height: 4),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center, // Centered
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                  diffText,
@@ -348,7 +353,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
       icon: icon,
       color: color,
       content: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, // Centered
+        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center, 
         children: [
           _buildDataLine(value, subtitle, isPrimary: true),
@@ -392,16 +397,21 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
 
   Widget _buildDataLine(String value, String label, {bool isPrimary = false}) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center, // Centered
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min, // Shrink wrap to content
       children: [
         Text(
           value,
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(width: 5), // Small space between Value and Label
-        Text(
-          ' $label', // Leading space to separate
-          style: TextStyle(fontSize: 12, color: Colors.grey[700]), 
+        const SizedBox(width: 5),
+        Flexible( // Allow text to shrink/wrap
+          child: Text(
+            label, // Removed leading space in string to handle alignment safely
+            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
         ),
       ],
     );
@@ -499,4 +509,135 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
 
 
 
+
+  Widget _buildLevelCard(LevelStats level) {
+    // 1. Calculate Progress
+    final currentExp = level.exp;
+    final nextLevelExp = _getNextLevelExpThreshold(level.exp);
+    final prevLevelExp = _getPrevLevelExpThreshold(level.exp);
+    
+    // Progress for this specific level range
+    final range = nextLevelExp - prevLevelExp;
+    final progressInLevel = currentExp - prevLevelExp;
+    final percent = range > 0 ? (progressInLevel / range).clamp(0.0, 1.0) : 1.0;
+
+    // 2. Difficulty Label
+    String difficulty = "Novato";
+    if (level.current >= 80) difficulty = "Extremadamente Difícil";
+    else if (level.current >= 50) difficulty = "Muy Difícil";
+    else if (level.current >= 30) difficulty = "Difícil";
+    else if (level.current >= 20) difficulty = "Medio–Difícil";
+    else if (level.current >= 10) difficulty = "Medio";
+    else difficulty = "Fácil";
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+            children: [
+                // Badge
+                Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                            colors: [Theme.of(context).primaryColor, Theme.of(context).primaryColorDark],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                            BoxShadow(
+                                color: Theme.of(context).primaryColor.withOpacity(0.4),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                            )
+                        ]
+                    ),
+                    child: Center(
+                        child: Text(
+                            '${level.current}',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 24,
+                            ),
+                        ),
+                    ),
+                ),
+                const SizedBox(width: 16),
+                // Info & Bar
+                Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                           Row(
+                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                               children: [
+                                   Text(
+                                       'Nivel ${level.current}',
+                                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                   ),
+                                   Text(
+                                       difficulty,
+                                       style: TextStyle(
+                                           color: Colors.grey[600],
+                                           fontSize: 12,
+                                           fontWeight: FontWeight.w500
+                                       ),
+                                   ),
+                               ],
+                           ),
+                           const SizedBox(height: 8),
+                           ClipRRect(
+                               borderRadius: BorderRadius.circular(10),
+                               child: LinearProgressIndicator(
+                                   value: percent,
+                                   minHeight: 10,
+                                   backgroundColor: Colors.grey[200],
+                                   valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                               ),
+                           ),
+                           const SizedBox(height: 4),
+                           Text(
+                               '${currentExp} / ${nextLevelExp} XP',
+                               style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                           ),
+                        ],
+                    ),
+                ),
+            ],
+        ),
+      ),
+    );
+  }
+
+  // Thresholds identical to Backend logic
+  int _getNextLevelExpThreshold(int currentExp) {
+      if (currentExp < 100) return 100;
+      if (currentExp < 300) return 300;
+      if (currentExp < 1300) return 1300;
+      if (currentExp < 3000) return 3000;
+      if (currentExp < 6000) return 6000;
+      if (currentExp < 10000) return 10000;
+      if (currentExp < 16000) return 16000;
+      if (currentExp < 30000) return 30000;
+      if (currentExp < 50000) return 50000;
+      return 1000000; // 100+
+  }
+
+  int _getPrevLevelExpThreshold(int currentExp) {
+      if (currentExp < 100) return 0;
+      if (currentExp < 300) return 100;
+      if (currentExp < 1300) return 300;
+      if (currentExp < 3000) return 1300;
+      if (currentExp < 6000) return 3000;
+      if (currentExp < 10000) return 6000;
+      if (currentExp < 16000) return 10000;
+      if (currentExp < 30000) return 16000;
+      if (currentExp < 50000) return 30000;
+      return 50000;
+  }
 }

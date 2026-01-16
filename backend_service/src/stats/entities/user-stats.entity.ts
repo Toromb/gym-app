@@ -14,6 +14,15 @@ export class UserStats {
     @Column({ default: 0 })
     workoutCount: number;
 
+    @Column({ default: 0 })
+    totalExperience: number;
+
+    @Column({ default: 1 })
+    currentLevel: number;
+
+    @Column({ nullable: true })
+    lastBonusWeek: string; // "YYYY-WW"
+
     @Column({ type: 'timestamp', nullable: true })
     lastWorkoutDate: Date | null;
 

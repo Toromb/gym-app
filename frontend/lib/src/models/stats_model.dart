@@ -49,11 +49,13 @@ class UserProgress {
   final WeightStats weight;
   final VolumeStats volume;
   final WorkoutStats workouts;
+  final LevelStats level;
 
   UserProgress({
     required this.weight,
     required this.volume,
     required this.workouts,
+    required this.level,
   });
 
   factory UserProgress.fromJson(Map<String, dynamic> json) {
@@ -61,6 +63,7 @@ class UserProgress {
       weight: WeightStats.fromJson(json['weight'] ?? {}),
       volume: VolumeStats.fromJson(json['volume'] ?? {}),
       workouts: WorkoutStats.fromJson(json['workouts'] ?? {}),
+      level: LevelStats.fromJson(json['level'] ?? {}),
     );
   }
 }
@@ -143,6 +146,23 @@ class WorkoutStats {
       thisMonth: json['thisMonth'] ?? 0,
       thisWeek: json['thisWeek'] ?? 0,
       weeklyAverage: (json['weeklyAverage'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}
+
+class LevelStats {
+  final int current; // Level 1-100+
+  final int exp;     // Total Accumulated EXP
+
+  LevelStats({
+    required this.current,
+    required this.exp,
+  });
+
+  factory LevelStats.fromJson(Map<String, dynamic> json) {
+    return LevelStats(
+      current: json['current'] ?? 1,
+      exp: json['exp'] ?? 0,
     );
   }
 }

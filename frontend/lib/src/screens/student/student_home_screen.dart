@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
+import '../../providers/stats_provider.dart'; // Import StatsProvider
 import '../../models/user_model.dart' as app_models;
+import '../../models/stats_model.dart'; // Import StatsModel
 import '../../localization/app_localizations.dart';
 import '../../models/plan_model.dart';
 import '../../models/student_assignment_model.dart';
@@ -40,7 +42,16 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       provider.fetchMyHistory();
       provider.computeWeeklyStats();
       provider.computeMonthlyStats();
+      
       context.read<GymScheduleProvider>().fetchSchedule();
+      
+      // Fetch Progress for Level Summary
+      print('DEBUG: StudentHomeScreen - Calling fetchProgress');
+      context.read<StatsProvider>().fetchProgress().then((_) {
+         print('DEBUG: StudentHomeScreen - fetchProgress COMPLETED. Data: ${context.read<StatsProvider>().progress?.level?.current}');
+      }).catchError((e) {
+         print('DEBUG: StudentHomeScreen - fetchProgress FAILED: $e');
+      });
     });
   }
 
@@ -106,32 +117,94 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                const SizedBox(height: 16),
-                _buildDashboardCard(
-                  context,
-                  title: 'Mi Progreso',
-                  subtitle: 'Evolución de peso, volumen y carga.',
-                  icon: Icons.show_chart,
-                  onTap: () {
-                    Navigator.push(
+                
+                // --- MI PROGRESO (Level Summary) ---
+                Consumer<StatsProvider>(
+                  builder: (context, stats, child) {
+                    Widget? subtitleWidget;
+                    String? subtitleText = 'Evolución de peso, volumen y carga.';
+
+                    final progress = stats.progress;
+                    if (progress != null) {
+                        final level = progress.level;
+                        final currentExp = level.exp;
+                        // Manual Thresholds (Same as ProfileProgressScreen to avoid heavy logic import)
+                        int getNext(int exp) {
+                          if (exp < 100) return 100;
+                          if (exp < 300) return 300;
+                          if (exp < 1300) return 1300;
+                          if (exp < 3000) return 3000;
+                          if (exp < 6000) return 6000;
+                          if (exp < 10000) return 10000;
+                          if (exp < 16000) return 16000;
+                          if (exp < 30000) return 30000;
+                          if (exp < 50000) return 50000;
+                          return 1000000;
+                        }
+                        int getPrev(int exp) {
+                          if (exp < 100) return 0;
+                          if (exp < 300) return 100;
+                          if (exp < 1300) return 300;
+                          if (exp < 3000) return 1300;
+                          if (exp < 6000) return 3000;
+                          if (exp < 10000) return 6000;
+                          if (exp < 16000) return 10000;
+                          if (exp < 30000) return 16000;
+                          if (exp < 50000) return 30000;
+                          return 50000;
+                        }
+                        
+                        final nextExp = getNext(currentExp);
+                        final prevExp = getPrev(currentExp);
+                        final range = nextExp - prevExp;
+                        final p = range > 0 ? ((currentExp - prevExp) / range).clamp(0.0, 1.0) : 1.0;
+                        
+                        // Difficulty (Optional text)
+                        String diff = "Novato";
+                        if (level.current >= 10) diff = "Medio";
+                        if (level.current >= 30) diff = "Difícil";
+                        if (level.current >= 50) diff = "Muy Difícil";
+
+                        subtitleText = null;
+                        subtitleWidget = Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                             Text('Nivel ${level.current} • $diff', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.primary)),
+                             const SizedBox(height: 6),
+                             ClipRRect(
+                               borderRadius: BorderRadius.circular(4),
+                               child: LinearProgressIndicator(
+                                 value: p,
+                                 minHeight: 6,
+                                 backgroundColor: Colors.grey[300],
+                                 valueColor: AlwaysStoppedAnimation(Theme.of(context).colorScheme.primary),
+                               ),
+                             ),
+                             const SizedBox(height: 4),
+                             Text('${currentExp} / $nextExp XP', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                          ],
+                        );
+                    }
+
+                    return _buildDashboardCard(
                       context,
-                      MaterialPageRoute(builder: (context) => const ProfileProgressScreen()),
+                      title: 'Mi Progreso',
+                      subtitle: subtitleText,
+                      subtitleWidget: subtitleWidget,
+                      icon: Icons.show_chart,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ProfileProgressScreen()),
+                        ).then((_) {
+                           // Refresh functionality on return if needed
+                           context.read<StatsProvider>().fetchProgress();
+                        });
+                      },
                     );
-                  },
+                  }
                 ),
-                //  const SizedBox(height: 16),
-                // _buildDashboardCard(
-                //   context,
-                //   title: 'Estado Muscular', // Should localize
-                //   subtitle: 'Visualizá tu carga muscular y recuperación.',
-                //   icon: Icons.accessibility_new,
-                //   onTap: () {
-                //     Navigator.push(
-                //       context,
-                //       MaterialPageRoute(builder: (context) => const MuscleFlowScreen()),
-                //     );
-                //   },
-                // ),
+                
                  const SizedBox(height: 16),
                   _buildDashboardCard(
                   context,
@@ -512,7 +585,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
 
   Widget _buildDashboardCard(BuildContext context,
-      {required String title, String? subtitle, required IconData icon, required VoidCallback onTap}) {
+      {required String title, String? subtitle, Widget? subtitleWidget, required IconData icon, required VoidCallback onTap}) {
     
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -537,7 +610,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                    if (subtitle != null)
+                    if (subtitleWidget != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: subtitleWidget,
+                      )
+                    else if (subtitle != null)
                       Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
                   ],
                 ),
