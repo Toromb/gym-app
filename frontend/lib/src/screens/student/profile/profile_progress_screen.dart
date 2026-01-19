@@ -14,6 +14,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:collection/collection.dart'; // Import for firstWhereOrNull
 import '../calendar_screen.dart'; // Import CalendarScreen for embedding
 import 'package:intl/intl.dart'; // For date formatting
+import '../muscle_flow_screen.dart';
 
 class ProfileProgressScreen extends StatefulWidget {
   final String? userId; // Optional: If null, shows current user's progress
@@ -148,6 +149,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                 _safelyBuild(() => const CalendarScreen(isEmbedded: true)), // Embedded Calendar
                 const SizedBox(height: 24),
                 _safelyBuild(() => _buildLevelCard(progress.level)), // New Level Card
+                const SizedBox(height: 24),
+                _safelyBuild(() => _buildMuscleFlowCard()), // New Muscle Flow Link
                 const SizedBox(height: 24),
                 _safelyBuild(() => _buildStatusCards(progress)),
                 const SizedBox(height: 24),
@@ -731,5 +734,53 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
       if (currentExp < 30000) return 16000;
       if (currentExp < 50000) return 30000;
       return 50000;
+  }
+  Widget _buildMuscleFlowCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MuscleFlowScreen()),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+                children: [
+                    Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                            color: Colors.redAccent.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.accessibility_new, color: Colors.redAccent),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                                Text(
+                                    'Estado Muscular',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                    'Ver recuperación y fatiga',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                ),
+                            ],
+                        ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                ],
+            ),
+        ),
+      ),
+    );
   }
 }

@@ -51,20 +51,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // --- Options ---
   final Map<String, String> _goalOptions = {
-    'musculation': 'Musculación / Hipertrofia',
+    'musculation': 'Musculación',
     'health': 'Salud y bienestar general',
     'cardio': 'Solo cardio / Resistencia',
     'mixed': 'Musculación y cardio (Mixto)',
     'mobility': 'Movilidad y zona media',
     'sport': 'Deportivo (Rendimiento)',
-    'rehab': 'Rehabilitación / Kinesiología',
+    'rehab': 'Rehabilitación',
   };
 
   final Map<String, String> _experienceOptions = {
     'none': 'Nunca fui a un gimnasio',
     'less_than_year': 'Entrené y dejé hace menos de 1 año',
     'more_than_year': 'Entrené y dejé hace más de 1 año',
-    'current': 'Entreno actualmente o hasta hace poco',
+    'current': 'Entrené hasta hace poco',
   };
 
   final Map<String, String> _activityOptions = {

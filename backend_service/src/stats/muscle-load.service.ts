@@ -52,6 +52,7 @@ export class MuscleLoadService {
         });
 
         // If not completed, we are done (load removed)
+        this.logger.log(`[DEBUG] syncExecutionLoad: Session ${session.id} Status=${session.status}`);
         if (session.status !== 'COMPLETED') {
             return;
         }
@@ -75,6 +76,8 @@ export class MuscleLoadService {
                 relations: ['muscle'],
             });
 
+            this.logger.log(`[DEBUG] Exercise ${exExec.exercise.name} (ID: ${exExec.exercise.id}) - Mappings found: ${mappings.length}`);
+
             for (const map of mappings) {
                 const stimulus = this.STIMULUS_BY_ROLE[map.role] || 0;
                 const current = muscleDeltas.get(map.muscle.id) || 0;
@@ -95,6 +98,8 @@ export class MuscleLoadService {
             ledgerEntries.push(entry);
         }
 
+        this.logger.log(`[DEBUG] Saving ${ledgerEntries.length} ledger entries. Sample: ${JSON.stringify(ledgerEntries[0])}`);
+
         if (ledgerEntries.length > 0) {
             await manager.save(MuscleLoadLedger, ledgerEntries);
         }
@@ -104,129 +109,143 @@ export class MuscleLoadService {
      * Retrieves the current load state for all muscles of a student.
      * Applies recovery logic up to targetDate (default: today).
      */
-    async getLoadsForStudent(studentId: string, targetDateStr?: string): Promise<any> {
-        const targetDate = targetDateStr ? new Date(targetDateStr) : new Date();
-        // Normalize to YYYY-MM-DD for consistency
-        const targetDateIso = targetDate.toISOString().split('T')[0];
+    async getLoadsForStudent(studentId: string): Promise<any> {
+        try {
+            const targetDate = new Date();
+            const targetDateIso = targetDate.toISOString().split('T')[0];
 
-        // 1. Get All Muscles (to ensure we return full body state)
-        const allMuscles = await this.muscleRepo.find();
+            this.logger.log(`[DEBUG] getLoadsForStudent: Student=${studentId}, TargetDate=${targetDateIso}`);
+            const totalLedger = await this.ledgerRepo.count({ where: { student: { id: studentId } } });
+            this.logger.log(`[DEBUG] Total Ledger Entries for Student: ${totalLedger}`);
 
-        // 2. Get Materialized State
-        const states = await this.stateRepo.find({
-            where: { student: { id: studentId } },
-        });
+            // 1. Get All Muscles (to ensure we return full body state)
+            const allMuscles = await this.muscleRepo.find();
 
-        const result = [];
-        const newStates: MuscleLoadState[] = [];
-
-        for (const muscle of allMuscles) {
-            let currentState = states.find((s) => s.muscleId === muscle.id);
-
-            // Default Initial State
-            let currentLoad = currentState ? currentState.currentLoad : 0;
-            let lastDate = currentState ? new Date(currentState.lastComputedDate) : new Date(targetDateIso);
-            // If no state, we assume fresh 0 from targetDate effectively, 
-            // BUT for calculation correctness if there are ledger entries, we should look back?
-            // MVP Strategy: If no state, we assume 0 load at targetDate unless we want to rebuild from history.
-            // Rebuilding from eternity is expensive.
-            // Simplification: If no state, calculate from start of time or just 0?
-            // Better: If no state, try to find ANY ledger entry. If none, it's 0.
-
-            // RECOVERY ALGORITHM
-
-            if (currentState) {
-                // Calculate days passed since last computation
-                const diffTime = Math.abs(targetDate.getTime() - lastDate.getTime());
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                if (lastDate < targetDate) {
-                    // Apply Recovery
-                    const recovery = diffDays * this.RECOVERY_PER_DAY;
-                    currentLoad = Math.max(0, currentLoad - recovery);
-                }
-            }
-
-            // 4. Fetch NEW Stimulus from Ledger (since lastComputedDate + 1 day)
-            // If no state, we need to fetch all history? Or just assume 0.
-            // Risk: If user has many ledger entries but never checked muscle-loads, state is empty.
-            // Solution: If state is missing, look back 30 days? Or just query ALL ledger entries <= targetDate if usage is low.
-            // Let's query Ledger entries > lastComputedDate AND <= targetDate.
-
-            let queryDateStart = currentState ? new Date(currentState.lastComputedDate) : new Date('2020-01-01');
-            // We want strictly greater than last computed date, because last computed included that date.
-            // Wait, if I computed yesterday, I want events from TODAY onwards.
-
-            // If state doesn't exist, query all history (or capped).
-
-            const ledgerEvents = await this.ledgerRepo.find({
-                where: {
-                    student: { id: studentId },
-                    muscle: { id: muscle.id },
-                    date: Between(
-                        this.addDays(queryDateStart, 1).toISOString().split('T')[0],
-                        targetDateIso
-                    )
-                }
+            // 2. Get Materialized State
+            const states = await this.stateRepo.find({
+                where: { student: { id: studentId } },
             });
 
-            // Sum Deltas
-            let sumDelta = 0;
-            for (const event of ledgerEvents) {
-                sumDelta += event.deltaLoad;
+            const result = [];
+            const newStates: MuscleLoadState[] = [];
+
+            for (const muscle of allMuscles) {
+                let currentState = states.find((s) => s.muscleId === muscle.id);
+
+                if (currentState && currentState.lastComputedDate === targetDateIso) {
+                    // If the state is already "up to date" (Today), we must ignore it to force a re-calculation 
+                    // from the ledger, effectively rebuilding "Today's" value from history/scratch.
+                    // This is crucial for intra-day updates.
+                    // this.logger.log(`[DEBUG] Ignoring Today's State for ${muscle.name}`);
+                    currentState = undefined;
+                }
+
+                // Default Initial State
+                let currentLoad = currentState ? currentState.currentLoad : 0;
+                let lastDate = currentState ? new Date(currentState.lastComputedDate) : new Date(targetDateIso);
+
+                // RECOVERY ALGORITHM
+                if (currentState) {
+                    // Calculate days passed since last computation
+                    const diffTime = Math.abs(targetDate.getTime() - lastDate.getTime());
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (lastDate < targetDate) {
+                        // Apply Recovery
+                        const recovery = diffDays * this.RECOVERY_PER_DAY;
+                        currentLoad = Math.max(0, currentLoad - recovery);
+                    }
+                }
+
+                // 3. Apply Ledger Delta (New Workouts since last compute)
+                // Query needs to be strictly AFTER lastComputedDate to avoid double counting?
+                // Actually, ledger saves EXACT date. User might work out multiple times a day or backfill.
+                // Safe logic: From (lastComputed + 1 day) TILL targetDate.
+                // BUT if lastComputed is today (and we ignored it), we start from 2020.
+                const queryDateStart = currentState ? new Date(currentState.lastComputedDate) : new Date('2020-01-01');
+                // If currentState exists, we want NEXT day. If not, from beginning.
+                if (currentState) queryDateStart.setDate(queryDateStart.getDate() + 1);
+
+                const startStr = queryDateStart.toISOString().split('T')[0];
+
+                // Only log for a specific muscle to reduce noise?
+                if (muscle.name === 'Biceps' || muscle.name === 'Pecho') {
+                    this.logger.log(`[DEBUG] Querying ${muscle.name} (${muscle.id}): ${startStr} to ${targetDateIso}`);
+                }
+
+                const ledgerEvents = await this.ledgerRepo.find({
+                    where: {
+                        student: { id: studentId },
+                        muscle: { id: muscle.id }, // Make sure muscle entity is passed correctly? id matches.
+                        date: Between(startStr, targetDateIso),
+                    }
+                });
+
+                if (ledgerEvents.length > 0) {
+                    this.logger.log(`[DEBUG] ${muscle.name}: Found ${ledgerEvents.length} events!`);
+                } else if (muscle.name === 'Biceps') {
+                    this.logger.log(`[DEBUG] ${muscle.name}: Found 0 events. Query: student=${studentId}, muscle=${muscle.id}, date=${startStr}-${targetDateIso}`);
+                }
+
+                let sumDelta = 0;
+                for (const ev of ledgerEvents) {
+                    sumDelta += ev.deltaLoad;
+                }
+                if (ledgerEvents.length > 0) this.logger.log(`[DEBUG] ${muscle.name}: Sum Delta=${sumDelta}`);
+
+                currentLoad += sumDelta;
+                currentLoad = Math.min(this.MAX_LOAD, Math.max(0, currentLoad));
+
+                if (currentLoad > 0) {
+                    this.logger.log(`[DEBUG] ${muscle.name}: FinalLoad=${currentLoad}`);
+                }
+
+                // 6. Update State (Materialize)
+                // We only update if we are querying for "Today" or future, usually.
+                // Or we always update checking user.
+                // Optimization: Update state so next query is fast.
+
+                const newState = new MuscleLoadState();
+                // if (currentState) newState.id = currentState.id; // Removed: Composite Key used instead
+                newState.student = { id: studentId } as any;
+                newState.muscle = { id: muscle.id } as any;
+                newState.currentLoad = currentLoad;
+                newState.lastComputedDate = targetDateIso;
+
+                newStates.push(newState);
+
+                result.push({
+                    muscleId: muscle.id,
+                    muscleName: muscle.name,
+                    load: currentLoad,
+                    status: this.getStatus(currentLoad),
+                    lastComputedDate: targetDateIso
+                });
+            } // End loop
+
+            // Batch Save
+            // We save if we have new states that differ from DB.
+            const statesToSave = newStates.filter(ns => {
+                const existing = states.find(s => s.muscleId === ns.muscle.id);
+                if (!existing) return true; // New record
+                // If date changed, we must save.
+                if (existing.lastComputedDate !== ns.lastComputedDate) return true;
+                // If load changed significantly (float comparison), we must save.
+                if (Math.abs(existing.currentLoad - ns.currentLoad) > 0.01) return true;
+
+                return false; // No change, skip write
+            });
+
+            if (statesToSave.length > 0) {
+                this.logger.log(`[DEBUG] Saving ${statesToSave.length} updated muscle states`);
+                await this.stateRepo.save(statesToSave);
             }
 
-            // Apply Recovery for the gaps between events?
-            // COMPLEXITY simplified:
-            // The simple algorithm proposed:
-            // 1. Recover from LastDate to TargetDate (full span)
-            // 2. Add SumDelta (from that span)
-            // This is an APPROXIMATION. It assumes all load happened at the END or doesn't matter?
-            // User Spec: "3) Aplicar recuperación... 4) Traer ledger SUM... 5) Aplicar estímulo"
-            // This aligns with the approximation. Recover first, then add load.
-            // Issue: If I rested 10 days then trained today, I recover 10 days then add load. Correct.
-            // Issue: If I trained 10 days ago then rested, I add load then recover? 
-            // The proposed Algo: Recover currentLoad (old) by days. Then Add new loads.
-            // This implicitly assumes new loads are "fresh".
-            // Correct Logic for precise timeline:
-            // We should ideally iterate day by day.
-            // BUT for MVP based on spec:
-            // "3) Apply recovery (daysPassed * RECOVERY) -> 4) Add Ledger Sum"
-            // This implies NEW loads are not decayed immediately.
-
-            currentLoad = Math.min(this.MAX_LOAD, Math.max(0, currentLoad + sumDelta));
-
-            // 6. Update State (Materialize)
-            // We only update if we are querying for "Today" or future, usually.
-            // Or we always update checking user.
-            // Optimization: Update state so next query is fast.
-
-            const newState = new MuscleLoadState();
-            newState.student = { id: studentId } as any;
-            newState.muscle = { id: muscle.id } as any;
-            newState.currentLoad = currentLoad;
-            newState.lastComputedDate = targetDateIso;
-
-            newStates.push(newState);
-
-            result.push({
-                muscleId: muscle.id,
-                name: muscle.name,
-                region: muscle.region,
-                load: currentLoad,
-                status: this.getStatus(currentLoad)
-            });
+            return result;
+        } catch (e) {
+            this.logger.error(`[CRITICAL] Error in getLoadsForStudent: ${e.message}`, e.stack);
+            throw e;
         }
-
-        // Batch Save
-        if (newStates.length > 0) {
-            await this.stateRepo.save(newStates);
-        }
-
-        return {
-            date: targetDateIso,
-            muscles: result
-        };
     }
 
     private addDays(date: Date, days: number): Date {

@@ -94,6 +94,12 @@ export class TrainingSessionsController {
     return this.sessionsService.addSessionExercise(sessionId, body.exerciseId, body);
   }
 
+  // POST /executions/:id/debug-sync (Temporary Debug)
+  @Post(':id/debug-sync')
+  async debugSync(@Param('id') id: string) {
+    return this.sessionsService.syncSession(id);
+  }
+
   // GET /executions/calendar
   @Get('calendar')
   async getCalendar(

@@ -319,14 +319,23 @@ export class TrainingSessionsService {
     return savedEx;
   }
 
+  async syncSession(sessionId: string) {
+    await this._trySyncLoad(sessionId);
+    return { message: 'Sync triggered' };
+  }
+
   private async _trySyncLoad(sessionId: string) {
+    console.log(`[DEBUG] _trySyncLoad for Session ${sessionId}`);
     const fullSession = await this.sessionRepo.findOne({
       where: { id: sessionId },
       relations: ['exercises', 'exercises.exercise', 'student'],
     });
     if (fullSession) {
+      console.log(`[DEBUG] fullSession found with ${fullSession.exercises?.length} exercises. Calling muscleLoadService.syncExecutionLoad`);
       // Cast to any if muscleLoadService expects PlanExecution but structure is compatible
       await this.muscleLoadService.syncExecutionLoad(fullSession as any);
+    } else {
+      console.log(`[DEBUG] fullSession NOT FOUND for ${sessionId}`);
     }
   }
 
@@ -351,6 +360,7 @@ export class TrainingSessionsService {
     const saved = await this.sessionRepo.save(session);
 
     // Sync Muscle Load
+    console.log(`[DEBUG] Session ${sessionId} saved as COMPLETED. Calling _trySyncLoad...`);
     await this._trySyncLoad(saved.id);
 
     // LEGACY SYNC (Deprecated)

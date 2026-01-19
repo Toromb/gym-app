@@ -68,7 +68,10 @@ class StatsProvider with ChangeNotifier {
     // Basic cache: if not empty and not forced, return.
     // Muscle load changes after workout, so we might want aggressive refresh
     // For now, simple check.
-    if (_myLoads.isNotEmpty && !forceRefresh) return;
+    // Basic cache: if not empty and not forced, return.
+    // Muscle load changes after workout, so we might want aggressive refresh
+    // For now, simple check.
+    // if (_myLoads.isNotEmpty && !forceRefresh) return; // FORCE REFRESH FOR DEBUGGING
     
     // Do not set global _isLoading to true to avoid full screen blockers if not needed?
     // User might want to see spinner in the specific tab.

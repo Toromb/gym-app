@@ -18,8 +18,7 @@ import 'calendar_screen.dart';
 import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
 import 'package:intl/intl.dart';
-import 'muscle_flow_screen.dart';
-import 'muscle_flow_screen.dart';
+
 import 'free_training/free_training_selector_screen.dart';
 import 'profile/profile_progress_screen.dart';
 
