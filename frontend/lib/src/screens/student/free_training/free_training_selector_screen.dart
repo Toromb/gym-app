@@ -172,7 +172,7 @@ class _FreeTrainingSelectorScreenState extends State<FreeTrainingSelectorScreen>
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
+            constraints: const BoxConstraints(maxWidth: 900),
             child: Column(
               children: [
                 // Custom App Bar Area

@@ -19,18 +19,19 @@ import { UpdateExerciseDto } from './dto/update-exercise.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { UserRole } from '../users/entities/user.entity';
 
+import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+
 @Controller('exercises')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class ExercisesController {
   constructor(private readonly exercisesService: ExercisesService) { }
 
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.PROFE)
   create(@Body() createExerciseDto: CreateExerciseDto, @Request() req: any) {
     // Check if user is PROFE or ADMIN (can be done with a custom decorator/guard)
     // For MVP, assuming any authenticated user can create for now, or check role here
-    if (req.user.role === UserRole.ALUMNO) {
-      // throw new ForbiddenException('Only teachers can create exercises');
-    }
     return this.exercisesService.create(createExerciseDto, req.user);
   }
 

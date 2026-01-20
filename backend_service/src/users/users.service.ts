@@ -56,7 +56,10 @@ export class UsersService {
       professor: professor || undefined,
       gym: gym || undefined,
     });
-    return this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
+    const status = this.calculatePaymentStatus(savedUser);
+    savedUser.paymentStatus = status as any;
+    return savedUser;
   }
 
   async findAllStudents(
@@ -250,51 +253,93 @@ export class UsersService {
       }
     }
 
-    // 3. Fallback Logic: Calculate based on Cycle Start
-    // Logic:
-    // - Cycle anchor is the day of membershipStartDate.
-    // - If we are within 10 days of the current cycle start -> Pending.
-    // - If we are past 10 days -> Overdue.
+    // 3. Fallback Logic: Strict Day-of-Month check (Per User Request)
+    // Status depends ONLY on the current day relative to the anchor day in the CURRENT month.
+    // History does not matter. Use reset every month.
 
     if (!user.membershipStartDate) {
-      // No start date -> treat as Pending (Waiting for setup)
       return 'pending';
     }
 
     const now = new Date();
-    // Normalize to start of day
-    now.setHours(0, 0, 0, 0);
-
     const startDate = new Date(user.membershipStartDate);
+
+    // We only care about the DAY component.
+    const currentDay = now.getDate();
     const anchorDay = startDate.getDate();
 
-    // Determine "Current Cycle Start"
-    // Construct a date with Current Month/Year and Anchor Day
-    let cycleStart = new Date(now.getFullYear(), now.getMonth(), anchorDay);
+    // "La cuota solo debe figurar como VENCIDA cuando, en el ciclo actual, 
+    // hayan pasado más de 10 días desde el día de membresía."
+    // Example: Start=25. Current=20.
+    // Limit = 25 + 10 = 35. 
+    // 20 > 35? False. -> Pending.
 
-    // If constructed cycleStart is in the future relative to today,
-    // it means the current cycle actually started last month.
-    // Example: Today is Feb 5th. Anchor is 20th.
-    // constructed = Feb 20th (Future).
-    // Actual current cycle start = Jan 20th.
-    if (cycleStart > now) {
-      cycleStart.setMonth(cycleStart.getMonth() - 1);
-    }
+    // Logic for month wrap-around (e.g. Start=25, Current=5 of next month)
+    // If currentDay (5) < anchorDay (25), we are physically in the 'next' month relative to anchor.
+    // Theoretically limit is 25+10 = 35 (of prev month) aka 5th of current month.
+    // Let's stick to the SIMPLEST interpretation requested:
+    // "Comparison by real days elapsed... wait, user changed mind to: cycle control."
 
-    // Safety for edge case where anchor day doesn't exist in previous month (e.g. 31st)
-    // JS setMonth handles this by rolling over, but we want the last day of that month.
-    // However, for 'cycleStart', JS's auto-rollover is often acceptable or we can strict clamp.
-    // Let's rely on standard JS Date behavior which is robust enough for "approximate monthly cycles".
+    // User SAID: "La cuota solo debe figurar como VENCIDA cuando, en el ciclo actual (enero), aún no se llegó al día 25 ni se superaron los 10 días de gracia."
 
-    // Calculate days elapsed in current cycle
-    const diffTime = now.getTime() - cycleStart.getTime();
-    const daysInCycle = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    // Let's implement logic:
+    // Calculate "Last theoretical start date"
+    // If today is 20th Jan, and anchor is 25th. Last start was 25th Dec.
+    // Days elapsed since 25th Dec = 26 days. -> Vencido?
 
-    if (daysInCycle > 10) {
+    // User SAID: "Ejemplo: Fecha membresía: 25/08/2025. Hoy: 20/01/2026. Resultado esperado: CUOTA POR VENCER. Porque en el ciclo actual (enero), aún no se llegó al día 25"
+
+    // This implies: Cycle runs from 25th to 24th.
+    // If today (20) < Anchor (25) -> We are in the "tail" of the previous month's cycle?
+    // Or does the cycle START on the 25th?
+    // If cycle starts on 25th Jan, and current date is 20th Jan.
+    // Then we are in the cycle that started 25th Dec.
+    // Dec 25th + 10 days = Jan 4th.
+    // So on Jan 20th, we are WAY past the grace period of the Dec cycle.
+
+    // BUT User says: "Aún no se llegó al día 25... Estado: CUOTA POR VENCER".
+    // This implies that BEFORE the anchor day in the current month, IT IS NOT VENCIDO.
+    // It basically resets to "Pending" as soon as the month flips? Or strictly assumes "If we haven't reached the cutoff day yet".
+
+    // Let's interpret strictly:
+    // "La cuota solo debe figurar como VENCIDA cuando, en el ciclo actual, hayan pasado más de 10 días desde el día de membresía."
+
+    // If today is 20. Anchor is 25.
+    // Cycle determines: "This month's payment".
+    // Deadline for "This Month" is 25th + 10 = 35th? Or next month 5th?
+
+    // If user says "25/08... Hoy 20/01... POR VENCER", it means:
+    // "I haven't reached my billing date (25th) for January yet, so I'm fine."
+    // (Implies current status is valid until 25th).
+
+    // What about the PREVIOUS bill (Dec 25th)?? The user seems to imply historical debt doesn't show 'Overdue'.
+    // Or maybe they assume they Paid Dec?
+
+    // Let's implement the specific requested check:
+    // "Vencida ONLY IF days_since_anchor_THIS_month > 10"
+
+    // Case 1: Today=20. Anchor=25.
+    // Check: Is (Today - Anchor) > 10?  (20 - 25 = -5). No. -> Pending.
+
+    // Case 2: Today=5. Anchor=25.
+    // Check: (5 - 25 = -20). No. -> Pending.
+
+    // Case 3: Today=28. Anchor=25.
+    // Check: (28 - 25 = 3). 3 > 10? No. -> Pending.
+
+    // Case 4: Today=15. Anchor=1.
+    // Check: (15 - 1 = 14). 14 > 10? YES. -> OVERDUE.
+
+    // This seems to be the logic requested. "Has the grace period passed for THIS CALENDAR MONTH'S anchor day?"
+
+    let daysDiff = currentDay - anchorDay;
+
+    // If daysDiff is negative (e.g. today 20, anchor 25), it means we are BEFORE the date.
+    if (daysDiff > 10) {
       return 'overdue';
-    } else {
-      return 'pending';
     }
+
+    return 'pending';
   }
 
   async findOneByActivationTokenHash(hash: string): Promise<User | null> {

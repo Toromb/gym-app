@@ -140,7 +140,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
+            constraints: const BoxConstraints(maxWidth: 900),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -207,8 +207,13 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
   Widget _buildInfoRow(String label, String value) {
     // Basic translation map for known goals
     const goalTranslations = {
-      'sport': 'Deporte',
-      'health': 'Salud',
+      'sport': 'Deportivo (Rendimiento)',
+      'health': 'Salud y bienestar',
+      'musculation': 'Musculación',
+      'cardio': 'Cardio / Resistencia',
+      'mixed': 'Musculación y cardio',
+      'mobility': 'Movilidad',
+      'rehab': 'Rehabilitación',
       'aesthetics': 'Estética',
       'strength': 'Fuerza',
       'hypertrophy': 'Hipertrofia',

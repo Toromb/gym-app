@@ -145,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
+          constraints: const BoxConstraints(maxWidth: 900),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(

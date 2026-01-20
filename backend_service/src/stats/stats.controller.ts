@@ -13,8 +13,11 @@ import { GymsService } from '../gyms/gyms.service';
 import { StatsService } from './stats.service';
 import { UserRole } from '../users/entities/user.entity';
 
+import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+
 @Controller('stats')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class StatsController {
   constructor(
     private readonly usersService: UsersService,
@@ -44,13 +47,10 @@ export class StatsController {
   }
 
   @Get()
+  @Roles(UserRole.SUPER_ADMIN)
   async getPlatformStats(@Request() req: any) {
     const user = req.user;
-    if (user.role !== UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException(
-        'Only Super Admin can access platform stats',
-      );
-    }
+    // Removed manual check
 
     const stats = {
       totalGyms: await this.gymsService.countAll(),

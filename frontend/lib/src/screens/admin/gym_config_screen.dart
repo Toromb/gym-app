@@ -199,7 +199,10 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Configuración del Gym')),
-      body: SingleChildScrollView(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
@@ -305,6 +308,8 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
               ),
             ],
           ),
+      ),
+      ),
         ),
       ),
     );

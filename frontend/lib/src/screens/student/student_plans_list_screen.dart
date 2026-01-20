@@ -45,7 +45,7 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
               ? Center(child: Text(AppLocalizations.of(context)!.get('noPlans')))
               : Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 800),
+                    constraints: const BoxConstraints(maxWidth: 900),
                     child: ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _assignments.length,

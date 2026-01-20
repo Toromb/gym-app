@@ -41,21 +41,21 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestionar Usuarios'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_add),
-            tooltip: 'Agregar Usuario',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AddUserScreen()),
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
-      body: Consumer<UserProvider>(
+      floatingActionButton: isAdmin ? FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddUserScreen()),
+          );
+        },
+        tooltip: 'Crear Usuario',
+        child: const Icon(Icons.person_add),
+      ) : null,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: Consumer<UserProvider>(
         builder: (context, userProvider, _) {
           if (userProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -117,6 +117,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
             );
           }
         },
+      ),
+        ),
       ),
     );
   }

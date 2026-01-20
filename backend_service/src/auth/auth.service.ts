@@ -46,7 +46,12 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { email: user.email, sub: user.id, role: user.role };
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      tokenVersion: user.tokenVersion
+    };
 
     // Force transformation to respect @Exclude() decorators (e.g. Gym.users, passwordHash)
     // unwrap the TypeORM entity to a plain object using class-transformer rules
@@ -143,7 +148,8 @@ export class AuthService {
     await this.usersService.updateTokens(user.id, {
       resetTokenHash: null,
       resetTokenExpires: null,
-      passwordHash: passwordHash
+      passwordHash: passwordHash,
+      tokenVersion: (user.tokenVersion || 0) + 1
     });
   }
 
@@ -167,10 +173,21 @@ export class AuthService {
 
     // Update user
     await this.usersService.updateTokens(user.id, {
-      passwordHash: newHash
+      passwordHash: newHash,
+      tokenVersion: (user.tokenVersion || 0) + 1
     });
 
     this.logger.log(`Password changed for user ${user.email}`);
+  }
+
+  async logout(userId: string): Promise<void> {
+    const user = await this.usersService.findOne(userId);
+    if (user) {
+      await this.usersService.updateTokens(userId, {
+        tokenVersion: (user.tokenVersion || 0) + 1
+      });
+      this.logger.log(`User ${user.email} logged out (Token invalidated)`);
+    }
   }
 
   private async generateRandomToken(): Promise<string> {

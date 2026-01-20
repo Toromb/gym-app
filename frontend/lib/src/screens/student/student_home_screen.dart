@@ -75,7 +75,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
+            constraints: const BoxConstraints(maxWidth: 900),
             child: Consumer<PlanProvider>(
             builder: (context, planProvider, child) {
               return SingleChildScrollView(

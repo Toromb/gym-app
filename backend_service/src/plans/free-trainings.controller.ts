@@ -18,23 +18,17 @@ import { UpdateFreeTrainingDefinitionDto } from './dto/update-free-training-defi
 import { AuthGuard } from '@nestjs/passport';
 import { UserRole } from '../users/entities/user.entity';
 
+import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+
 @Controller('free-trainings')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class FreeTrainingsController {
     constructor(private readonly freeTrainingsService: FreeTrainingsService) { }
 
     @Post()
+    @Roles(UserRole.ADMIN, UserRole.PROFE, UserRole.SUPER_ADMIN)
     create(@Body() dto: CreateFreeTrainingDefinitionDto, @Request() req: any) {
-        if (
-            req.user.role !== UserRole.ADMIN &&
-            req.user.role !== UserRole.PROFE &&
-            req.user.role !== UserRole.SUPER_ADMIN
-        ) {
-            throw new ForbiddenException(
-                'Only teachers and admins can create free training templates',
-            );
-        }
-
         // Check Gym
         const gymId = req.user.gym?.id;
         if (!gymId) {
@@ -45,16 +39,8 @@ export class FreeTrainingsController {
     }
 
     @Patch(':id')
+    @Roles(UserRole.ADMIN, UserRole.PROFE, UserRole.SUPER_ADMIN)
     update(@Param('id') id: string, @Body() dto: UpdateFreeTrainingDefinitionDto, @Request() req: any) {
-        if (
-            req.user.role !== UserRole.ADMIN &&
-            req.user.role !== UserRole.PROFE &&
-            req.user.role !== UserRole.SUPER_ADMIN
-        ) {
-            throw new ForbiddenException(
-                'Only teachers and admins can update free training templates',
-            );
-        }
         // TODO: Validate Gym Ownership?
         return this.freeTrainingsService.update(id, dto);
     }
@@ -93,16 +79,8 @@ export class FreeTrainingsController {
     }
 
     @Delete(':id')
+    @Roles(UserRole.ADMIN, UserRole.PROFE, UserRole.SUPER_ADMIN)
     remove(@Param('id') id: string, @Request() req: any) {
-        if (
-            req.user.role !== UserRole.ADMIN &&
-            req.user.role !== UserRole.PROFE &&
-            req.user.role !== UserRole.SUPER_ADMIN
-        ) {
-            throw new ForbiddenException(
-                'Only teachers and admins can delete free training templates',
-            );
-        }
         // Also should check ownership?
         return this.freeTrainingsService.remove(id);
     }

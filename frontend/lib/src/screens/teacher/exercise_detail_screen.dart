@@ -28,7 +28,10 @@ class ExerciseDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,6 +46,8 @@ class ExerciseDetailScreen extends StatelessWidget {
               _buildVideoSection(context),
           ],
         ),
+      ),
+      ),
       ),
     );
   }

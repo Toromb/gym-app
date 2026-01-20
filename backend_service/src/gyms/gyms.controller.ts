@@ -24,8 +24,11 @@ import { RequestWithUser } from '../auth/interfaces/request-with-user.interface'
 import { CreateGymDto } from './dto/create-gym.dto';
 import { UpdateGymDto } from './dto/update-gym.dto';
 
+import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+
 @Controller('gyms')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class GymsController {
   constructor(private readonly gymsService: GymsService) { }
 
@@ -51,14 +54,14 @@ export class GymsController {
   }
 
   @Post()
+  @Roles(UserRole.SUPER_ADMIN)
   create(@Body() createGymDto: CreateGymDto, @Request() req: any) {
-    this.checkSuperAdmin(req.user);
     return this.gymsService.create(createGymDto);
   }
 
   @Get()
+  @Roles(UserRole.SUPER_ADMIN)
   findAll(@Request() req: any) {
-    this.checkSuperAdmin(req.user);
     return this.gymsService.findAll();
   }
 
@@ -87,8 +90,8 @@ export class GymsController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.SUPER_ADMIN)
   remove(@Param('id') id: string, @Request() req: any) {
-    this.checkSuperAdmin(req.user);
     return this.gymsService.remove(id);
   }
 

@@ -19,12 +19,15 @@ import { UpdateGymScheduleDto } from './dto/update-gym-schedule.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { UserRole } from '../users/entities/user.entity';
 
+import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+
 @ApiTags('gym-schedule')
 @ApiBearerAuth()
 @Controller('gym-schedule')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class GymScheduleController {
-  constructor(private readonly gymScheduleService: GymScheduleService) {}
+  constructor(private readonly gymScheduleService: GymScheduleService) { }
 
   @Get()
   @ApiOperation({ summary: 'Get gym schedule' })
@@ -43,13 +46,11 @@ export class GymScheduleController {
     status: 200,
     description: 'The gym schedule has been successfully updated.',
   })
+  @Roles(UserRole.ADMIN)
   update(
     @Body() updateGymScheduleDtos: UpdateGymScheduleDto[],
     @Request() req: any,
   ) {
-    if (req.user.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Only admin can update schedule');
-    }
     const gymId = req.user.gym?.id;
     if (!gymId) throw new ForbiddenException('No gym associated with admin');
 

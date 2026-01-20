@@ -29,7 +29,10 @@ class _PlansListScreenState extends State<PlansListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.get('plansLibrary'))),
-      body: Consumer<PlanProvider>(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: Consumer<PlanProvider>(
         builder: (context, planProvider, _) {
           if (planProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -81,6 +84,8 @@ class _PlansListScreenState extends State<PlansListScreen> {
             itemCount: sortedKeys.length + 1, // +1 for Search
           );
         },
+      ),
+      ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {

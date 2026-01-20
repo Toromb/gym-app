@@ -58,6 +58,9 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   resetTokenExpires: Date | null;
 
+  @Column({ default: 0 })
+  tokenVersion: number;
+
   @Column({ default: false })
   isActive: boolean;
 

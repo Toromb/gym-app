@@ -53,7 +53,7 @@ class _GymScheduleScreenState extends State<GymScheduleScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-             constraints: const BoxConstraints(maxWidth: 800),
+             constraints: const BoxConstraints(maxWidth: 900),
              child: scheduleProvider.isLoading
               ? const Center(child: CircularProgressIndicator())
               : scheduleProvider.error != null

@@ -21,19 +21,19 @@ import { UserRole } from '../users/entities/user.entity';
 
 import { UpdatePlanDto } from './dto/update-plan.dto';
 
+import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+
 @Controller('plans')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 export class PlansController {
   constructor(private readonly plansService: PlansService) { }
 
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.PROFE)
   create(@Body() createPlanDto: CreatePlanDto, @Request() req: any) {
     // Only Teacher/Admin can create plans
-    // Ideally use a custom Guard or check role here
-    if (req.user.role === UserRole.ALUMNO) {
-      throw new ForbiddenException('Only teachers and admins can create plans');
-    }
     return this.plansService.create(createPlanDto, req.user);
   }
 
@@ -76,24 +76,19 @@ export class PlansController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.PROFE)
   update(
     @Param('id') id: string,
     @Body() updatePlanDto: UpdatePlanDto,
     @Request() req: any,
   ) {
-    // Allow Admin or Profe (any Profe can edit any plan per requirements)
-    if (req.user.role !== UserRole.ADMIN && req.user.role !== UserRole.PROFE) {
-      throw new ForbiddenException('Only admins and professors can edit plans');
-    }
     console.log('Update Payload RAW:', JSON.stringify(updatePlanDto, null, 2));
     return this.plansService.update(id, updatePlanDto, req.user);
   }
 
   @Post('assign')
+  @Roles(UserRole.ADMIN, UserRole.PROFE)
   assignPlan(@Body() body: { planId: string; studentId: string }, @Request() req: any) {
-    if (req.user.role !== UserRole.PROFE && req.user.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Only professors and admins can assign plans');
-    }
     return this.plansService.assignPlan(body.planId, body.studentId, req.user);
   }
 

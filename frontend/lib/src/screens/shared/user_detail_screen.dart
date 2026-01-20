@@ -14,7 +14,10 @@ class UserDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('${user.firstName} ${user.lastName}')),
-      body: SingleChildScrollView(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,6 +101,8 @@ class UserDetailScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+      ),
       ),
     );
   }

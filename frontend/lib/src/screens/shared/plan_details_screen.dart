@@ -159,7 +159,10 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                }
             }
         },
-        child: SingleChildScrollView(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
@@ -173,6 +176,8 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
             ],
           ),
         ),
+      ),
+      ),
       ),
     );
   }

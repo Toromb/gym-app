@@ -57,7 +57,10 @@ class _MuscleFlowScreenState extends State<MuscleFlowScreen> {
       appBar: widget.studentId == null ? null : AppBar(title: const Text('Estado Muscular')),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start, // Align header left
             children: [
               // 1. Header
@@ -129,6 +132,8 @@ class _MuscleFlowScreenState extends State<MuscleFlowScreen> {
           ),
         ),
       ),
+    ),
+  ),
     );
   }
 }

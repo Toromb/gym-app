@@ -80,7 +80,10 @@ class _ManageEquipmentsScreenState extends State<ManageEquipmentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Gestionar Equipamiento'), leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context))),
-      body: _isLoading 
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: _isLoading 
         ? const Center(child: CircularProgressIndicator()) 
         : _error != null 
           ? Center(child: Text('Error: $_error'))
@@ -102,6 +105,8 @@ class _ManageEquipmentsScreenState extends State<ManageEquipmentsScreen> {
                 );
               },
             ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
           onPressed: () {
               showDialog(context: context, builder: (ctx) {
