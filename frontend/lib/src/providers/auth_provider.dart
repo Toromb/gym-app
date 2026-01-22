@@ -39,12 +39,12 @@ class AuthProvider with ChangeNotifier {
     final result = await _authService.login(email, password);
     
     if (result is Map<String, dynamic>) {
-      print('AuthProvider login result: $result'); // Debug log
+      // print('AuthProvider login result: $result'); // Debug log
       _token = result['access_token'];
       if (result['user'] != null) {
         _user = User.fromJson(result['user']);
       } else {
-        print('AuthProvider Error: User object is NULL in login response');
+        debugPrint('AuthProvider Error: User object is NULL in login response');
       }
       _isAuthenticated = true;
       await checkOnboardingStatus(); // Ensure status is checked on explicit login
@@ -87,7 +87,7 @@ class AuthProvider with ChangeNotifier {
         await _authService.logout(); // Clear invalid token
       }
     } catch (e) {
-      print('AutoLogin Error: $e');
+      debugPrint('AutoLogin Error: $e');
       _status = AuthStatus.unauthenticated;
       _isAuthenticated = false;
     }
@@ -118,7 +118,7 @@ class AuthProvider with ChangeNotifier {
       // Requirement: "Student begins session for first time".
       if (_user!.role == 'alumno') {
           _isOnboarded = await _onboardingService.getMyStatus();
-          print('AuthProvider: Onboarding status for ${_user!.email}: $_isOnboarded');
+          // print('AuthProvider: Onboarding status for ${_user!.email}: $_isOnboarded');
           notifyListeners();
       } else {
           _isOnboarded = true; // Teachers/Admins don't need onboarding

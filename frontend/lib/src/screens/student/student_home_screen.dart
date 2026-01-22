@@ -45,18 +45,16 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       context.read<GymScheduleProvider>().fetchSchedule();
       
       // Fetch Progress for Level Summary
-      print('DEBUG: StudentHomeScreen - Calling fetchProgress');
-      context.read<StatsProvider>().fetchProgress().then((_) {
-         print('DEBUG: StudentHomeScreen - fetchProgress COMPLETED. Data: ${context.read<StatsProvider>().progress?.level?.current}');
-      }).catchError((e) {
-         print('DEBUG: StudentHomeScreen - fetchProgress FAILED: $e');
+      // Fetch Progress for Level Summary
+      context.read<StatsProvider>().fetchProgress().catchError((e) {
+         debugPrint('StudentHomeScreen - fetchProgress FAILED: $e');
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    print('DEBUG: StudentHomeScreen build called - V1.1');
+    // debugPrint('StudentHomeScreen build called');
     final app_models.User? user = context.watch<AuthProvider>().user;
 
     return Scaffold(
@@ -115,60 +113,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const StudentPlansListScreen()),
-                        ).then((_) async {
-                           // 1. Flush Queue & Get Result
-                           print('DEBUG: StudentHomeScreen - Waiting for updates...');
-                           final newStatsMap = await context.read<PlanProvider>().waitForPendingUpdates();
-                           print('DEBUG: StudentHomeScreen - Got stats map: $newStatsMap');
-                           
-                           if (context.mounted) {
-                               if (newStatsMap != null) {
-                                   print('DEBUG: Direct Update Route');
-                                   // DIRECT UPDATE: We got the stats from the backend transaction!
-                                   // Map structure from backend: { totalExperience: ..., currentLevel: ... }
-                                   // Frontend UserProgress structure needs adaptation if backend format differs.
-                                   // Backend 'stats.service.ts' returns simple object in updateStats/save.
-                                   // Frontend 'StatsModel' (UserProgress) expects: level: { current, exp }, etc.
-                                   // Wait, backend 'updateStats' returns the RAW entity (UserStats).
-                                   // Frontend expects the composite 'getProgress' structure.
-                                   // Ah. I returned RAW entity from backend.
-                                   
-                                   // FIX: I should have returned getProgress() from backend or handle simple mapping here.
-                                   // Let's rely on simple mapping here to avoid re-fetching everything.
-                                   final rawStats = newStatsMap;
-                                   final currentLevel = rawStats['currentLevel'] as int? ?? 1;
-                                   final currentExp = rawStats['totalExperience'] as int? ?? 0;
-                                   
-                                   print('DEBUG: Updating to Level $currentLevel, Exp $currentExp');
-
-                                   // Create partial or synthetic progress object
-                                   // Since we don't have the full volumetrics, maybe we should just set the level info?
-                                   // Or, we can trigger a fetch if we strictly want full data, BUT
-                                   // The user cares about the "Mi Progreso" card visually updating.
-                                   // That card reads `stats.progress?.level`.
-                                   
-                                   // Let's reconstruct or patch current progress.
-                                   // If we have previous progress, copy it.
-                                   final oldProgress = context.read<StatsProvider>().progress;
-                                   if (oldProgress != null) {
-                                       final newProgress = oldProgress.copyWith(
-                                           level: LevelStats(current: currentLevel, exp: currentExp)
-                                       );
-                                       context.read<StatsProvider>().setDirectProgress(newProgress);
-                                   } else {
-                                        // Fetch if we had nothing (safe fallback)
-                                        context.read<StatsProvider>().fetchProgress();
-                                   }
-                                   
-                               } else {
-                                   print('DEBUG: Fallback Route (Fetch)');
-                                   // Fallback if no stats returned (e.g. offline or other endpoint)
-                                   context.read<StatsProvider>().fetchProgress();
-                               }
-
-                               // Always refresh dashboard charts
-                               context.read<PlanProvider>().computeWeeklyStats();
-                           }
+                        ).then((_) {
+                           _refreshDashboardStats();
                         });
                       },
                     ),
@@ -286,34 +232,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           MaterialPageRoute(
                             builder: (context) => const FreeTrainingSelectorScreen()
                           ),
-                        ).then((result) async {
-                           // 1. Flush Queue & Get Result
-                           final newStatsMap = await context.read<PlanProvider>().waitForPendingUpdates();
-                           
-                           if (context.mounted) {
-                               if (newStatsMap != null) {
-                                   final rawStats = newStatsMap;
-                                   final currentLevel = rawStats['currentLevel'] as int? ?? 1;
-                                   final currentExp = rawStats['totalExperience'] as int? ?? 0;
-                                   
-                                   final oldProgress = context.read<StatsProvider>().progress;
-                                   if (oldProgress != null) {
-                                       final newProgress = oldProgress.copyWith(
-                                           level: LevelStats(current: currentLevel, exp: currentExp)
-                                       );
-                                       context.read<StatsProvider>().setDirectProgress(newProgress);
-                                   } else {
-                                        context.read<StatsProvider>().fetchProgress();
-                                   }
-                               } else {
-                                   context.read<StatsProvider>().fetchProgress();
-                               }
-                               
-                               context.read<PlanProvider>().fetchMyHistory();
-                               context.read<PlanProvider>().computeWeeklyStats();
-                               context.read<PlanProvider>().computeMonthlyStats();
-                           }
-                        });
+                      },
+                    ).then((_) {
+                       _refreshDashboardStats();
+                    });
                       },
                     ),
                     const SizedBox(height: 16),
@@ -472,31 +394,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
           if (!mounted) return;
           if (result == true) {
-              // 1. Flush Queue & Get Result
-              final newStatsMap = await context.read<PlanProvider>().waitForPendingUpdates();
-              
-              if (context.mounted) {
-                  if (newStatsMap != null) {
-                      final rawStats = newStatsMap;
-                      final currentLevel = rawStats['currentLevel'] as int? ?? 1;
-                      final currentExp = rawStats['totalExperience'] as int? ?? 0;
-                      
-                      final oldProgress = context.read<StatsProvider>().progress;
-                      if (oldProgress != null) {
-                          final newProgress = oldProgress.copyWith(
-                              level: LevelStats(current: currentLevel, exp: currentExp)
-                          );
-                          context.read<StatsProvider>().setDirectProgress(newProgress);
-                      } else {
-                          context.read<StatsProvider>().fetchProgress();
-                      }
-                  } else {
-                      await context.read<StatsProvider>().fetchProgress();
-                  }
-
-                  context.read<PlanProvider>().computeWeeklyStats();
-                  context.read<PlanProvider>().computeMonthlyStats();
-              }
+             _refreshDashboardStats();
           }
         },
         borderRadius: BorderRadius.circular(16),
@@ -780,5 +678,33 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       }
       
       return 'Hoy $dayName: ${todaySchedule.displayHours}';
+  }
+  Future<void> _refreshDashboardStats() async {
+      // 1. Flush Queue & Get Result
+      final newStatsMap = await context.read<PlanProvider>().waitForPendingUpdates();
+      
+      if (context.mounted) {
+          if (newStatsMap != null) {
+              final rawStats = newStatsMap;
+              final currentLevel = rawStats['currentLevel'] as int? ?? 1;
+              final currentExp = rawStats['totalExperience'] as int? ?? 0;
+              
+              final oldProgress = context.read<StatsProvider>().progress;
+              if (oldProgress != null) {
+                  final newProgress = oldProgress.copyWith(
+                      level: LevelStats(current: currentLevel, exp: currentExp)
+                  );
+                  context.read<StatsProvider>().setDirectProgress(newProgress);
+              } else {
+                  context.read<StatsProvider>().fetchProgress();
+              }
+          } else {
+              await context.read<StatsProvider>().fetchProgress();
+          }
+
+          context.read<PlanProvider>().fetchMyHistory();
+          context.read<PlanProvider>().computeWeeklyStats();
+          context.read<PlanProvider>().computeMonthlyStats();
+      }
   }
 }

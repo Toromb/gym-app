@@ -110,9 +110,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Perfil actualizado')));
-      setState(() => _isEditing = false);
-      _loadProfile(); // Reload to get fresh data/formatted dates
+      if (mounted) {
+        // Sync with global auth state
+        context.read<AuthProvider>().refreshUser();
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Perfil actualizado')));
+        setState(() => _isEditing = false);
+        _loadProfile(); // Keep local load for safety, though provider has it now
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al actualizar perfil')));
     }
