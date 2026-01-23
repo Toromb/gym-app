@@ -232,10 +232,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           MaterialPageRoute(
                             builder: (context) => const FreeTrainingSelectorScreen()
                           ),
-                      },
-                    ).then((_) {
-                       _refreshDashboardStats();
-                    });
+                        ).then((_) {
+                           _refreshDashboardStats();
+                        });
                       },
                     ),
                     const SizedBox(height: 16),
