@@ -112,6 +112,7 @@ export class MuscleLoadService {
     async getLoadsForStudent(studentId: string): Promise<any> {
         try {
             const targetDate = new Date();
+            targetDate.setHours(0, 0, 0, 0); // Normalize to Midnight to avoid intra-day recovery
             const targetDateIso = targetDate.toISOString().split('T')[0];
 
             this.logger.log(`[DEBUG] getLoadsForStudent: Student=${studentId}, TargetDate=${targetDateIso}`);
@@ -176,28 +177,64 @@ export class MuscleLoadService {
                 const ledgerEvents = await this.ledgerRepo.find({
                     where: {
                         student: { id: studentId },
-                        muscle: { id: muscle.id }, // Make sure muscle entity is passed correctly? id matches.
+                        muscle: { id: muscle.id },
                         date: Between(startStr, targetDateIso),
-                    }
+                    },
+                    order: { date: 'ASC' } // Critical: Process in order
                 });
 
                 if (ledgerEvents.length > 0) {
                     this.logger.log(`[DEBUG] ${muscle.name}: Found ${ledgerEvents.length} events!`);
-                } else if (muscle.name === 'Biceps') {
-                    this.logger.log(`[DEBUG] ${muscle.name}: Found 0 events. Query: student=${studentId}, muscle=${muscle.id}, date=${startStr}-${targetDateIso}`);
                 }
 
-                let sumDelta = 0;
+                // SIMULATION LOGIC:
+                // We must apply recovery between events to avoid massive accumulation from history.
+                // Start simulation from: 'currentLoad' (from state) at 'lastDate' (from state)
+
+                let simLoad = currentLoad;
+                let simDate = lastDate; // This is either 'lastComputedDate' or '2020-01-01'
+
+                // If starting from scratch (no state), ensure we don't carry garbage
+                if (!currentState) {
+                    simLoad = 0;
+                    simDate = new Date('2020-01-01');
+                }
+
                 for (const ev of ledgerEvents) {
-                    sumDelta += ev.deltaLoad;
-                }
-                if (ledgerEvents.length > 0) this.logger.log(`[DEBUG] ${muscle.name}: Sum Delta=${sumDelta}`);
+                    const eventDate = new Date(ev.date); // This is a string YYYY-MM-DD from DB usually, or Date object?
+                    // TypeORM returns Date object for 'date' column type usually, or string if simple.
+                    // Let's ensure it is a Date.
 
-                currentLoad += sumDelta;
-                currentLoad = Math.min(this.MAX_LOAD, Math.max(0, currentLoad));
+                    // Calculate days passed since last simulation point
+                    const diffTime = Math.max(0, eventDate.getTime() - simDate.getTime());
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); // Floor to be safe on same-day
+
+                    if (diffDays > 0) {
+                        const recovery = diffDays * this.RECOVERY_PER_DAY;
+                        simLoad = Math.max(0, simLoad - recovery);
+                    }
+
+                    // Apply Load
+                    simLoad += ev.deltaLoad;
+
+                    // Update simulation pointer
+                    simDate = eventDate;
+                }
+
+                // Final Recovery: From last event (or start) to Target Date
+                const targetDateUtc = new Date(targetDateIso);
+                const finalDiffTime = Math.max(0, targetDateUtc.getTime() - simDate.getTime());
+                const finalDiffDays = Math.ceil(finalDiffTime / (1000 * 60 * 60 * 24));
+
+                if (finalDiffDays > 0) {
+                    const recovery = finalDiffDays * this.RECOVERY_PER_DAY;
+                    simLoad = Math.max(0, simLoad - recovery);
+                }
+
+                currentLoad = Math.min(this.MAX_LOAD, Math.max(0, simLoad));
 
                 if (currentLoad > 0) {
-                    this.logger.log(`[DEBUG] ${muscle.name}: FinalLoad=${currentLoad}`);
+                    this.logger.log(`[DEBUG] ${muscle.name}: FinalLoad=${currentLoad} (Simulated)`);
                 }
 
                 // 6. Update State (Materialize)

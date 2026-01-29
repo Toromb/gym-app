@@ -82,3 +82,14 @@
     - [x] Logic Refinement: TrainingSessionsService body weight fallback
     - [x] Fix: Swap Suggestion Logic (Primary Role Filter)
     - [x] Feature: Config Lastre for Body Weight (Plan & Session)
+
+## Manual Testing Session (Current)
+
+
+- [x] Run Backend Service
+- [x] Run Frontend Service (Chrome)
+- [x] Fix: `MuscleLoadService` incorrect history accumulation
+- [x] Verify: `verify_recovery_logic.ts` script
+- [ ] Verify Application Loads
+
+- [ ] Verify Application Loads

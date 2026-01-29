@@ -54,7 +54,7 @@ class _MuscleFlowScreenState extends State<MuscleFlowScreen> {
     // Main Scaffold handling
     // If embedded (Professor view), we might not want another Scaffold, but keeping for AppBar consistency if pushed.
     return Scaffold(
-      appBar: widget.studentId == null ? null : AppBar(title: const Text('Estado Muscular')),
+      appBar: AppBar(title: const Text('Estado Muscular')),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
@@ -63,27 +63,15 @@ class _MuscleFlowScreenState extends State<MuscleFlowScreen> {
               child: Column(
             crossAxisAlignment: CrossAxisAlignment.start, // Align header left
             children: [
-              // 1. Header
+              // 1. Header (Subtitle only, title is in AppBar)
               if (widget.studentId == null)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Estado Muscular',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Basado en tus entrenamientos recientes',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                  child: Text(
+                    'Basado en tus entrenamientos recientes',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
 
