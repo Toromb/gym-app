@@ -11,6 +11,7 @@ import '../student/muscle_flow/muscle_flow_summary.dart';
 import '../student/muscle_flow/muscle_flow_body.dart';
 import '../student/muscle_flow/muscle_flow_list.dart';
 import '../../widgets/payment_status_badge.dart';
+import '../../services/stats_service.dart';
 
 class UserDetailScreen extends StatefulWidget {
   final User user;
@@ -185,32 +186,34 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 _buildCard(
                   context,
                   title: 'Perfil de Entrenamiento',
-                  child: FutureBuilder<OnboardingProfile?>(
-                    future: OnboardingService(ApiClient()).getUserOnboarding(widget.user.id),
+                  child: FutureBuilder<List<dynamic>>(
+                    future: Future.wait([
+                      OnboardingService(ApiClient()).getUserOnboarding(widget.user.id),
+                      StatsService().getStudentProgress(widget.user.id),
+                    ]),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                          return const Center(child: CircularProgressIndicator());
                       }
                       
-                      final profile = snapshot.data;
-                      
+                      final profile = snapshot.data?[0] as OnboardingProfile?;
+                      final progress = snapshot.data?[1] as UserProgress?;
+
                       // Fallback Strategy
                       // If OnboardingProfile is null, we try to use data from User entity
                       String? backupGoal = widget.user.trainingGoal;
                       
-                      // Determination: Do we have ANY data to show?
-                      // 1. Profile exists
-                      // 2. User has a goal
-                      
-                      if (profile == null && backupGoal == null) {
-                         return const Text('Sin onboarding completo ni datos de objetivo.', style: TextStyle(fontStyle: FontStyle.italic));
+                      if (profile == null && backupGoal == null && progress == null) {
+                         return const Text('Sin datos disponibles.', style: TextStyle(fontStyle: FontStyle.italic));
                       }
                       
                       // Prepare data variables
                       String goal = profile?.goal ?? backupGoal ?? 'No definido';
                       String? goalReason = profile?.goalDetails;
                       String experience = profile != null ? _translateExperience(profile.experience) : 'No definido';
-                      String level = profile != null ? _translateActivity(profile.activityLevel) : 'No definido';
+                      // String level = profile != null ? _translateActivity(profile.activityLevel) : 'No definido'; // OLD
+                      String level = progress != null ? 'Nivel ${progress.level.current}' : 'N/A'; // NEW
+                      
                       String frequency = _translateFrequency(profile?.desiredFrequency) ?? 'No definido';
                       String injuries = profile?.injuries.isNotEmpty == true ? profile!.injuries.join(', ') : 'Ninguna';
                       String? injuryDetails = profile?.injuryDetails;
