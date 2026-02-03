@@ -48,6 +48,9 @@ class User {
   final String? professorId;
   final String? professorName;
 
+  // Visuals
+  final String? profilePictureUrl;
+
   User({
     required this.id,
     required this.email,
@@ -78,6 +81,7 @@ class User {
     this.gym,
     this.professorId,
     this.professorName,
+    this.profilePictureUrl,
   });
 
   String get name => '$firstName $lastName';
@@ -128,6 +132,7 @@ class User {
       gym: json['gym'] != null ? Gym.fromJson(json['gym']) : null,
       professorId: json['professor'] != null ? json['professor']['id'] : null,
       professorName: json['professor'] != null ? "${json['professor']['firstName']} ${json['professor']['lastName']}" : null,
+      profilePictureUrl: json['profilePictureUrl'],
     );
   }
 
@@ -164,6 +169,7 @@ class User {
       gym: gym ?? this.gym,
       professorId: professorId,
       professorName: professorName,
+      profilePictureUrl: profilePictureUrl,
     );
   }
 
@@ -195,6 +201,7 @@ class User {
       'internalNotes': internalNotes,
       'adminNotes': adminNotes,
       'gym': gym?.toJson(),
+      'profilePictureUrl': profilePictureUrl,
     };
   }
 }

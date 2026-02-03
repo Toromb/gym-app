@@ -81,11 +81,16 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
         ),
         body: _isLoading 
             ? const Center(child: CircularProgressIndicator())
-            : TabBarView(
-                children: [
-                  _buildassignmentsList(activeAssignments, true),
-                  _buildassignmentsList(historyAssignments, false),
-                ],
+            : Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 900),
+                  child: TabBarView(
+                    children: [
+                      _buildassignmentsList(activeAssignments, true),
+                      _buildassignmentsList(historyAssignments, false),
+                    ],
+                  ),
+                ),
               ),
       ),
     );

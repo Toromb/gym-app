@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../providers/stats_provider.dart'; // Import StatsProvider
 import '../../models/user_model.dart' as app_models;
 import '../../models/stats_model.dart'; // Import StatsModel
@@ -21,6 +22,7 @@ import 'package:intl/intl.dart';
 
 import 'free_training/free_training_selector_screen.dart';
 import 'profile/profile_progress_screen.dart';
+import '../../widgets/dashboard_payment_button.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -58,18 +60,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     final app_models.User? user = context.watch<AuthProvider>().user;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.get('dashboardTitle')),
-         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthProvider>().logout();
-              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-            },
-          ),
-        ],
-      ),
+
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -262,8 +253,215 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     );
   }
 
+
+
+  Widget _buildGenericInfoCard(BuildContext context, String title, String subtitle, IconData icon, Color color, {VoidCallback? onTap}) {
+     // Use surface container low for "empty state" cards
+     final colorScheme = Theme.of(context).colorScheme;
+     
+     return Card(
+      color: colorScheme.surfaceContainerLow,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Row(
+            children: [
+              Icon(icon, size: 40, color: color),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+                  ],
+                ),
+              ),
+              if (onTap != null) Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(app_models.User? user) {
+    // 1. Calculate Expiration Logic (Preserved)
+    String? expirationFormatted;
+    bool isExpired = false;
+    bool isNearExpiration = false;
+    
+    if (user?.membershipExpirationDate != null) {
+        try {
+            final date = DateTime.parse(user!.membershipExpirationDate!);
+            expirationFormatted = DateFormat('dd/MM', 'es').format(date);
+             final daysLeft = date.difference(DateTime.now()).inDays;
+             if (daysLeft < 0) isExpired = true;
+             else if (daysLeft <= 5) isNearExpiration = true;
+        } catch (_) {}
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch, 
+      children: [
+        // New Header Layout: Avatar Left | Text Middle | Status/Logout Right
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+             // Avatar
+             Container(
+               decoration: BoxDecoration(
+                 shape: BoxShape.circle,
+                 border: Border.all(color: Colors.blueAccent, width: 2),
+               ),
+               child: Builder(
+                 builder: (context) {
+                   final String? profilePic = user?.profilePictureUrl;
+                   final bool hasProfilePic = profilePic != null && profilePic.isNotEmpty;
+                   
+                   return CircleAvatar(
+                     radius: 28,
+                     backgroundColor: Colors.grey[200],
+                     backgroundImage: hasProfilePic
+                      ? NetworkImage(profilePic!.startsWith('http') ? profilePic : 'http://localhost:3001$profilePic')
+                      : null,
+                     child: !hasProfilePic
+                      ? Icon(Icons.person, size: 30, color: Colors.grey[400])
+                      : null,
+                   );
+                 }
+               ),
+             ),
+             const SizedBox(width: 16),
+             
+             // Texts
+             Expanded(
+               child: Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                   Text(
+                     'Panel de Alumno',
+                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                       fontWeight: FontWeight.bold,
+                       color: Theme.of(context).colorScheme.onSurface 
+                     ),
+                   ),
+                   Text(
+                     '¡Hola, ${user?.firstName ?? "Alumno"}!',
+                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                   ),
+                 ],
+               ),
+             ),
+
+             // Logout / Actions
+             Row(
+               children: [
+                 // Theme Toggle
+                 Consumer<ThemeProvider>(
+                   builder: (_, theme, __) {
+                     final isDark = theme.isDarkMode;
+                     return Container(
+                       decoration: BoxDecoration(
+                         color: isDark ? Colors.grey[800] : Colors.grey[100], 
+                         shape: BoxShape.circle,
+                       ),
+                       child: IconButton(
+                         onPressed: () => theme.toggleTheme(!isDark),
+                         icon: Icon(
+                           isDark ? Icons.light_mode : Icons.dark_mode,
+                           color: isDark ? Colors.white : Colors.black87,
+                         ),
+                         tooltip: 'Cambiar Tema',
+                       ),
+                     );
+                   }
+                 ),
+                 const SizedBox(width: 8),
+
+                 // Logout
+                 Builder(
+                   builder: (context) {
+                     final isDark = Theme.of(context).brightness == Brightness.dark;
+                     return Container(
+                       decoration: BoxDecoration(
+                         color: isDark ? Colors.grey[800] : Colors.grey[100],
+                         borderRadius: BorderRadius.circular(12),
+                       ),
+                       child: IconButton(
+                         icon: Icon(Icons.logout, color: isDark ? Colors.white : Colors.black87),
+                         onPressed: () {
+                            context.read<AuthProvider>().logout();
+                            Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                         },
+                         tooltip: 'Cerrar Sesión',
+                       ),
+                     );
+                   }
+                 ),
+               ],
+             )
+          ],
+        ),
+        
+        const SizedBox(height: 24),
+
+        // User Name & Membership Row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+             Expanded(
+               child: Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                   Text(
+                      '${user?.firstName} ${user?.lastName ?? ""}'.trim(),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, fontSize: 22),
+                   ),
+                   const SizedBox(height: 4),
+                   Text(
+                      user?.gym?.businessName ?? 'GYM MEMBER',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Colors.grey,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w600
+                      ),
+                   ),
+                 ],
+               ),
+             ),
+             
+             // Payment Status Badge & Date Group
+             Column(
+               crossAxisAlignment: CrossAxisAlignment.end,
+               children: [
+                  if (expirationFormatted != null)
+                   DashboardPaymentButton(
+                     user: user!,
+                     isExpired: isExpired, 
+                     isNearExpiration: isNearExpiration,
+                     onTap: () => _showPaymentInfo(context, user),
+                   ),
+                 
+                 if (expirationFormatted != null)
+                   Padding(
+                     padding: const EdgeInsets.only(top: 2.0, right: 4.0), // Very small gap
+                     child: Text(
+                       'Vencimiento: $expirationFormatted', 
+                       style: TextStyle(fontSize: 10, color: Colors.grey[500])
+                     )
+                   ),
+               ],
+             )
+      ],
+    ),
+  ],
+);
+  }
+
   Widget _buildNextWorkoutCard(BuildContext context, PlanProvider provider) {
-    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     if (provider.isLoading) {
@@ -275,43 +473,24 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       );
     }
 
-    // Logic to determine state
     final next = provider.nextWorkout;
-    // Map: { 'week': PlanWeek, 'day': PlanDay, 'assignment': StudentAssignment } OR { 'finished': true } OR null
+    // ... (Keep existing empty/finished checks if needed, simplistic view here assumes functionality is key)
 
     if (next == null) {
-      // No assignments
-      if (provider.assignments.isEmpty) {
-        return _buildGenericInfoCard(
-          context, 
-          'Sin plan asignado', 
-          'Consultá con tu profesor para comenzar.',
-          Icons.info_outline,
-          colorScheme.secondary
-        );
-      }
-      // Assignments exist but activeAssignment logic failed (e.g. none active?)
-      // Or user explicitly reset. Suggest picking one.
-      return _buildGenericInfoCard(
-          context,
-          'Seleccioná un plan',
-          'Tenés planes disponibles. Tocá acá para elegir cuál iniciar.',
-          Icons.touch_app,
-          colorScheme.tertiary,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const StudentPlansListScreen()),
-            ).then((_) => context.read<PlanProvider>().fetchMyHistory());
-          }
-      );
+       // ... (Keep existing Empty State logic)
+       if (provider.assignments.isEmpty) {
+        return _buildGenericInfoCard(context, 'Sin plan asignado', 'Consultá con tu profesor.', Icons.info_outline, Colors.grey);
+       }
+       return _buildGenericInfoCard(context, 'Seleccioná un plan', 'Tocá para elegir.', Icons.touch_app, Colors.blue, onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const StudentPlansListScreen())).then((_) => context.read<PlanProvider>().fetchMyHistory());
+       });
     }
 
     if (next['finished'] == true) {
        final assignment = next['assignment'] as StudentAssignment?;
        
        return Card(
-        color: colorScheme.surfaceContainerHighest,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -319,15 +498,15 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             children: [
               Row(
                 children: [
-                   Icon(Icons.emoji_events, color: colorScheme.primary, size: 40),
+                   Icon(Icons.emoji_events, color: Theme.of(context).colorScheme.primary, size: 40),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Text('¡Plan Completado!', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.primary)),
+                    child: Text('¡Plan Completado!', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              Text('Felicitaciones. Has completado todos los entrenamientos de este plan.', style: textTheme.bodyMedium),
+              Text('Felicitaciones. Has completado todos los entrenamientos de este plan.', style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
@@ -367,19 +546,15 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       );
     }
 
-    // We have a next workout
+    // Active Workout
     final week = next['week'] as PlanWeek;
     final day = next['day'] as PlanDay; 
     final assignment = next['assignment'] as StudentAssignment; 
-    final planId = assignment.plan.id!; // Force unwrap as plan must have ID
+    final planId = assignment.plan.id!;
 
-    return Card(
-      color: colorScheme.primary, // Hero color
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: () async {
-          // Navigate to DayDetail
+    return InkWell(
+      onTap: () async {
+          // SAME LOGIC
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
@@ -390,231 +565,155 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               )
             ),
           );
-
-          if (!mounted) return;
-          if (result == true) {
-             _refreshDashboardStats();
-          }
-        },
-        borderRadius: BorderRadius.circular(16),
+          if (mounted && result == true) _refreshDashboardStats();
+      },
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF5B8C98), // Muted Teal/Blue
+              Color(0xFF3A6B78), // Darker Shade
+            ],
+          ),
+          boxShadow: [
+             BoxShadow(color: const Color(0xFF5B8C98).withOpacity(0.6), blurRadius: 16, offset: const Offset(0, 8))
+          ]
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(20.0), // Reduced from 24
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: colorScheme.onPrimary.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text('PRÓXIMO ENTRENAMIENTO', style: textTheme.labelSmall?.copyWith(color: colorScheme.onPrimary, fontWeight: FontWeight.bold)),
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('PRÓXIMO ENTRENAMIENTO', style: textTheme.labelSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16), // Reduced from 24
               Text(
                 (day.title ?? 'Día ${day.dayOfWeek}').replaceAll('Day', 'Día'),
-                style: textTheme.displaySmall?.copyWith(color: colorScheme.onPrimary, fontWeight: FontWeight.w800, fontSize: 28),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${assignment.plan.name} • Semana ${week.weekNumber}',
-                style: textTheme.bodyLarge?.copyWith(color: colorScheme.onPrimary.withValues(alpha: 0.9)),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                   Text(
-                     'Comenzar entrenamiento', 
-                     style: textTheme.titleMedium?.copyWith(
-                       color: colorScheme.onPrimary, 
-                       fontWeight: FontWeight.bold
-                     )
-                   ),
-                   const SizedBox(width: 8),
-                   Icon(Icons.arrow_forward, color: colorScheme.onPrimary),
-                ],
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGenericInfoCard(BuildContext context, String title, String subtitle, IconData icon, Color color, {VoidCallback? onTap}) {
-     // Use surface container low for "empty state" cards
-     final colorScheme = Theme.of(context).colorScheme;
-     
-     return Card(
-      color: colorScheme.surfaceContainerLow,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Row(
-            children: [
-              Icon(icon, size: 40, color: color),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
-                  ],
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 32 // Reduced from 36
                 ),
               ),
-              if (onTap != null) Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.onSurfaceVariant),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(app_models.User? user) {
-    final welcomeMessage = user?.gym?.welcomeMessage;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    // Format expiration date if available
-    String? expirationFormatted;
-    if (user?.membershipExpirationDate != null) {
-        try {
-            final date = DateTime.parse(user!.membershipExpirationDate!);
-            expirationFormatted = DateFormat('dd/MM', 'es').format(date);
-        } catch (_) {}
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch, 
-      children: [
-        // 1. Header Row: Name/Stats & Gym Info
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start, 
-          children: [
-             // Left: User Name & Status
-             Expanded(
-               child: Column(
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                    Text(
-                      '${user?.firstName} ${user?.lastName ?? ""} (Alumno)'.trim(),
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-                    PaymentStatusBadge(
-                      status: user?.paymentStatus, 
-                      isEditable: false,
-                      expirationDate: expirationFormatted, // Logic for date
-                    ),
-                 ],
-               ),
-             ),
-             
-             // Right: Gym Logo/Info (Less Visual Weight)
-             if (user?.gym != null)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                    if (user!.gym!.logoUrl != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                            user.gym!.logoUrl!.startsWith('http') 
-                                ? user.gym!.logoUrl! 
-                                : 'http://localhost:3001${user.gym!.logoUrl}',
-                            height: 55, // Increased to 55px as requested
-                            width: 55,
-                            fit: BoxFit.contain,
-                            errorBuilder: (c,e,s) => const Icon(Icons.fitness_center, color: Colors.grey),
-                         ),
-                      ),
-                     const SizedBox(height: 8),
-                     Text(
-                       user.gym!.businessName,
-                       style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey[700]),
-                       textAlign: TextAlign.end,
-                     ),
-                ],
-              )
-          ],
-        ),
-        
-        // 2. Admin Message (Reduced Weight)
-        if (welcomeMessage != null && welcomeMessage.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              const SizedBox(height: 4),
+              Text(
+                'Inicio • Semana ${week.weekNumber}', 
+                style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14), // Reduced from 16
+              ),
+              const SizedBox(height: 24), // Reduced from 32
+              
+              // Button Look-alike
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16), // Reduced vertical to 8
                 decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerLow, // Neutral background
-                    borderRadius: BorderRadius.circular(12),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.info_outline, size: 20, color: Colors.grey[600]),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                          welcomeMessage,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
+                    Text(
+                      'Comenzar entrenamiento',
+                      style: TextStyle(
+                        color: const Color(0xFF2d5acc), // Blue Text
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16 // Restored to 16
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_rounded, color: Color(0xFF2d5acc), size: 20)
                   ],
                 ),
-            ),
-        ],
-      ],
+              )
+            ],
+          ),
+        ),
+      ),
     );
   }
-
-
+ 
   Widget _buildDashboardCard(BuildContext context,
       {required String title, String? subtitle, Widget? subtitleWidget, required IconData icon, required VoidCallback onTap}) {
     
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, size: 32, color: colorScheme.onPrimaryContainer),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+    return Container(
+      decoration: BoxDecoration(
+         color: isDark ? colorScheme.surfaceContainer : Colors.white, // Dark mode aware
+         borderRadius: BorderRadius.circular(20),
+         border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade100),
+         boxShadow: [
+           BoxShadow(
+             color: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.1), 
+             blurRadius: 15, 
+             offset: const Offset(0, 5)
+           )
+         ]
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                 Row(
+                   children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0E7FF), // Light Purple/Blue background
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(icon, size: 24, color: const Color(0xFF4338ca)), // Darker Purple/Blue Icon
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          title, 
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold, 
+                            fontSize: 16, 
+                            color: colorScheme.onSurface // Theme aware text
+                          )
+                        ),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 18, color: isDark ? Colors.grey[600] : Colors.grey[300]),
+                   ],
+                 ),
+                 
+                 // Content below icon (for Progress Bar or Subtitle)
+                 if (subtitleWidget != null || subtitle != null) ...[
+                    const SizedBox(height: 12),
                     if (subtitleWidget != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: subtitleWidget,
-                      )
-                    else if (subtitle != null)
-                      Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
-                  ],
-                ),
-              ),
-              Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.outline),
-            ],
+                      subtitleWidget
+                    else 
+                      Text(
+                        subtitle!, 
+                        style: TextStyle(
+                          color: isDark ? Colors.grey[400] : Colors.grey[500], 
+                          fontSize: 14
+                        )
+                      ),
+                 ]
+              ],
+            ),
           ),
         ),
       ),
@@ -705,5 +804,51 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           context.read<PlanProvider>().computeWeeklyStats();
           context.read<PlanProvider>().computeMonthlyStats();
       }
+  }
+  void _showPaymentInfo(BuildContext context, app_models.User? user) {
+    if (user?.gym == null) return;
+    
+    final gym = user!.gym!;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.payment, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 12),
+            const Text('Datos de Pago'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Para renovar tu cuota, podés transferir a:', style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: 16),
+            if (gym.paymentBankName != null && gym.paymentBankName!.isNotEmpty)
+              _infoRow(Icons.account_balance, 'Banco: ${gym.paymentBankName}'),
+            if (gym.paymentAlias != null && gym.paymentAlias!.isNotEmpty)
+              _infoRow(Icons.link, 'Alias: ${gym.paymentAlias}'),
+             if (gym.paymentCbu != null && gym.paymentCbu!.isNotEmpty)
+              _infoRow(Icons.numbers, 'CBU: ${gym.paymentCbu}'),
+             if (gym.paymentAccountName != null && gym.paymentAccountName!.isNotEmpty)
+              _infoRow(Icons.person, 'Titular: ${gym.paymentAccountName}'),
+              
+             if (gym.paymentNotes != null && gym.paymentNotes!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+                  child: Text(gym.paymentNotes!, style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
+                )
+             ]
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
+        ],
+      ),
+    );
   }
 }

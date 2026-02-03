@@ -60,59 +60,64 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
             );
           }
           
-          return Column(
-            children: [
-              _buildSearch(),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: students.length,
-                  itemBuilder: (context, index) {
-                    final student = students[index];
-                    
-                    return StudentCardItem(
-                      student: student,
-                      onDelete: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Eliminar Alumno'),
-                            content: Text('¿Estás seguro de que quieres eliminar a ${student.name}?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancelar'),
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Column(
+                children: [
+                  _buildSearch(),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: students.length,
+                      itemBuilder: (context, index) {
+                        final student = students[index];
+                        
+                        return StudentCardItem(
+                          student: student,
+                          onDelete: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Eliminar Alumno'),
+                                content: Text('¿Estás seguro de que quieres eliminar a ${student.name}?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Cancelar'),
+                                  ),
+                                  FilledButton(
+                                    style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: const Text('Eliminar'),
+                                  ),
+                                ],
                               ),
-                              FilledButton(
-                                style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Eliminar'),
-                              ),
-                            ],
-                          ),
-                        );
+                            );
 
-                        if (confirm == true && context.mounted) {
-                          // ignore: use_build_context_synchronously
-                          final error = await context.read<UserProvider>().deleteUser(student.id);
-                          if (context.mounted) {
-                            if (error == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Usuario eliminado')),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(error), backgroundColor: colorScheme.error),
-                              );
+                            if (confirm == true && context.mounted) {
+                              // ignore: use_build_context_synchronously
+                              final error = await context.read<UserProvider>().deleteUser(student.id);
+                              if (context.mounted) {
+                                if (error == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Usuario eliminado')),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(error), backgroundColor: colorScheme.error),
+                                  );
+                                }
+                              }
                             }
-                          }
-                        }
+                          },
+                        );
                       },
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           );
         },
       ),
