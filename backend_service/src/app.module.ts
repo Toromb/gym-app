@@ -34,7 +34,7 @@ import { StatsModule } from './stats/stats.module';
       limit: 100,
     }]),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
+      rootPath: join(__dirname, '..', '..', 'uploads'), // Go up from dist/src to root
       serveRoot: '/uploads',
     }),
     TypeOrmModule.forRootAsync({

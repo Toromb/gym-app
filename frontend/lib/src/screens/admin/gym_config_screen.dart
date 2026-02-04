@@ -5,7 +5,9 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/gyms_provider.dart';
+import '../../providers/gyms_provider.dart';
 import '../../models/gym_model.dart';
+import '../../utils/constants.dart'; // Import constants
 
 class GymConfigScreen extends StatefulWidget {
   const GymConfigScreen({super.key});
@@ -171,15 +173,7 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
       }
   }
   
-  String _resolveLogoUrl(String relativeUrl) {
-      if (relativeUrl.startsWith('http')) return relativeUrl;
-      
-      if (kIsWeb) {
-          if (kReleaseMode) return relativeUrl; 
-          return 'http://localhost:3001$relativeUrl'; 
-      }
-      return 'http://10.0.2.2:3001$relativeUrl'; 
-  }
+
 
 
 
@@ -194,7 +188,7 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
     
     String? logoDisplayUrl;
     if (_currentGym!.logoUrl != null) {
-        logoDisplayUrl = _resolveLogoUrl(_currentGym!.logoUrl!);
+        logoDisplayUrl = resolveImageUrl(_currentGym!.logoUrl!);
     }
 
     return Scaffold(

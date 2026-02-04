@@ -23,6 +23,7 @@ import 'package:intl/intl.dart';
 import 'free_training/free_training_selector_screen.dart';
 import 'profile/profile_progress_screen.dart';
 import '../../widgets/dashboard_payment_button.dart';
+import '../../utils/constants.dart'; // Import constants
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -37,20 +38,22 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // 2. Load Dashboard Data (Only if onboarded)
-      // Since we are here, we are onboarded (guaranteed by HomeScreen)
-      final provider = context.read<PlanProvider>();
-      provider.fetchMyHistory();
-      provider.computeWeeklyStats();
-      provider.computeMonthlyStats();
-      
-      context.read<GymScheduleProvider>().fetchSchedule();
-      
-      // Fetch Progress for Level Summary
-      // Fetch Progress for Level Summary
-      context.read<StatsProvider>().fetchProgress().catchError((e) {
-         debugPrint('StudentHomeScreen - fetchProgress FAILED: $e');
-      });
+       // Refresh user to get latest Gym Logo
+       await context.read<AuthProvider>().refreshUser();
+
+       if (!mounted) return;
+
+       // Load Dashboard Data
+       final planProvider = context.read<PlanProvider>();
+       planProvider.fetchMyHistory();
+       planProvider.computeWeeklyStats();
+       planProvider.computeMonthlyStats();
+       
+       context.read<GymScheduleProvider>().fetchSchedule();
+       
+       context.read<StatsProvider>().fetchProgress().catchError((e) {
+          debugPrint('StudentHomeScreen - fetchProgress FAILED: $e');
+       });
     });
   }
 
@@ -325,7 +328,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                      radius: 28,
                      backgroundColor: Colors.grey[200],
                      backgroundImage: hasProfilePic
-                      ? NetworkImage(profilePic!.startsWith('http') ? profilePic : 'http://localhost:3001$profilePic')
+                      ? NetworkImage(resolveImageUrl(profilePic))
                       : null,
                      child: !hasProfilePic
                       ? Icon(Icons.person, size: 30, color: Colors.grey[400])
@@ -416,11 +419,22 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                child: Column(
                  crossAxisAlignment: CrossAxisAlignment.start,
                  children: [
-                   Text(
-                      '${user?.firstName} ${user?.lastName ?? ""}'.trim(),
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, fontSize: 22),
-                   ),
-                   const SizedBox(height: 4),
+                   if (user?.gym?.logoUrl != null && user!.gym!.logoUrl!.isNotEmpty)
+                       Padding(
+                         padding: const EdgeInsets.only(bottom: 6.0),
+                         child: ConstrainedBox(
+                           constraints: const BoxConstraints(maxHeight: 60, maxWidth: 200), // Increased size
+                           // child: Image.network(
+                           //   resolveImageUrl(user!.gym!.logoUrl),
+                           child: Image.network(
+                             resolveImageUrl(user!.gym!.logoUrl),
+                             fit: BoxFit.contain,
+                             alignment: Alignment.centerLeft,
+                             errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                           ),
+                         ),
+                       ),
+
                    Text(
                       user?.gym?.businessName ?? 'GYM MEMBER',
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(

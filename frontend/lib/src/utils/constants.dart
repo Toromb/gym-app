@@ -10,7 +10,7 @@ String get baseUrl {
 
   if (kIsWeb) {
     if (kDebugMode) {
-      return 'http://127.0.0.1:3001';
+      return 'http://localhost:3001';
     }
     // Use the current window origin to ensure absolute URL
     // This avoids issues with relative URIs in some HTTP clients
@@ -27,4 +27,21 @@ String get baseUrl {
       return 'http://10.0.2.2:3001'; // Changed default to 3001 to match backend
   }
   return 'http://localhost:3001';
+}
+
+String resolveImageUrl(String? relativeUrl) {
+  if (relativeUrl == null || relativeUrl.isEmpty) return '';
+  if (relativeUrl.startsWith('http')) return relativeUrl;
+  
+  String base = baseUrl;
+  // If baseUrl ends with /api, remove it to get the root domain where images are served
+  if (base.endsWith('/api')) {
+      base = base.substring(0, base.length - 4);
+  }
+  
+  // Clean up slashes
+  if (base.endsWith('/')) base = base.substring(0, base.length - 1);
+  if (relativeUrl.startsWith('/')) relativeUrl = relativeUrl.substring(1);
+
+  return '$base/$relativeUrl';
 }
