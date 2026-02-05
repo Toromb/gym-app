@@ -36,6 +36,15 @@ export class AuthController {
     return this.authService.login(user);
   }
 
+  @Post('google')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async googleLogin(@Body() body: { idToken: string; gymId?: string }) {
+    if (!body.idToken) {
+      throw new UnauthorizedException('ID Token requerido');
+    }
+    return this.authService.loginWithGoogle(body.idToken, body.gymId);
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Post('logout')
   async logout(@Request() req: any) {

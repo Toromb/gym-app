@@ -1,19 +1,97 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger, BadRequestException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { instanceToPlain } from 'class-transformer';
+import { OAuth2Client } from 'google-auth-library';
+import { GymsService } from '../gyms/gyms.service';
+import { UserRole } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID!);
 
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private gymsService: GymsService,
   ) { }
+
+  async loginWithGoogle(idToken: string, gymId?: string) {
+    let payload;
+    try {
+      const ticket = await this.googleClient.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID!,
+      });
+      payload = ticket.getPayload();
+    } catch (error) {
+      this.logger.error(`Google Token Validation Failed: ${error.message}`);
+      throw new UnauthorizedException('Token de Google inválido');
+    }
+
+    if (!payload) throw new UnauthorizedException('Token de Google inválido');
+    const { email, sub: providerUserId, name, picture } = payload;
+
+    if (!email || !providerUserId) {
+      throw new UnauthorizedException('Token de Google incompleto (falta email o sub)');
+    }
+
+    // 1. Try to find user
+    let user = await this.usersService.findOneByEmail(email);
+    if (!user) {
+      user = await this.usersService.findOneByProviderUserId(providerUserId);
+    }
+
+    if (user) {
+      // LOGIN EXISTING USER
+      // Link account silently if needed
+      const updates: any = {};
+      if (!user.providerUserId) updates.providerUserId = providerUserId;
+      if (!user.profileImageUrl && picture) updates.profileImageUrl = picture;
+      // Optional: Update provider to GOOGLE if it was LOCAL? 
+      // Let's assume we allow hybrid, but we mark them if they logged with Google.
+      if (user.provider === 'LOCAL') updates.provider = 'GOOGLE';
+
+      if (Object.keys(updates).length > 0) {
+        await this.usersService.updateTokens(user.id, updates);
+      }
+    } else {
+      // REGISTER NEW USER
+      // Strict Check: Must have Gym ID
+      if (!gymId) {
+        throw new BadRequestException('El usuario no pertenece a ningún gimnasio. Solicite un enlace o QR de invitación a su gimnasio.');
+      }
+
+      const gym = await this.gymsService.findOne(gymId);
+      if (!gym) throw new BadRequestException('Gimnasio inválido o no encontrado.');
+
+      const names = name ? name.split(' ') : ['Usuario', 'Google'];
+      const firstName = names[0];
+      const lastName = names.slice(1).join(' ') || '';
+
+      const createUserDto: CreateUserDto = {
+        email,
+        firstName,
+        lastName,
+        gymId, // Important
+        provider: 'GOOGLE',
+        providerUserId,
+        profileImageUrl: picture,
+        role: UserRole.ALUMNO,
+        isActive: true,
+        paysMembership: true,
+      };
+
+      user = await this.usersService.create(createUserDto);
+      this.logger.log(`Created new Google user: ${email} for Gym ${gym.businessName}`);
+    }
+
+    return this.login(user);
+  }
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findOneByEmail(email);

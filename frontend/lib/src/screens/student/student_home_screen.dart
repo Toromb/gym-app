@@ -853,8 +853,20 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
-                  child: Text(gym.paymentNotes!, style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark 
+                        ? Colors.grey[800] 
+                        : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    gym.paymentNotes!, 
+                    style: TextStyle(
+                      fontSize: 12, 
+                      fontStyle: FontStyle.italic,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                    ),
+                  ),
                 )
              ]
           ],

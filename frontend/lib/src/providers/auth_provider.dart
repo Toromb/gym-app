@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import '../services/onboarding_service.dart';
 import '../services/user_service.dart';
 import '../services/api_client.dart';
+import '../services/google_auth_service.dart';
 
 enum AuthStatus { unknown, unauthenticated, authenticated, loading }
 
@@ -16,6 +17,7 @@ class AuthProvider with ChangeNotifier {
   String? _token;
   User? _user;
   final AuthService _authService = AuthService();
+  final GoogleAuthService _googleAuthService = GoogleAuthService();
   // We use ApiClient singleton here
   final OnboardingService _onboardingService = OnboardingService(ApiClient());
   final UserService _userService = UserService();
@@ -37,9 +39,35 @@ class AuthProvider with ChangeNotifier {
 
   Future<String?> login(String email, String password) async {
     final result = await _authService.login(email, password);
-    
+    return _handleAuthResult(result);
+  }
+
+  Future<String?> loginWithGoogle() async {
+    try {
+      // 1. Native Google Sign-In
+      final googleUser = await _googleAuthService.signIn();
+      if (googleUser == null) return 'Inicio de sesión cancelado';
+
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+          return 'Error: No se pudo obtener el ID Token de Google';
+      }
+
+      // 2. Backend Validation & Login
+      final result = await _authService.loginWithGoogle(idToken);
+      
+      // 3. Handle Result (Success or Error Message)
+      return _handleAuthResult(result);
+
+    } catch (e) {
+      return 'Error iniciando sesión con Google: $e';
+    }
+  }
+
+  Future<String?> _handleAuthResult(dynamic result) async {
     if (result is Map<String, dynamic>) {
-      // print('AuthProvider login result: $result'); // Debug log
       _token = result['access_token'];
       if (result['user'] != null) {
         _user = User.fromJson(result['user']);
@@ -69,8 +97,6 @@ class AuthProvider with ChangeNotifier {
 
     try {
       // Validate token by fetching profile
-      // Note: We need to set the token in ApiClient or ensure UserService uses it. 
-      // ApiClient reads generically from storage so it should be fine as AuthService saved it there.
       final user = await _userService.getProfile();
       if (user != null) {
         _token = token;
@@ -96,11 +122,13 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> logout() async {
     await _authService.logout();
+    await _googleAuthService.signOut(); // Ensure Google session is also cleared
     _isAuthenticated = false;
     _token = null;
     _user = null;
     notifyListeners();
   }
+  
   Future<void> changePassword(String currentPassword, String newPassword) async {
     await _authService.changePassword(currentPassword, newPassword);
   }
@@ -114,11 +142,8 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> checkOnboardingStatus() async {
       if (_user == null) return;
-      // Only students need onboarding check? Or everyone?
-      // Requirement: "Student begins session for first time".
       if (_user!.role == 'alumno') {
           _isOnboarded = await _onboardingService.getMyStatus();
-          // print('AuthProvider: Onboarding status for ${_user!.email}: $_isOnboarded');
           notifyListeners();
       } else {
           _isOnboarded = true; // Teachers/Admins don't need onboarding

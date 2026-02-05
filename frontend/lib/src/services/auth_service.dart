@@ -58,6 +58,35 @@ class AuthService {
     }
   }
 
+  Future<dynamic> loginWithGoogle(String idToken, [String? gymId]) async {
+    try {
+      final response = await _api.post('/auth/google', {
+          'idToken': idToken, 
+          if (gymId != null) 'gymId': gymId,
+      });
+
+      if (response == null || response is! Map) {
+         return 'Invalid response from server';
+      }
+
+      final token = response['access_token'];
+      if (token == null) {
+          return 'No access token in response';
+      }
+      
+      await _saveToken(token);
+      return response;
+    } on BadRequestException catch (e) { 
+        return e.message; // e.g. "El usuario no pertenece a ningún gimnasio..."
+    } on UnauthorizedException {
+      return 'Session expired or invalid token';
+    } on ApiException catch (e) {
+       return e.message;
+    } catch (e) {
+      return 'Error: $e';
+    }
+  }
+
   Future<void> logout() async {
     await _deleteToken();
   }

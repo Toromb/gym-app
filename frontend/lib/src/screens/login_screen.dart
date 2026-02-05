@@ -258,6 +258,38 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       
                       const SizedBox(height: 24),
+                      
+                      // Divider
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: Colors.grey[400])),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text('O continuar con', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                          ),
+                          Expanded(child: Divider(color: Colors.grey[400])),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Google Login Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: OutlinedButton.icon(
+                          onPressed: _performGoogleLogin,
+                          icon: Image.asset('assets/images/google_logo.png', height: 24, errorBuilder: (c,e,s) => const Icon(Icons.login)), // Fallback icon
+                          label: const Text('Continuar con Google', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.black87,
+                            side: BorderSide(color: Colors.grey.shade300),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            backgroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -318,6 +350,38 @@ class _LoginScreenState extends State<LoginScreen> {
             SnackBar(
               content: Text(displayMsg),
               backgroundColor: Colors.red,
+            ),
+          );
+      }
+  }
+
+  Future<void> _performGoogleLogin() async {
+      setState(() => _isLoading = true);
+      
+      // Trigger Google Login
+      final errorMsg = await context.read<AuthProvider>().loginWithGoogle();
+      
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (errorMsg == null) {
+        // Success
+        context.read<UserProvider>().clear();
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false
+        );
+      } else {
+          // Error (e.g. Canceled, No Gym, etc)
+          // If canceled, maybe don't show snackbar? 
+          if (errorMsg == 'Google Sign-In canceled') return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMsg), // Backend message (e.g. "El usuario no pertenece a ningún gimnasio")
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(label: 'OK', onPressed: () {}, textColor: Colors.white),
             ),
           );
       }
