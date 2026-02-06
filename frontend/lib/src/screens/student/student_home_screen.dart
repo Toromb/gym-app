@@ -23,7 +23,8 @@ import 'package:intl/intl.dart';
 import 'free_training/free_training_selector_screen.dart';
 import 'profile/profile_progress_screen.dart';
 import '../../widgets/dashboard_payment_button.dart';
-import '../../utils/constants.dart'; // Import constants
+import '../../utils/constants.dart';
+import '../../widgets/dashboard_header.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -75,7 +76,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                     _buildHeader(user),
+                     GymDashboardHeader(user: user),
+
                     const SizedBox(height: 24),
 
                     // PROGRESS SUMMARY (Simple Text)
@@ -290,190 +292,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     );
   }
 
-  Widget _buildHeader(app_models.User? user) {
-    // 1. Calculate Expiration Logic (Preserved)
-    String? expirationFormatted;
-    bool isExpired = false;
-    bool isNearExpiration = false;
-    
-    if (user?.membershipExpirationDate != null) {
-        try {
-            final date = DateTime.parse(user!.membershipExpirationDate!);
-            expirationFormatted = DateFormat('dd/MM', 'es').format(date);
-             final daysLeft = date.difference(DateTime.now()).inDays;
-             if (daysLeft < 0) isExpired = true;
-             else if (daysLeft <= 5) isNearExpiration = true;
-        } catch (_) {}
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch, 
-      children: [
-        // New Header Layout: Avatar Left | Text Middle | Status/Logout Right
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-             // Avatar
-             Container(
-               decoration: BoxDecoration(
-                 shape: BoxShape.circle,
-                 border: Border.all(color: Colors.blueAccent, width: 2),
-               ),
-               child: Builder(
-                 builder: (context) {
-                   final String? profilePic = user?.profilePictureUrl;
-                   final bool hasProfilePic = profilePic != null && profilePic.isNotEmpty;
-                   
-                   return CircleAvatar(
-                     radius: 28,
-                     backgroundColor: Colors.grey[200],
-                     backgroundImage: hasProfilePic
-                      ? NetworkImage(resolveImageUrl(profilePic))
-                      : null,
-                     child: !hasProfilePic
-                      ? Icon(Icons.person, size: 30, color: Colors.grey[400])
-                      : null,
-                   );
-                 }
-               ),
-             ),
-             const SizedBox(width: 16),
-             
-             // Texts
-             Expanded(
-               child: Column(
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                   Text(
-                     'Panel de Alumno',
-                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                       fontWeight: FontWeight.bold,
-                       color: Theme.of(context).colorScheme.onSurface 
-                     ),
-                   ),
-                   Text(
-                     '¡Hola, ${user?.firstName ?? "Alumno"}!',
-                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-                   ),
-                 ],
-               ),
-             ),
-
-             // Logout / Actions
-             Row(
-               children: [
-                 // Theme Toggle
-                 Consumer<ThemeProvider>(
-                   builder: (_, theme, __) {
-                     final isDark = theme.isDarkMode;
-                     return Container(
-                       decoration: BoxDecoration(
-                         color: isDark ? Colors.grey[800] : Colors.grey[100], 
-                         shape: BoxShape.circle,
-                       ),
-                       child: IconButton(
-                         onPressed: () => theme.toggleTheme(!isDark),
-                         icon: Icon(
-                           isDark ? Icons.light_mode : Icons.dark_mode,
-                           color: isDark ? Colors.white : Colors.black87,
-                         ),
-                         tooltip: 'Cambiar Tema',
-                       ),
-                     );
-                   }
-                 ),
-                 const SizedBox(width: 8),
-
-                 // Logout
-                 Builder(
-                   builder: (context) {
-                     final isDark = Theme.of(context).brightness == Brightness.dark;
-                     return Container(
-                       decoration: BoxDecoration(
-                         color: isDark ? Colors.grey[800] : Colors.grey[100],
-                         borderRadius: BorderRadius.circular(12),
-                       ),
-                       child: IconButton(
-                         icon: Icon(Icons.logout, color: isDark ? Colors.white : Colors.black87),
-                         onPressed: () {
-                            context.read<AuthProvider>().logout();
-                            Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-                         },
-                         tooltip: 'Cerrar Sesión',
-                       ),
-                     );
-                   }
-                 ),
-               ],
-             )
-          ],
-        ),
-        
-        const SizedBox(height: 24),
-
-        // User Name & Membership Row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-             Expanded(
-               child: Column(
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                   if (user?.gym?.logoUrl != null && user!.gym!.logoUrl!.isNotEmpty)
-                       Padding(
-                         padding: const EdgeInsets.only(bottom: 6.0),
-                         child: ConstrainedBox(
-                           constraints: const BoxConstraints(maxHeight: 60, maxWidth: 200), // Increased size
-                           // child: Image.network(
-                           //   resolveImageUrl(user!.gym!.logoUrl),
-                           child: Image.network(
-                             resolveImageUrl(user!.gym!.logoUrl),
-                             fit: BoxFit.contain,
-                             alignment: Alignment.centerLeft,
-                             errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-                           ),
-                         ),
-                       ),
-
-                   Text(
-                      user?.gym?.businessName ?? 'GYM MEMBER',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Colors.grey,
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w600
-                      ),
-                   ),
-                 ],
-               ),
-             ),
-             
-             // Payment Status Badge & Date Group
-             Column(
-               crossAxisAlignment: CrossAxisAlignment.end,
-               children: [
-                  if (expirationFormatted != null)
-                   DashboardPaymentButton(
-                     user: user!,
-                     isExpired: isExpired, 
-                     isNearExpiration: isNearExpiration,
-                     onTap: () => _showPaymentInfo(context, user),
-                   ),
-                 
-                 if (expirationFormatted != null)
-                   Padding(
-                     padding: const EdgeInsets.only(top: 2.0, right: 4.0), // Very small gap
-                     child: Text(
-                       'Vencimiento: $expirationFormatted', 
-                       style: TextStyle(fontSize: 10, color: Colors.grey[500])
-                     )
-                   ),
-               ],
-             )
-      ],
-    ),
-  ],
-);
-  }
+// _buildHeader removed (logic moved to DashboardHeader widget)
 
   Widget _buildNextWorkoutCard(BuildContext context, PlanProvider provider) {
     final textTheme = Theme.of(context).textTheme;

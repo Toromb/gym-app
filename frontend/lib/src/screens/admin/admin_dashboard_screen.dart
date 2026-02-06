@@ -11,6 +11,7 @@ import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
 import 'manage_equipments_screen.dart';
 import 'free_training/manage_free_trainings_screen.dart';
+import '../../widgets/dashboard_header.dart'; // Add import
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -35,94 +36,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Panel de Administración'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthProvider>().logout();
-              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: SingleChildScrollView(
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                  // Header Section
-                 Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                       // User Info - Flex 3
-                       Expanded(
-                          flex: 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                                 Text(
-                                   'Bienvenido,', 
-                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: Colors.grey)
-                                 ),
-                                 Text(
-                                   user?.firstName ?? 'Admin',
-                                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                                 ),
-                            ],
-                          ),
-                       ),
-      
-                       // Logo (Center) - Flex 2
-                       Expanded(
-                         flex: 2,
-                         child: Center(
-                           child: user?.gym?.logoUrl != null
-                               ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                          user!.gym!.logoUrl!.startsWith('http') 
-                                              ? user.gym!.logoUrl! 
-                                              : 'http://localhost:3001${user.gym!.logoUrl}',
-                                          height: 80, 
-                                          fit: BoxFit.contain,
-                                          errorBuilder: (c,e,s) => const SizedBox.shrink(),
-                                       ),
-                                 )
-                               : const SizedBox.shrink(),
-                         ),
-                       ),
-      
-                       // Gym Info (Right) - Flex 3
-                       Expanded(
-                          flex: 3,
-                          child: user?.gym != null 
-                            ? Container(
-                             margin: const EdgeInsets.only(left: 4),
-                             child: Column(
-                               crossAxisAlignment: CrossAxisAlignment.end,
-                               children: [
-                                   Text(
-                                       user!.gym!.businessName, 
-                                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colorScheme.primary), 
-                                       textAlign: TextAlign.end,
-                                       overflow: TextOverflow.ellipsis,
-                                       maxLines: 2,
-                                   ),
-                                   const SizedBox(height: 2),
-                                   if (user.gym!.address.isNotEmpty)
-                                       Text(user.gym!.address, style: TextStyle(fontSize: 11, color: colorScheme.secondary), textAlign: TextAlign.end), 
-                               ],
-                             ),
-                          )
-                          : const SizedBox.shrink()
-                       )
-                    ],
-                 ),
+                 GymDashboardHeader(user: user, showPaymentStatus: false),
                 const SizedBox(height: 32),
                 
                 _buildDashboardCard(
@@ -233,7 +157,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ],
             ),
           ),
-        ),
+      ),
+      ),
       ),
     );
   }
