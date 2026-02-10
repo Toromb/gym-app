@@ -6,6 +6,7 @@ import '../services/onboarding_service.dart';
 import '../services/user_service.dart';
 import '../services/api_client.dart';
 import '../services/google_auth_service.dart';
+import '../services/apple_auth_service.dart';
 
 enum AuthStatus { unknown, unauthenticated, authenticated, loading }
 
@@ -18,6 +19,7 @@ class AuthProvider with ChangeNotifier {
   User? _user;
   final AuthService _authService = AuthService();
   final GoogleAuthService _googleAuthService = GoogleAuthService();
+  final AppleAuthService _appleAuthService = AppleAuthService();
   // We use ApiClient singleton here
   final OnboardingService _onboardingService = OnboardingService(ApiClient());
   final UserService _userService = UserService();
@@ -64,6 +66,27 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       return 'Error iniciando sesión con Google: $e';
     }
+  }
+
+  Future<String?> loginWithApple([String? inviteToken]) async {
+      try {
+          final credential = await _appleAuthService.signIn();
+          if (credential == null) return 'Inicio de sesión cancelado';
+
+          final identityToken = credential.identityToken;
+          if (identityToken == null) return 'Error: No se pudo obtener el Identity Token de Apple';
+
+          final result = await _authService.loginWithApple(
+              identityToken: identityToken,
+              inviteToken: inviteToken,
+              firstName: credential.givenName,
+              lastName: credential.familyName,
+          );
+
+          return _handleAuthResult(result);
+      } catch (e) {
+          return 'Error iniciando sesión con Apple: $e';
+      }
   }
 
   Future<String?> _handleAuthResult(dynamic result) async {

@@ -5,6 +5,8 @@ import '../localization/app_localizations.dart';
 import '../providers/user_provider.dart';
 import '../providers/theme_provider.dart';
 import 'home_screen.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:flutter/foundation.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -285,9 +287,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             side: BorderSide(color: Colors.grey.shade300),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             backgroundColor: Colors.white,
+
                           ),
                         ),
                       ),
+
+                      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: SignInWithAppleButton(
+                            onPressed: _performAppleLogin,
+                            style: SignInWithAppleButtonStyle.white, // Matches Google style broadly
+                            height: 56,
+                            borderRadius: const BorderRadius.all(Radius.circular(16)),
+                          ),
+                        ),
+                      ],
                       
                       const SizedBox(height: 24),
                       Row(
@@ -385,5 +402,32 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
       }
+
+  }
+
+  Future<void> _performAppleLogin() async {
+    setState(() => _isLoading = true);
+
+    final errorMsg = await context.read<AuthProvider>().loginWithApple();
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (errorMsg == null) {
+      context.read<UserProvider>().clear();
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeScreen()), (route) => false);
+    } else {
+      if (errorMsg == 'Inicio de sesión cancelado') return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(label: 'OK', onPressed: () {}, textColor: Colors.white),
+        ),
+      );
+    }
   }
 }
