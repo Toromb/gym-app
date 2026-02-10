@@ -36,6 +36,26 @@ export class AuthController {
     return this.authService.login(user);
   }
 
+  @Post('google')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async googleLogin(@Body() body: { idToken: string; gymId?: string }) {
+    if (!body.idToken) {
+      throw new UnauthorizedException('ID Token requerido');
+    }
+    return this.authService.loginWithGoogle(body.idToken, body.gymId);
+  }
+
+  @Post('apple')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async appleLogin(@Body() body: { identityToken: string; inviteToken?: string; firstName?: string; lastName?: string }) {
+    if (!body.identityToken) {
+      throw new UnauthorizedException('Identity Token requerido');
+    }
+    // Apple only sends name on first login, so we might want to pass it to service if needed for user creation.
+    // For now, service uses default, but we could enhance it later. 
+    return this.authService.loginWithApple(body.identityToken, body.inviteToken);
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Post('logout')
   async logout(@Request() req: any) {

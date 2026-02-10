@@ -96,6 +96,13 @@ export class UsersService {
     });
   }
 
+  async findOneByProviderUserId(providerUserId: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { providerUserId },
+      relations: ['gym'],
+    });
+  }
+
   async findOneByEmail(email: string): Promise<User | null> {
     const user = await this.usersRepository
       .createQueryBuilder('user')

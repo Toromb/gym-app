@@ -40,6 +40,15 @@ export class User {
   @Column({ unique: true })
   email: string;
 
+  @Column({ default: 'LOCAL' })
+  provider: string; // 'LOCAL', 'GOOGLE', 'APPLE'
+
+  @Column({ nullable: true })
+  providerUserId: string;
+
+  @Column({ nullable: true })
+  profileImageUrl: string;
+
   @Exclude()
   @Column({ type: 'varchar', select: false, nullable: true })
   passwordHash: string | null;

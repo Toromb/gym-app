@@ -123,4 +123,16 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   professorId?: string;
+
+  @IsOptional()
+  @IsString()
+  provider?: string;
+
+  @IsOptional()
+  @IsString()
+  providerUserId?: string;
+
+  @IsOptional()
+  @IsString()
+  profileImageUrl?: string;
 }

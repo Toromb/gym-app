@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -84,8 +84,6 @@ class ApiClient {
     try {
       final response = await _client.get(url, headers: headers).timeout(_timeout);
       return _processResponse(response, url);
-    } on SocketException {
-      throw NetworkException('No Internet Connection');
     } on TimeoutException {
       throw NetworkException('Connection Timed Out');
     } catch (e) {
@@ -105,8 +103,6 @@ class ApiClient {
           .post(url, headers: headers, body: jsonEncode(body))
           .timeout(_timeout);
       return _processResponse(response, url);
-    } on SocketException {
-      throw NetworkException('No Internet Connection');
     } on TimeoutException {
       throw NetworkException('Connection Timed Out');
     } catch (e) {
@@ -126,8 +122,6 @@ class ApiClient {
           .put(url, headers: headers, body: jsonEncode(body))
           .timeout(_timeout);
       return _processResponse(response, url);
-    } on SocketException {
-      throw NetworkException('No Internet Connection');
     } on TimeoutException {
       throw NetworkException('Connection Timed Out');
     } catch (e) {
@@ -145,8 +139,6 @@ class ApiClient {
     try {
       final response = await _client.delete(url, headers: headers).timeout(_timeout);
       return _processResponse(response, url);
-    } on SocketException {
-      throw NetworkException('No Internet Connection');
     } on TimeoutException {
       throw NetworkException('Connection Timed Out');
     } catch (e) {
@@ -165,8 +157,6 @@ class ApiClient {
           .patch(url, headers: headers, body: jsonEncode(body))
           .timeout(_timeout);
       return _processResponse(response, url);
-    } on SocketException {
-      throw NetworkException('No Internet Connection');
     } on TimeoutException {
       throw NetworkException('Connection Timed Out');
     } catch (e) {

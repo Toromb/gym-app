@@ -8,9 +8,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
 
 
+import { GymsModule } from '../gyms/gyms.module';
+
 @Module({
   imports: [
     UsersModule,
+    GymsModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

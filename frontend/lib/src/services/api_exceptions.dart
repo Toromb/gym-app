@@ -27,3 +27,7 @@ class ServerException extends ApiException {
 class NetworkException extends ApiException {
   NetworkException([String message = 'Network Error']) : super(message);
 }
+
+class BadRequestException extends ApiException {
+  BadRequestException([String message = 'Bad Request']) : super(message, 400);
+}

@@ -5,6 +5,8 @@ import '../localization/app_localizations.dart';
 import '../providers/user_provider.dart';
 import '../providers/theme_provider.dart';
 import 'home_screen.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:flutter/foundation.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -258,6 +260,53 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       
                       const SizedBox(height: 24),
+                      
+                      // Divider
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: Colors.grey[400])),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text('O continuar con', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                          ),
+                          Expanded(child: Divider(color: Colors.grey[400])),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Google Login Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: OutlinedButton.icon(
+                          onPressed: _performGoogleLogin,
+                          icon: Image.asset('assets/images/google_logo.png', height: 24, errorBuilder: (c,e,s) => const Icon(Icons.login)), // Fallback icon
+                          label: const Text('Continuar con Google', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.black87,
+                            side: BorderSide(color: Colors.grey.shade300),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            backgroundColor: Colors.white,
+
+                          ),
+                        ),
+                      ),
+
+                      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: SignInWithAppleButton(
+                            onPressed: _performAppleLogin,
+                            style: SignInWithAppleButtonStyle.white, // Matches Google style broadly
+                            height: 56,
+                            borderRadius: const BorderRadius.all(Radius.circular(16)),
+                          ),
+                        ),
+                      ],
+                      
+                      const SizedBox(height: 24),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -321,5 +370,64 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
       }
+  }
+
+  Future<void> _performGoogleLogin() async {
+      setState(() => _isLoading = true);
+      
+      // Trigger Google Login
+      final errorMsg = await context.read<AuthProvider>().loginWithGoogle();
+      
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (errorMsg == null) {
+        // Success
+        context.read<UserProvider>().clear();
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false
+        );
+      } else {
+          // Error (e.g. Canceled, No Gym, etc)
+          // If canceled, maybe don't show snackbar? 
+          if (errorMsg == 'Google Sign-In canceled') return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMsg), // Backend message (e.g. "El usuario no pertenece a ningún gimnasio")
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(label: 'OK', onPressed: () {}, textColor: Colors.white),
+            ),
+          );
+      }
+
+  }
+
+  Future<void> _performAppleLogin() async {
+    setState(() => _isLoading = true);
+
+    final errorMsg = await context.read<AuthProvider>().loginWithApple();
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (errorMsg == null) {
+      context.read<UserProvider>().clear();
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeScreen()), (route) => false);
+    } else {
+      if (errorMsg == 'Inicio de sesión cancelado') return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(label: 'OK', onPressed: () {}, textColor: Colors.white),
+        ),
+      );
+    }
   }
 }
