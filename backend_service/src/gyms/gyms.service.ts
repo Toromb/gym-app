@@ -37,7 +37,7 @@ export class GymsService {
     return this.gymsRepository.find();
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
     return this.gymsRepository.findOneBy({ id });
   }
 
