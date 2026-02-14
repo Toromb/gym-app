@@ -24,9 +24,9 @@ String get baseUrl {
   }
 
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:3000'; // Changed default to 3001 to match backend
+      return 'http://10.0.2.2:3001'; // Changed default to 3001 to match backend
   }
-  return 'http://localhost:3000';
+  return 'http://localhost:3001';
 }
 
 String resolveImageUrl(String? relativeUrl) {

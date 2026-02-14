@@ -17,6 +17,8 @@ import 'src/localization/app_localizations.dart';
 import 'src/providers/theme_provider.dart';
 
 import 'src/screens/public/activate_account_screen.dart';
+import 'src/screens/public/support_screen.dart';
+import 'src/screens/public/terms_screen.dart';
 
 import 'package:hive_flutter/hive_flutter.dart';
 import 'src/services/local_storage_service.dart';
@@ -97,6 +99,7 @@ class MyApp extends StatelessWidget {
         }
 
         return MaterialApp(
+          debugShowCheckedModeBanner: false,
           title: 'GymFlow',
           themeMode: themeProvider.themeMode, 
           theme: AppTheme.createTheme(
@@ -163,6 +166,14 @@ class MyApp extends StatelessWidget {
 
             if (uri.path == '/login') {
                return MaterialPageRoute(builder: (_) => const LoginScreen());
+            }
+
+            if (uri.path == '/soporte') {
+               return MaterialPageRoute(builder: (_) => const SupportScreen());
+            }
+
+            if (uri.path == '/terminos') {
+               return MaterialPageRoute(builder: (_) => const TermsScreen());
             }
 
             return null; // Let home take precedence or default
