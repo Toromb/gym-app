@@ -36,6 +36,7 @@ dependencies:
   xml: ^6.6.1
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^7.0.1
+  url_strategy: ^0.3.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

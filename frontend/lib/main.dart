@@ -22,10 +22,13 @@ import 'src/screens/public/terms_screen.dart';
 
 import 'package:hive_flutter/hive_flutter.dart';
 import 'src/services/local_storage_service.dart';
+import 'src/services/local_storage_service.dart';
 import 'src/services/sync_service.dart';
+import 'package:url_strategy/url_strategy.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  setPathUrlStrategy();
   await Hive.initFlutter();
   await LocalStorageService().init();
   SyncService().init();
