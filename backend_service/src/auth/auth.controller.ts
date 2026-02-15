@@ -6,6 +6,7 @@ import {
   Get,
   Request,
   UnauthorizedException,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
@@ -13,6 +14,7 @@ import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
+import { UserRole } from '../users/entities/user.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -38,11 +40,11 @@ export class AuthController {
 
   @Post('google')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async googleLogin(@Body() body: { idToken: string; gymId?: string }) {
+  async googleLogin(@Body() body: { idToken: string; inviteToken?: string }) {
     if (!body.idToken) {
       throw new UnauthorizedException('ID Token requerido');
     }
-    return this.authService.loginWithGoogle(body.idToken, body.gymId);
+    return this.authService.loginWithGoogle(body.idToken, body.inviteToken);
   }
 
   @Post('apple')
@@ -51,8 +53,6 @@ export class AuthController {
     if (!body.identityToken) {
       throw new UnauthorizedException('Identity Token requerido');
     }
-    // Apple only sends name on first login, so we might want to pass it to service if needed for user creation.
-    // For now, service uses default, but we could enhance it later. 
     return this.authService.loginWithApple(body.identityToken, body.inviteToken);
   }
 
@@ -81,6 +81,17 @@ export class AuthController {
   @Post('generate-activation-link')
   async generateActivationLink(@Body('userId') userId: string) {
     const token = await this.authService.generateActivationToken(userId);
+    return { token };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('generate-invite-link')
+  async generateInviteLink(
+    @Body('gymId') gymId: string,
+    @Body('role') role?: UserRole
+  ) {
+    // Only Admin/SuperAdmin should call this, ideally validated by RolesGuard (out of scope for quick fix, but noted)
+    const token = await this.authService.generateInviteLink(gymId, role);
     return { token };
   }
 

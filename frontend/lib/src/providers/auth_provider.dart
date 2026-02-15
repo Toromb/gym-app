@@ -44,7 +44,7 @@ class AuthProvider with ChangeNotifier {
     return _handleAuthResult(result);
   }
 
-  Future<String?> loginWithGoogle() async {
+  Future<String?> loginWithGoogle({String? inviteToken}) async {
     try {
       // 1. Native Google Sign-In
       final googleUser = await _googleAuthService.signIn();
@@ -57,8 +57,9 @@ class AuthProvider with ChangeNotifier {
           return 'Error: No se pudo obtener el ID Token de Google';
       }
 
-      // 2. Backend Validation & Login
-      final result = await _authService.loginWithGoogle(idToken);
+      // 2. Backend Validation & Login using AuthService which accepts optional named params or positional
+      // AuthService logic needs update to match
+      final result = await _authService.loginWithGoogle(idToken, inviteToken);
       
       // 3. Handle Result (Success or Error Message)
       return _handleAuthResult(result);
@@ -68,7 +69,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<String?> loginWithApple([String? inviteToken]) async {
+  Future<String?> loginWithApple({String? inviteToken}) async {
       try {
           final credential = await _appleAuthService.signIn();
           if (credential == null) return 'Inicio de sesión cancelado';

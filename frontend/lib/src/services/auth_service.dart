@@ -58,11 +58,11 @@ class AuthService {
     }
   }
 
-  Future<dynamic> loginWithGoogle(String idToken, [String? gymId]) async {
+  Future<dynamic> loginWithGoogle(String idToken, [String? inviteToken]) async {
     try {
       final response = await _api.post('/auth/google', {
           'idToken': idToken, 
-          if (gymId != null) 'gymId': gymId,
+          if (inviteToken != null) 'inviteToken': inviteToken,
       });
 
       if (response == null || response is! Map) {
@@ -231,7 +231,7 @@ class AuthService {
         origin = kReleaseMode ? 'https://tugymflow.com' : 'http://localhost:3000';
     }
     
-    return '$origin/#/activate-account?token=$token';
+    return '$origin/activate-account?token=$token';
   }
 
   String getResetUrl(String token) {
@@ -245,7 +245,7 @@ class AuthService {
     if (origin.isEmpty || origin == 'null') {
          origin = kReleaseMode ? 'https://tugymflow.com' : 'http://localhost:3000';
     }
-    return '$origin/#/reset-password?token=$token';
+    return '$origin/reset-password?token=$token';
   }
 
   Future<void> changePassword(String currentPassword, String newPassword) async {

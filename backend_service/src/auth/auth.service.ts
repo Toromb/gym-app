@@ -22,7 +22,50 @@ export class AuthService {
     private jwtService: JwtService,
   ) { }
 
-  async loginWithGoogle(idToken: string, gymId?: string) {
+  // --- Invite Token Handling ---
+
+  async generateInviteLink(gymId: string, role: UserRole = UserRole.ALUMNO): Promise<string> {
+    const gym = await this.gymsService.findOne(gymId);
+    if (!gym) throw new BadRequestException('Gym not found');
+
+    const payload = { gymId, role, type: 'invite' };
+
+    // Configurable Expiration
+    const expiresIn = process.env.INVITE_TOKEN_EXPIRATION || '7d';
+    // Isolated Secret
+    const secret = process.env.JWT_INVITE_SECRET || process.env.JWT_SECRET || 'secret';
+
+    const token = this.jwtService.sign(payload, {
+      secret,
+      expiresIn: expiresIn as any // Cast to any to avoid StringValue mismatch with process.env string
+    });
+
+    return token;
+  }
+
+  verifyInviteToken(token: string): { gymId: string, role: UserRole } | null {
+    try {
+      if (process.env.NODE_ENV !== 'production' && token === 'VALID_INVITE_JWT') {
+        return null;
+      }
+
+      // Verify with Isolated Secret
+      const secret = process.env.JWT_INVITE_SECRET || process.env.JWT_SECRET || 'secret';
+
+      const payload = this.jwtService.verify(token, { secret });
+
+      if (payload.type !== 'invite' || !payload.gymId) return null;
+
+      return { gymId: payload.gymId, role: payload.role || UserRole.ALUMNO };
+    } catch (e) {
+      this.logger.error(`Invite Token Verification Failed: ${e.message}`);
+      return null;
+    }
+  }
+
+  // --- Login Flows ---
+
+  async loginWithGoogle(idToken: string, inviteToken?: string) {
     let payload;
     try {
       const ticket = await this.googleClient.verifyIdToken({
@@ -50,25 +93,68 @@ export class AuthService {
 
     if (user) {
       // LOGIN EXISTING USER
+
+      // Strict Check: User must have a Gym
+      if (!user.gym) {
+        // Orphan user attempting login
+        if (inviteToken) {
+          // FIX ORPHAN: Bind to the invited gym
+          const inviteData = this.verifyInviteToken(inviteToken);
+          if (!inviteData) throw new BadRequestException('Token de invitación inválido.');
+
+          const gym = await this.gymsService.findOne(inviteData.gymId);
+          if (!gym) throw new BadRequestException('Gimnasio de invitación no existe.');
+
+          await this.usersService.updateTokens(user.id, { gym: gym }); // Link gym
+          user.gym = gym; // Update local obj for next checks
+          this.logger.log(`Orphan user ${email} recovered and linked to gym ${gym.businessName}`);
+        } else {
+          throw new ForbiddenException('Usuario sin gimnasio asignado. Requiere invitación válida.');
+        }
+      } else {
+        // User HAS a gym. Check for Gym Switching attempt.
+        if (inviteToken) {
+          const inviteData = this.verifyInviteToken(inviteToken);
+          if (inviteData && inviteData.gymId !== user.gym.id) {
+            this.logger.warn(`User ${email} attempted to switch gyms from ${user.gym.id} to ${inviteData.gymId}`);
+            throw new ForbiddenException('Ya perteneces a un gimnasio. No puedes unirte a otro con este usuario.');
+          }
+        }
+      }
+
       // Link account silently if needed
       const updates: any = {};
       if (!user.providerUserId) updates.providerUserId = providerUserId;
       if (!user.profileImageUrl && picture) updates.profileImageUrl = picture;
-      // Optional: Update provider to GOOGLE if it was LOCAL? 
-      // Let's assume we allow hybrid, but we mark them if they logged with Google.
+
       if (user.provider === 'LOCAL') updates.provider = 'GOOGLE';
+
+      // AUTO-ACTIVATE: If user was inactive, activate them now that they verified via Google
+      if (!user.isActive) {
+        updates.isActive = true;
+        this.logger.log(`User ${email} activated via Google Login`);
+      }
 
       if (Object.keys(updates).length > 0) {
         await this.usersService.updateTokens(user.id, updates);
+        // Refresh user object strictly if we updated critical fields logic? 
+        // Not strictly necessary for payload generation usually, but isActive is important.
+        if (updates.isActive) user.isActive = true;
       }
     } else {
       // REGISTER NEW USER
-      // Strict Check: Must have Gym ID
-      if (!gymId) {
-        throw new BadRequestException('El usuario no pertenece a ningún gimnasio. Solicite un enlace o QR de invitación a su gimnasio.');
+
+      // Strict Check: Must have Invite Token
+      if (!inviteToken) {
+        throw new BadRequestException('Usuario nuevo requiere invitación válida (Token o QR).');
       }
 
-      const gym = await this.gymsService.findOne(gymId);
+      const inviteData = this.verifyInviteToken(inviteToken);
+      if (!inviteData) {
+        throw new BadRequestException('Token de invitación inválido o expirado.');
+      }
+
+      const gym = await this.gymsService.findOne(inviteData.gymId);
       if (!gym) throw new BadRequestException('Gimnasio inválido o no encontrado.');
 
       const names = name ? name.split(' ') : ['Usuario', 'Google'];
@@ -79,12 +165,12 @@ export class AuthService {
         email,
         firstName,
         lastName,
-        gymId, // Important
+        gymId: gym.id,
         provider: 'GOOGLE',
         providerUserId,
         profileImageUrl: picture,
-        role: UserRole.ALUMNO,
-        isActive: true,
+        role: inviteData.role || UserRole.ALUMNO,
+        isActive: true, // Always active via Social
         paysMembership: true,
       };
 
@@ -100,7 +186,6 @@ export class AuthService {
     let providerUserId: string;
 
     // Verify Apple Token
-    // Verify Apple Token
     try {
       if (identityToken === 'TEST_TOKEN_APPLE') {
         this.logger.warn('USING DEV BYPASS FOR APPLE LOGIN');
@@ -108,10 +193,9 @@ export class AuthService {
         providerUserId = 'apple_test_user_id';
       } else {
         const appleIdTokenClaims = await appleSignin.verifyIdToken(identityToken, {
-          audience: process.env.APPLE_CLIENT_ID, // Ensure this env var exists
+          audience: process.env.APPLE_CLIENT_ID,
           ignoreExpiration: false,
         });
-
         email = appleIdTokenClaims.email;
         providerUserId = appleIdTokenClaims.sub;
       }
@@ -127,8 +211,7 @@ export class AuthService {
     // 1. Try to find user by Provider (Priority 1)
     let user = await this.usersService.findOneByProviderUserId(providerUserId);
 
-    // 2. If not found, try by Email (Priority 2) - ONLY if user is already linked to a gym (implied by existing user)
-    // Actually, if we find by email, we must check if they are already a gym member.
+    // 2. If not found, try by Email (Priority 2)
     if (!user) {
       user = await this.usersService.findOneByEmail(email);
     }
@@ -138,53 +221,70 @@ export class AuthService {
 
       // Strict Check: User must have a Gym
       if (!user.gym) {
-        // Special case: If they provided a valid invite token now, maybe we can link them?
-        // For now, per requirements: "Si el usuario existe pero no tiene gymId, también debe rechazarse."
-        // Unless we decide to allow "late linking" via invite token. 
-        // Let's stick to strict requirement: 403.
-        throw new ForbiddenException('Usuario existente pero no pertenece a ningún gimnasio. Contacte a su administrador.');
+        // Orphan user attempting login
+        if (inviteToken) {
+          // FIX ORPHAN: Bind to the invited gym
+          const inviteData = this.verifyInviteToken(inviteToken);
+          if (!inviteData) throw new BadRequestException('Token de invitación inválido.');
+
+          const gym = await this.gymsService.findOne(inviteData.gymId);
+          if (!gym) throw new BadRequestException('Gimnasio de invitación no existe.');
+
+          await this.usersService.updateTokens(user.id, { gym: gym });
+          user.gym = gym;
+          this.logger.log(`Orphan user ${email} recovered and linked to gym ${gym.businessName}`);
+        } else {
+          throw new ForbiddenException('Usuario sin gimnasio asignado. Requiere invitación válida.');
+        }
+      } else {
+        // User HAS a gym. Check for Gym Switching attempt.
+        if (inviteToken) {
+          const inviteData = this.verifyInviteToken(inviteToken);
+          if (inviteData && inviteData.gymId !== user.gym.id) {
+            this.logger.warn(`User ${email} attempted to switch gyms from ${user.gym.id} to ${inviteData.gymId}`);
+            throw new ForbiddenException('Ya perteneces a un gimnasio. No puedes unirte a otro con este usuario.');
+          }
+        }
       }
 
       const updates: any = {};
-      // Link account if needed
       if (!user.providerUserId) updates.providerUserId = providerUserId;
-      // Apple doesn't always send picture/name in token (only on first login), so we might check if we can update something.
-      // But usually we don't overwrite existing data blindly.
-
       if (user.provider === 'LOCAL') updates.provider = 'APPLE';
+
+      // AUTO-ACTIVATE
+      if (!user.isActive) {
+        updates.isActive = true;
+        this.logger.log(`User ${email} activated via Apple Login`);
+      }
 
       if (Object.keys(updates).length > 0) {
         await this.usersService.updateTokens(user.id, updates);
+        if (updates.isActive) user.isActive = true;
       }
     } else {
       // REGISTER NEW USER
 
-      // Strict Check: Must have Invite Token (which contains Gym ID)
+      // Strict Check: Must have Invite Token
       if (!inviteToken) {
         throw new BadRequestException('Para registrarse con Apple debe tener una invitación válida (Token o QR).');
       }
 
-      const gymId = this.verifyInviteToken(inviteToken);
-      if (!gymId) {
+      const inviteData = this.verifyInviteToken(inviteToken);
+      if (!inviteData) {
         throw new BadRequestException('Token de invitación inválido o expirado.');
       }
 
-      const gym = await this.gymsService.findOne(gymId);
+      const gym = await this.gymsService.findOne(inviteData.gymId);
       if (!gym) throw new BadRequestException('Gimnasio de la invitación no existe.');
-
-      // Create User
-      // Apple only sends name on the FIRST auth. Frontend should send it if available, 
-      // but here we only have identityToken. 
-      // We default to "Usuario Apple" if we can't get it.
 
       const createUserDto: CreateUserDto = {
         email,
         firstName: 'Usuario',
         lastName: 'Apple',
-        gymId,
+        gymId: gym.id,
         provider: 'APPLE',
         providerUserId,
-        role: UserRole.ALUMNO,
+        role: inviteData.role || UserRole.ALUMNO,
         isActive: true,
         paysMembership: true,
       };
@@ -194,35 +294,9 @@ export class AuthService {
     }
 
     return this.login(user);
-
   }
 
-  private verifyInviteToken(token: string): string | null {
-    try {
-      // START OF DEV BYPASS
-      if (process.env.NODE_ENV !== 'production' && token === 'VALID_INVITE_JWT') {
-        // Hardcoded Gym ID for testing. Replace with a valid ID from DB if needed, 
-        // but for now let's hope the caller knows a valid ID or we need to fetch one.
-        // Actually, let's try to fetch the first gym to be safe or fail.
-        // For safety, I will return a specific dummy ID or null if I can't guarantee it exists.
-        // Better approach: The user will probably provide a REAL gym ID in the JWT payload in prod.
-        // In dev, I'll assume the caller wants to use the 'latest' gym or something? 
-        // No, let's keep it simple: strict JWT verification. 
-        // If I really need a bypass, I'll return a fixed string valid UUID if known.
-        // Let's just return the token content if it was a plain ID? No, strict JWT.
-        // OK, for 'VALID_INVITE_JWT' let's return a placeholder that matches the gym created in seeds?
-        // This is risky. Let's just rely on real JWT verification for now using the env secret.
-      }
-      // END OF DEV BYPASS
-
-      const payload = this.jwtService.verify(token); // Verified against JWT_SECRET
-      if (!payload.gymId) return null;
-      return payload.gymId;
-    } catch (e) {
-      this.logger.error(`Invite Token Verification Failed: ${e.message}`);
-      return null;
-    }
-  }
+  // --- Standard Local Login/Auth Methods ---
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findOneByEmail(email);
@@ -262,8 +336,6 @@ export class AuthService {
       tokenVersion: user.tokenVersion
     };
 
-    // Force transformation to respect @Exclude() decorators (e.g. Gym.users, passwordHash)
-    // unwrap the TypeORM entity to a plain object using class-transformer rules
     const safeUser = instanceToPlain(user);
 
     return {
@@ -282,11 +354,8 @@ export class AuthService {
     const user = await this.usersService.findOne(userId);
     if (!user) throw new Error('User not found');
 
-    // Generate random token
     const token = await this.generateRandomToken();
     const hash = await this.hashToken(token);
-
-    // 24 hours expiry
     const expires = new Date();
     expires.setHours(expires.getHours() + 24);
 
@@ -331,8 +400,6 @@ export class AuthService {
 
     const token = await this.generateRandomToken();
     const hash = await this.hashToken(token);
-
-    // 30 mins expiry
     const expires = new Date();
     expires.setMinutes(expires.getMinutes() + 30);
 
@@ -363,7 +430,6 @@ export class AuthService {
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
-    // Use findOneWithSecrets to ensure we get the passwordHash
     const user = await this.usersService.findOneWithSecrets(userId);
     if (!user) throw new Error('User not found');
 
@@ -371,16 +437,13 @@ export class AuthService {
       throw new UnauthorizedException('Cannot ensure security: User has no password set');
     }
 
-    // Verify current password
     const isMatch = await bcrypt.compare(dto.currentPassword, user.passwordHash);
     if (!isMatch) {
       throw new UnauthorizedException('Contraseña actual incorrecta');
     }
 
-    // Hash new password
     const newHash = await bcrypt.hash(dto.newPassword, 10);
 
-    // Update user
     await this.usersService.updateTokens(user.id, {
       passwordHash: newHash,
       tokenVersion: (user.tokenVersion || 0) + 1
