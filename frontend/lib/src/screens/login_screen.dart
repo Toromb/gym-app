@@ -194,47 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                               // ... (rest of the form remains here but replacing entire block for safety of the stack structure)
-                            ],
-                          ),
-                        ),
-                        // Dark Mode Toggle (Now inside Card)
-                        Positioned(
-                          top: 16,
-                          right: 16,
-                          child: Consumer<ThemeProvider>(
-                            builder: (_, theme, __) {
-                              final isDark = theme.isDarkMode;
-                              return Container(
-                                decoration: BoxDecoration(
-                                  color: isDark ? Colors.grey[800] : Colors.grey[100],
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: IconButton(
-                                  onPressed: () => theme.toggleTheme(!isDark),
-                                  icon: Icon(
-                                    isDark ? Icons.light_mode : Icons.dark_mode,
-                                    color: isDark ? Colors.white : Colors.black87,
-                                  ),
-                                  tooltip: 'Cambiar Tema',
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+
                           const SizedBox(height: 8),
                           Text(
                             'Inicia sesión para continuar',
@@ -413,9 +373,41 @@ class _LoginScreenState extends State<LoginScreen> {
                               )
                             ],
                           )
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        top: 16,
+                        right: 16,
+                        child: Consumer<ThemeProvider>(
+                          builder: (_, theme, __) {
+                            final isDark = theme.isDarkMode;
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.grey[800] : Colors.grey[100],
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: IconButton(
+                                onPressed: () => theme.toggleTheme(!isDark),
+                                icon: Icon(
+                                  isDark ? Icons.light_mode : Icons.dark_mode,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
+                                tooltip: 'Cambiar Tema',
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                   ),
                 ),
               ),
