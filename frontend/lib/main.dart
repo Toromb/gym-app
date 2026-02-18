@@ -135,40 +135,24 @@ class MyApp extends StatelessWidget {
               child: child!,
             );
           },
-          home: () {
-             if (auth.status == AuthStatus.loading || auth.status == AuthStatus.unknown) {
-               return const Scaffold(
-                 body: Center(
-                   child: CircularProgressIndicator(),
-                 ),
-               );
-             }
-             if (auth.isAuthenticated) {
-                return const HomeScreen();
-             }
-             return const LoginScreen();
-          }(),
+          initialRoute: '/',
           onGenerateRoute: (settings) {
-            // Handle /activate-account?token=...
-            // Handle /reset-password?token=...
-            final uri = Uri.parse(settings.name ?? '');
             
-            if (uri.path == '/activate-account') {
+            final uri = Uri.parse(settings.name ?? '/');
+            
+            // 1. Handle Activation/Reset (Public)
+            if (uri.path == '/activate-account' || uri.path.contains('activate-account')) {
               final token = uri.queryParameters['token'];
               return MaterialPageRoute(
                 builder: (_) => ActivateAccountScreen(token: token, mode: 'activate'),
               );
             }
             
-            if (uri.path == '/reset-password') {
+            if (uri.path == '/reset-password' || uri.path.contains('reset-password')) {
               final token = uri.queryParameters['token'];
               return MaterialPageRoute(
                 builder: (_) => ActivateAccountScreen(token: token, mode: 'reset'),
               );
-            }
-
-            if (uri.path == '/login') {
-               return MaterialPageRoute(builder: (_) => const LoginScreen());
             }
 
             if (uri.path == '/soporte') {
@@ -179,7 +163,24 @@ class MyApp extends StatelessWidget {
                return MaterialPageRoute(builder: (_) => const TermsScreen());
             }
 
-            return null; // Let home take precedence or default
+            // 2. Handle Root / Login (Auth Guarded)
+            // If path is / or /login, we apply the auth check logic
+            if (uri.path == '/' || uri.path == '/login') {
+               return MaterialPageRoute(
+                 builder: (_) {
+                    if (auth.status == AuthStatus.loading || auth.status == AuthStatus.unknown) {
+                       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                    }
+                    if (auth.isAuthenticated) {
+                       return const HomeScreen();
+                    }
+                    return const LoginScreen();
+                 }
+               );
+            }
+
+            // Default fallback
+            return MaterialPageRoute(builder: (_) => const LoginScreen());
           },
         );
       },
