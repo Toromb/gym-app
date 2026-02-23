@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../localization/app_localizations.dart';
@@ -115,6 +115,93 @@ class _LoginScreenState extends State<LoginScreen> {
       );
   }
 
+  Widget _buildSocialButtons() {
+    // Check if we should show Apple Sign In (iOS only generally, or if configured for web but here we follow previous logic)
+    final bool showApple = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+    if (!showApple) {
+      return OutlinedButton(
+        onPressed: _isLoading ? null : _performGoogleLogin,
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/images/google_logo.png', height: 24),
+            const SizedBox(width: 12),
+             Text(
+                'Continuar con Google',
+                style: TextStyle(
+                    fontSize: 16,
+                    // Use contrasting color based on theme context (which is inside the bottom sheet)
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87
+                )
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _isLoading ? null : _performGoogleLogin,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/images/google_logo.png', height: 24),
+                const SizedBox(width: 8),
+                 Text(
+                    'Google',
+                    style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87
+                    )
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _isLoading ? null : _performAppleLogin,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.apple,
+                  size: 28, // Match the visual weight of the google logo (24px image)
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+                ),
+                const SizedBox(width: 8),
+                 Text(
+                    'Apple',
+                    style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87
+                    )
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -133,42 +220,126 @@ class _LoginScreenState extends State<LoginScreen> {
               fit: BoxFit.cover,
             ),
           ),
-          // Overlay to improve text readability
+          // Overlay to improve text readability (Gradient or solid)
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withOpacity(0.5),
             ),
           ),
           // Content
-          SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                // Mantiene el ancho máximo de 900px como en el dashboard
-                constraints: const BoxConstraints(maxWidth: 900),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                  child: Card(
-                    // Agrego una tarjeta semi-transparente para que el formulario resalte
-                    color: isDark ? Colors.black.withOpacity(0.7) : Colors.white.withOpacity(0.7),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    child: Stack(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(32.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Hero(
-                                tag: 'logo',
-                                child: Image.asset(
-                                  'assets/images/tugymflow_logo.png',
-                                  height: 60, // Resized to 60px
-                                ),
+          Column(
+            children: [
+              // Logo and Welcome Text Area (Top)
+              Expanded(
+                flex: 4, // Takes up ~40% of space
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Hero(
+                        tag: 'logo',
+                        child: Image.asset(
+                          'assets/images/tugymflow_logo.png',
+                          height: 80, 
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Bienvenido',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tu Gym Flow',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white.withOpacity(0.8),
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Login Form Area (Bottom Sheet)
+              Expanded(
+                flex: 6, // Takes up ~60% of space
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 900),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 16),
+                          Text(
+                            'Iniciar Sesión',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Por favor ingresa tus credenciales para continuar',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          
+                          const SizedBox(height: 32),
+                          
+                          if (_errorMessage != null)
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.only(bottom: 24),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red.withOpacity(0.5)),
                               ),
-                              const SizedBox(height: 40),
-                              if (hasInvite)
-                                Container(
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          if (_inviteToken != null)
+                             Container(
                                   padding: const EdgeInsets.all(12),
                                   margin: const EdgeInsets.only(bottom: 24),
                                   decoration: BoxDecoration(
@@ -185,48 +356,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
 
-                              const Text(
-                                'Bienvenido',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              // ... (rest of the form remains here but replacing entire block for safety of the stack structure)
-
-                          const SizedBox(height: 8),
-                          Text(
-                            'Inicia sesión para continuar',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 48),
-                          if (_errorMessage != null)
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              margin: const EdgeInsets.only(bottom: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.red.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.red),
-                              ),
-                              child: Text(
-                                _errorMessage!,
-                                style: const TextStyle(color: Colors.red),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
                           TextField(
                             controller: _emailController,
                             decoration: InputDecoration(
-                              labelText: 'Email',
+                              hintText: 'Correo electrónico',
                               prefixIcon: const Icon(Icons.email_outlined),
+                              filled: true,
+                              fillColor: isDark ? Colors.grey[900] : Colors.grey[100],
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
                               ),
                             ),
                             keyboardType: TextInputType.emailAddress,
@@ -236,7 +379,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _passwordController,
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
-                              labelText: 'Contraseña',
+                              hintText: 'Contraseña',
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -250,12 +393,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                   });
                                 },
                               ),
+                              filled: true,
+                              fillColor: isDark ? Colors.grey[900] : Colors.grey[100],
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
@@ -266,150 +416,90 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: const Text('¿Olvidaste tu contraseña?'),
                             ),
                           ),
+                          
                           const SizedBox(height: 24),
 
                           // Login Button
                           SizedBox(
-                            height: 50,
+                            height: 54, // Slightly taller
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _performLogin,
                               style: ElevatedButton.styleFrom(
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                elevation: 2,
+                                backgroundColor: Theme.of(context).primaryColor,
+                                foregroundColor: Colors.white,
                               ),
                               child: _isLoading
-                                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                  : const Text('Iniciar Sesión', style: TextStyle(fontSize: 16)),
+                                  ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                                  : const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text('Ingresar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                        SizedBox(width: 8),
+                                        Icon(Icons.arrow_forward, size: 20),
+                                      ],
+                                    ),
                             ),
                           ),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 32),
 
                           // OR Divider
-                          const Row(
+                          Row(
                             children: [
-                              Expanded(child: Divider()),
+                              Expanded(child: Divider(color: Colors.grey[400])),
                               Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 16),
-                                child: Text('O continuar con'),
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text('O continuar con', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                               ),
-                              Expanded(child: Divider()),
+                              Expanded(child: Divider(color: Colors.grey[400])),
                             ],
                           ),
                           const SizedBox(height: 24),
 
                           // Social Login Buttons
-                          if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: _isLoading ? null : _performGoogleLogin,
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Image.asset('assets/images/google_logo.png', height: 24),
-                                        const SizedBox(width: 8),
-                                        const Text('Google'),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: SignInWithAppleButton(
-                                    onPressed: _performAppleLogin,
-                                    text: "Apple",
-                                    style: SignInWithAppleButtonStyle.white,
-                                    height: 48, // Match standard button height
-                                    borderRadius: const BorderRadius.all(Radius.circular(12)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ] else ...[
-                            // Google Login Button (Full Width for Android/Web)
-                            OutlinedButton(
-                              onPressed: _isLoading ? null : _performGoogleLogin,
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset('assets/images/google_logo.png', height: 24),
-                                  const SizedBox(width: 12),
-                                  const Text('Continuar con Google', style: TextStyle(fontSize: 16)),
-                                ],
-                              ),
-                            ),
-                          ],
+                           _buildSocialButtons(),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 32),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "¿No tienes una cuenta? ",
+                                '¿No tienes una cuenta? ',
                                 style: TextStyle(color: Colors.grey[600]),
                               ),
-                              TextButton(
-                                onPressed: () {
-                                  showDialog(
-                                      context: context,
-                                      builder: (c) => AlertDialog(
-                                        title: const Text('Registro'),
-                                        content: const Text('El registro de nuevos usuarios debe ser realizado por un administrador.'),
-                                        actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text('OK'))],
-                                      )
-                                  );
-                                },
-                                child: const Text('Regístrate', style: TextStyle(fontWeight: FontWeight.bold)),
-                              )
-                            ],
-                          )
-                          ],
-                        ),
-                      ),
-                      Positioned(
-                        top: 16,
-                        right: 16,
-                        child: Consumer<ThemeProvider>(
-                          builder: (_, theme, __) {
-                            final isDark = theme.isDarkMode;
-                            return Container(
-                              decoration: BoxDecoration(
-                                color: isDark ? Colors.grey[800] : Colors.grey[100],
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: IconButton(
-                                onPressed: () => theme.toggleTheme(!isDark),
-                                icon: Icon(
-                                  isDark ? Icons.light_mode : Icons.dark_mode,
-                                  color: isDark ? Colors.white : Colors.black87,
+                              Text(
+                                "Habla con tu gimnasio",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).primaryColor,
                                 ),
-                                tooltip: 'Cambiar Tema',
                               ),
-                            );
-                          },
-                        ),
+                            ],
+                          ),
+                          // Extra padding for bottom safe area if needed
+                          SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 0 : 20),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
                   ),
                 ),
+              ),
+            ),
+          ),
+        ],
+      ),
+          
+          // Theme Toggle (Absolute Positioned)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            right: 16,
+            child: IconButton(
+              onPressed: () => themeProvider.toggleTheme(!isDark),
+              icon: Icon(
+                isDark ? Icons.light_mode : Icons.dark_mode,
+                color: Colors.white, // Always white on the background image
               ),
             ),
           ),

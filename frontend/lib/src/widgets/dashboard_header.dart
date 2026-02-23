@@ -175,7 +175,7 @@ class GymDashboardHeader extends StatelessWidget {
              ),
              
              // Payment Status Badge & Date Group (Only if applicable)
-             if (showPaymentStatus && expirationFormatted != null)
+             if (showPaymentStatus)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -183,40 +183,97 @@ class GymDashboardHeader extends StatelessWidget {
                      user: user!,
                      isExpired: isExpired, 
                      isNearExpiration: isNearExpiration,
+                     hasMembership: expirationFormatted != null,
                      onTap: () {
-                         // Logic to show payment info, copied from original
-                         // Usually this opens a modal. We might need to pass a callback or specific logic.
-                         // For now, let's keep it simple or make it optional.
-                         // But wait, the original passed `context`.
-                         // Let's assume we can trigger the dialog here or pass the function.
-                         // Replicating `_showPaymentInfo` logic might be needed if it's complex, 
-                         // or we can allow the parent to handle it.
-                         // For reuse, let's define the dialog here or make it a static helper.
-                         // For now, I'll assume we can copy `_showPaymentInfo` or similar.
-                         // Actually, let's make it a required callback if needed, or implement a simple default.
-                         showDialog(
-                            context: context, 
-                            builder: (ctx) => AlertDialog(
-                                title: const Text("Estado de Membresía"),
-                                content: Text("Vence el: $expirationFormatted\n${isExpired ? 'MEMBRESÍA VENCIDA' : 'Activa'}"),
-                                actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK"))]
-                            )
-                         );
+                            _showPaymentInfo(context, user);
                      },
                    ),
                    
-                   Padding(
-                     padding: const EdgeInsets.only(top: 2.0, right: 4.0), 
-                     child: Text(
-                       'Vencimiento: $expirationFormatted', 
-                       style: TextStyle(fontSize: 10, color: Colors.grey[500])
-                     )
-                   ),
+                   if (expirationFormatted != null)
+                     Padding(
+                       padding: const EdgeInsets.only(top: 2.0, right: 4.0), 
+                       child: Text(
+                         'Vencimiento: $expirationFormatted', 
+                         style: TextStyle(fontSize: 10, color: Colors.grey[500])
+                       )
+                     ),
                 ],
               )
           ],
         ),
       ],
     );
+  }
+
+  void _showPaymentInfo(BuildContext context, app_models.User? user) {
+    if (user?.gym == null) return;
+    
+    final gym = user!.gym!;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.payment, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 12),
+            const Text('Datos de Pago'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Para renovar tu cuota, podés transferir a:', style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: 16),
+            if (gym.paymentBankName != null && gym.paymentBankName!.isNotEmpty)
+              _infoRow(context, Icons.account_balance, 'Banco: ${gym.paymentBankName}'),
+            if (gym.paymentAlias != null && gym.paymentAlias!.isNotEmpty)
+              _infoRow(context, Icons.link, 'Alias: ${gym.paymentAlias}'),
+             if (gym.paymentCbu != null && gym.paymentCbu!.isNotEmpty)
+              _infoRow(context, Icons.numbers, 'CBU: ${gym.paymentCbu}'),
+             if (gym.paymentAccountName != null && gym.paymentAccountName!.isNotEmpty)
+              _infoRow(context, Icons.person, 'Titular: ${gym.paymentAccountName}'),
+              
+             if (gym.paymentNotes != null && gym.paymentNotes!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark 
+                        ? Colors.grey[800] 
+                        : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    gym.paymentNotes!, 
+                    style: TextStyle(
+                      fontSize: 12, 
+                      fontStyle: FontStyle.italic,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                    ),
+                  ),
+                )
+             ]
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(BuildContext context, IconData icon, String text) {
+      return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+              children: [
+                  Icon(icon, size: 16, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
+              ],
+          ),
+      );
   }
 }

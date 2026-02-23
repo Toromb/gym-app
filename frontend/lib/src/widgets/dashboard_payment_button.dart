@@ -5,6 +5,7 @@ class DashboardPaymentButton extends StatefulWidget {
   final User user;
   final bool isExpired;
   final bool isNearExpiration;
+  final bool hasMembership;
   final VoidCallback onTap;
 
   const DashboardPaymentButton({
@@ -12,6 +13,7 @@ class DashboardPaymentButton extends StatefulWidget {
     required this.user,
     required this.isExpired,
     required this.isNearExpiration,
+    this.hasMembership = true,
     required this.onTap,
   });
 
@@ -24,13 +26,15 @@ class _DashboardPaymentButtonState extends State<DashboardPaymentButton> {
 
   @override
   Widget build(BuildContext context) {
-    final color = (widget.isExpired || widget.isNearExpiration) ? Colors.orange : Colors.green;
-    final bgColor = (widget.isExpired || widget.isNearExpiration) ? Colors.orange[50] : Colors.green[50];
-    final textColor = (widget.isExpired || widget.isNearExpiration) ? Colors.orange[800] : Colors.green[800];
+    final color = !widget.hasMembership ? Colors.blue : ((widget.isExpired || widget.isNearExpiration) ? Colors.orange : Colors.green);
+    final bgColor = !widget.hasMembership ? Colors.blue[50] : ((widget.isExpired || widget.isNearExpiration) ? Colors.orange[50] : Colors.green[50]);
+    final textColor = !widget.hasMembership ? Colors.blue[800] : ((widget.isExpired || widget.isNearExpiration) ? Colors.orange[800] : Colors.green[800]);
     
-    final text = widget.isExpired 
-        ? 'VENCIDA' 
-        : (widget.isNearExpiration ? 'CUOTA POR VENCER' : 'CUOTA PAGA');
+    final text = !widget.hasMembership 
+        ? 'DATOS DE PAGO'
+        : (widget.isExpired 
+            ? 'VENCIDA' 
+            : (widget.isNearExpiration ? 'CUOTA POR VENCER' : 'CUOTA PAGA'));
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),

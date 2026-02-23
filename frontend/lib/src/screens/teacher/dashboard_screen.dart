@@ -47,7 +47,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                  // Header Section
-                 GymDashboardHeader(user: user, showPaymentStatus: false),
+                 GymDashboardHeader(user: user, showPaymentStatus: true),
                 const SizedBox(height: 32),
                 
                 _buildDashboardCard(

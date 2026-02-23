@@ -98,5 +98,6 @@
     - [x] Reorganize info into Cards (Personal, Membership, Physical, Onboarding)
     - [x] Integrate `MuscleFlow` widgets for Muscle Status view
     - [x] Improve typography and spacing ("Premium" feel)
+    - [x] Revert Login Screen to "Bottom Sheet" design (Logo top, Form bottom)
 
 - [ ] Verify Application Loads
