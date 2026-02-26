@@ -141,7 +141,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
   void _showInviteLinkDialog(BuildContext context) {
       final user = context.read<AuthProvider>().user;
-      final gymId = user?.gymId;
+      final gymId = user?.gym?.id;
       
       if (gymId == null) {
          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error: No se encontró el gimnasio del administrador.')));
