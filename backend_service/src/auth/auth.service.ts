@@ -30,14 +30,14 @@ export class AuthService {
 
     const payload = { gymId, role, type: 'invite' };
 
-    // Configurable Expiration
-    const expiresIn = process.env.INVITE_TOKEN_EXPIRATION || '7d';
+    // Permanent Expiration (10 years) for MVP QR Codes
+    const expiresIn = '3650d';
     // Isolated Secret
     const secret = process.env.JWT_INVITE_SECRET || process.env.JWT_SECRET || 'secret';
 
     const token = this.jwtService.sign(payload, {
       secret,
-      expiresIn: expiresIn as any // Cast to any to avoid StringValue mismatch with process.env string
+      expiresIn: expiresIn as any
     });
 
     return token;
@@ -348,6 +348,35 @@ export class AuthService {
     const user = await this.usersService.create(createUserDto);
     const { passwordHash, ...result } = user;
     return result;
+  }
+
+  async registerWithInvite(createUserDto: CreateUserDto, inviteToken: string) {
+    // 1. Validate Token
+    const inviteData = this.verifyInviteToken(inviteToken);
+    if (!inviteData) {
+      throw new BadRequestException('Token de invitación inválido o corrupto.');
+    }
+
+    // 2. Ensure Gym Exists
+    const gym = await this.gymsService.findOne(inviteData.gymId);
+    if (!gym) {
+      throw new BadRequestException('El gimnasio asociado a esta invitación no existe.');
+    }
+
+    // 3. Override properties from token to prevent customer tampering
+    const safeUserDto: CreateUserDto = {
+      ...createUserDto,
+      gymId: inviteData.gymId,
+      role: inviteData.role,
+      paysMembership: true, // Auto-set for new students via invite
+    };
+
+    // 4. Create User
+    const user = await this.usersService.create(safeUserDto);
+    this.logger.log(`Created new user via Invite: ${user.email} for Gym ${gym.businessName}`);
+
+    // 5. Automatically log them in
+    return this.login(user);
   }
 
   async generateActivationToken(userId: string): Promise<string> {

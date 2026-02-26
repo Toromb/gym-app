@@ -8,7 +8,9 @@ import '../localization/app_localizations.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
+import '../providers/user_provider.dart';
 import '../screens/home_screen.dart';
+import '../screens/public/register_with_invite_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final Map<String, String>? queryParams; // Receive parameters from deep links/web
@@ -34,6 +36,15 @@ class _LoginScreenState extends State<LoginScreen> {
     if (widget.queryParams != null && widget.queryParams!.containsKey('token')) {
        _inviteToken = widget.queryParams!['token'];
        debugPrint('LoginScreen: Invite Token detected: $_inviteToken');
+       
+       // Delay navigation to let the build process finish
+       WidgetsBinding.instance.addPostFrameCallback((_) {
+         Navigator.of(context).push(
+           MaterialPageRoute(
+             builder: (_) => RegisterWithInviteScreen(inviteToken: _inviteToken!),
+           )
+         );
+       });
     }
   }
 

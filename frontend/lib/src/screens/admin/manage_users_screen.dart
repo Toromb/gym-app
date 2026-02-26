@@ -13,6 +13,8 @@ import 'edit_user_screen.dart';
 import '../teacher/student_plans_screen.dart';
 import '../../widgets/payment_status_badge.dart';
 import '../shared/user_detail_screen.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '../../services/api_client.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   const ManageUsersScreen({super.key});
@@ -42,15 +44,29 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
       appBar: AppBar(
         title: const Text('Gestionar Usuarios'),
       ),
-      floatingActionButton: isAdmin ? FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddUserScreen()),
-          );
-        },
-        tooltip: 'Crear Usuario',
-        child: const Icon(Icons.person_add),
+      floatingActionButton: isAdmin ? Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 'invite_link',
+            onPressed: () => _showInviteLinkDialog(context),
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
+            tooltip: 'Link de Invitación',
+            child: Icon(Icons.qr_code_2, color: Theme.of(context).colorScheme.onTertiary),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton(
+            heroTag: 'add_user',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddUserScreen()),
+              );
+            },
+            tooltip: 'Crear Usuario',
+            child: const Icon(Icons.person_add),
+          ),
+        ],
       ) : null,
       body: Center(
         child: ConstrainedBox(
@@ -121,6 +137,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
         ),
       ),
     );
+  }
+
+  void _showInviteLinkDialog(BuildContext context) {
+      showDialog(
+          context: context,
+          builder: (context) => const _InviteLinkDialog(),
+      );
   }
 
   Widget _buildSearchAndFilter() {
@@ -668,6 +691,108 @@ class _AssignProfessorDialogState extends State<_AssignProfessorDialog> {
                         child: const Text('Guardar'),
                     )
                 ]
+        );
+    }
+}
+
+class _InviteLinkDialog extends StatefulWidget {
+    const _InviteLinkDialog();
+
+    @override
+    State<_InviteLinkDialog> createState() => _InviteLinkDialogState();
+}
+
+class _InviteLinkDialogState extends State<_InviteLinkDialog> {
+    bool _isLoading = true;
+    String? _inviteLink;
+    String? _errorMessage;
+
+    @override
+    void initState() {
+        super.initState();
+        _generateLink();
+    }
+
+    Future<void> _generateLink() async {
+        try {
+            final api = ApiClient();
+            // Assuming we added an endpoint or we can use the existing generate method if we expose it correctly
+            // Auth controller already has: POST /auth/invite -> { role: 'alumno' }
+            // Let's call it and generate the deep link
+            final response = await api.post('/auth/invite', {'role': 'alumno'});
+            
+            if (response != null && response['inviteLink'] != null) {
+                final token = response['inviteLink']; // the token itself
+                // The deep link format we handle in main.dart:
+                // gymflow://invite?token=XYZ
+                // For a more robust solution, we can host this token on the actual domain
+                final fullLink = 'https://tugymflow.com/invite?token=$token'; // Use web landing or deep link directly
+                
+                setState(() {
+                    _inviteLink = fullLink;
+                    _isLoading = false;
+                });
+            } else {
+                 setState(() {
+                    _errorMessage = 'Respuesta inválida del servidor';
+                    _isLoading = false;
+                });
+            }
+        } catch (e) {
+            setState(() {
+                _errorMessage = 'Error al generar link: $e';
+                _isLoading = false;
+            });
+        }
+    }
+
+    @override
+    Widget build(BuildContext context) {
+        return AlertDialog(
+            title: const Text('Enlace de Invitación', textAlign: TextAlign.center),
+            content: _isLoading 
+                ? const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()))
+                : _errorMessage != null
+                    ? Text(_errorMessage!, style: const TextStyle(color: Colors.red))
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                            const Text('Comparte este QR o enlace con tus alumnos para que se registren automáticamente a tu gimnasio.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14)),
+                            const SizedBox(height: 24),
+                            // QR Code
+                            Container(
+                                color: Colors.white,
+                                padding: const EdgeInsets.all(8),
+                                child: QrImageView(
+                                    data: _inviteLink!,
+                                    version: QrVersions.auto,
+                                    size: 200.0,
+                                ),
+                            ),
+                            const SizedBox(height: 24),
+                            // Copy Link button
+                            ElevatedButton.icon(
+                                onPressed: () {
+                                    Clipboard.setData(ClipboardData(text: _inviteLink!));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Enlace copiado al portapapeles'), backgroundColor: Colors.green)
+                                    );
+                                },
+                                icon: const Icon(Icons.copy),
+                                label: const Text('Copiar Enlace'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                  foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                                ),
+                            ),
+                        ],
+                    ),
+            actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cerrar'),
+                )
+            ],
         );
     }
 }

@@ -25,6 +25,15 @@ export class AuthController {
     return this.authService.register(createUserDto);
   }
 
+  @Post('register-with-invite')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async registerWithInvite(@Body() body: { user: CreateUserDto; inviteToken: string }) {
+    if (!body.inviteToken) {
+      throw new UnauthorizedException('Token de invitación requerido');
+    }
+    return this.authService.registerWithInvite(body.user, body.inviteToken);
+  }
+
   @Post('login')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async login(@Body() loginDto: LoginDto) {
@@ -90,7 +99,7 @@ export class AuthController {
     @Body('gymId') gymId: string,
     @Body('role') role?: UserRole
   ) {
-    // Only Admin/SuperAdmin should call this, ideally validated by RolesGuard (out of scope for quick fix, but noted)
+    // Only Admin/SuperAdmin should call this
     const token = await this.authService.generateInviteLink(gymId, role);
     return { token };
   }
