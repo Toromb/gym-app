@@ -140,9 +140,17 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
   }
 
   void _showInviteLinkDialog(BuildContext context) {
+      final user = context.read<AuthProvider>().user;
+      final gymId = user?.gymId;
+      
+      if (gymId == null) {
+         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error: No se encontró el gimnasio del administrador.')));
+         return;
+      }
+
       showDialog(
           context: context,
-          builder: (context) => const _InviteLinkDialog(),
+          builder: (context) => _InviteLinkDialog(gymId: gymId),
       );
   }
 
@@ -696,7 +704,8 @@ class _AssignProfessorDialogState extends State<_AssignProfessorDialog> {
 }
 
 class _InviteLinkDialog extends StatefulWidget {
-    const _InviteLinkDialog();
+    final String gymId;
+    const _InviteLinkDialog({required this.gymId});
 
     @override
     State<_InviteLinkDialog> createState() => _InviteLinkDialogState();
@@ -716,17 +725,14 @@ class _InviteLinkDialogState extends State<_InviteLinkDialog> {
     Future<void> _generateLink() async {
         try {
             final api = ApiClient();
-            // Assuming we added an endpoint or we can use the existing generate method if we expose it correctly
-            // Auth controller already has: POST /auth/invite -> { role: 'alumno' }
-            // Let's call it and generate the deep link
-            final response = await api.post('/auth/invite', {'role': 'alumno'});
+            final response = await api.post('/auth/generate-invite-link', {
+                'gymId': widget.gymId,
+                'role': 'alumno'
+            });
             
-            if (response != null && response['inviteLink'] != null) {
-                final token = response['inviteLink']; // the token itself
-                // The deep link format we handle in main.dart:
-                // gymflow://invite?token=XYZ
-                // For a more robust solution, we can host this token on the actual domain
-                final fullLink = 'https://tugymflow.com/invite?token=$token'; // Use web landing or deep link directly
+            if (response != null && response['token'] != null) {
+                final token = response['token']; 
+                final fullLink = 'https://tugymflow.com/invite?token=$token'; 
                 
                 setState(() {
                     _inviteLink = fullLink;
