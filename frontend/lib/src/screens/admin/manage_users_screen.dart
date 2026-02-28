@@ -43,6 +43,15 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestionar Usuarios'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Actualizar lista',
+            onPressed: () {
+              context.read<UserProvider>().fetchUsers(forceRefresh: true);
+            },
+          ),
+        ],
       ),
       floatingActionButton: isAdmin ? Column(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -97,22 +106,28 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
             final profes = filteredUsers.where((u) => u.role == 'profe').toList();
             final alumnos = filteredUsers.where((u) => u.role == 'alumno').toList();
 
-            return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSearchAndFilter(),
-                  _buildSectionHeader(context, 'Admins', admins.length),
-                  ..._buildUserListWidgets(context, admins, isAdmin, false),
-                  
-                  _buildSectionHeader(context, 'Profesores', profes.length),
-                  ..._buildUserListWidgets(context, profes, isAdmin, false),
-                  
-                  _buildSectionHeader(context, 'Alumnos', alumnos.length),
-                  ..._buildUserListWidgets(context, alumnos, isAdmin, false),
-                  
-                  const SizedBox(height: 80), // Space for FAB
-                ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                await context.read<UserProvider>().fetchUsers(forceRefresh: true);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(), // Important for RefreshIndicator to work when list is small
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSearchAndFilter(),
+                    _buildSectionHeader(context, 'Admins', admins.length),
+                    ..._buildUserListWidgets(context, admins, isAdmin, false),
+                    
+                    _buildSectionHeader(context, 'Profesores', profes.length),
+                    ..._buildUserListWidgets(context, profes, isAdmin, false),
+                    
+                    _buildSectionHeader(context, 'Alumnos', alumnos.length),
+                    ..._buildUserListWidgets(context, alumnos, isAdmin, false),
+                    
+                    const SizedBox(height: 80), // Space for FAB
+                  ],
+                ),
               ),
             );
           } else {
@@ -124,9 +139,15 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                  _buildSearchAndFilter(), // Reuse
                 _buildSectionHeader(context, 'Alumnos', students.length),
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.only(bottom: 100),
-                    children: _buildUserListWidgets(context, students, false, true),
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      await context.read<UserProvider>().fetchUsers(forceRefresh: true);
+                    },
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(bottom: 100),
+                      children: _buildUserListWidgets(context, students, false, true),
+                    ),
                   ),
                 ),
               ],
@@ -724,15 +745,11 @@ class _InviteLinkDialogState extends State<_InviteLinkDialog> {
 
     Future<void> _generateLink() async {
         try {
-            final api = ApiClient();
-            final response = await api.post('/auth/generate-invite-link', {
-                'gymId': widget.gymId,
-                'role': 'alumno'
-            });
+            final authService = AuthService();
+            final token = await authService.generateInviteLink(widget.gymId); // Defaults to ALUMNO
             
-            if (response != null && response['token'] != null) {
-                final token = response['token']; 
-                final fullLink = 'https://tugymflow.com/invite?token=$token'; 
+            if (token != null) {
+                final fullLink = authService.getInviteUrl(token); 
                 
                 setState(() {
                     _inviteLink = fullLink;
@@ -740,13 +757,13 @@ class _InviteLinkDialogState extends State<_InviteLinkDialog> {
                 });
             } else {
                  setState(() {
-                    _errorMessage = 'Respuesta inválida del servidor';
+                    _errorMessage = 'Respuesta vacía del servidor';
                     _isLoading = false;
                 });
             }
         } catch (e) {
             setState(() {
-                _errorMessage = 'Error al generar link: $e';
+                _errorMessage = 'Error: $e';
                 _isLoading = false;
             });
         }
@@ -754,51 +771,79 @@ class _InviteLinkDialogState extends State<_InviteLinkDialog> {
 
     @override
     Widget build(BuildContext context) {
-        return AlertDialog(
-            title: const Text('Enlace de Invitación', textAlign: TextAlign.center),
-            content: _isLoading 
-                ? const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()))
-                : _errorMessage != null
-                    ? Text(_errorMessage!, style: const TextStyle(color: Colors.red))
-                    : Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                            const Text('Comparte este QR o enlace con tus alumnos para que se registren automáticamente a tu gimnasio.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14)),
-                            const SizedBox(height: 24),
-                            // QR Code
-                            Container(
-                                color: Colors.white,
-                                padding: const EdgeInsets.all(8),
-                                child: QrImageView(
-                                    data: _inviteLink!,
-                                    version: QrVersions.auto,
-                                    size: 200.0,
-                                ),
+        return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Container(
+                width: 400, // Fixed width helps prevent layout issues
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                        const Text('Enlace de Invitación', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 24),
+                        if (_isLoading)
+                            const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()))
+                        else if (_errorMessage != null)
+                            Text(_errorMessage!, style: const TextStyle(color: Colors.red))
+                        else
+                            Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                    const Text('Comparte este QR o enlace con tus alumnos para que se registren automáticamente a tu gimnasio.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14)),
+                                    const SizedBox(height: 24),
+                                    // QR Code
+                                    Container(
+                                        color: Colors.white,
+                                        padding: const EdgeInsets.all(8),
+                                        child: SizedBox(
+                                            height: 200,
+                                            width: 200,
+                                            child: CustomPaint(
+                                                size: const Size.square(200),
+                                                painter: QrPainter(
+                                                    data: _inviteLink!,
+                                                    version: QrVersions.auto,
+                                                    eyeStyle: const QrEyeStyle(
+                                                        eyeShape: QrEyeShape.square,
+                                                        color: Colors.black,
+                                                    ),
+                                                    dataModuleStyle: const QrDataModuleStyle(
+                                                        dataModuleShape: QrDataModuleShape.square,
+                                                        color: Colors.black,
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    // Copy Link button
+                                    ElevatedButton.icon(
+                                        onPressed: () {
+                                            Clipboard.setData(ClipboardData(text: _inviteLink!));
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Enlace copiado al portapapeles'), backgroundColor: Colors.green)
+                                            );
+                                        },
+                                        icon: const Icon(Icons.copy),
+                                        label: const Text('Copiar Enlace'),
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                            foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                                        ),
+                                    ),
+                                ],
                             ),
-                            const SizedBox(height: 24),
-                            // Copy Link button
-                            ElevatedButton.icon(
-                                onPressed: () {
-                                    Clipboard.setData(ClipboardData(text: _inviteLink!));
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Enlace copiado al portapapeles'), backgroundColor: Colors.green)
-                                    );
-                                },
-                                icon: const Icon(Icons.copy),
-                                label: const Text('Copiar Enlace'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                                  foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-                                ),
+                        const SizedBox(height: 24),
+                        Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cerrar'),
                             ),
-                        ],
-                    ),
-            actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cerrar'),
-                )
-            ],
+                        ),
+                    ],
+                ),
+            ),
         );
     }
 }

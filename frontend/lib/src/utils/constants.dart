@@ -10,7 +10,7 @@ String get baseUrl {
 
   if (kIsWeb) {
     if (kDebugMode) {
-      return 'http://localhost:3001';
+      return 'http://localhost:3000';
     }
     // Use the current window origin to ensure absolute URL
     // This avoids issues with relative URIs in some HTTP clients
@@ -24,9 +24,9 @@ String get baseUrl {
   }
 
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:3001'; // Changed default to 3001 to match backend
+      return 'http://10.0.2.2:3000'; // Changed default to 3000 to match backend
   }
-  return 'http://localhost:3001';
+  return 'http://localhost:3000';
 }
 
 String resolveImageUrl(String? relativeUrl) {

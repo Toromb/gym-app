@@ -21,6 +21,11 @@ class ApiClient {
   http.Client _client = http.Client();
   static const Duration _timeout = Duration(seconds: 30);
 
+  // Callbacks for global 401 handling
+  static Future<bool> Function()? onTokenExpired;
+  static void Function()? onSessionTerminated;
+  static bool _isRefreshing = false;
+
   Future<String?> _getToken() async {
     try {
       if (kIsWeb) {
@@ -75,94 +80,83 @@ class ApiClient {
     }
   }
 
-  Future<dynamic> get(String endpoint) async {
+  Future<dynamic> _requestWithRetry(String endpoint, String method, {dynamic body, bool disableInterceptor = false}) async {
     final url = Uri.parse('$baseUrl$endpoint');
-    final headers = await _getHeaders();
+    
+    Future<http.Response> makeRequest() async {
+      final headers = await _getHeaders();
+      switch (method) {
+        case 'GET': return await _client.get(url, headers: headers).timeout(_timeout);
+        case 'POST': return await _client.post(url, headers: headers, body: jsonEncode(body)).timeout(_timeout);
+        case 'PUT': return await _client.put(url, headers: headers, body: jsonEncode(body)).timeout(_timeout);
+        case 'PATCH': return await _client.patch(url, headers: headers, body: jsonEncode(body)).timeout(_timeout);
+        case 'DELETE': return await _client.delete(url, headers: headers).timeout(_timeout);
+        default: throw Exception('Unsupported Method');
+      }
+    }
 
-    if (kDebugMode) debugPrint('GET $url');
+    if (kDebugMode) debugPrint('$method $url');
 
     try {
-      final response = await _client.get(url, headers: headers).timeout(_timeout);
+      final response = await makeRequest();
       return _processResponse(response, url);
     } on TimeoutException {
       throw NetworkException('Connection Timed Out');
+    } on UnauthorizedException {
+      if (disableInterceptor || onTokenExpired == null || kIsWeb) {
+        // En Web, no intentamos refresh silencioso, deslogueamos directo
+        if (!disableInterceptor) onSessionTerminated?.call();
+        rethrow;
+      }
+
+      // Prevent concurrent refreshes (a robust app would queue them, MVP just blocks)
+      if (_isRefreshing) {
+         // Optionally wait or just fail
+         onSessionTerminated?.call();
+         rethrow;
+      }
+
+      _isRefreshing = true;
+      try {
+        final refreshed = await onTokenExpired!();
+        if (refreshed) {
+          // Retry original request with fresh token
+          final retryResponse = await makeRequest();
+          return _processResponse(retryResponse, url);
+        } else {
+          onSessionTerminated?.call();
+          throw UnauthorizedException();
+        }
+      } catch (e) {
+        onSessionTerminated?.call();
+        throw UnauthorizedException();
+      } finally {
+        _isRefreshing = false;
+      }
     } catch (e) {
-        if (e is ApiException) rethrow; // Pass up known exceptions
-        throw NetworkException('Error communicating with server: $e');
+      if (e is ApiException) rethrow;
+      throw NetworkException('Error communicating with server: $e');
     }
   }
 
-  Future<dynamic> post(String endpoint, dynamic body) async {
-    final url = Uri.parse('$baseUrl$endpoint');
-    final headers = await _getHeaders();
-
-    if (kDebugMode) debugPrint('POST $url');
-
-    try {
-      final response = await _client
-          .post(url, headers: headers, body: jsonEncode(body))
-          .timeout(_timeout);
-      return _processResponse(response, url);
-    } on TimeoutException {
-      throw NetworkException('Connection Timed Out');
-    } catch (e) {
-        if (e is ApiException) rethrow;
-        throw NetworkException('Error communicating with server: $e');
-    }
+  Future<dynamic> get(String endpoint, {bool disableInterceptor = false}) async {
+    return _requestWithRetry(endpoint, 'GET', disableInterceptor: disableInterceptor);
   }
 
-  Future<dynamic> put(String endpoint, dynamic body) async {
-    final url = Uri.parse('$baseUrl$endpoint');
-    final headers = await _getHeaders();
-
-    if (kDebugMode) debugPrint('PUT $url');
-
-    try {
-      final response = await _client
-          .put(url, headers: headers, body: jsonEncode(body))
-          .timeout(_timeout);
-      return _processResponse(response, url);
-    } on TimeoutException {
-      throw NetworkException('Connection Timed Out');
-    } catch (e) {
-        if (e is ApiException) rethrow;
-        throw NetworkException('Error communicating with server: $e');
-    }
+  Future<dynamic> post(String endpoint, dynamic body, {bool disableInterceptor = false}) async {
+    return _requestWithRetry(endpoint, 'POST', body: body, disableInterceptor: disableInterceptor);
   }
 
-  Future<dynamic> delete(String endpoint) async {
-    final url = Uri.parse('$baseUrl$endpoint');
-    final headers = await _getHeaders();
-
-    if (kDebugMode) debugPrint('DELETE $url');
-
-    try {
-      final response = await _client.delete(url, headers: headers).timeout(_timeout);
-      return _processResponse(response, url);
-    } on TimeoutException {
-      throw NetworkException('Connection Timed Out');
-    } catch (e) {
-        if (e is ApiException) rethrow;
-        throw NetworkException('Error communicating with server: $e');
-    }
+  Future<dynamic> put(String endpoint, dynamic body, {bool disableInterceptor = false}) async {
+    return _requestWithRetry(endpoint, 'PUT', body: body, disableInterceptor: disableInterceptor);
   }
-  Future<dynamic> patch(String endpoint, dynamic body) async {
-    final url = Uri.parse('$baseUrl$endpoint');
-    final headers = await _getHeaders();
 
-    if (kDebugMode) debugPrint('PATCH $url');
+  Future<dynamic> delete(String endpoint, {bool disableInterceptor = false}) async {
+    return _requestWithRetry(endpoint, 'DELETE', disableInterceptor: disableInterceptor);
+  }
 
-    try {
-      final response = await _client
-          .patch(url, headers: headers, body: jsonEncode(body))
-          .timeout(_timeout);
-      return _processResponse(response, url);
-    } on TimeoutException {
-      throw NetworkException('Connection Timed Out');
-    } catch (e) {
-        if (e is ApiException) rethrow;
-        throw NetworkException('Error communicating with server: $e');
-    }
+  Future<dynamic> patch(String endpoint, dynamic body, {bool disableInterceptor = false}) async {
+    return _requestWithRetry(endpoint, 'PATCH', body: body, disableInterceptor: disableInterceptor);
   }
 
   // --- Equipments ---

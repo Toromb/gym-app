@@ -25,8 +25,12 @@ import 'src/services/local_storage_service.dart';
 import 'src/services/local_storage_service.dart';
 import 'src/services/sync_service.dart';
 import 'package:url_strategy/url_strategy.dart';
-import 'package:app_links/app_links.dart';
+
 import 'dart:async';
+import 'src/services/api_client.dart';
+import 'src/services/auth_service.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +39,26 @@ void main() async {
   await LocalStorageService().init();
   SyncService().init();
   
+  // ---------------------------------------------------------
+  // SESSION MANAGEMENT INTERCEPTORS
+  // ---------------------------------------------------------
+  ApiClient.onTokenExpired = () async {
+     return await AuthService().refreshToken();
+  };
+
+  ApiClient.onSessionTerminated = () {
+     // Force an immediate UI redirect to Login when session dies
+     AuthService().logout().then((_) {
+        navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+           ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Tu sesión ha expirado por seguridad.')),
+           );
+        }
+     });
+  };
+
   runApp(
     MultiProvider(
       providers: [
@@ -104,6 +128,7 @@ class MyApp extends StatelessWidget {
         }
 
         return MaterialApp(
+          navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
           title: 'GymFlow',
           themeMode: themeProvider.themeMode, 
@@ -148,8 +173,9 @@ class MyApp extends StatelessWidget {
                final token = queryParams['token'];
                if (token != null) {
                  // Push to LoginScreen but pass the token to trigger invite flow
+                 // Handling removed for MVP as it caused compile errors and we are moving to In-App scanning.
                  return MaterialPageRoute(
-                   builder: (_) => LoginScreen(queryParams: {'token': token}),
+                   builder: (_) => const LoginScreen(),
                  );
                }
             }
@@ -203,65 +229,4 @@ class MyApp extends StatelessWidget {
 }
 
 // DeepLinkHandler Widget to wrap MaterialApp and listen for links
-class DeepLinkHandler extends StatefulWidget {
-  final Widget child;
-  const DeepLinkHandler({super.key, required this.child});
 
-  @override
-  State<DeepLinkHandler> createState() => _DeepLinkHandlerState();
-}
-
-class _DeepLinkHandlerState extends State<DeepLinkHandler> {
-  late AppLinks _appLinks;
-  StreamSubscription<Uri>? _linkSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _initDeepLinks();
-  }
-
-  Future<void> _initDeepLinks() async {
-    _appLinks = AppLinks();
-
-    // 1. Handle initial URI (app opened from closed state)
-    try {
-      final initialUri = await _appLinks.getInitialLink();
-      if (initialUri != null) {
-        _handleDeepLink(initialUri);
-      }
-    } catch (e) {
-      debugPrint("Failed to handle initial deep link: $e");
-    }
-
-    // 2. Handle incoming links while app is open/background
-    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
-      _handleDeepLink(uri);
-    }, onError: (err) {
-      debugPrint("Error listening to deep links: $err");
-    });
-  }
-
-  void _handleDeepLink(Uri uri) {
-    debugPrint("Deep link received: $uri");
-    // Depending on routing, you might need a GlobalKey<NavigatorState>
-    // to push a route dynamically, or if your routing reads initialRoute correctly
-    // it will be picked up by onGenerateRoute if passed correctly.
-    // For simplicity with MaterialApp's default navigation flow, if we are inside
-    // context, we could try:
-    // Navigator.of(context).pushNamed(uri.toString());
-    // However, since we wrap the MaterialApp or are inside it, we will use a global key
-    // or rely on standard path-based routing if web.
-  }
-
-  @override
-  void dispose() {
-    _linkSubscription?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return widget.child;
-  }
-}

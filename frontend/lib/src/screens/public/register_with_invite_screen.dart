@@ -5,6 +5,7 @@ import '../../providers/theme_provider.dart';
 import '../../services/api_client.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../utils/constants.dart';
 
 class RegisterWithInviteScreen extends StatefulWidget {
   final String inviteToken;
@@ -27,6 +28,8 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
   String? _gymName;
   bool _isValidatingToken = true;
 
+  String? _logoUrl;
+
   @override
   void initState() {
     super.initState();
@@ -34,28 +37,32 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
   }
 
   Future<void> _validateToken() async {
-    // Ideally, we could have an endpoint to just validate and return Gym Name: GET /auth/validate-invite?token=...
-    // For MVP, we decode the JWT locally or just let the registration fail.
-    // However, since we want to show the Gym Name in the UI, we should decode the payload.
-    // JWT has 3 parts separated by dots.
     try {
-      final parts = widget.inviteToken.split('.');
-      if (parts.length != 3) throw Exception('Invalid token format');
+      final api = ApiClient();
+      final response = await api.get('/auth/invite-info/${widget.inviteToken}');
       
-      // We need just the payload to see what's inside (often not encrypted, just base64 encoded)
-      // Since it's signed by backend, we trust it until submission.
-      
-      setState(() {
-         // Fallback if we cannot parse it easily in flutter without another package
-         _gymName = "Tu Gimnasio"; 
-         _isValidatingToken = false;
-      });
-      
+      if (response != null && response['gymName'] != null) {
+        setState(() {
+          _gymName = response['gymName'];
+          _logoUrl = response['logoUrl'];
+          _isValidatingToken = false;
+        });
+      } else {
+        throw Exception('Invalid response');
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'El enlace de invitación es inválido o está corrupto.';
-        _isValidatingToken = false;
-      });
+      if (kDebugMode) {
+        // Fallback for local debugging without backend update applied
+        setState(() {
+          _gymName = "Tu Gimnasio"; 
+          _isValidatingToken = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'El enlace de invitación es inválido o expiró.';
+          _isValidatingToken = false;
+        });
+      }
     }
   }
 
@@ -247,11 +254,14 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
       ),
       body: _isValidatingToken 
         ? const Center(child: CircularProgressIndicator())
-        : SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+        : Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -261,7 +271,20 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.stars_rounded, size: 48, color: Theme.of(context).primaryColor),
+                      if (_logoUrl != null && _logoUrl!.isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            '$baseUrl$_logoUrl',
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Icon(Icons.fitness_center, size: 48, color: Theme.of(context).primaryColor),
+                          ),
+                        )
+                      else
+                        Icon(Icons.stars_rounded, size: 48, color: Theme.of(context).primaryColor),
                       const SizedBox(height: 12),
                       const Text(
                         "¡Has sido invitado!",
@@ -270,7 +293,7 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Estás a un paso de unirte a $_gymName.",
+                        "Estás a un paso de unirte a ${_gymName ?? 'tu gimnasio'}.",
                          style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                          textAlign: TextAlign.center,
                       )
@@ -385,14 +408,15 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
                 
                 _buildSocialButtons(),
                 
-                const SizedBox(height: 40),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text("Ya tengo cuenta, quiero iniciar sesión"),
                 )
               ],
             ),
-        ),
+         ),
+       ),
+      ),
     );
   }
 }
