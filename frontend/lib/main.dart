@@ -26,6 +26,12 @@ import 'src/services/local_storage_service.dart';
 import 'src/services/sync_service.dart';
 import 'package:url_strategy/url_strategy.dart';
 
+import 'dart:async';
+import 'src/services/api_client.dart';
+import 'src/services/auth_service.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setPathUrlStrategy();
@@ -33,6 +39,26 @@ void main() async {
   await LocalStorageService().init();
   SyncService().init();
   
+  // ---------------------------------------------------------
+  // SESSION MANAGEMENT INTERCEPTORS
+  // ---------------------------------------------------------
+  ApiClient.onTokenExpired = () async {
+     return await AuthService().refreshToken();
+  };
+
+  ApiClient.onSessionTerminated = () {
+     // Force an immediate UI redirect to Login when session dies
+     AuthService().logout().then((_) {
+        navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+           ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Tu sesión ha expirado por seguridad.')),
+           );
+        }
+     });
+  };
+
   runApp(
     MultiProvider(
       providers: [
@@ -102,6 +128,7 @@ class MyApp extends StatelessWidget {
         }
 
         return MaterialApp(
+          navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
           title: 'GymFlow',
           themeMode: themeProvider.themeMode, 
@@ -139,17 +166,30 @@ class MyApp extends StatelessWidget {
           onGenerateRoute: (settings) {
             
             final uri = Uri.parse(settings.name ?? '/');
+            final queryParams = uri.queryParameters;
             
+            // 0. Handle Invite Link Deep Link (e.g. gymflow://invite?token=XYZ)
+            if (uri.path == '/invite' || uri.path.contains('invite')) {
+               final token = queryParams['token'];
+               if (token != null) {
+                 // Push to LoginScreen but pass the token to trigger invite flow
+                 // Handling removed for MVP as it caused compile errors and we are moving to In-App scanning.
+                 return MaterialPageRoute(
+                   builder: (_) => const LoginScreen(),
+                 );
+               }
+            }
+
             // 1. Handle Activation/Reset (Public)
             if (uri.path == '/activate-account' || uri.path.contains('activate-account')) {
-              final token = uri.queryParameters['token'];
+              final token = queryParams['token'];
               return MaterialPageRoute(
                 builder: (_) => ActivateAccountScreen(token: token, mode: 'activate'),
               );
             }
             
             if (uri.path == '/reset-password' || uri.path.contains('reset-password')) {
-              final token = uri.queryParameters['token'];
+              final token = queryParams['token'];
               return MaterialPageRoute(
                 builder: (_) => ActivateAccountScreen(token: token, mode: 'reset'),
               );
@@ -187,3 +227,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+// DeepLinkHandler Widget to wrap MaterialApp and listen for links
+

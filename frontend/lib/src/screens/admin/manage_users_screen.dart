@@ -13,6 +13,8 @@ import 'edit_user_screen.dart';
 import '../teacher/student_plans_screen.dart';
 import '../../widgets/payment_status_badge.dart';
 import '../shared/user_detail_screen.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '../../services/api_client.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   const ManageUsersScreen({super.key});
@@ -41,16 +43,39 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestionar Usuarios'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Actualizar lista',
+            onPressed: () {
+              context.read<UserProvider>().fetchUsers(forceRefresh: true);
+            },
+          ),
+        ],
       ),
-      floatingActionButton: isAdmin ? FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddUserScreen()),
-          );
-        },
-        tooltip: 'Crear Usuario',
-        child: const Icon(Icons.person_add),
+      floatingActionButton: isAdmin ? Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 'invite_link',
+            onPressed: () => _showInviteLinkDialog(context),
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
+            tooltip: 'Link de Invitación',
+            child: Icon(Icons.qr_code_2, color: Theme.of(context).colorScheme.onTertiary),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton(
+            heroTag: 'add_user',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddUserScreen()),
+              );
+            },
+            tooltip: 'Crear Usuario',
+            child: const Icon(Icons.person_add),
+          ),
+        ],
       ) : null,
       body: Center(
         child: ConstrainedBox(
@@ -81,22 +106,28 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
             final profes = filteredUsers.where((u) => u.role == 'profe').toList();
             final alumnos = filteredUsers.where((u) => u.role == 'alumno').toList();
 
-            return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSearchAndFilter(),
-                  _buildSectionHeader(context, 'Admins', admins.length),
-                  ..._buildUserListWidgets(context, admins, isAdmin, false),
-                  
-                  _buildSectionHeader(context, 'Profesores', profes.length),
-                  ..._buildUserListWidgets(context, profes, isAdmin, false),
-                  
-                  _buildSectionHeader(context, 'Alumnos', alumnos.length),
-                  ..._buildUserListWidgets(context, alumnos, isAdmin, false),
-                  
-                  const SizedBox(height: 80), // Space for FAB
-                ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                await context.read<UserProvider>().fetchUsers(forceRefresh: true);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(), // Important for RefreshIndicator to work when list is small
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSearchAndFilter(),
+                    _buildSectionHeader(context, 'Admins', admins.length),
+                    ..._buildUserListWidgets(context, admins, isAdmin, false),
+                    
+                    _buildSectionHeader(context, 'Profesores', profes.length),
+                    ..._buildUserListWidgets(context, profes, isAdmin, false),
+                    
+                    _buildSectionHeader(context, 'Alumnos', alumnos.length),
+                    ..._buildUserListWidgets(context, alumnos, isAdmin, false),
+                    
+                    const SizedBox(height: 80), // Space for FAB
+                  ],
+                ),
               ),
             );
           } else {
@@ -108,9 +139,15 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                  _buildSearchAndFilter(), // Reuse
                 _buildSectionHeader(context, 'Alumnos', students.length),
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.only(bottom: 100),
-                    children: _buildUserListWidgets(context, students, false, true),
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      await context.read<UserProvider>().fetchUsers(forceRefresh: true);
+                    },
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(bottom: 100),
+                      children: _buildUserListWidgets(context, students, false, true),
+                    ),
                   ),
                 ),
               ],
@@ -121,6 +158,21 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
         ),
       ),
     );
+  }
+
+  void _showInviteLinkDialog(BuildContext context) {
+      final user = context.read<AuthProvider>().user;
+      final gymId = user?.gym?.id;
+      
+      if (gymId == null) {
+         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error: No se encontró el gimnasio del administrador.')));
+         return;
+      }
+
+      showDialog(
+          context: context,
+          builder: (context) => _InviteLinkDialog(gymId: gymId),
+      );
   }
 
   Widget _buildSearchAndFilter() {
@@ -668,6 +720,130 @@ class _AssignProfessorDialogState extends State<_AssignProfessorDialog> {
                         child: const Text('Guardar'),
                     )
                 ]
+        );
+    }
+}
+
+class _InviteLinkDialog extends StatefulWidget {
+    final String gymId;
+    const _InviteLinkDialog({required this.gymId});
+
+    @override
+    State<_InviteLinkDialog> createState() => _InviteLinkDialogState();
+}
+
+class _InviteLinkDialogState extends State<_InviteLinkDialog> {
+    bool _isLoading = true;
+    String? _inviteLink;
+    String? _errorMessage;
+
+    @override
+    void initState() {
+        super.initState();
+        _generateLink();
+    }
+
+    Future<void> _generateLink() async {
+        try {
+            final authService = AuthService();
+            final token = await authService.generateInviteLink(widget.gymId); // Defaults to ALUMNO
+            
+            if (token != null) {
+                final fullLink = authService.getInviteUrl(token); 
+                
+                setState(() {
+                    _inviteLink = fullLink;
+                    _isLoading = false;
+                });
+            } else {
+                 setState(() {
+                    _errorMessage = 'Respuesta vacía del servidor';
+                    _isLoading = false;
+                });
+            }
+        } catch (e) {
+            setState(() {
+                _errorMessage = 'Error: $e';
+                _isLoading = false;
+            });
+        }
+    }
+
+    @override
+    Widget build(BuildContext context) {
+        return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Container(
+                width: 400, // Fixed width helps prevent layout issues
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                        const Text('Enlace de Invitación', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 24),
+                        if (_isLoading)
+                            const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()))
+                        else if (_errorMessage != null)
+                            Text(_errorMessage!, style: const TextStyle(color: Colors.red))
+                        else
+                            Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                    const Text('Comparte este QR o enlace con tus alumnos para que se registren automáticamente a tu gimnasio.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14)),
+                                    const SizedBox(height: 24),
+                                    // QR Code
+                                    Container(
+                                        color: Colors.white,
+                                        padding: const EdgeInsets.all(8),
+                                        child: SizedBox(
+                                            height: 200,
+                                            width: 200,
+                                            child: CustomPaint(
+                                                size: const Size.square(200),
+                                                painter: QrPainter(
+                                                    data: _inviteLink!,
+                                                    version: QrVersions.auto,
+                                                    eyeStyle: const QrEyeStyle(
+                                                        eyeShape: QrEyeShape.square,
+                                                        color: Colors.black,
+                                                    ),
+                                                    dataModuleStyle: const QrDataModuleStyle(
+                                                        dataModuleShape: QrDataModuleShape.square,
+                                                        color: Colors.black,
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    // Copy Link button
+                                    ElevatedButton.icon(
+                                        onPressed: () {
+                                            Clipboard.setData(ClipboardData(text: _inviteLink!));
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Enlace copiado al portapapeles'), backgroundColor: Colors.green)
+                                            );
+                                        },
+                                        icon: const Icon(Icons.copy),
+                                        label: const Text('Copiar Enlace'),
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                            foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                                        ),
+                                    ),
+                                ],
+                            ),
+                        const SizedBox(height: 24),
+                        Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cerrar'),
+                            ),
+                        ),
+                    ],
+                ),
+            ),
         );
     }
 }

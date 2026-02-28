@@ -10,6 +10,10 @@ import { OAuth2Client } from 'google-auth-library';
 import { GymsService } from '../gyms/gyms.service';
 import { UserRole } from '../users/entities/user.entity';
 import appleSignin from 'apple-signin-auth';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, IsNull } from 'typeorm';
+import { RefreshToken } from './entities/refresh-token.entity';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +24,8 @@ export class AuthService {
     private usersService: UsersService,
     private gymsService: GymsService,
     private jwtService: JwtService,
+    @InjectRepository(RefreshToken)
+    private refreshTokensRepository: Repository<RefreshToken>,
   ) { }
 
   // --- Invite Token Handling ---
@@ -28,16 +34,14 @@ export class AuthService {
     const gym = await this.gymsService.findOne(gymId);
     if (!gym) throw new BadRequestException('Gym not found');
 
-    const payload = { gymId, role, type: 'invite' };
+    const payload = { gymId, role: UserRole.ALUMNO, type: 'invite' }; // Force ALUMNO on generation as well
 
-    // Configurable Expiration
-    const expiresIn = process.env.INVITE_TOKEN_EXPIRATION || '7d';
-    // Isolated Secret
     const secret = process.env.JWT_INVITE_SECRET || process.env.JWT_SECRET || 'secret';
 
+    // QR permanente (no expira)
     const token = this.jwtService.sign(payload, {
       secret,
-      expiresIn: expiresIn as any // Cast to any to avoid StringValue mismatch with process.env string
+      expiresIn: '3650d', // 10 years
     });
 
     return token;
@@ -63,9 +67,23 @@ export class AuthService {
     }
   }
 
+  async getInviteInfo(token: string) {
+    const inviteData = this.verifyInviteToken(token);
+    if (!inviteData) throw new BadRequestException('Token de invitación inválido.');
+
+    const gym = await this.gymsService.findOne(inviteData.gymId);
+    if (!gym) throw new BadRequestException('Gimnasio no encontrado.');
+
+    return {
+      gymName: gym.businessName,
+      logoUrl: gym.logoUrl,
+      role: inviteData.role,
+    };
+  }
+
   // --- Login Flows ---
 
-  async loginWithGoogle(idToken: string, inviteToken?: string) {
+  async loginWithGoogle(idToken: string, inviteToken?: string, platform: string = 'web', deviceId?: string) {
     let payload;
     try {
       const ticket = await this.googleClient.verifyIdToken({
@@ -178,10 +196,10 @@ export class AuthService {
       this.logger.log(`Created new Google user: ${email} for Gym ${gym.businessName}`);
     }
 
-    return this.login(user);
+    return this.login(user, platform, deviceId);
   }
 
-  async loginWithApple(identityToken: string, inviteToken?: string) {
+  async loginWithApple(identityToken: string, inviteToken?: string, platform: string = 'web', deviceId?: string) {
     let email: string;
     let providerUserId: string;
 
@@ -328,7 +346,7 @@ export class AuthService {
     }
   }
 
-  async login(user: any) {
+  async login(user: any, platform: string = 'web', deviceId?: string) {
     const payload = {
       email: user.email,
       sub: user.id,
@@ -337,9 +355,33 @@ export class AuthService {
     };
 
     const safeUser = instanceToPlain(user);
+    const accessToken = this.jwtService.sign(payload); // Defaults to 60m because of AuthModule config
+
+    let refreshToken = null;
+    if (platform === 'mobile') {
+      // 1. Generate secure random string
+      refreshToken = crypto.randomBytes(40).toString('hex');
+      // 2. Hash it for the database
+      const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+
+      // 3. Save to DB with 90-day expiration
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 90);
+
+      const deviceLabel = deviceId || `mobile-${Date.now()}`;
+
+      const rtEntity = this.refreshTokensRepository.create({
+        userId: user.id,
+        deviceId: deviceLabel,
+        tokenHash,
+        expiresAt,
+      });
+      await this.refreshTokensRepository.save(rtEntity);
+    }
 
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: accessToken,
+      refresh_token: refreshToken,
       user: safeUser,
     };
   }
@@ -348,6 +390,35 @@ export class AuthService {
     const user = await this.usersService.create(createUserDto);
     const { passwordHash, ...result } = user;
     return result;
+  }
+
+  async registerWithInvite(createUserDto: CreateUserDto, inviteToken: string) {
+    // 1. Validate Token
+    const inviteData = this.verifyInviteToken(inviteToken);
+    if (!inviteData) {
+      throw new BadRequestException('Token de invitación inválido o corrupto.');
+    }
+
+    // 2. Ensure Gym Exists
+    const gym = await this.gymsService.findOne(inviteData.gymId);
+    if (!gym) {
+      throw new BadRequestException('El gimnasio asociado a esta invitación no existe.');
+    }
+
+    // 3. Override properties from token to prevent customer tampering
+    const safeUserDto: CreateUserDto = {
+      ...createUserDto,
+      gymId: inviteData.gymId,
+      role: UserRole.ALUMNO, // Strictly force STUDENT role regardless of token
+      paysMembership: true, // Auto-set for new students via invite
+    };
+
+    // 4. Create User
+    const user = await this.usersService.create(safeUserDto);
+    this.logger.log(`Created new user via Invite: ${user.email} for Gym ${gym.businessName}`);
+
+    // 5. Automatically log them in
+    return this.login(user, 'web');
   }
 
   async generateActivationToken(userId: string): Promise<string> {
@@ -391,6 +462,11 @@ export class AuthService {
       isActive: true
     });
 
+    await this.refreshTokensRepository.update(
+      { userId: user.id, revokedAt: IsNull() },
+      { revokedAt: new Date() }
+    );
+
     this.logger.log(`Account successfully activated for user ${user.email}`);
   }
 
@@ -427,6 +503,80 @@ export class AuthService {
       passwordHash: passwordHash,
       tokenVersion: (user.tokenVersion || 0) + 1
     });
+
+    await this.refreshTokensRepository.update(
+      { userId: user.id, revokedAt: IsNull() },
+      { revokedAt: new Date() }
+    );
+    this.logger.log(`Password reset successfully for user ${user.email}`);
+  }
+
+  // --- Session Management (Refresh & Logout) ---
+
+  async refreshSession(refreshTokenStr: string, deviceId?: string) {
+    if (!refreshTokenStr) throw new UnauthorizedException('Refresh token is required');
+
+    const tokenHash = crypto.createHash('sha256').update(refreshTokenStr).digest('hex');
+
+    // 1. Find the token in the DB
+    const storedToken = await this.refreshTokensRepository.findOne({
+      where: { tokenHash },
+      relations: ['user']
+    });
+
+    if (!storedToken) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    // 2. Check if revoked
+    if (storedToken.revokedAt) {
+      this.logger.warn(`Attempted to use REVOKED refresh token for user ${storedToken.user.email}`);
+      // Token Theft Detection: Revoke ALL active tokens for this user immediately.
+      await this.refreshTokensRepository.update(
+        { userId: storedToken.userId, revokedAt: IsNull() },
+        { revokedAt: new Date() }
+      );
+      throw new UnauthorizedException('Token has been revoked. Security breach detected. All sessions terminated.');
+    }
+
+    // 3. Check if expired
+    if (storedToken.expiresAt < new Date()) {
+      throw new UnauthorizedException('Refresh token expired. Please log in again.');
+    }
+
+    // 4. Token is valid. Rotate it. (Revoke old, issue new)
+    storedToken.revokedAt = new Date();
+    await this.refreshTokensRepository.save(storedToken);
+
+    // 5. Generate new session for the user
+    this.logger.log(`Session refreshed for user ${storedToken.user.email} on device ${storedToken.deviceId}`);
+    return this.login(storedToken.user, 'mobile', deviceId || storedToken.deviceId);
+  }
+
+  async logoutSession(userId: string, refreshTokenStr?: string, deviceId?: string) {
+    if (refreshTokenStr) {
+      // Logout specific token
+      const tokenHash = crypto.createHash('sha256').update(refreshTokenStr).digest('hex');
+      const token = await this.refreshTokensRepository.findOne({ where: { tokenHash, userId } });
+      if (token && !token.revokedAt) {
+        token.revokedAt = new Date();
+        await this.refreshTokensRepository.save(token);
+        this.logger.log(`Refresh token revoked for user ${userId} on logout.`);
+      }
+    } else if (deviceId) {
+      // Optional: Logout by device ID
+      await this.refreshTokensRepository.update(
+        { userId, deviceId, revokedAt: IsNull() },
+        { revokedAt: new Date() }
+      );
+    } else {
+      // Global logout: Revoke all active sessions for this user
+      await this.refreshTokensRepository.update(
+        { userId, revokedAt: IsNull() },
+        { revokedAt: new Date() }
+      );
+      this.logger.log(`All refresh tokens revoked for user ${userId} on global logout.`);
+    }
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
@@ -448,6 +598,11 @@ export class AuthService {
       passwordHash: newHash,
       tokenVersion: (user.tokenVersion || 0) + 1
     });
+
+    await this.refreshTokensRepository.update(
+      { userId: user.id, revokedAt: IsNull() },
+      { revokedAt: new Date() }
+    );
 
     this.logger.log(`Password changed for user ${user.email}`);
   }

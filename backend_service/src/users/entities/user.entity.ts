@@ -12,6 +12,7 @@ import { StudentPlan } from '../../plans/entities/student-plan.entity';
 import { Exclude } from 'class-transformer';
 import { Gym } from '../../gyms/entities/gym.entity';
 import { OnboardingProfile } from './onboarding-profile.entity';
+import { RefreshToken } from '../../auth/entities/refresh-token.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -170,4 +171,7 @@ export class User {
 
   @OneToOne(() => OnboardingProfile, (profile) => profile.user)
   onboardingProfile: OnboardingProfile;
+
+  @OneToMany(() => RefreshToken, (token) => token.user)
+  refreshTokens: RefreshToken[];
 }

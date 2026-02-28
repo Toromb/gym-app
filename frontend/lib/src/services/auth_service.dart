@@ -11,21 +11,25 @@ class AuthService {
   final ApiClient _api = ApiClient();
   final _storage = const FlutterSecureStorage();
 
-  Future<void> _saveToken(String token) async {
+  Future<void> _saveTokens(String accessToken, String? refreshToken) async {
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('jwt', token);
+      await prefs.setString('jwt', accessToken);
+      if (refreshToken != null) await prefs.setString('refresh_token', refreshToken);
     } else {
-      await _storage.write(key: 'jwt', value: token);
+      await _storage.write(key: 'jwt', value: accessToken);
+      if (refreshToken != null) await _storage.write(key: 'refresh_token', value: refreshToken);
     }
   }
 
-  Future<void> _deleteToken() async {
+  Future<void> _deleteTokens() async {
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('jwt');
+      await prefs.remove('refresh_token');
     } else {
       await _storage.delete(key: 'jwt');
+      await _storage.delete(key: 'refresh_token');
     }
   }
 
@@ -33,7 +37,8 @@ class AuthService {
     try {
       final response = await _api.post('/auth/login', {
           'email': email, 
-          'password': password
+          'password': password,
+          'platform': kIsWeb ? 'web' : 'mobile'
       });
 
       // Response is parsed JSON (Map)
@@ -42,11 +47,12 @@ class AuthService {
       }
 
       final token = response['access_token'];
+      final refreshToken = response['refresh_token'];
       if (token == null) {
           return 'No access token in response';
       }
       
-      await _saveToken(token);
+      await _saveTokens(token, refreshToken);
       return response;
 
     } on UnauthorizedException {
@@ -63,6 +69,7 @@ class AuthService {
       final response = await _api.post('/auth/google', {
           'idToken': idToken, 
           if (inviteToken != null) 'inviteToken': inviteToken,
+          'platform': kIsWeb ? 'web' : 'mobile'
       });
 
       if (response == null || response is! Map) {
@@ -70,11 +77,12 @@ class AuthService {
       }
 
       final token = response['access_token'];
+      final refreshToken = response['refresh_token'];
       if (token == null) {
           return 'No access token in response';
       }
       
-      await _saveToken(token);
+      await _saveTokens(token, refreshToken);
       return response;
     } on BadRequestException catch (e) { 
         return e.message; // e.g. "El usuario no pertenece a ningún gimnasio..."
@@ -100,6 +108,7 @@ class AuthService {
         if (inviteToken != null) 'inviteToken': inviteToken,
         if (firstName != null) 'firstName': firstName,
         if (lastName != null) 'lastName': lastName,
+        'platform': kIsWeb ? 'web' : 'mobile'
       });
 
       if (response == null || response is! Map) {
@@ -107,11 +116,12 @@ class AuthService {
       }
 
       final token = response['access_token'];
+      final refreshToken = response['refresh_token'];
       if (token == null) {
         return 'No access token in response';
       }
 
-      await _saveToken(token);
+      await _saveTokens(token, refreshToken);
       return response;
     } on BadRequestException catch (e) {
       return e.message;
@@ -125,7 +135,17 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await _deleteToken();
+    final rToken = await getRefreshToken();
+    try {
+      if (rToken != null) {
+        // Optimistically tell the server to revoke it. Ignore errors.
+        await _api.post('/auth/logout', {'refreshToken': rToken});
+      } else {
+        await _api.post('/auth/logout', {});
+      }
+    } catch (_) {}
+    
+    await _deleteTokens();
   }
 
   Future<String?> getToken() async {
@@ -134,6 +154,32 @@ class AuthService {
        return prefs.getString('jwt');
     }
     return await _storage.read(key: 'jwt');
+  }
+
+  Future<String?> getRefreshToken() async {
+    if (kIsWeb) {
+       final prefs = await SharedPreferences.getInstance();
+       return prefs.getString('refresh_token');
+    }
+    return await _storage.read(key: 'refresh_token');
+  }
+
+  Future<bool> refreshToken() async {
+    final rToken = await getRefreshToken();
+    if (rToken == null) return false;
+
+    try {
+      final response = await _api.post('/auth/refresh', {'refreshToken': rToken});
+      if (response != null && response['access_token'] != null) {
+        await _saveTokens(response['access_token'], response['refresh_token']);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error refreshing token: $e');
+    }
+    // If refresh failed, ensure we clear state
+    await _deleteTokens();
+    return false;
   }
   Future<String?> activateAccount(String token, String password) async {
     final url = '$baseUrl/auth/activate-account';
@@ -168,22 +214,10 @@ class AuthService {
   }
 
   Future<String?> generateActivationToken(String userId) async {
-     final token = await getToken();
-     if (token == null) return null;
-
-     final url = '$baseUrl/auth/generate-activation-link';
      try {
-       final response = await http.post(
-         Uri.parse(url),
-         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token'
-         },
-         body: jsonEncode({'userId': userId}),
-       );
-       if (response.statusCode == 200 || response.statusCode == 201) {
-          final data = jsonDecode(response.body);
-          return data['token'];
+       final response = await _api.post('/auth/generate-activation-link', {'userId': userId});
+       if (response != null && response['token'] != null) {
+          return response['token'];
        }
        return null;
      } catch (e) {
@@ -193,22 +227,10 @@ class AuthService {
   }
 
   Future<String?> generateResetToken(String userId) async {
-     final token = await getToken();
-     if (token == null) return null;
-
-     final url = '$baseUrl/auth/generate-reset-link';
      try {
-       final response = await http.post(
-         Uri.parse(url),
-         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token'
-         },
-         body: jsonEncode({'userId': userId}),
-       );
-       if (response.statusCode == 200 || response.statusCode == 201) {
-          final data = jsonDecode(response.body);
-          return data['token'];
+       final response = await _api.post('/auth/generate-reset-link', {'userId': userId});
+       if (response != null && response['token'] != null) {
+          return response['token'];
        }
        return null;
      } catch (e) {
@@ -248,25 +270,46 @@ class AuthService {
     return '$origin/reset-password?token=$token';
   }
 
+  String getInviteUrl(String token) {
+    String origin;
+    if (kIsWeb) {
+       origin = Uri.base.origin;
+    } else {
+       origin = 'https://tugymflow.com';
+    }
+    
+    if (origin.isEmpty || origin == 'null') {
+         origin = kReleaseMode ? 'https://tugymflow.com' : 'http://localhost:3000';
+    }
+    return '$origin/invite?token=$token';
+  }
+
+  Future<String?> generateInviteLink(String gymId, {String role = 'ALUMNO'}) async {
+     try {
+       final response = await _api.post('/auth/generate-invite-link', {
+           'gymId': gymId, 
+           'role': role
+       });
+       if (response != null && response['token'] != null) {
+          return response['token'];
+       }
+       throw ApiException('Server error: Token no devuelto');
+     } catch (e) {
+       debugPrint('Exception in generateInviteLink: $e');
+       if (e is ApiException) rethrow;
+       throw ApiException(e.toString());
+     }
+  }
+
   Future<void> changePassword(String currentPassword, String newPassword) async {
-    final token = await getToken();
-    if (token == null) throw ApiException('No authenticated session');
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/auth/change-password'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'currentPassword': currentPassword,
-        'newPassword': newPassword,
-      }),
-    );
-
-    if (response.statusCode != 201 && response.statusCode != 200) {
-      final body = jsonDecode(response.body);
-      throw ApiException(body['message'] ?? 'Error changing password');
+    try {
+        await _api.post('/auth/change-password', {
+            'currentPassword': currentPassword,
+            'newPassword': newPassword,
+        });
+    } catch (e) {
+        if (e is ApiException) rethrow;
+        throw ApiException('Error changing password: $e');
     }
   }
 }

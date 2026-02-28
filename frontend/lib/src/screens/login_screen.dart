@@ -8,12 +8,13 @@ import '../localization/app_localizations.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
+import '../providers/user_provider.dart';
 import '../screens/home_screen.dart';
+import '../screens/public/register_with_invite_screen.dart';
+import 'auth/qr_scanner_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  final Map<String, String>? queryParams; // Receive parameters from deep links/web
-
-  const LoginScreen({super.key, this.queryParams});
+  const LoginScreen({super.key});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -25,16 +26,10 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _obscurePassword = true;
-  String? _inviteToken;
 
   @override
   void initState() {
     super.initState();
-    // Parse invite token from query parameters if available
-    if (widget.queryParams != null && widget.queryParams!.containsKey('token')) {
-       _inviteToken = widget.queryParams!['token'];
-       debugPrint('LoginScreen: Invite Token detected: $_inviteToken');
-    }
   }
 
   Future<void> _performLogin() async {
@@ -65,8 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _performGoogleLogin() async {
       setState(() => _isLoading = true);
       
-      // Trigger Google Login with Invite Token
-      final errorMsg = await context.read<AuthProvider>().loginWithGoogle(inviteToken: _inviteToken);
+      final errorMsg = await context.read<AuthProvider>().loginWithGoogle();
       
       if (!mounted) return;
 
@@ -87,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _performAppleLogin() async {
     setState(() => _isLoading = true);
 
-    final errorMsg = await context.read<AuthProvider>().loginWithApple(inviteToken: _inviteToken);
+    final errorMsg = await context.read<AuthProvider>().loginWithApple();
 
     if (!mounted) return;
 
@@ -207,9 +201,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
 
-    // If invite token is present, show a banner
-    final bool hasInvite = _inviteToken != null;
-
     return Scaffold(
       body: Stack(
         children: [
@@ -313,6 +304,31 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           
+                          const SizedBox(height: 24),
+
+                          // NEW: Escanear QR Button
+                          OutlinedButton.icon(
+                            onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const QRScannerScreen()),
+                                );
+                            },
+                            icon: Icon(Icons.qr_code_scanner, color: Theme.of(context).primaryColor),
+                            label: Text(
+                              '¿Sos nuevo? Escaneá el QR de tu gimnasio',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                          
                           const SizedBox(height: 32),
                           
                           if (_errorMessage != null)
@@ -337,24 +353,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ],
                               ),
                             ),
-
-                          if (_inviteToken != null)
-                             Container(
-                                  padding: const EdgeInsets.all(12),
-                                  margin: const EdgeInsets.only(bottom: 24),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.blue),
-                                  ),
-                                  child: const Row(
-                                    children: [
-                                      Icon(Icons.mark_email_read, color: Colors.blue),
-                                      SizedBox(width: 12),
-                                      Expanded(child: Text("Has recibido una invitación. Inicia sesión para aceptarla.", style: TextStyle(color: Colors.blue))),
-                                    ],
-                                  ),
-                                ),
 
                           TextField(
                             controller: _emailController,
