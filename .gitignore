@@ -47,3 +47,6 @@ dist/
 backend/*.log
 backend/**/*.log
 
+
+# Temporary python scripts
+frontend/*.py
