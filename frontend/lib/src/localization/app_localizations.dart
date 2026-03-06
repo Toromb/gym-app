@@ -122,6 +122,19 @@ class AppLocalizations {
       'day_saturday': 'Sábado',
       'day_sunday': 'Domingo',
 
+      // --- Timer Component ---
+      'tabClock': 'Reloj',
+      'tabStopwatch': 'Cronómetro',
+      'tabTimer': 'Temporizador',
+      'btnPlay': 'Iniciar',
+      'btnPause': 'Pausar',
+      'btnReset': 'Reiniciar',
+      'timerAdd10s': '+10s',
+      'timerAdd30s': '+30s',
+      'timerAdd1m': '+1m',
+      'timerSub10s': '-10s',
+
+
       // --- Exercises ---
       'sets': 'Series',
       'reps': 'Reps',

@@ -8,6 +8,8 @@ import '../../models/execution_model.dart'; // Import Execution Model
 import '../../localization/app_localizations.dart';
 import 'exercise_execution_card.dart';
 import 'exercise_selection_dialog.dart';
+import 'training_timer_card.dart'; // NEW
+
 
 class DayDetailScreen extends StatefulWidget {
   final PlanDay? day; // Nullable
@@ -262,6 +264,11 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                       '${exercisesToRender.length} ${AppLocalizations.of(context)!.get('exercisesToComplete')}',
                       style: TextStyle(color: Colors.grey[600]),
                     ),
+                    
+                    // NEW: Timer Card Integration
+                    if (!widget.readOnly && exercisesToRender.isNotEmpty)
+                      const TrainingTimerCard(),
+                      
                     const SizedBox(height: 24),
                     ...exercisesToRender.asMap().entries.map((entry) {
                       final index = entry.key;

@@ -139,9 +139,9 @@ class AuthService {
     try {
       if (rToken != null) {
         // Optimistically tell the server to revoke it. Ignore errors.
-        await _api.post('/auth/logout', {'refreshToken': rToken});
+        await _api.post('/auth/logout', {'refreshToken': rToken}, disableInterceptor: true);
       } else {
-        await _api.post('/auth/logout', {});
+        await _api.post('/auth/logout', {}, disableInterceptor: true);
       }
     } catch (_) {}
     
