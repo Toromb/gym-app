@@ -19,6 +19,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { GymScheduleModule } from './gym-schedule/gym-schedule.module';
 import { GymsModule } from './gyms/gyms.module';
 import { StatsModule } from './stats/stats.module';
+import { GymLeadsModule } from './gym-leads/gym-leads.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { StatsModule } from './stats/stats.module';
     GymScheduleModule,
     GymsModule,
     StatsModule,
+    GymLeadsModule,
   ],
   controllers: [AppController],
   providers: [

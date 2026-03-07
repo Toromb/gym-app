@@ -11,6 +11,7 @@ import '../providers/user_provider.dart';
 import '../providers/user_provider.dart';
 import '../screens/home_screen.dart';
 import '../screens/public/register_with_invite_screen.dart';
+import '../screens/public/gym_interest_screen.dart';
 import 'auth/qr_scanner_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -33,11 +34,27 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _performLogin() async {
-      setState(() => _isLoading = true);
-      final errorMsg = await context.read<AuthProvider>().login(
-            _emailController.text.trim(),
-            _passwordController.text.trim(),
-          );
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+
+      if (email.isEmpty || password.isEmpty) {
+         setState(() => _errorMessage = 'Por favor completá todos los campos.');
+         return;
+      }
+
+      // Validar formato de email básico
+      final bool emailValid = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(email);
+      if (!emailValid) {
+         setState(() => _errorMessage = 'Por favor, ingresa un correo electrónico válido.');
+         return;
+      }
+
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+      
+      final errorMsg = await context.read<AuthProvider>().login(email, password);
       
       if (!mounted) return;
       
@@ -48,8 +65,10 @@ class _LoginScreenState extends State<LoginScreen> {
           setState(() {
             _isLoading = false;
              // Basic error mapping
-            if (errorMsg.contains('invalidCredentials')) {
-               _errorMessage = 'Email o contraseña incorrectos';
+            if (errorMsg.contains('invalidCredentials') || errorMsg.contains('Unauthorized')) {
+               _errorMessage = 'Email o contraseña incorrectos.';
+            } else if (errorMsg.toLowerCase().contains('bad request')) {
+               _errorMessage = 'Datos ingresados no válidos.';
             } else {
                _errorMessage = errorMsg.replaceAll('Exception:', '').trim();
             }
@@ -476,6 +495,79 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
+                          const SizedBox(height: 32),
+
+                          // B2B Commercial Block - Clearly separated
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100],
+                              border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.business_center, color: isDark ? Colors.blue[300] : Colors.blue[800], size: 24),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        '¿Tenés un gimnasio y querés usar TuGymFlow?',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark ? Colors.white : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'TuGymFlow está diseñado para gimnasios. Si sos dueño o administrador y querés implementar el sistema en tu centro, podés solicitar información desde acá.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: isDark ? Colors.grey[400] : Colors.grey[700],
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const GymInterestScreen()),
+                                    );
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    side: BorderSide(color: isDark ? Colors.blue[300]! : Colors.blue[700]!),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  child: Text(
+                                    'Solicitar información',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? Colors.blue[300] : Colors.blue[800],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Solo para dueños o administradores de gimnasios.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark ? Colors.grey[500] : Colors.grey[500],
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
                           // Extra padding for bottom safe area if needed
                           SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 0 : 20),
                         ],

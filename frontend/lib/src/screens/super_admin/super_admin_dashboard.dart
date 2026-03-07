@@ -5,6 +5,7 @@ import '../../providers/theme_provider.dart';
 import 'gyms_list_screen.dart';
 import 'gym_admins_screen.dart';
 import 'platform_stats_screen.dart';
+import 'super_admin_leads_screen.dart';
 
 class SuperAdminDashboardScreen extends StatelessWidget {
   const SuperAdminDashboardScreen({super.key});
@@ -85,6 +86,7 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                   },
                 ),
                 const SizedBox(height: 16),
+                const SizedBox(height: 16),
                  _buildDashboardCard(
                   context,
                   icon: Icons.analytics,
@@ -96,6 +98,38 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (_) => const PlatformStatsScreen()),
                     );
                   },
+                ),
+                
+                const SizedBox(height: 30),
+                Text(
+                  'Comercial & Ventas',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: theme.colorScheme.primary, // Theme aware
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                _buildDashboardCard(
+                  context,
+                  icon: Icons.business,
+                  title: 'Leads Comerciales',
+                  subtitle: 'Interesados en contratar TuGymFlow vía app/web',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SuperAdminLeadsScreen()),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 30),
+                Text(
+                  'Configuraciones',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: theme.colorScheme.primary, // Theme aware
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _buildDashboardCard(

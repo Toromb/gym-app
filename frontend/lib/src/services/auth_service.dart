@@ -39,7 +39,7 @@ class AuthService {
           'email': email, 
           'password': password,
           'platform': kIsWeb ? 'web' : 'mobile'
-      });
+      }, disableInterceptor: true);
 
       // Response is parsed JSON (Map)
       if (response == null || response is! Map) {
@@ -70,7 +70,7 @@ class AuthService {
           'idToken': idToken, 
           if (inviteToken != null) 'inviteToken': inviteToken,
           'platform': kIsWeb ? 'web' : 'mobile'
-      });
+      }, disableInterceptor: true);
 
       if (response == null || response is! Map) {
          return 'Invalid response from server';
@@ -109,7 +109,7 @@ class AuthService {
         if (firstName != null) 'firstName': firstName,
         if (lastName != null) 'lastName': lastName,
         'platform': kIsWeb ? 'web' : 'mobile'
-      });
+      }, disableInterceptor: true);
 
       if (response == null || response is! Map) {
         return 'Invalid response from server';

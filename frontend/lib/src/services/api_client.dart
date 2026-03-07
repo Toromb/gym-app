@@ -189,4 +189,20 @@ class ApiClient {
        // DELETE /exercises/equipments/:id
        await delete('/exercises/equipments/$id');
   }
+
+  // --- Gym Leads ---
+  Future<void> createGymLead(Map<String, dynamic> data) async {
+    // POST /gym-leads
+    await post('/gym-leads', data, disableInterceptor: true);
+  }
+
+  Future<List<dynamic>> getGymLeads({int page = 1, int limit = 50}) async {
+    // GET /gym-leads
+    // Passing pagination query parameters for future scalability
+    final response = await get('/gym-leads?page=$page&limit=$limit');
+    if (response is List) {
+      return response;
+    }
+    return [];
+  }
 }
