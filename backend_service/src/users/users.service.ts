@@ -56,6 +56,18 @@ export class UsersService {
       professor: professor || undefined,
       gym: gym || undefined,
     });
+
+    // Auto-assign membershipStartDate for Students if left null
+    if (
+      user.role === UserRole.ALUMNO &&
+      user.paysMembership !== false &&
+      !user.membershipStartDate
+    ) {
+      const now = new Date();
+      // Asignar primer día del mes actual (hora local del servidor)
+      user.membershipStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+
     const savedUser = await this.usersRepository.save(user);
     const status = this.calculatePaymentStatus(savedUser);
     savedUser.paymentStatus = status as any;
