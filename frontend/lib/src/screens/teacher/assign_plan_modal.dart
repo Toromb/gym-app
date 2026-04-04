@@ -38,12 +38,15 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
           children: [
             Consumer<UserProvider>(
               builder: (context, userProvider, _) {
-                if (userProvider.isLoading) return const CircularProgressIndicator();
+                if (userProvider.isLoading)
+                  return const CircularProgressIndicator();
                 return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Seleccionar Alumno'),
+                  decoration:
+                      const InputDecoration(labelText: 'Seleccionar Alumno'),
                   initialValue: _selectedStudentId,
                   items: userProvider.students
-                      .map((s) => DropdownMenuItem(value: s.id, child: Text(s.name)))
+                      .map((s) =>
+                          DropdownMenuItem(value: s.id, child: Text(s.name)))
                       .toList(),
                   onChanged: widget.preselectedStudent == null
                       ? (value) => setState(() => _selectedStudentId = value)
@@ -54,12 +57,15 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
             const SizedBox(height: 16),
             Consumer<PlanProvider>(
               builder: (context, planProvider, _) {
-                if (planProvider.isLoading) return const CircularProgressIndicator();
+                if (planProvider.isLoading)
+                  return const CircularProgressIndicator();
                 return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Seleccionar Plan'),
+                  decoration:
+                      const InputDecoration(labelText: 'Seleccionar Plan'),
                   initialValue: _selectedPlanId,
                   items: planProvider.plans
-                      .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name)))
+                      .map((p) =>
+                          DropdownMenuItem(value: p.id, child: Text(p.name)))
                       .toList(),
                   onChanged: (value) => setState(() => _selectedPlanId = value),
                 );
@@ -83,33 +89,36 @@ class _AssignPlanModalState extends State<AssignPlanModal> {
                           _selectedPlanId!,
                           _selectedStudentId!,
                         );
-                    
+
                     if (!mounted) return;
                     setState(() => _isLoading = false);
 
                     if (error == null) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Plan asignado exitosamente')),
-                        );
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Plan asignado exitosamente')),
+                      );
                     } else {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Error de Asignación'),
-                            content: Text(error),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('OK'),
-                              ),
-                            ],
-                          ),
-                        );
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Error de Asignación'),
+                          content: Text(error),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
                     }
                   }
                 },
-          child: _isLoading ? const CircularProgressIndicator() : const Text('Asignar'),
+          child: _isLoading
+              ? const CircularProgressIndicator()
+              : const Text('Asignar'),
         ),
       ],
     );

@@ -1,4 +1,3 @@
-
 import '../models/plan_model.dart';
 import '../models/student_assignment_model.dart';
 import '../models/execution_model.dart';
@@ -8,11 +7,12 @@ import 'api_exceptions.dart';
 class PlanService {
   final ApiClient _api = ApiClient();
 
-  List<T> _parseList<T>(dynamic response, T Function(Map<String, dynamic>) fromJson) {
-      if (response is List) {
-          return response.map((json) => fromJson(json)).toList();
-      }
-      return [];
+  List<T> _parseList<T>(
+      dynamic response, T Function(Map<String, dynamic>) fromJson) {
+    if (response is List) {
+      return response.map((json) => fromJson(json)).toList();
+    }
+    return [];
   }
 
   Future<List<Plan>> getPlans() async {
@@ -24,7 +24,8 @@ class PlanService {
     try {
       final response = await _api.get('/plans/$id');
       return Plan.fromJson(response);
-    } catch (_) { // 404 handled by ApiClient? ApiClient throws NotFoundException.
+    } catch (_) {
+      // 404 handled by ApiClient? ApiClient throws NotFoundException.
       return null;
     }
   }
@@ -36,9 +37,9 @@ class PlanService {
 
   Future<bool> updatePlan(String id, Plan plan) async {
     await _api.patch('/plans/$id', plan.toJson());
-    return true; 
+    return true;
   }
-  
+
   Future<Plan?> getMyPlan() async {
     final response = await _api.get('/plans/student/my-plan');
     return Plan.fromJson(response);
@@ -49,34 +50,36 @@ class PlanService {
     return _parseList(response, (json) => StudentAssignment.fromJson(json));
   }
 
-  Future<bool> updateProgress(String studentPlanId, String type, String id, bool completed, {String? date}) async {
+  Future<bool> updateProgress(
+      String studentPlanId, String type, String id, bool completed,
+      {String? date}) async {
     await _api.patch('/plans/student/progress', {
-        'studentPlanId': studentPlanId,
-        'type': type,
-        'id': id,
-        'completed': completed,
-        'date': date,
+      'studentPlanId': studentPlanId,
+      'type': type,
+      'id': id,
+      'completed': completed,
+      'date': date,
     });
     return true;
   }
 
   Future<String?> assignPlan(String planId, String studentId) async {
     try {
-        await _api.post('/plans/assign', {
-            'studentId': studentId,
-            'planId': planId,
-        });
-        return null;
+      await _api.post('/plans/assign', {
+        'studentId': studentId,
+        'planId': planId,
+      });
+      return null;
     } on ApiException catch (e) {
-        if (e.statusCode == 409) {
-             // In ApiClient, response body IS included in message?
-             // Not currently. ApiClient logic: throw ApiException('Unknown Error', code).
-             // I should IMPROVE ApiClient to include body in ApiException.
-             return 'Conflicto en la asignación.';
-        }
-        return 'Error al asignar el plan.';
+      if (e.statusCode == 409) {
+        // In ApiClient, response body IS included in message?
+        // Not currently. ApiClient logic: throw ApiException('Unknown Error', code).
+        // I should IMPROVE ApiClient to include body in ApiException.
+        return 'Conflicto en la asignación.';
+      }
+      return 'Error al asignar el plan.';
     } catch (e) {
-        return 'Error al asignar el plan.';
+      return 'Error al asignar el plan.';
     }
   }
 
@@ -92,15 +95,15 @@ class PlanService {
 
   Future<String?> deletePlan(String id) async {
     try {
-        await _api.delete('/plans/$id');
-        return null; 
+      await _api.delete('/plans/$id');
+      return null;
     } on ApiException catch (e) {
-        if (e.statusCode == 409) {
-            return 'El plan está en uso y no puede eliminarse.';
-        }
-        return 'Error al eliminar el plan.';
+      if (e.statusCode == 409) {
+        return 'El plan está en uso y no puede eliminarse.';
+      }
+      return 'Error al eliminar el plan.';
     } catch (e) {
-        return 'Error al eliminar el plan.';
+      return 'Error al eliminar el plan.';
     }
   }
 
@@ -111,25 +114,29 @@ class PlanService {
 
   // --- EXECUTION ENGINE API ---
 
-  Future<TrainingSession?> startSession(String? planId, int? weekNumber, int? dayOrder, {String? date, String? freeTrainingId}) async {
-     final response = await _api.post('/executions/start', {
-        'planId': planId,
-        'weekNumber': weekNumber,
-        'dayOrder': dayOrder,
-        'date': date,
-        'freeTrainingId': freeTrainingId,
-     });
-     return TrainingSession.fromJson(response);
+  Future<TrainingSession?> startSession(
+      String? planId, int? weekNumber, int? dayOrder,
+      {String? date, String? freeTrainingId}) async {
+    final response = await _api.post('/executions/start', {
+      'planId': planId,
+      'weekNumber': weekNumber,
+      'dayOrder': dayOrder,
+      'date': date,
+      'freeTrainingId': freeTrainingId,
+    });
+    return TrainingSession.fromJson(response);
   }
 
-  Future<SessionExercise?> addSessionExercise(String sessionId, String exerciseId) async {
+  Future<SessionExercise?> addSessionExercise(
+      String sessionId, String exerciseId) async {
     final response = await _api.post('/executions/$sessionId/exercises', {
-        'exerciseId': exerciseId,
+      'exerciseId': exerciseId,
     });
     return SessionExercise.fromJson(response);
   }
 
-  Future<bool> updateSessionExercise(String sessionExerciseId, Map<String, dynamic> updates) async {
+  Future<bool> updateSessionExercise(
+      String sessionExerciseId, Map<String, dynamic> updates) async {
     await _api.patch('/executions/exercises/$sessionExerciseId', updates);
     return true;
   }
@@ -139,8 +146,11 @@ class PlanService {
     return true;
   }
 
-  Future<List<TrainingSession>> getCalendarHistory(String from, String to) async {
-    final uri = Uri(path: '/executions/calendar', queryParameters: {'from': from, 'to': to});
+  Future<List<TrainingSession>> getCalendarHistory(
+      String from, String to) async {
+    final uri = Uri(
+        path: '/executions/calendar',
+        queryParameters: {'from': from, 'to': to});
     final response = await _api.get(uri.toString());
     return _parseList(response, (json) => TrainingSession.fromJson(json));
   }
@@ -152,17 +162,18 @@ class PlanService {
     required int day,
     String? startDate,
   }) async {
-     final params = {
-        'studentId': studentId,
-        'planId': planId,
-        'week': week.toString(),
-        'day': day.toString(),
-        if (startDate != null) 'startDate': startDate,
-     };
-     final uri = Uri(path: '/executions/history/structure', queryParameters: params);
-     
-     final response = await _api.get(uri.toString());
-     if (response == null) return null;
-     return TrainingSession.fromJson(response);
+    final params = {
+      'studentId': studentId,
+      'planId': planId,
+      'week': week.toString(),
+      'day': day.toString(),
+      if (startDate != null) 'startDate': startDate,
+    };
+    final uri =
+        Uri(path: '/executions/history/structure', queryParameters: params);
+
+    final response = await _api.get(uri.toString());
+    if (response == null) return null;
+    return TrainingSession.fromJson(response);
   }
 }

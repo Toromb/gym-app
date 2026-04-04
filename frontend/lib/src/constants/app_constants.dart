@@ -1,4 +1,3 @@
-
 class AppConstants {
   static const String appName = 'Gym App';
 }

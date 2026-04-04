@@ -74,7 +74,8 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Ocurrió un error al enviar la solicitud. Por favor intenta más tarde.';
+        _errorMessage =
+            'Ocurrió un error al enviar la solicitud. Por favor intenta más tarde.';
       });
     }
   }
@@ -94,16 +95,20 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
           Text(
             'Te vamos a contactar pronto para contarte cómo implementar TuGymFlow en tu centro.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: isDark ? Colors.grey[300] : Colors.grey[700]),
+            style: TextStyle(
+                fontSize: 16,
+                color: isDark ? Colors.grey[300] : Colors.grey[700]),
           ),
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Volver al inicio', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            child: const Text('Volver al inicio',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -152,7 +157,8 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                        const Icon(Icons.error_outline,
+                            color: Colors.red, size: 20),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -168,7 +174,8 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
                   label: 'Nombre y Apellido *',
                   icon: Icons.person_outline,
                   isDark: isDark,
-                  validator: (value) => value == null || value.isEmpty ? 'Requerido' : null,
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Requerido' : null,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
@@ -176,7 +183,8 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
                   label: 'Nombre del Gimnasio *',
                   icon: Icons.fitness_center,
                   isDark: isDark,
-                  validator: (value) => value == null || value.isEmpty ? 'Requerido' : null,
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Requerido' : null,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
@@ -184,7 +192,8 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
                   label: 'Ciudad / Provincia *',
                   icon: Icons.location_on_outlined,
                   isDark: isDark,
-                  validator: (value) => value == null || value.isEmpty ? 'Requerido' : null,
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Requerido' : null,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
@@ -206,7 +215,8 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
                   icon: Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
                   isDark: isDark,
-                  validator: (value) => value == null || value.isEmpty ? 'Requerido' : null,
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Requerido' : null,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
@@ -230,14 +240,21 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _submitForm,
                     style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       elevation: 2,
                       backgroundColor: Theme.of(context).primaryColor,
                       foregroundColor: Colors.white,
                     ),
                     child: _isLoading
-                        ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                        : const Text('Enviar Solicitud', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2.5, color: Colors.white))
+                        : const Text('Enviar Solicitud',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -247,7 +264,8 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Implementar TuGymFlow', style: TextStyle(fontSize: 18)),
+        title:
+            const Text('Implementar TuGymFlow', style: TextStyle(fontSize: 18)),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -255,7 +273,8 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 600),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
             child: content,
           ),
         ),
@@ -280,7 +299,8 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
       decoration: InputDecoration(
         hintText: label,
         prefixIcon: Padding(
-          padding: EdgeInsets.only(bottom: maxLines > 1 ? (maxLines - 1) * 20.0 : 0),
+          padding:
+              EdgeInsets.only(bottom: maxLines > 1 ? (maxLines - 1) * 20.0 : 0),
           child: Icon(icon),
         ),
         filled: true,

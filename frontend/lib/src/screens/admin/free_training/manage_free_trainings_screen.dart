@@ -8,27 +8,30 @@ class ManageFreeTrainingsScreen extends StatefulWidget {
   const ManageFreeTrainingsScreen({super.key});
 
   @override
-  State<ManageFreeTrainingsScreen> createState() => _ManageFreeTrainingsScreenState();
+  State<ManageFreeTrainingsScreen> createState() =>
+      _ManageFreeTrainingsScreenState();
 }
 
 class _ManageFreeTrainingsScreenState extends State<ManageFreeTrainingsScreen> {
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: FreeTrainingSelectorScreen(
-          isAdminMode: true,
-          onTrainingSelected: (training) {
-              Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => FreeTrainingEditorScreen(training: training)
-              ));
-          },
+        isAdminMode: true,
+        onTrainingSelected: (training) {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) =>
+                      FreeTrainingEditorScreen(training: training)));
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-             Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => const FreeTrainingEditorScreen()
-              ));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const FreeTrainingEditorScreen()));
         },
         child: const Icon(Icons.add),
         tooltip: "Crear Nuevo Entrenamiento", // Debug marker

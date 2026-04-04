@@ -5,7 +5,8 @@ class ThemeProvider with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
 
   String? _userId;
-  String get _themeKey => _userId != null ? 'theme_mode_$_userId' : 'theme_mode_guest';
+  String get _themeKey =>
+      _userId != null ? 'theme_mode_$_userId' : 'theme_mode_guest';
 
   ThemeProvider();
 
@@ -20,7 +21,8 @@ class ThemeProvider with ChangeNotifier {
 
   bool get isDarkMode {
     if (_themeMode == ThemeMode.system) {
-      return WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+      return WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+          Brightness.dark;
     }
     return _themeMode == ThemeMode.dark;
   }

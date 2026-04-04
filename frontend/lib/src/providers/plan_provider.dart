@@ -17,7 +17,7 @@ class PlanProvider with ChangeNotifier {
   final PlanService _planService = PlanService();
   final LocalStorageService _localStorage = LocalStorageService();
   final SyncService _syncService = SyncService();
-  
+
   List<Plan> _plans = [];
   Plan? _myPlan;
   bool _isLoading = false;
@@ -29,9 +29,11 @@ class PlanProvider with ChangeNotifier {
 
   // Exercise Service
   final ExerciseService _exerciseService = ExerciseService();
-  Future<List<Exercise>> fetchExercises({String? muscleId, String? role, List<String>? equipmentIds}) async {
+  Future<List<Exercise>> fetchExercises(
+      {String? muscleId, String? role, List<String>? equipmentIds}) async {
     try {
-      return await _exerciseService.getExercises(muscleId: muscleId, role: role, equipmentIds: equipmentIds);
+      return await _exerciseService.getExercises(
+          muscleId: muscleId, role: role, equipmentIds: equipmentIds);
     } catch (e) {
       debugPrint('Error fetching exercises: $e');
       return [];
@@ -39,7 +41,8 @@ class PlanProvider with ChangeNotifier {
   }
 
   // Legacy/Convenience wrapper
-  Future<List<Exercise>> fetchExercisesByMuscle(String muscleId) => fetchExercises(muscleId: muscleId, role: 'PRIMARY');
+  Future<List<Exercise>> fetchExercisesByMuscle(String muscleId) =>
+      fetchExercises(muscleId: muscleId, role: 'PRIMARY');
 
   int _weeklyWorkoutCount = 0;
   int get weeklyWorkoutCount => _weeklyWorkoutCount;
@@ -48,7 +51,7 @@ class PlanProvider with ChangeNotifier {
   int get monthlyWorkoutCount => _monthlyWorkoutCount;
 
   List<StudentAssignment> _assignments = [];
-  
+
   // Computed property via Extension
   StudentAssignment? get activeAssignment => _assignments.activeAssignment;
 
@@ -60,15 +63,12 @@ class PlanProvider with ChangeNotifier {
 
     // Use Extension Logic
     final next = assignment.nextWorkout;
-    
+
     if (next != null) {
-        // Inject assignment for UI usage (StudentHomeScreen)
-        return {
-           ...next,
-           'assignment': assignment 
-        };
+      // Inject assignment for UI usage (StudentHomeScreen)
+      return {...next, 'assignment': assignment};
     }
-    
+
     // If extension returns null but we have a plan, it means Finished
     return {'finished': true, 'assignment': assignment};
   }
@@ -78,7 +78,7 @@ class PlanProvider with ChangeNotifier {
 
   Future<void> fetchPlans({bool forceRefresh = false}) async {
     if (_isPlansLoaded && !forceRefresh) return;
-    
+
     _isLoading = true;
     notifyListeners();
     try {
@@ -104,7 +104,7 @@ class PlanProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
-    debugPrint('Error creating plan: $e');
+      debugPrint('Error creating plan: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -120,8 +120,9 @@ class PlanProvider with ChangeNotifier {
       if (success) {
         // We could manually update the list item here to avoid full refetch
         // But for safety/completeness we can force refresh specific item or just invalidate
-        _isPlansLoaded = false; // Invalidate cache to force refresh on next visit if needed, or:
-        await fetchPlans(forceRefresh: true); 
+        _isPlansLoaded =
+            false; // Invalidate cache to force refresh on next visit if needed, or:
+        await fetchPlans(forceRefresh: true);
         return true;
       }
       return false;
@@ -171,61 +172,63 @@ class PlanProvider with ChangeNotifier {
 
   // --- EXECUTION ENGINE START (OFFLINE-AWARE) ---
 
-  Future<void> startSession(String? planId, int? weekNumber, int? dayOrder, {String? freeTrainingId}) async {
-    _currentSession = null; 
+  Future<void> startSession(String? planId, int? weekNumber, int? dayOrder,
+      {String? freeTrainingId}) async {
+    _currentSession = null;
     _isLoading = true;
     notifyListeners();
-    
+
     // 1. Try Load Cache FIRST (Always)
     TrainingSession? cachedSession;
     try {
-        final json = _localStorage.getSession();
-        if (json != null) {
-            cachedSession = TrainingSession.fromJson(json);
-        }
+      final json = _localStorage.getSession();
+      if (json != null) {
+        cachedSession = TrainingSession.fromJson(json);
+      }
     } catch (e) {
-        debugPrint('❌ Error parsing cache: $e');
+      debugPrint('❌ Error parsing cache: $e');
     }
 
     // 2. Determine Validity of Cache
     bool useCache = false;
-    
+
     // Check if we have pending changes in Queue
     final queue = _localStorage.getQueue();
-    final hasPendingChanges = queue.isNotEmpty; 
+    final hasPendingChanges = queue.isNotEmpty;
 
     if (cachedSession != null && cachedSession.status == 'IN_PROGRESS') {
-         // VALIDATION: Ensure cached session matches the INTENT (Plan vs Free)
-         bool matchesIntent = false;
-         
-         if (freeTrainingId != null) {
-             // Expecting specific Free Training
-             // Note: If definition wasn't persisted, this might be null and cause cache miss, which is safe.
-             if (cachedSession.freeTrainingDefinition?.id == freeTrainingId) {
-                 matchesIntent = true;
-             }
-         } else if (planId == 'FREE_SESSION') {
-             // Expecting a GENERIC Free Session (no template)
-             // cachedSession should have source='FREE' and NO definition (or ignore it?)
-             // Let's match if source is FREE.
-             if (cachedSession.source == 'FREE') {
-                 matchesIntent = true;
-             }
-         } else {
-             // Expecting a specific Plan Session
-             // cachedSession should have matching planID
-             if (cachedSession.planId == planId) {
-                 matchesIntent = true;
-             }
-         }
+      // VALIDATION: Ensure cached session matches the INTENT (Plan vs Free)
+      bool matchesIntent = false;
 
-         if (matchesIntent) {
-             _currentSession = cachedSession;
-             useCache = true;
-             debugPrint('✅ Loaded cached session (Initial): ${_currentSession?.id}');
-         } else {
-             debugPrint('⚠️ Cache Mismatch: Cached=${cachedSession.id} (Plan=${cachedSession.planId}, Src=${cachedSession.source}) vs Requested=$planId / Free=$freeTrainingId');
-         }
+      if (freeTrainingId != null) {
+        // Expecting specific Free Training
+        // Note: If definition wasn't persisted, this might be null and cause cache miss, which is safe.
+        if (cachedSession.freeTrainingDefinition?.id == freeTrainingId) {
+          matchesIntent = true;
+        }
+      } else if (planId == 'FREE_SESSION') {
+        // Expecting a GENERIC Free Session (no template)
+        // cachedSession should have source='FREE' and NO definition (or ignore it?)
+        // Let's match if source is FREE.
+        if (cachedSession.source == 'FREE') {
+          matchesIntent = true;
+        }
+      } else {
+        // Expecting a specific Plan Session
+        // cachedSession should have matching planID
+        if (cachedSession.planId == planId) {
+          matchesIntent = true;
+        }
+      }
+
+      if (matchesIntent) {
+        _currentSession = cachedSession;
+        useCache = true;
+        debugPrint('✅ Loaded cached session (Initial): ${_currentSession?.id}');
+      } else {
+        debugPrint(
+            '⚠️ Cache Mismatch: Cached=${cachedSession.id} (Plan=${cachedSession.planId}, Src=${cachedSession.source}) vs Requested=$planId / Free=$freeTrainingId');
+      }
     }
 
     // Check Connectivity
@@ -233,52 +236,56 @@ class PlanProvider with ChangeNotifier {
     final bool isOffline = (connectivity.contains(ConnectivityResult.none));
 
     if (isOffline) {
-       if (useCache) {
-          _isLoading = false;
-          notifyListeners();
-          return;
-       } else {
-           // No cache, and offline -> Error or Empty
-           debugPrint('📴 Offline and no cache.');
-       }
+      if (useCache) {
+        _isLoading = false;
+        notifyListeners();
+        return;
+      } else {
+        // No cache, and offline -> Error or Empty
+        debugPrint('📴 Offline and no cache.');
+      }
     }
 
     // 3. Online Fetch (if needed or safe to refresh)
     try {
       if (useCache && hasPendingChanges) {
-          debugPrint('⚠️ Pending offline changes detected. Skipping Server Fetch to preserve state.');
-          _isLoading = false;
-          notifyListeners();
-          
-          // Trigger sync to try flushing them
-          _syncService.triggerSync();
-          return;
+        debugPrint(
+            '⚠️ Pending offline changes detected. Skipping Server Fetch to preserve state.');
+        _isLoading = false;
+        notifyListeners();
+
+        // Trigger sync to try flushing them
+        _syncService.triggerSync();
+        return;
       }
 
       final now = DateTime.now();
-      final dateStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-      final String? effectivePlanId = (planId == 'FREE_SESSION') ? null : planId;
+      final dateStr =
+          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+      final String? effectivePlanId =
+          (planId == 'FREE_SESSION') ? null : planId;
 
-      final serverSession = await _planService.startSession(effectivePlanId, weekNumber, dayOrder, date: dateStr, freeTrainingId: freeTrainingId);
-      
+      final serverSession = await _planService.startSession(
+          effectivePlanId, weekNumber, dayOrder,
+          date: dateStr, freeTrainingId: freeTrainingId);
+
       if (serverSession != null) {
-          // If we were using cache, only overwrite if server is "fresher" or we had no pending changes.
-          // Since we checked hasPendingChanges above, we can overwrite here safely?
-          // CAUTION: 'startSession' on backend might RETURN the existing session or CREATE a new one.
-          // If we had a cached session ID A, and server returns ID B, we swaped sessions.
-          // If server returns ID A, it's an update.
-          
-          _currentSession = serverSession;
-          await _localStorage.saveSession(_currentSession!.toJson());
-          debugPrint('☁️ Synced with Server Session: ${_currentSession?.id}');
+        // If we were using cache, only overwrite if server is "fresher" or we had no pending changes.
+        // Since we checked hasPendingChanges above, we can overwrite here safely?
+        // CAUTION: 'startSession' on backend might RETURN the existing session or CREATE a new one.
+        // If we had a cached session ID A, and server returns ID B, we swaped sessions.
+        // If server returns ID A, it's an update.
+
+        _currentSession = serverSession;
+        await _localStorage.saveSession(_currentSession!.toJson());
+        debugPrint('☁️ Synced with Server Session: ${_currentSession?.id}');
       }
-      
     } catch (e) {
       debugPrint('Error starting session (Online): $e');
       // If we failed to fetch but had cache, we stick with cache (already set).
       if (!useCache) {
-          // Retry cache as last resort if not already loaded
-          /* ... logic covered by initial load ... */
+        // Retry cache as last resort if not already loaded
+        /* ... logic covered by initial load ... */
       }
     } finally {
       _isLoading = false;
@@ -286,78 +293,83 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> updateSessionExercise(String sessionExerciseId, Map<String, dynamic> updates) async {
-      // 1. Optimistic Update (Local State)
-      if (_currentSession != null) {
-        final updatedExercises = _currentSession!.exercises.map((e) {
-            if (e.id == sessionExerciseId) {
-                return e.copyWith(
-                    isCompleted: updates['isCompleted'],
-                    setsDone: updates['setsDone'], 
-                    repsDone: updates['repsDone'],
-                    weightUsed: updates['weightUsed'],
-                    timeSpent: updates['timeSpent'], // Added timeSpent
-                    distanceCovered: updates['distanceCovered'], // Added distanceCovered
-                    addedWeight: updates['addedWeight'], // Added Lastre
-                    notes: updates['notes'],
-                    // Handle Swap Exercise updates
-                    exercise: updates['exercise'] != null ? Exercise(
-                        id: updates['exercise']['id'], 
-                        name: updates['exerciseNameSnapshot'] ?? '', 
-                        description: '', 
-                        muscleGroup: '', 
-                        muscles: updates['exercise']['muscles'] ?? [],
-                        equipments: updates['exercise']['equipments'] ?? [],
-                        metricType: updates['exercise']['metricType'] ?? 'REPS'
-                    ) : e.exercise,
-                    exerciseNameSnapshot: updates['exerciseNameSnapshot'],
-                    videoUrl: updates['videoUrl'],
-                    
-                    targetSetsSnapshot: updates['targetSetsSnapshot'] ?? e.targetSetsSnapshot,
-                    targetRepsSnapshot: updates['targetRepsSnapshot'],
-                    targetWeightSnapshot: updates['targetWeightSnapshot'],
-                    targetTimeSnapshot: updates['targetTimeSnapshot'],
-                    targetDistanceSnapshot: updates['targetDistanceSnapshot'],
-                    
-                    equipmentsSnapshot: updates['exercise'] != null ? updates['exercise']['equipments'] : e.equipmentsSnapshot, 
-                );
-            }
-            return e;
-        }).toList();
+  Future<bool> updateSessionExercise(
+      String sessionExerciseId, Map<String, dynamic> updates) async {
+    // 1. Optimistic Update (Local State)
+    if (_currentSession != null) {
+      final updatedExercises = _currentSession!.exercises.map((e) {
+        if (e.id == sessionExerciseId) {
+          return e.copyWith(
+            isCompleted: updates['isCompleted'],
+            setsDone: updates['setsDone'],
+            repsDone: updates['repsDone'],
+            weightUsed: updates['weightUsed'],
+            timeSpent: updates['timeSpent'], // Added timeSpent
+            distanceCovered:
+                updates['distanceCovered'], // Added distanceCovered
+            addedWeight: updates['addedWeight'], // Added Lastre
+            notes: updates['notes'],
+            // Handle Swap Exercise updates
+            exercise: updates['exercise'] != null
+                ? Exercise(
+                    id: updates['exercise']['id'],
+                    name: updates['exerciseNameSnapshot'] ?? '',
+                    description: '',
+                    muscleGroup: '',
+                    muscles: updates['exercise']['muscles'] ?? [],
+                    equipments: updates['exercise']['equipments'] ?? [],
+                    metricType: updates['exercise']['metricType'] ?? 'REPS')
+                : e.exercise,
+            exerciseNameSnapshot: updates['exerciseNameSnapshot'],
+            videoUrl: updates['videoUrl'],
 
-        _currentSession = _currentSession!.copyWith(exercises: updatedExercises);
-        notifyListeners();
-        
-        // 2. Persist to Local Cache
-        await _localStorage.saveSession(_currentSession!.toJson());
-      }
+            targetSetsSnapshot:
+                updates['targetSetsSnapshot'] ?? e.targetSetsSnapshot,
+            targetRepsSnapshot: updates['targetRepsSnapshot'],
+            targetWeightSnapshot: updates['targetWeightSnapshot'],
+            targetTimeSnapshot: updates['targetTimeSnapshot'],
+            targetDistanceSnapshot: updates['targetDistanceSnapshot'],
+
+            equipmentsSnapshot: updates['exercise'] != null
+                ? updates['exercise']['equipments']
+                : e.equipmentsSnapshot,
+          );
+        }
+        return e;
+      }).toList();
+
+      _currentSession = _currentSession!.copyWith(exercises: updatedExercises);
+      notifyListeners();
+
+      // 2. Persist to Local Cache
+      await _localStorage.saveSession(_currentSession!.toJson());
+    }
 
     try {
       // 3. Prepare API Request
       final apiUpdates = Map<String, dynamic>.from(updates);
       if (apiUpdates['exercise'] != null && apiUpdates['exercise'] is Map) {
-          apiUpdates['exercise'] = {'id': apiUpdates['exercise']['id']}; 
+        apiUpdates['exercise'] = {'id': apiUpdates['exercise']['id']};
       }
 
       // 4. Queue Request
-      // final activeUser = _myPlan?.creator ?? 'unknown'; 
+      // final activeUser = _myPlan?.creator ?? 'unknown';
       final request = {
-          'id': const Uuid().v4(),
-          'method': 'PATCH',
-          'endpoint': '/executions/exercises/$sessionExerciseId',
-          // Using ApiClient logic, we usually pass endpoint. 
-          // Check PlanService: return await _api.patch('/training-sessions/exercise/$id', data);
-          'body': apiUpdates,
-          'timestamp': DateTime.now().toIso8601String(),
+        'id': const Uuid().v4(),
+        'method': 'PATCH',
+        'endpoint': '/executions/exercises/$sessionExerciseId',
+        // Using ApiClient logic, we usually pass endpoint.
+        // Check PlanService: return await _api.patch('/training-sessions/exercise/$id', data);
+        'body': apiUpdates,
+        'timestamp': DateTime.now().toIso8601String(),
       };
-      
+
       await _localStorage.addToQueue(request);
-      
+
       // 5. Trigger Sync (Fire & Forget)
       _syncService.triggerSync();
-      
-      return true; // Always return true for Optimistic UI
 
+      return true; // Always return true for Optimistic UI
     } catch (e) {
       debugPrint('Error updating session exercise logic: $e');
       return false;
@@ -370,48 +382,51 @@ class PlanProvider with ChangeNotifier {
     // Actually, user says "Excluded: Edición Estructural".
     // But if we want to allow it, we'd need to mock the adding locally.
     // For now, let's keep it simple: Try Online. If fails, error.
-    
+
     try {
-      final newExercise = await _planService.addSessionExercise(_currentSession!.id, exerciseId);
+      final newExercise = await _planService.addSessionExercise(
+          _currentSession!.id, exerciseId);
       if (newExercise != null) {
         // Add to local list
-        final updatedList = List<SessionExercise>.from(_currentSession!.exercises)..add(newExercise);
+        final updatedList =
+            List<SessionExercise>.from(_currentSession!.exercises)
+              ..add(newExercise);
         _currentSession = _currentSession!.copyWith(exercises: updatedList);
-         // Update Cache
+        // Update Cache
         await _localStorage.saveSession(_currentSession!.toJson());
-        
+
         notifyListeners();
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   Future<void> deleteSessionExercise(String sessionExerciseId) async {
     if (_currentSession == null) return;
-    
+
     // 1. Optimistic Update (Local State)
-    final updatedList = _currentSession!.exercises.where((e) => e.id != sessionExerciseId).toList();
+    final updatedList = _currentSession!.exercises
+        .where((e) => e.id != sessionExerciseId)
+        .toList();
     _currentSession = _currentSession!.copyWith(exercises: updatedList);
     notifyListeners();
-    
+
     // 2. Persist to Local Cache
     await _localStorage.saveSession(_currentSession!.toJson());
 
     try {
       // 3. Queue Request
       final request = {
-          'id': const Uuid().v4(),
-          'method': 'DELETE',
-          'endpoint': '/executions/exercises/$sessionExerciseId',
-          'body': {}, 
-          'timestamp': DateTime.now().toIso8601String(),
+        'id': const Uuid().v4(),
+        'method': 'DELETE',
+        'endpoint': '/executions/exercises/$sessionExerciseId',
+        'body': {},
+        'timestamp': DateTime.now().toIso8601String(),
       };
-      
+
       await _localStorage.addToQueue(request);
-      
+
       // 4. Trigger Sync
       _syncService.triggerSync();
-      
     } catch (e) {
       debugPrint('Error deleting session exercise: $e');
     }
@@ -423,36 +438,36 @@ class PlanProvider with ChangeNotifier {
   // 3. Complete Session
   Future<void> completeSession(String date, {String? dayId}) async {
     if (_currentSession == null) return;
-    
+
     // 1. Optimistic Local Update (Session Status)
     _currentSession = _currentSession!.copyWith(status: 'COMPLETED');
     notifyListeners();
-    
+
     // 2. Optimistic Local Update (Assignment Progress)
     if (dayId != null && activeAssignment != null) {
-        // Find current assignment index
-        final index = _assignments.indexWhere((a) => a.id == activeAssignment!.id);
-        if (index != -1) {
-            final assignment = _assignments[index];
-            final newProgress = Map<String, dynamic>.from(assignment.progress);
-            
-            // Ensure structure
-            if (newProgress['days'] == null) newProgress['days'] = {};
-            final daysMap = Map<String, dynamic>.from(newProgress['days']);
-            
-            // Mark day as completed
-            daysMap[dayId!] = {
-                'completed': true,
-                'date': date
-            };
-            newProgress['days'] = daysMap;
-            
-            // Update Assignment
-            final updatedAssignment = assignment.copyWithProgress(newProgress: newProgress);
-            _assignments[index] = updatedAssignment;
-            notifyListeners();
-            debugPrint('✅ Optimistically updated Assignment Progress for day $dayId');
-        }
+      // Find current assignment index
+      final index =
+          _assignments.indexWhere((a) => a.id == activeAssignment!.id);
+      if (index != -1) {
+        final assignment = _assignments[index];
+        final newProgress = Map<String, dynamic>.from(assignment.progress);
+
+        // Ensure structure
+        if (newProgress['days'] == null) newProgress['days'] = {};
+        final daysMap = Map<String, dynamic>.from(newProgress['days']);
+
+        // Mark day as completed
+        daysMap[dayId!] = {'completed': true, 'date': date};
+        newProgress['days'] = daysMap;
+
+        // Update Assignment
+        final updatedAssignment =
+            assignment.copyWithProgress(newProgress: newProgress);
+        _assignments[index] = updatedAssignment;
+        notifyListeners();
+        debugPrint(
+            '✅ Optimistically updated Assignment Progress for day $dayId');
+      }
     }
 
     // 3. Persist Cache
@@ -461,37 +476,39 @@ class PlanProvider with ChangeNotifier {
     try {
       // 4. Queue Request
       final request = {
-          'id': const Uuid().v4(),
-          'method': 'PATCH', 
-          'endpoint': '/executions/${_currentSession!.id}/complete',
-          'body': {'date': date}, 
-          'timestamp': DateTime.now().toIso8601String(),
+        'id': const Uuid().v4(),
+        'method': 'PATCH',
+        'endpoint': '/executions/${_currentSession!.id}/complete',
+        'body': {'date': date},
+        'timestamp': DateTime.now().toIso8601String(),
       };
-      
+
       await _localStorage.addToQueue(request);
 
       // 5. Trigger Sync (and hold future)
       _activeSyncRequest = _syncService.triggerSync();
       // We do NOT await here to keep UI responsive (Optimistic).
       // But we captured the future so result can be retrieved later.
-      
     } catch (e) {
-       debugPrint('Error completing session logic: $e');
-       rethrow; 
+      debugPrint('Error completing session logic: $e');
+      rethrow;
     }
   }
-  
+
   // Clean cache manually if needed (e.g. leaving screen)
   Future<void> clearLocalSession() async {
-      await _localStorage.clearSession();
-      _currentSession = null;
-      notifyListeners();
+    await _localStorage.clearSession();
+    _currentSession = null;
+    notifyListeners();
   }
 
-  Future<List<TrainingSession>> fetchCalendar(DateTime from, DateTime to) async {
+  Future<List<TrainingSession>> fetchCalendar(
+      DateTime from, DateTime to) async {
     try {
-      final fromStr = "${from.year}-${from.month.toString().padLeft(2, '0')}-${from.day.toString().padLeft(2, '0')}";
-      final toStr = "${to.year}-${to.month.toString().padLeft(2, '0')}-${to.day.toString().padLeft(2, '0')}";
+      final fromStr =
+          "${from.year}-${from.month.toString().padLeft(2, '0')}-${from.day.toString().padLeft(2, '0')}";
+      final toStr =
+          "${to.year}-${to.month.toString().padLeft(2, '0')}-${to.day.toString().padLeft(2, '0')}";
       return await _planService.getCalendarHistory(fromStr, toStr);
     } catch (e) {
       debugPrint('Error fetching calendar: $e');
@@ -500,48 +517,53 @@ class PlanProvider with ChangeNotifier {
   }
 
   Future<void> computeWeeklyStats() async {
-      final now = DateTime.now();
-      final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-      final endOfWeek = startOfWeek.add(const Duration(days: 6));
+    final now = DateTime.now();
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    final endOfWeek = startOfWeek.add(const Duration(days: 6));
 
-      try {
-          final executions = await fetchCalendar(startOfWeek, endOfWeek);
-          // Count unique days by date string
-          final uniqueDays = executions
-              .where((e) => e.status == 'COMPLETED')
-              .map((e) => e.date) // e.date is YYYY-MM-DD
-              .toSet();
-          
-          _weeklyWorkoutCount = uniqueDays.length;
-          debugPrint('Weekly Stats: ${executions.length} executions -> $_weeklyWorkoutCount unique days');
-          notifyListeners();
-      } catch (e) {
-          debugPrint('Error computing stats: $e');
-      }
+    try {
+      final executions = await fetchCalendar(startOfWeek, endOfWeek);
+      // Count unique days by date string
+      final uniqueDays = executions
+          .where((e) => e.status == 'COMPLETED')
+          .map((e) => e.date) // e.date is YYYY-MM-DD
+          .toSet();
+
+      _weeklyWorkoutCount = uniqueDays.length;
+      debugPrint(
+          'Weekly Stats: ${executions.length} executions -> $_weeklyWorkoutCount unique days');
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error computing stats: $e');
+    }
   }
 
   Future<void> computeMonthlyStats() async {
-      final now = DateTime.now();
-      final startOfMonth = DateTime(now.year, now.month, 1);
-      final endOfMonth = DateTime(now.year, now.month + 1, 0);
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1);
+    final endOfMonth = DateTime(now.year, now.month + 1, 0);
 
-      try {
-          final executions = await fetchCalendar(startOfMonth, endOfMonth);
-          _monthlyWorkoutCount = executions.where((e) => e.status == 'COMPLETED').length;
-          notifyListeners();
-      } catch (e) {
-          debugPrint('Error computing monthly stats: $e');
-      }
+    try {
+      final executions = await fetchCalendar(startOfMonth, endOfMonth);
+      _monthlyWorkoutCount =
+          executions.where((e) => e.status == 'COMPLETED').length;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error computing monthly stats: $e');
+    }
   }
 
   // --- EXECUTION ENGINE END ---
 
-  Future<bool> updateProgress(String studentPlanId, String type, String id, bool completed, {String? date}) async {
+  Future<bool> updateProgress(
+      String studentPlanId, String type, String id, bool completed,
+      {String? date}) async {
     try {
-        return await _planService.updateProgress(studentPlanId, type, id, completed, date: date);
+      return await _planService
+          .updateProgress(studentPlanId, type, id, completed, date: date);
     } catch (e) {
-        debugPrint('Error updating progress: $e');
-        return false;
+      debugPrint('Error updating progress: $e');
+      return false;
     }
   }
 
@@ -582,7 +604,7 @@ class PlanProvider with ChangeNotifier {
     try {
       return await _planService.getStudentAssignments(studentId);
     } catch (e) {
-    debugPrint('Error fetching assignments: $e');
+      debugPrint('Error fetching assignments: $e');
       return [];
     }
   }
@@ -593,7 +615,7 @@ class PlanProvider with ChangeNotifier {
     try {
       return await _planService.deleteAssignment(assignmentId);
     } catch (e) {
-    debugPrint('Error deleting assignment: $e');
+      debugPrint('Error deleting assignment: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -651,39 +673,40 @@ class PlanProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>?> waitForPendingUpdates() async {
-      List<Map<String, dynamic>> results;
-      
-      // If there was an active sync initiated by completeSession, wait for it.
-      if (_activeSyncRequest != null) {
-          results = await _activeSyncRequest!;
-          _activeSyncRequest = null; 
-          
-          // Race Condition Check: Did we get the completion result?
-          bool found = results.any((r) => (r['endpoint'] as String).endsWith('/complete'));
-          
-          if (!found) {
-             final queue = _localStorage.getQueue();
-             if (queue.isNotEmpty) {
-                 // The item might have been added just as the previous sync finished.
-                 // Trigger a fresh sync to pick it up.
-                 results = await _syncService.triggerSync();
-             }
-          }
-      } else {
+    List<Map<String, dynamic>> results;
+
+    // If there was an active sync initiated by completeSession, wait for it.
+    if (_activeSyncRequest != null) {
+      results = await _activeSyncRequest!;
+      _activeSyncRequest = null;
+
+      // Race Condition Check: Did we get the completion result?
+      bool found =
+          results.any((r) => (r['endpoint'] as String).endsWith('/complete'));
+
+      if (!found) {
+        final queue = _localStorage.getQueue();
+        if (queue.isNotEmpty) {
+          // The item might have been added just as the previous sync finished.
+          // Trigger a fresh sync to pick it up.
           results = await _syncService.triggerSync();
+        }
       }
-      
-      // Look for completion response
-      for (final result in results) {
-          final endpoint = result['endpoint'] as String;
-          if (endpoint.endsWith('/complete') && result['response'] != null) {
-              final response = result['response'];
-              if (response is Map<String, dynamic> && response.containsKey('stats')) {
-                  return response['stats'] as Map<String, dynamic>;
-              }
-          }
+    } else {
+      results = await _syncService.triggerSync();
+    }
+
+    // Look for completion response
+    for (final result in results) {
+      final endpoint = result['endpoint'] as String;
+      if (endpoint.endsWith('/complete') && result['response'] != null) {
+        final response = result['response'];
+        if (response is Map<String, dynamic> && response.containsKey('stats')) {
+          return response['stats'] as Map<String, dynamic>;
+        }
       }
-      return null;
+    }
+    return null;
   }
 
   void clear() {
@@ -700,9 +723,9 @@ class PlanProvider with ChangeNotifier {
 
 // Helper class for UI feedback (if needed, or move to utils)
 class ScaffoldMessengerHelper {
-    static void showOfflineSnack(String msg) {
-        // Implementation depends on access to BuildContext or GlobalKey
-        // For Provider, usually we return status and let UI handle showing Snackbars.
-        // We ignored this for now in logic, just using debugPrint.
-    }
+  static void showOfflineSnack(String msg) {
+    // Implementation depends on access to BuildContext or GlobalKey
+    // For Provider, usually we return status and let UI handle showing Snackbars.
+    // We ignored this for now in logic, just using debugPrint.
+  }
 }

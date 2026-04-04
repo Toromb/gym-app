@@ -7,6 +7,7 @@ import '../../utils/app_colors.dart'; // Corrected path
 import 'package:intl/intl.dart';
 import '../../localization/app_localizations.dart';
 import '../shared/plan_details_screen.dart';
+import '../../widgets/background_page_wrapper.dart';
 
 class StudentPlansListScreen extends StatefulWidget {
   const StudentPlansListScreen({super.key});
@@ -37,99 +38,136 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.get('navPlans'))),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _assignments.isEmpty
-              ? Center(child: Text(AppLocalizations.of(context)!.get('noPlans')))
-              : Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 900),
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _assignments.length,
-                      itemBuilder: (context, index) {
-                        final assignment = _assignments[index];
-                        final plan = assignment.plan;
-                        final isActive = assignment.isActive;
-                        final assignedDate = assignment.assignedAt != null
-                            ? DateFormat.yMMMd(AppLocalizations.of(context)!.locale.languageCode).format(DateTime.parse(assignment.assignedAt!))
-                            : 'Unknown Date';
-      
-                        final colorScheme = Theme.of(context).colorScheme;
-                        final textTheme = Theme.of(context).textTheme;
-      
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PlanDetailsScreen(
-                                      plan: plan, 
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.85,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(AppLocalizations.of(context)!.get('navPlans')),
+        ),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _assignments.isEmpty
+                ? Center(
+                    child: Text(AppLocalizations.of(context)!.get('noPlans')))
+                : Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 900),
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _assignments.length,
+                        itemBuilder: (context, index) {
+                          final assignment = _assignments[index];
+                          final plan = assignment.plan;
+                          final isActive = assignment.isActive;
+                          final assignedDate = assignment.assignedAt != null
+                              ? DateFormat.yMMMd(AppLocalizations.of(context)!
+                                      .locale
+                                      .languageCode)
+                                  .format(
+                                      DateTime.parse(assignment.assignedAt!))
+                              : 'Unknown Date';
+
+                          final colorScheme = Theme.of(context).colorScheme;
+                          final textTheme = Theme.of(context).textTheme;
+
+                          return Card(
+                            elevation: 0,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surface
+                                .withOpacity(0.9),
+                            margin: const EdgeInsets.only(bottom: 16),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PlanDetailsScreen(
+                                      plan: plan,
                                       canEdit: false,
-                                      assignment: assignment, 
-                                  ),
-                                ),
-                              ).then((_) => _loadHistory()); 
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          plan.name,
-                                          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                      Container(
-                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                         decoration: BoxDecoration(
-                                           color: AppColors.success.withValues(alpha: 0.1), 
-                                           borderRadius: BorderRadius.circular(20),
-                                           border: Border.all(color: AppColors.success.withValues(alpha: 0.2)),
-                                         ),
-                                         child: Text(
-                                           AppLocalizations.of(context)!.get('statusActive'), 
-                                           style: textTheme.labelSmall?.copyWith(color: AppColors.success, fontWeight: FontWeight.bold)
-                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (plan.objective != null)
-                                    Text(
-                                      '${AppLocalizations.of(context)!.get('objective')} ${plan.objective}', 
-                                      style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)
+                                      assignment: assignment,
                                     ),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.calendar_today, size: 16, color: colorScheme.onSurfaceVariant),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        '${AppLocalizations.of(context)!.get('assignedOn')} $assignedDate', 
-                                        style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)
-                                      ),
-                                    ],
                                   ),
-                                ],
+                                ).then((_) => _loadHistory());
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            plan.name,
+                                            style: textTheme.titleLarge
+                                                ?.copyWith(
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.success
+                                                .withValues(alpha: 0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            border: Border.all(
+                                                color: AppColors.success
+                                                    .withValues(alpha: 0.2)),
+                                          ),
+                                          child: Text(
+                                              AppLocalizations.of(context)!
+                                                  .get('statusActive'),
+                                              style: textTheme.labelSmall
+                                                  ?.copyWith(
+                                                      color: AppColors.success,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    if (plan.objective != null)
+                                      Text(
+                                          '${AppLocalizations.of(context)!.get('objective')} ${plan.objective}',
+                                          style: textTheme.bodyMedium?.copyWith(
+                                              color: colorScheme
+                                                  .onSurfaceVariant)),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.calendar_today,
+                                            size: 16,
+                                            color:
+                                                colorScheme.onSurfaceVariant),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                            '${AppLocalizations.of(context)!.get('assignedOn')} $assignedDate',
+                                            style: textTheme.bodySmall
+                                                ?.copyWith(
+                                                    color: colorScheme
+                                                        .onSurfaceVariant)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
+      ),
     );
   }
 }

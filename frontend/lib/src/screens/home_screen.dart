@@ -23,7 +23,7 @@ class HomeScreen extends StatelessWidget {
         } else {
           // Default to student, but check onboarding
           if (!auth.isOnboarded) {
-             return const OnboardingScreen();
+            return const OnboardingScreen();
           }
           return const StudentHomeScreen();
         }

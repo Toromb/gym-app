@@ -23,7 +23,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         // Try to extract token from URL format (e.g., https://tugymflow.com/invite?token=XYZ)
         // or just accept it if it's a raw token string.
         String? token;
-        
+
         try {
           final uri = Uri.parse(rawValue);
           if (uri.queryParameters.containsKey('token')) {
@@ -34,17 +34,19 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           // Although the plan specified keeping the future-proof URL form.
         }
 
-        token ??= rawValue; // Fallback to raw value if it wasn't a standard URL with a ?token= parameter
+        token ??=
+            rawValue; // Fallback to raw value if it wasn't a standard URL with a ?token= parameter
 
         if (token.isNotEmpty) {
           _hasScanned = true;
           _controller.stop();
-          
+
           if (!mounted) return;
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => RegisterWithInviteScreen(inviteToken: token!),
+              builder: (context) =>
+                  RegisterWithInviteScreen(inviteToken: token!),
             ),
           );
           return;
@@ -78,24 +80,31 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
             controller: _controller,
             onDetect: _onDetect,
             errorBuilder: (BuildContext context, MobileScannerException error) {
-              print('MobileScanner Error: ${error.errorCode} - ${error.errorDetails?.message}');
+              print(
+                  'MobileScanner Error: ${error.errorCode} - ${error.errorDetails?.message}');
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 60),
+                      const Icon(Icons.error_outline,
+                          color: Colors.red, size: 60),
                       const SizedBox(height: 16),
                       Text(
                         'Error de cámara: ${error.errorCode.name}',
-                        style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        error.errorDetails?.message ?? 'No se pudo iniciar la cámara.',
-                        style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        error.errorDetails?.message ??
+                            'No se pudo iniciar la cámara.',
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 14),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -110,13 +119,14 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                   children: [
                     CircularProgressIndicator(color: Colors.white),
                     SizedBox(height: 16),
-                    Text('Iniciando cámara...', style: TextStyle(color: Colors.white)),
+                    Text('Iniciando cámara...',
+                        style: TextStyle(color: Colors.white)),
                   ],
                 ),
               );
             },
           ),
-          
+
           // Overlay to guide the user
           Container(
             decoration: ShapeDecoration(
@@ -129,7 +139,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
               ),
             ),
           ),
-          
+
           const Positioned(
             bottom: 40,
             left: 0,
@@ -206,7 +216,8 @@ class QrScannerOverlayShape extends ShapeBorder {
     final _mBorderLength = borderLength > cutOutSize / 2 + borderWidthSize
         ? cutOutSize / 2 + borderOffset
         : borderLength;
-    final _mCutOutWidth = cutOutSize < width ? cutOutSize : width - borderOffset;
+    final _mCutOutWidth =
+        cutOutSize < width ? cutOutSize : width - borderOffset;
 
     final backgroundPaint = Paint()
       ..color = Colors.black.withOpacity(overlayColorAlpha)

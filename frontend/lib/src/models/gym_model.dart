@@ -6,14 +6,14 @@ class Gym {
   final String? email;
   final String status;
   final int maxProfiles;
-  
+
   // Customization
   final String? logoUrl;
   final String? primaryColor;
   final String? secondaryColor;
   final String? welcomeMessage;
   final String? openingHours;
-  
+
   // Payment Info
   final String? paymentAlias;
   final String? paymentCbu;

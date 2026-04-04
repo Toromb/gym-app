@@ -1,4 +1,3 @@
-
 class PlatformStats {
   final int totalGyms;
   final int activeGyms;
@@ -121,8 +120,9 @@ class VolumeStats {
       thisWeek: (json['thisWeek'] as num?)?.toDouble() ?? 0.0,
       thisMonth: (json['thisMonth'] as num?)?.toDouble() ?? 0.0,
       chart: (json['chart'] as List?)
-          ?.map((e) => VolumePoint.fromJson(e))
-          .toList() ?? [],
+              ?.map((e) => VolumePoint.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 }
@@ -148,8 +148,8 @@ class WorkoutStats {
   final double weeklyAverage;
 
   WorkoutStats({
-    required this.total, 
-    required this.thisMonth, 
+    required this.total,
+    required this.thisMonth,
     required this.thisWeek,
     required this.weeklyAverage,
   });
@@ -166,7 +166,7 @@ class WorkoutStats {
 
 class LevelStats {
   final int current; // Level 1-100+
-  final int exp;     // Total Accumulated EXP
+  final int exp; // Total Accumulated EXP
 
   LevelStats({
     required this.current,

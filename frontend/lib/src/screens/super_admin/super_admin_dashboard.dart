@@ -13,22 +13,26 @@ class SuperAdminDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Super Admin Dashboard'),
         actions: [
           Consumer<ThemeProvider>(
             builder: (_, themeProvider, __) => IconButton(
-              icon: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
-              onPressed: () => themeProvider.toggleTheme(!themeProvider.isDarkMode),
+              icon: Icon(themeProvider.isDarkMode
+                  ? Icons.light_mode
+                  : Icons.dark_mode),
+              onPressed: () =>
+                  themeProvider.toggleTheme(!themeProvider.isDarkMode),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
               context.read<AuthProvider>().logout();
-              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+              Navigator.of(context)
+                  .pushNamedAndRemoveUntil('/login', (route) => false);
             },
           ),
         ],
@@ -57,19 +61,19 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 30),
-      
                 _buildDashboardCard(
                   context,
                   icon: Icons.fitness_center,
                   title: 'Gestionar Gimnasios',
                   subtitle: 'Ver, crear y editar gimnasios registrados',
                   onTap: () {
-                     if (context.mounted) {
-                       Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const GymsListScreen()),
-                        );
-                     }
+                    if (context.mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const GymsListScreen()),
+                      );
+                    }
                   },
                 ),
                 const SizedBox(height: 16),
@@ -80,26 +84,26 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                   subtitle: 'Administrar cuentas de administradores',
                   onTap: () {
                     Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const GymAdminsScreen())
-                    );
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const GymAdminsScreen()));
                   },
                 ),
                 const SizedBox(height: 16),
                 const SizedBox(height: 16),
-                 _buildDashboardCard(
+                _buildDashboardCard(
                   context,
                   icon: Icons.analytics,
                   title: 'Estadísticas de Plataforma',
                   subtitle: 'Métricas globales y rendimiento',
-                   onTap: () {
+                  onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const PlatformStatsScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const PlatformStatsScreen()),
                     );
                   },
                 ),
-                
                 const SizedBox(height: 30),
                 Text(
                   'Comercial & Ventas',
@@ -109,7 +113,6 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 _buildDashboardCard(
                   context,
                   icon: Icons.business,
@@ -118,11 +121,11 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const SuperAdminLeadsScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const SuperAdminLeadsScreen()),
                     );
                   },
                 ),
-
                 const SizedBox(height: 30),
                 Text(
                   'Configuraciones',
@@ -150,7 +153,8 @@ class SuperAdminDashboardScreen extends StatelessWidget {
   void _showChangePasswordDialog(BuildContext context) {
     final currentController = TextEditingController();
     final newController = TextEditingController();
-    final confirmController = TextEditingController(); // Added confirm controller
+    final confirmController =
+        TextEditingController(); // Added confirm controller
     bool isLoading = false;
 
     showDialog(
@@ -163,23 +167,27 @@ class SuperAdminDashboardScreen extends StatelessWidget {
             children: [
               TextField(
                 controller: currentController,
-                decoration: const InputDecoration(labelText: 'Contraseña Actual'),
+                decoration:
+                    const InputDecoration(labelText: 'Contraseña Actual'),
                 obscureText: true,
               ),
               TextField(
                 controller: newController,
-                decoration: const InputDecoration(labelText: 'Nueva Contraseña (min 6 chars)'),
+                decoration: const InputDecoration(
+                    labelText: 'Nueva Contraseña (min 6 chars)'),
                 obscureText: true,
               ),
               TextField(
                 controller: confirmController, // Confirm field
-                decoration: const InputDecoration(labelText: 'Confirmar Nueva Contraseña'),
+                decoration: const InputDecoration(
+                    labelText: 'Confirmar Nueva Contraseña'),
                 obscureText: true,
               ),
-              if (isLoading) const Padding(
-                padding: EdgeInsets.only(top: 10),
-                child: LinearProgressIndicator(),
-              ),
+              if (isLoading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 10),
+                  child: LinearProgressIndicator(),
+                ),
             ],
           ),
           actions: [
@@ -188,45 +196,50 @@ class SuperAdminDashboardScreen extends StatelessWidget {
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
-              onPressed: isLoading ? null : () async {
-                 // Validation
-                 if (newController.text.length < 6) {
-                   ScaffoldMessenger.of(context).showSnackBar(
-                     const SnackBar(content: Text('La nueva contraseña debe tener al menos 6 caracteres')),
-                   );
-                   return;
-                 }
-                 if (newController.text != confirmController.text) {
-                   ScaffoldMessenger.of(context).showSnackBar(
-                     const SnackBar(content: Text('Las contraseñas no coinciden')),
-                   );
-                   return;
-                 }
-                 
-                 setState(() => isLoading = true);
-                 try {
-                   await context.read<AuthProvider>().changePassword(
-                     currentController.text,
-                     newController.text
-                   );
-                   if (context.mounted) {
-                     Navigator.pop(context); // Close dialog
-                     ScaffoldMessenger.of(context).showSnackBar(
-                       const SnackBar(content: Text('✅ Contraseña actualizada correctamente')),
-                     );
-                   }
-                 } catch (e) {
-                   if (context.mounted) {
-                     ScaffoldMessenger.of(context).showSnackBar(
-                       SnackBar(content: Text('Error: ${e.toString()}')),
-                     );
-                   }
-                 } finally {
-                   if (context.mounted) {
-                      setState(() => isLoading = false);
-                   }
-                 }
-              },
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      // Validation
+                      if (newController.text.length < 6) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text(
+                                  'La nueva contraseña debe tener al menos 6 caracteres')),
+                        );
+                        return;
+                      }
+                      if (newController.text != confirmController.text) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Las contraseñas no coinciden')),
+                        );
+                        return;
+                      }
+
+                      setState(() => isLoading = true);
+                      try {
+                        await context.read<AuthProvider>().changePassword(
+                            currentController.text, newController.text);
+                        if (context.mounted) {
+                          Navigator.pop(context); // Close dialog
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    '✅ Contraseña actualizada correctamente')),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error: ${e.toString()}')),
+                          );
+                        }
+                      } finally {
+                        if (context.mounted) {
+                          setState(() => isLoading = false);
+                        }
+                      }
+                    },
               child: const Text('Cambiar'),
             ),
           ],
@@ -235,12 +248,14 @@ class SuperAdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDashboardCard(BuildContext context, 
-      {required IconData icon, required String title, required String subtitle, required VoidCallback onTap}) {
-    
+  Widget _buildDashboardCard(BuildContext context,
+      {required IconData icon,
+      required String title,
+      required String subtitle,
+      required VoidCallback onTap}) {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
-    
+
     return Card(
       elevation: 2.0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -264,23 +279,24 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title, 
-                      style: TextStyle(
-                        fontSize: 18.0, 
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface, // Theme aware
-                      )
-                    ),
+                    Text(title,
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface, // Theme aware
+                        )),
                     const SizedBox(height: 4),
-                    Text(
-                      subtitle, 
-                      style: TextStyle(fontSize: 13.0, color: theme.colorScheme.onSurfaceVariant) // Theme aware
-                    ),
+                    Text(subtitle,
+                        style: TextStyle(
+                            fontSize: 13.0,
+                            color: theme
+                                .colorScheme.onSurfaceVariant) // Theme aware
+                        ),
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios, size: 16, color: theme.colorScheme.onSurfaceVariant),
+              Icon(Icons.arrow_forward_ios,
+                  size: 16, color: theme.colorScheme.onSurfaceVariant),
             ],
           ),
         ),

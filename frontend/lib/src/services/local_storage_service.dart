@@ -17,7 +17,8 @@ class LocalStorageService {
   Future<void> init() async {
     _sessionBox = await Hive.openBox(_sessionBoxName);
     _queueBox = await Hive.openBox(_queueBoxName);
-    if (kDebugMode) print('📦 Hive Boxes Opened: $_sessionBoxName, $_queueBoxName');
+    if (kDebugMode)
+      print('📦 Hive Boxes Opened: $_sessionBoxName, $_queueBoxName');
   }
 
   // --- Session Cache ---
@@ -43,19 +44,22 @@ class LocalStorageService {
   Future<void> addToQueue(Map<String, dynamic> request) async {
     // request: { 'id': uuid, 'method': 'POST', 'url': '...', 'body': {...}, 'timestamp': ... }
     await _queueBox?.add(jsonEncode(request));
-    if (kDebugMode) print('📦 Added to Sync Queue: ${request['method']} ${request['url']}');
+    if (kDebugMode)
+      print('📦 Added to Sync Queue: ${request['method']} ${request['url']}');
   }
 
   List<Map<String, dynamic>> getQueue() {
     if (_queueBox == null) return [];
-    return _queueBox!.values.map((e) => jsonDecode(e) as Map<String, dynamic>).toList();
+    return _queueBox!.values
+        .map((e) => jsonDecode(e) as Map<String, dynamic>)
+        .toList();
   }
 
   Future<void> removeFromQueue(int index) async {
     await _queueBox?.deleteAt(index);
     if (kDebugMode) print('📦 Removed from Queue at index $index');
   }
-  
+
   Future<void> clearQueue() async {
     await _queueBox?.clear();
   }

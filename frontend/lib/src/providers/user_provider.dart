@@ -13,12 +13,15 @@ class UserProvider with ChangeNotifier {
   Map<String, String?> _lastFetchArgs = {};
   bool _isUsersLoaded = false;
 
-  Future<void> fetchUsers({String? role, String? gymId, bool forceRefresh = false}) async {
+  Future<void> fetchUsers(
+      {String? role, String? gymId, bool forceRefresh = false}) async {
     // Check if arguments changed
     final currentArgs = {'role': role, 'gymId': gymId};
-    final argsChanged = _lastFetchArgs['role'] != role || _lastFetchArgs['gymId'] != gymId;
+    final argsChanged =
+        _lastFetchArgs['role'] != role || _lastFetchArgs['gymId'] != gymId;
 
-    if (_isUsersLoaded && !forceRefresh && !argsChanged && _students.isNotEmpty) return;
+    if (_isUsersLoaded && !forceRefresh && !argsChanged && _students.isNotEmpty)
+      return;
 
     _isLoading = true;
     notifyListeners();
@@ -27,7 +30,7 @@ class UserProvider with ChangeNotifier {
       _isUsersLoaded = true;
       _lastFetchArgs = currentArgs;
     } catch (e) {
-        print('Error fetching users: $e');
+      print('Error fetching users: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -35,7 +38,8 @@ class UserProvider with ChangeNotifier {
   }
 
   // Alias for backward compatibility or clarity
-  Future<void> fetchStudents({bool forceRefresh = false}) => fetchUsers(forceRefresh: forceRefresh);
+  Future<void> fetchStudents({bool forceRefresh = false}) =>
+      fetchUsers(forceRefresh: forceRefresh);
 
   Future<bool> addUser({
     required String email,
@@ -73,7 +77,7 @@ class UserProvider with ChangeNotifier {
         paysMembership: paysMembership,
       );
       if (newUser != null) {
-        _students.add(newUser); 
+        _students.add(newUser);
         notifyListeners();
         return true;
       }
@@ -177,6 +181,7 @@ class UserProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
   void clear() {
     _students = [];
     _isLoading = false;

@@ -1,4 +1,3 @@
-
 import '../student_assignment_model.dart';
 import '../../models/plan_model.dart'; // Ensure Plan models are imported
 
@@ -15,27 +14,27 @@ extension PlanTraversalLogic on StudentAssignment {
     final daysProgress = (progress['days'] as Map<String, dynamic>?) ?? {};
 
     for (var week in weeks) {
-        final days = week.days ?? [];
-        // Ensure sorted by day order to recommend correct sequence
-        days.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
+      final days = week.days ?? [];
+      // Ensure sorted by day order to recommend correct sequence
+      days.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
 
-        for (var day in days) {
-            final dayId = day.id;
-             // Check completion
-            final isCompleted = daysProgress[dayId]?['completed'] == true;
+      for (var day in days) {
+        final dayId = day.id;
+        // Check completion
+        final isCompleted = daysProgress[dayId]?['completed'] == true;
 
-            if (!isCompleted) {
-                return {
-                    'week': week,
-                    'day': day,
-                    'dayId': day.id,
-                    'title': day.title ?? 'Día ${day.dayOfWeek}',
-                };
-            }
+        if (!isCompleted) {
+          return {
+            'week': week,
+            'day': day,
+            'dayId': day.id,
+            'title': day.title ?? 'Día ${day.dayOfWeek}',
+          };
         }
+      }
     }
 
-    // If all completed, return null or maybe the last one? 
+    // If all completed, return null or maybe the last one?
     // Current logic usually implies "Plan Completed".
     return null;
   }

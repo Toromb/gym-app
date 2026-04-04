@@ -13,18 +13,19 @@ class SyncService {
 
   final _storage = LocalStorageService();
   final _api = ApiClient();
-  
 
   StreamSubscription? _connectivitySubscription;
 
   void init() {
     // Listen to network changes
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
-       // connectivity_plus returns a list now in newer versions
-       if (results.any((r) => r != ConnectivityResult.none)) {
-         if (kDebugMode) print('📶 Network Connected. Triggering Sync...');
-         triggerSync();
-       }
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> results) {
+      // connectivity_plus returns a list now in newer versions
+      if (results.any((r) => r != ConnectivityResult.none)) {
+        if (kDebugMode) print('📶 Network Connected. Triggering Sync...');
+        triggerSync();
+      }
     });
   }
 
@@ -38,7 +39,7 @@ class SyncService {
     if (_syncFuture != null) return _syncFuture!;
 
     _syncFuture = _processQueue();
-    // We await it here so that triggerSync itself waits, 
+    // We await it here so that triggerSync itself waits,
     // but the future is also stored in _syncFuture for other callers.
     try {
       return await _syncFuture!;
@@ -50,7 +51,7 @@ class SyncService {
 
   Future<List<Map<String, dynamic>>> _processQueue() async {
     final List<Map<String, dynamic>> results = [];
-    
+
     // Double check real internet
     bool hasInternet = await InternetConnectionChecker.instance.hasConnection;
     if (!hasInternet) {
@@ -65,17 +66,18 @@ class SyncService {
         return results;
       }
 
-      if (kDebugMode) print('🔄 Processing Sync Queue (${queue.length} items)...');
+      if (kDebugMode)
+        print('🔄 Processing Sync Queue (${queue.length} items)...');
 
       // Process items one by one (FIFO)
       // Note: We read the *current* queue status. If new items are added while syncing, they are appended.
       // We will loop until queue is empty or error occurs.
-      
+
       int processedCount = 0;
-      
+
       // Reload queue to be sure
       var currentQueue = _storage.getQueue();
-      
+
       while (currentQueue.isNotEmpty) {
         final item = currentQueue.first; // Peek first
         final method = item['method'] as String;
@@ -87,7 +89,7 @@ class SyncService {
 
         try {
           if (kDebugMode) print('📤 Sending: $method $endpoint');
-          
+
           switch (method.toUpperCase()) {
             case 'POST':
               response = await _api.post(endpoint, body);
@@ -107,15 +109,11 @@ class SyncService {
               break;
           }
           success = true;
-          
+
           if (response != null) {
-              results.add({
-                  'method': method,
-                  'endpoint': endpoint,
-                  'response': response
-              });
+            results.add(
+                {'method': method, 'endpoint': endpoint, 'response': response});
           }
-          
         } catch (e) {
           if (kDebugMode) print('❌ Sync Error for $endpoint: $e');
           // If 5xx or Network -> Stop sync, keep item.
@@ -123,13 +121,16 @@ class SyncService {
           // For now, simpler: Stop sync on any error to prevent data loss or disorder.
           // Exception: 400/403 might block queue forever if not handled.
           // Ideally check statusCode if possible. ApiClient throws ApiException(msg, code).
-          
-          if (e.toString().contains('400') || e.toString().contains('403') || e.toString().contains('404')) {
-             if (kDebugMode) print('⚠️ Client Error ($e). Discarding item to unblock queue.');
-             success = true; // Treated as "handled" (discarded)
+
+          if (e.toString().contains('400') ||
+              e.toString().contains('403') ||
+              e.toString().contains('404')) {
+            if (kDebugMode)
+              print('⚠️ Client Error ($e). Discarding item to unblock queue.');
+            success = true; // Treated as "handled" (discarded)
           } else {
-             // Server/Network error -> Retry later
-             success = false;
+            // Server/Network error -> Retry later
+            success = false;
           }
         }
 
@@ -143,13 +144,13 @@ class SyncService {
           break;
         }
       }
-      
-      if (kDebugMode) print('✅ Sync Finished. Processed $processedCount items.');
 
+      if (kDebugMode)
+        print('✅ Sync Finished. Processed $processedCount items.');
     } catch (e) {
-       if (kDebugMode) print('❌ Critical Sync Error: $e');
+      if (kDebugMode) print('❌ Critical Sync Error: $e');
     }
-    
+
     return results;
   }
 }

@@ -1,7 +1,5 @@
 import 'user_model.dart';
 
-
-
 class Equipment {
   final String id;
   final String name;
@@ -103,7 +101,7 @@ class Exercise {
   final String? imageUrl;
   final String muscleGroup;
   final String? type;
-  
+
   // Defaults
   final int? sets;
   final String? reps;
@@ -112,7 +110,7 @@ class Exercise {
   final String? notes;
   final List<ExerciseMuscle> muscles;
   final List<Equipment> equipments;
-  
+
   // Professional Change System Config
   final double? loadFactor;
   final int? defaultSets;
@@ -175,7 +173,9 @@ class Exercise {
       rest: json['rest'],
       load: json['load'],
       notes: json['notes'],
-      loadFactor: json['loadFactor'] != null ? (json['loadFactor'] as num).toDouble() : null,
+      loadFactor: json['loadFactor'] != null
+          ? (json['loadFactor'] as num).toDouble()
+          : null,
       defaultSets: json['defaultSets'],
       minReps: json['minReps'],
       maxReps: json['maxReps'],
@@ -188,9 +188,15 @@ class Exercise {
       defaultTime: json['defaultTime'],
       minTime: json['minTime'],
       maxTime: json['maxTime'],
-      defaultDistance: json['defaultDistance'] != null ? (json['defaultDistance'] as num).toDouble() : null,
-      minDistance: json['minDistance'] != null ? (json['minDistance'] as num).toDouble() : null,
-      maxDistance: json['maxDistance'] != null ? (json['maxDistance'] as num).toDouble() : null,
+      defaultDistance: json['defaultDistance'] != null
+          ? (json['defaultDistance'] as num).toDouble()
+          : null,
+      minDistance: json['minDistance'] != null
+          ? (json['minDistance'] as num).toDouble()
+          : null,
+      maxDistance: json['maxDistance'] != null
+          ? (json['maxDistance'] as num).toDouble()
+          : null,
     );
   }
   Map<String, dynamic> toJson() {
@@ -211,8 +217,10 @@ class Exercise {
       'defaultSets': defaultSets,
       'minReps': minReps,
       'maxReps': maxReps,
-      'exerciseMuscles': muscles.map((e) => e.toJson()).toList(), // API expects 'exerciseMuscles' usually? or 'muscles'? Factory uses 'exerciseMuscles'.
-      'equipments': equipments.map((e) => e.toJson()).toList(), 
+      'exerciseMuscles': muscles
+          .map((e) => e.toJson())
+          .toList(), // API expects 'exerciseMuscles' usually? or 'muscles'? Factory uses 'exerciseMuscles'.
+      'equipments': equipments.map((e) => e.toJson()).toList(),
       'metricType': metricType,
       'defaultTime': defaultTime,
       'minTime': minTime,
@@ -258,7 +266,8 @@ class PlanExercise {
   factory PlanExercise.fromJson(Map<String, dynamic> json) {
     return PlanExercise(
       id: json['id'],
-      exercise: json['exercise'] != null ? Exercise.fromJson(json['exercise']) : null,
+      exercise:
+          json['exercise'] != null ? Exercise.fromJson(json['exercise']) : null,
       sets: json['sets'] ?? 0,
       reps: json['reps'] ?? '',
       suggestedLoad: json['suggestedLoad'],
@@ -266,7 +275,9 @@ class PlanExercise {
       notes: json['notes'],
       videoUrl: json['videoUrl'],
       targetTime: json['targetTime'],
-      targetDistance: json['targetDistance'] != null ? (json['targetDistance'] as num).toDouble() : null,
+      targetDistance: json['targetDistance'] != null
+          ? (json['targetDistance'] as num).toDouble()
+          : null,
       order: json['order'] ?? 0,
       equipments: (json['equipments'] as List<dynamic>?)
               ?.map((e) => Equipment.fromJson(e))
@@ -301,10 +312,14 @@ enum TrainingIntent {
 
   String get label {
     switch (this) {
-      case TrainingIntent.STRENGTH: return 'Fuerza';
-      case TrainingIntent.HYPERTROPHY: return 'Hipertrofia';
-      case TrainingIntent.ENDURANCE: return 'Resistencia';
-      case TrainingIntent.GENERAL: return 'General';
+      case TrainingIntent.STRENGTH:
+        return 'Fuerza';
+      case TrainingIntent.HYPERTROPHY:
+        return 'Hipertrofia';
+      case TrainingIntent.ENDURANCE:
+        return 'Resistencia';
+      case TrainingIntent.GENERAL:
+        return 'General';
     }
   }
 
@@ -312,10 +327,14 @@ enum TrainingIntent {
   static TrainingIntent fromString(String? key) {
     if (key == null) return TrainingIntent.GENERAL;
     switch (key.toUpperCase()) {
-      case 'STRENGTH': return TrainingIntent.STRENGTH;
-      case 'HYPERTROPHY': return TrainingIntent.HYPERTROPHY;
-      case 'ENDURANCE': return TrainingIntent.ENDURANCE;
-      default: return TrainingIntent.GENERAL;
+      case 'STRENGTH':
+        return TrainingIntent.STRENGTH;
+      case 'HYPERTROPHY':
+        return TrainingIntent.HYPERTROPHY;
+      case 'ENDURANCE':
+        return TrainingIntent.ENDURANCE;
+      default:
+        return TrainingIntent.GENERAL;
     }
   }
 

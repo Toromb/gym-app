@@ -60,35 +60,39 @@ class _MuscleFlowBodyState extends State<MuscleFlowBody> {
         final colorHex = _colorToHex(MuscleFlowUtils.getColor(load.load));
 
         // Find elements with the matching ID
-        final elements = document.findAllElements('*').where((element) => element.getAttribute('id') == svgId);
-        
+        final elements = document
+            .findAllElements('*')
+            .where((element) => element.getAttribute('id') == svgId);
+
         if (elements.isEmpty) continue;
-        
+
         for (var element in elements) {
           // Force apply to all descendant paths (or rect/circle/etc if needed)
           // This bypasses inheritance issues by painting the leaves directly.
-          final paths = element.descendants.whereType<XmlElement>().where((node) => 
-              node.name.local == 'path' || 
-              node.name.local == 'rect' || 
-              node.name.local == 'circle' || 
-              node.name.local == 'ellipse' || 
-              node.name.local == 'polygon' ||
-              node.name.local == 'polyline'
-          ).toList();
+          final paths = element.descendants
+              .whereType<XmlElement>()
+              .where((node) =>
+                  node.name.local == 'path' ||
+                  node.name.local == 'rect' ||
+                  node.name.local == 'circle' ||
+                  node.name.local == 'ellipse' ||
+                  node.name.local == 'polygon' ||
+                  node.name.local == 'polyline')
+              .toList();
 
           if (paths.isEmpty && (element.name.local == 'path')) {
-             paths.add(element);
+            paths.add(element);
           }
 
           if (paths.isEmpty) {
-             // Fallback: Just set it on the element (e.g. it is a path itself, or empty group)
-             element.setAttribute('fill', colorHex);
-             element.removeAttribute('style');
+            // Fallback: Just set it on the element (e.g. it is a path itself, or empty group)
+            element.setAttribute('fill', colorHex);
+            element.removeAttribute('style');
           } else {
-             for (var path in paths) {
-                path.setAttribute('fill', colorHex);
-                path.removeAttribute('style'); // Nuke conflicting styles
-             }
+            for (var path in paths) {
+              path.setAttribute('fill', colorHex);
+              path.removeAttribute('style'); // Nuke conflicting styles
+            }
           }
         }
       }
@@ -102,14 +106,16 @@ class _MuscleFlowBodyState extends State<MuscleFlowBody> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const SizedBox(height: 300, child: Center(child: CircularProgressIndicator()));
+      return const SizedBox(
+          height: 300, child: Center(child: CircularProgressIndicator()));
     }
 
     final rawSvg = _isFront ? _svgStringFront : _svgStringBack;
 
     // Safety check for null rawSvg
     if (rawSvg == null) {
-       return const SizedBox(height: 300, child: Center(child: Text('Error: SVG not loaded')));
+      return const SizedBox(
+          height: 300, child: Center(child: Text('Error: SVG not loaded')));
     }
 
     // Process safely
@@ -133,13 +139,13 @@ class _MuscleFlowBodyState extends State<MuscleFlowBody> {
           ],
         ),
         const SizedBox(height: 16),
-        
+
         // Heatmap Render
         Center(
           child: SizedBox(
             height: 280, // Smaller Fixed height
             child: SvgPicture.string(
-              processedSvg, 
+              processedSvg,
               width: MediaQuery.of(context).size.width,
               fit: BoxFit.contain,
             ),
@@ -149,4 +155,3 @@ class _MuscleFlowBodyState extends State<MuscleFlowBody> {
     );
   }
 }
-

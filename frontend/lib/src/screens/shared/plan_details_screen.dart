@@ -17,8 +17,8 @@ class PlanDetailsScreen extends StatefulWidget {
   final String? studentId;
 
   const PlanDetailsScreen({
-    super.key, 
-    required this.plan, 
+    super.key,
+    required this.plan,
     this.canEdit = true,
     this.readOnly = false,
     this.assignment,
@@ -40,15 +40,17 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
     _currentAssignment = widget.assignment;
   }
 
-  Future<void> _handleProgressUpdate(String type, String id, bool completed, {String? date}) async {
+  Future<void> _handleProgressUpdate(String type, String id, bool completed,
+      {String? date}) async {
     if (_currentAssignment == null) return;
 
     // Optimistic Update
     setState(() {
       Map<String, dynamic> newProgress = Map.from(_currentAssignment!.progress);
-      
+
       if (type == 'exercise') {
-        Map<String, dynamic> exercises = Map.from(newProgress['exercises'] ?? {});
+        Map<String, dynamic> exercises =
+            Map.from(newProgress['exercises'] ?? {});
         if (completed) {
           exercises[id] = true;
         } else {
@@ -65,21 +67,20 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
         newProgress['days'] = days;
       }
 
-      _currentAssignment = _currentAssignment!.copyWithProgress(newProgress: newProgress);
+      _currentAssignment =
+          _currentAssignment!.copyWithProgress(newProgress: newProgress);
     });
 
     final success = await context.read<PlanProvider>().updateProgress(
-      _currentAssignment!.id,
-      type,
-      id,
-      completed,
-      date: date
-    );
+        _currentAssignment!.id, type, id, completed,
+        date: date);
 
     if (!success) {
       if (mounted) {
         // Revert (could just reload from server or use simple toggle back logic)
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.get('errorUpdateProgress'))));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                AppLocalizations.of(context)!.get('errorUpdateProgress'))));
         // Ideally revert state here, but for MVP keep it simple
       }
     }
@@ -95,7 +96,8 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
         helpText: AppLocalizations.of(context)!.get('selectDate'),
       );
       if (picked != null) {
-        _handleProgressUpdate('day', dayId, true, date: DateFormat('yyyy-MM-dd').format(picked));
+        _handleProgressUpdate('day', dayId, true,
+            date: DateFormat('yyyy-MM-dd').format(picked));
       }
     } else {
       _handleProgressUpdate('day', dayId, false);
@@ -116,18 +118,22 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
               onPressed: () async {
                 final result = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CreatePlanScreen(planToEdit: _plan)),
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          CreatePlanScreen(planToEdit: _plan)),
                 );
                 if (result == true && mounted) {
-                   // Refresh plan specifically from server to ensure fresh data
-                   if (_plan.id != null) {
-                       final updatedPlan = await context.read<PlanProvider>().getPlanById(_plan.id!);
-                       if (updatedPlan != null) {
-                         setState(() {
-                           _plan = updatedPlan;
-                         });
-                       }
-                   }
+                  // Refresh plan specifically from server to ensure fresh data
+                  if (_plan.id != null) {
+                    final updatedPlan = await context
+                        .read<PlanProvider>()
+                        .getPlanById(_plan.id!);
+                    if (updatedPlan != null) {
+                      setState(() {
+                        _plan = updatedPlan;
+                      });
+                    }
+                  }
                 }
               },
             ),
@@ -135,49 +141,53 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-            if (_plan.id != null) {
-               // Reload plan
-               final updatedPlan = await context.read<PlanProvider>().getPlanById(_plan.id!);
-               if (updatedPlan != null) {
-                  setState(() {
-                      _plan = updatedPlan;
-                  });
-               }
-               // Reload Progress if assignment exists
-               if (_currentAssignment != null) {
-                  await context.read<PlanProvider>().fetchMyHistory(); 
-                  // Update current assignment reference from provider
-                  // This is tricky because we need to find OUR assignment in the list.
-                  // For now, reloading Plan is key for Sets/Reps.
-                  final assignments = context.read<PlanProvider>().assignments;
-                  try {
-                      final updatedAss = assignments.firstWhere((a) => a.id == _currentAssignment!.id);
-                      setState(() {
-                          _currentAssignment = updatedAss;
-                      });
-                  } catch (_) {}
-               }
+          if (_plan.id != null) {
+            // Reload plan
+            final updatedPlan =
+                await context.read<PlanProvider>().getPlanById(_plan.id!);
+            if (updatedPlan != null) {
+              setState(() {
+                _plan = updatedPlan;
+              });
             }
+            // Reload Progress if assignment exists
+            if (_currentAssignment != null) {
+              await context.read<PlanProvider>().fetchMyHistory();
+              // Update current assignment reference from provider
+              // This is tricky because we need to find OUR assignment in the list.
+              // For now, reloading Plan is key for Sets/Reps.
+              final assignments = context.read<PlanProvider>().assignments;
+              try {
+                final updatedAss = assignments
+                    .firstWhere((a) => a.id == _currentAssignment!.id);
+                setState(() {
+                  _currentAssignment = updatedAss;
+                });
+              } catch (_) {}
+            }
+          }
         },
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 900),
             child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildPlanSummaryCard(context, _plan),
-              const SizedBox(height: 24),
-              Text(AppLocalizations.of(context)!.get('weeklySchedule'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              ..._plan.weeks.map((week) => _buildWeekCard(context, week)),
-            ],
+              padding: const EdgeInsets.all(16.0),
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPlanSummaryCard(context, _plan),
+                  const SizedBox(height: 24),
+                  Text(AppLocalizations.of(context)!.get('weeklySchedule'),
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  ..._plan.weeks.map((week) => _buildWeekCard(context, week)),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
-      ),
       ),
     );
   }
@@ -205,33 +215,39 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
         children: [
           Text(
             AppLocalizations.of(context)!.get('planOverview'),
-            style: textTheme.labelLarge?.copyWith(color: colorScheme.onPrimary.withValues(alpha: 0.8)),
+            style: textTheme.labelLarge
+                ?.copyWith(color: colorScheme.onPrimary.withValues(alpha: 0.8)),
           ),
           const SizedBox(height: 8),
           Text(
             plan.name,
-            style: textTheme.headlineMedium?.copyWith(color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
+            style: textTheme.headlineMedium?.copyWith(
+                color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
           ),
           if (plan.objective != null) ...[
             const SizedBox(height: 12),
-             Container(
-               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-               decoration: BoxDecoration(
-                 color: colorScheme.onPrimary,
-                 borderRadius: BorderRadius.circular(20),
-               ),
-               child: Text(
-                 plan.objective!,
-                 style: textTheme.labelMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.bold),
-               ),
-             ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: colorScheme.onPrimary,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                plan.objective!,
+                style: textTheme.labelMedium?.copyWith(
+                    color: colorScheme.primary, fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
           if (plan.durationWeeks > 0) ...[
-             const SizedBox(height: 12),
-             Text(
-               AppLocalizations.of(context)!.get('durationWeeks').replaceAll('{weeks}', '${plan.durationWeeks}'),
-               style: textTheme.bodyMedium?.copyWith(color: colorScheme.onPrimary.withValues(alpha: 0.9)),
-             ),
+            const SizedBox(height: 12),
+            Text(
+              AppLocalizations.of(context)!
+                  .get('durationWeeks')
+                  .replaceAll('{weeks}', '${plan.durationWeeks}'),
+              style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onPrimary.withValues(alpha: 0.9)),
+            ),
           ]
         ],
       ),
@@ -244,9 +260,16 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Text('${AppLocalizations.of(context)!.get('week').toUpperCase()} ${week.weekNumber}', style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Colors.grey)),
+          child: Text(
+              '${AppLocalizations.of(context)!.get('week').toUpperCase()} ${week.weekNumber}',
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                  color: Colors.grey)),
         ),
-        ...week.days.map<Widget>((day) => _buildDayCard(context, day, week.weekNumber)).toList(),
+        ...week.days
+            .map<Widget>((day) => _buildDayCard(context, day, week.weekNumber))
+            .toList(),
         const SizedBox(height: 16),
       ],
     );
@@ -263,16 +286,21 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: isCompleted ? AppColors.success.withValues(alpha: 0.05) : null, // Subtle green tint if completed
+      color: isCompleted
+          ? AppColors.success.withValues(alpha: 0.05)
+          : null, // Subtle green tint if completed
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: isCompleted ? BorderSide(color: AppColors.success.withValues(alpha: 0.5), width: 1) : BorderSide.none,
+        side: isCompleted
+            ? BorderSide(
+                color: AppColors.success.withValues(alpha: 0.5), width: 1)
+            : BorderSide.none,
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () async {
           if (_plan.id == null) return;
-          
+
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
@@ -281,35 +309,38 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                 planId: _plan.id!,
                 weekNumber: weekNumber,
                 readOnly: widget.readOnly,
-                studentId: widget.studentId, 
+                studentId: widget.studentId,
                 assignedAt: widget.assignment?.assignedAt,
               ),
             ),
           );
 
           if (result == true && !widget.readOnly && mounted) {
-             // User finished workout. 
-             await context.read<PlanProvider>().fetchMyHistory();
-             if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+            // User finished workout.
+            await context.read<PlanProvider>().fetchMyHistory();
+            if (mounted)
+              Navigator.of(context).popUntil((route) => route.isFirst);
           } else if (!widget.readOnly && mounted) {
-             // Refresh
-             context.read<PlanProvider>().fetchMyHistory().then((assignments) {
-                   if (mounted) {
-                       try {
-                           StudentAssignment updated;
-                           if (_currentAssignment?.id != null) {
-                             updated = assignments.firstWhere((a) => a.id == _currentAssignment!.id);
-                           } else {
-                             updated = assignments.firstWhere((a) => a.plan.id == _plan.id);
-                           }
-                           setState(() {
-                               _currentAssignment = updated;
-                           });
-                       } catch (e) {
-                           // Plan mismatch
-                       }
-                   }
-             });
+            // Refresh
+            context.read<PlanProvider>().fetchMyHistory().then((assignments) {
+              if (mounted) {
+                try {
+                  StudentAssignment updated;
+                  if (_currentAssignment?.id != null) {
+                    updated = assignments
+                        .firstWhere((a) => a.id == _currentAssignment!.id);
+                  } else {
+                    updated =
+                        assignments.firstWhere((a) => a.plan.id == _plan.id);
+                  }
+                  setState(() {
+                    _currentAssignment = updated;
+                  });
+                } catch (e) {
+                  // Plan mismatch
+                }
+              }
+            });
           }
         },
         child: Padding(
@@ -320,13 +351,13 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: isCompleted ? AppColors.success : colorScheme.primary.withValues(alpha: 0.1),
+                  color: isCompleted
+                      ? AppColors.success
+                      : colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  Icons.calendar_today, 
-                  color: isCompleted ? Colors.white : colorScheme.primary
-                ),
+                child: Icon(Icons.calendar_today,
+                    color: isCompleted ? Colors.white : colorScheme.primary),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -334,46 +365,55 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      day.title ?? '${AppLocalizations.of(context)!.get('day')} ${day.dayOfWeek}',
-                      style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      day.title ??
+                          '${AppLocalizations.of(context)!.get('day')} ${day.dayOfWeek}',
+                      style: textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${day.exercises.length} ${AppLocalizations.of(context)!.get('exercisesCount')}',
-                      style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                      style: textTheme.bodySmall
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                     if (day.trainingIntent != TrainingIntent.GENERAL)
-                       Container(
-                         margin: const EdgeInsets.only(top: 4),
-                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                         decoration: BoxDecoration(
-                           color: colorScheme.secondaryContainer, 
-                           borderRadius: BorderRadius.circular(8),
-                         ),
-                         child: Text(
-                           day.trainingIntent.label,
-                           style: TextStyle(
-                             fontSize: 10, 
-                             fontWeight: FontWeight.bold, 
-                             color: colorScheme.onSecondaryContainer
-                           ),
-                         ),
-                       ),
-                    if (isCompleted && day.id != null && _currentAssignment!.progress['days'][day.id]['date'] != null)
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: colorScheme.secondaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          day.trainingIntent.label,
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSecondaryContainer),
+                        ),
+                      ),
+                    if (isCompleted &&
+                        day.id != null &&
+                        _currentAssignment!.progress['days'][day.id]['date'] !=
+                            null)
                       Text(
-                         '${AppLocalizations.of(context)!.get('completedOn')} ${_currentAssignment!.progress['days'][day.id]['date']}',
-                         style: textTheme.labelSmall?.copyWith(color: AppColors.success, fontWeight: FontWeight.bold),
+                        '${AppLocalizations.of(context)!.get('completedOn')} ${_currentAssignment!.progress['days'][day.id]['date']}',
+                        style: textTheme.labelSmall?.copyWith(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.bold),
                       )
                   ],
                 ),
               ),
-              // We remove the legacy checkbox here to avoid confusion? 
-              // Or keep it read-only? 
+              // We remove the legacy checkbox here to avoid confusion?
+              // Or keep it read-only?
               // Let's keep the tick icon but not the interactable checkbox for now, as logic is moving to DayScreen "Finish".
               if (isCompleted)
-                 const Icon(Icons.check_circle, color: AppColors.success)
+                const Icon(Icons.check_circle, color: AppColors.success)
               else
-                 Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.onSurfaceVariant),
+                Icon(Icons.arrow_forward_ios,
+                    size: 16, color: colorScheme.onSurfaceVariant),
             ],
           ),
         ),

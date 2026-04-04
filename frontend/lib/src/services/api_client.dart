@@ -12,8 +12,8 @@ import '../models/plan_model.dart';
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
   factory ApiClient({http.Client? client}) {
-      if (client != null) _instance._client = client;
-      return _instance;
+    if (client != null) _instance._client = client;
+    return _instance;
   }
   ApiClient._internal();
 
@@ -49,7 +49,8 @@ class ApiClient {
 
   dynamic _processResponse(http.Response response, Uri url) {
     if (kDebugMode) {
-      debugPrint('API Response [${response.statusCode}]: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}...');
+      debugPrint(
+          'API Response [${response.statusCode}]: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}...');
     }
 
     switch (response.statusCode) {
@@ -57,9 +58,9 @@ class ApiClient {
       case 201:
         if (response.body.isEmpty) return null;
         try {
-            return jsonDecode(response.body);
+          return jsonDecode(response.body);
         } catch (_) {
-            return response.body; // Return string if not JSON
+          return response.body; // Return string if not JSON
         }
       case 204:
         return null;
@@ -76,22 +77,37 @@ class ApiClient {
       case 503:
         throw ServerException();
       default:
-        throw ApiException('Unknown Error (Status: ${response.statusCode}) URL: $url', response.statusCode);
+        throw ApiException(
+            'Unknown Error (Status: ${response.statusCode}) URL: $url',
+            response.statusCode);
     }
   }
 
-  Future<dynamic> _requestWithRetry(String endpoint, String method, {dynamic body, bool disableInterceptor = false}) async {
+  Future<dynamic> _requestWithRetry(String endpoint, String method,
+      {dynamic body, bool disableInterceptor = false}) async {
     final url = Uri.parse('$baseUrl$endpoint');
-    
+
     Future<http.Response> makeRequest() async {
       final headers = await _getHeaders();
       switch (method) {
-        case 'GET': return await _client.get(url, headers: headers).timeout(_timeout);
-        case 'POST': return await _client.post(url, headers: headers, body: jsonEncode(body)).timeout(_timeout);
-        case 'PUT': return await _client.put(url, headers: headers, body: jsonEncode(body)).timeout(_timeout);
-        case 'PATCH': return await _client.patch(url, headers: headers, body: jsonEncode(body)).timeout(_timeout);
-        case 'DELETE': return await _client.delete(url, headers: headers).timeout(_timeout);
-        default: throw Exception('Unsupported Method');
+        case 'GET':
+          return await _client.get(url, headers: headers).timeout(_timeout);
+        case 'POST':
+          return await _client
+              .post(url, headers: headers, body: jsonEncode(body))
+              .timeout(_timeout);
+        case 'PUT':
+          return await _client
+              .put(url, headers: headers, body: jsonEncode(body))
+              .timeout(_timeout);
+        case 'PATCH':
+          return await _client
+              .patch(url, headers: headers, body: jsonEncode(body))
+              .timeout(_timeout);
+        case 'DELETE':
+          return await _client.delete(url, headers: headers).timeout(_timeout);
+        default:
+          throw Exception('Unsupported Method');
       }
     }
 
@@ -111,9 +127,9 @@ class ApiClient {
 
       // Prevent concurrent refreshes (a robust app would queue them, MVP just blocks)
       if (_isRefreshing) {
-         // Optionally wait or just fail
-         onSessionTerminated?.call();
-         rethrow;
+        // Optionally wait or just fail
+        onSessionTerminated?.call();
+        rethrow;
       }
 
       _isRefreshing = true;
@@ -139,55 +155,66 @@ class ApiClient {
     }
   }
 
-  Future<dynamic> get(String endpoint, {bool disableInterceptor = false}) async {
-    return _requestWithRetry(endpoint, 'GET', disableInterceptor: disableInterceptor);
+  Future<dynamic> get(String endpoint,
+      {bool disableInterceptor = false}) async {
+    return _requestWithRetry(endpoint, 'GET',
+        disableInterceptor: disableInterceptor);
   }
 
-  Future<dynamic> post(String endpoint, dynamic body, {bool disableInterceptor = false}) async {
-    return _requestWithRetry(endpoint, 'POST', body: body, disableInterceptor: disableInterceptor);
+  Future<dynamic> post(String endpoint, dynamic body,
+      {bool disableInterceptor = false}) async {
+    return _requestWithRetry(endpoint, 'POST',
+        body: body, disableInterceptor: disableInterceptor);
   }
 
-  Future<dynamic> put(String endpoint, dynamic body, {bool disableInterceptor = false}) async {
-    return _requestWithRetry(endpoint, 'PUT', body: body, disableInterceptor: disableInterceptor);
+  Future<dynamic> put(String endpoint, dynamic body,
+      {bool disableInterceptor = false}) async {
+    return _requestWithRetry(endpoint, 'PUT',
+        body: body, disableInterceptor: disableInterceptor);
   }
 
-  Future<dynamic> delete(String endpoint, {bool disableInterceptor = false}) async {
-    return _requestWithRetry(endpoint, 'DELETE', disableInterceptor: disableInterceptor);
+  Future<dynamic> delete(String endpoint,
+      {bool disableInterceptor = false}) async {
+    return _requestWithRetry(endpoint, 'DELETE',
+        disableInterceptor: disableInterceptor);
   }
 
-  Future<dynamic> patch(String endpoint, dynamic body, {bool disableInterceptor = false}) async {
-    return _requestWithRetry(endpoint, 'PATCH', body: body, disableInterceptor: disableInterceptor);
+  Future<dynamic> patch(String endpoint, dynamic body,
+      {bool disableInterceptor = false}) async {
+    return _requestWithRetry(endpoint, 'PATCH',
+        body: body, disableInterceptor: disableInterceptor);
   }
 
   // --- Equipments ---
   // In a real app we might put this in a separate Repository/Service class
   // but fitting here for speed as per existing pattern.
-  
+
   Future<List<Equipment>> getEquipments() async {
-      // Assuming endpoint is /exercises/equipments or similar. 
-      // Actually backend service for equipments is likely exposed via ExercisesController or GymsController?
-      // I need to check backend controller. 
-      // Plan: I'll assume standard REST for now, or check where I put 'findAll' in backend.
-      // Wait, I created EquipmentsService but did I create a Controller for it?
-      // I registered it in ExercisesModule. I probably need to expose it via ExercisesController or a new EquipmentsController.
-      // Let's assume ExercisesController exposes it on GET /exercises/equipments.
-      
-      final dynamic response = await get('/exercises/equipments');
-      if (response is List) {
-          return response.map((e) => Equipment.fromJson(e)).toList();
-      }
-      return [];
+    // Assuming endpoint is /exercises/equipments or similar.
+    // Actually backend service for equipments is likely exposed via ExercisesController or GymsController?
+    // I need to check backend controller.
+    // Plan: I'll assume standard REST for now, or check where I put 'findAll' in backend.
+    // Wait, I created EquipmentsService but did I create a Controller for it?
+    // I registered it in ExercisesModule. I probably need to expose it via ExercisesController or a new EquipmentsController.
+    // Let's assume ExercisesController exposes it on GET /exercises/equipments.
+
+    final dynamic response = await get('/exercises/equipments');
+    if (response is List) {
+      return response.map((e) => Equipment.fromJson(e)).toList();
+    }
+    return [];
   }
 
   Future<Equipment> createEquipment(String name) async {
-       // POST /exercises/equipments
-       final dynamic response = await post('/exercises/equipments', {'name': name});
-       return Equipment.fromJson(response);
+    // POST /exercises/equipments
+    final dynamic response =
+        await post('/exercises/equipments', {'name': name});
+    return Equipment.fromJson(response);
   }
 
   Future<void> deleteEquipment(String id) async {
-       // DELETE /exercises/equipments/:id
-       await delete('/exercises/equipments/$id');
+    // DELETE /exercises/equipments/:id
+    await delete('/exercises/equipments/$id');
   }
 
   // --- Gym Leads ---

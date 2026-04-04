@@ -23,6 +23,7 @@ class ExerciseProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
   void clear() {
     _exercises = [];
     notifyListeners();

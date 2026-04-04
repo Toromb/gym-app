@@ -54,13 +54,13 @@ class TermsScreen extends StatelessWidget {
                 const Text(
                   'Última actualización: Febrero 2026',
                   style: TextStyle(
-                     color: textColor,
-                     fontWeight: FontWeight.bold,
-                     fontSize: 16,
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
                 const SizedBox(height: 32),
-                
+
                 const Text(
                   'TuGymFlow es una plataforma digital orientada a gimnasios y entrenadores registrados. Al utilizar la aplicación, aceptás los siguientes términos:',
                   style: TextStyle(
@@ -74,35 +74,40 @@ class TermsScreen extends StatelessWidget {
 
                 const _TermSection(
                   title: '1. Uso del servicio',
-                  content: 'La plataforma está destinada exclusivamente a gimnasios, entrenadores y alumnos vinculados mediante invitación. No se permite el uso fuera de esta estructura.',
+                  content:
+                      'La plataforma está destinada exclusivamente a gimnasios, entrenadores y alumnos vinculados mediante invitación. No se permite el uso fuera de esta estructura.',
                   headingColor: headingColor,
                   textColor: textColor,
                 ),
                 const _TermSection(
                   title: '2. Registro y acceso',
-                  content: 'El acceso a la aplicación se realiza mediante invitación generada por un gimnasio activo. Los usuarios son responsables de la veracidad de los datos proporcionados.',
+                  content:
+                      'El acceso a la aplicación se realiza mediante invitación generada por un gimnasio activo. Los usuarios son responsables de la veracidad de los datos proporcionados.',
                   headingColor: headingColor,
                   textColor: textColor,
                 ),
                 const _TermSection(
                   title: '3. Responsabilidad del contenido',
-                  content: 'TuGymFlow actúa como herramienta de gestión y organización. No brinda asesoramiento médico ni garantiza resultados físicos específicos.',
+                  content:
+                      'TuGymFlow actúa como herramienta de gestión y organización. No brinda asesoramiento médico ni garantiza resultados físicos específicos.',
                   headingColor: headingColor,
                   textColor: textColor,
                 ),
                 const _TermSection(
                   title: '4. Seguridad',
-                  content: 'Cada usuario es responsable de mantener la confidencialidad de sus credenciales de acceso.',
+                  content:
+                      'Cada usuario es responsable de mantener la confidencialidad de sus credenciales de acceso.',
                   headingColor: headingColor,
                   textColor: textColor,
                 ),
                 const _TermSection(
                   title: '5. Modificaciones',
-                  content: 'TuGymFlow podrá actualizar funcionalidades o términos cuando sea necesario para mejorar el servicio.',
+                  content:
+                      'TuGymFlow podrá actualizar funcionalidades o términos cuando sea necesario para mejorar el servicio.',
                   headingColor: headingColor,
                   textColor: textColor,
                 ),
-                
+
                 const SizedBox(height: 32), // H2 margin-top
                 const Text(
                   '6. Contacto',
@@ -129,7 +134,7 @@ class TermsScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                
+
                 const SizedBox(height: 48),
                 Center(
                   child: ElevatedButton(
@@ -160,7 +165,7 @@ class _TermSection extends StatelessWidget {
   final Color textColor;
 
   const _TermSection({
-    required this.title, 
+    required this.title,
     required this.content,
     required this.headingColor,
     required this.textColor,

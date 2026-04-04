@@ -11,7 +11,8 @@ class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   static final Map<String, Map<String, String>> _localizedValues = {
     'es': {
@@ -74,14 +75,16 @@ class AppLocalizations {
       'exercisesCount': 'Ejercicios', // Context: "3 Ejercicios"
       'weeklySchedule': 'Cronograma Semanal',
       'planOverview': 'Resumen del Plan',
-      'durationWeeks': 'Duración: {weeks} Semanas', // Needs manual format or just "Duración:"
+      'durationWeeks':
+          'Duración: {weeks} Semanas', // Needs manual format or just "Duración:"
       'selectDate': 'Seleccionar Fecha de Finalización',
       'errorUpdateProgress': 'Error al actualizar progreso',
       'exercisesToComplete': 'Ejercicios por completar',
       'confirmCompletion': 'Confirmar Fecha de Finalización',
       'workoutFinished': '¡Entrenamiento Finalizado!',
       'errorFinish': 'Error al finalizar entrenamiento',
-      'errorDateConflict': '¡Ya existe un entrenamiento completado en esta fecha!',
+      'errorDateConflict':
+          '¡Ya existe un entrenamiento completado en esta fecha!',
       'errorLoadExecution': 'No se pudo cargar el entrenamiento.',
       'retry': 'Reintentar',
       'errorUpdate': 'Error al actualizar',
@@ -134,7 +137,6 @@ class AppLocalizations {
       'timerAdd1m': '+1m',
       'timerSub10s': '-10s',
 
-
       // --- Exercises ---
       'sets': 'Series',
       'reps': 'Reps',
@@ -142,7 +144,7 @@ class AppLocalizations {
       'watchVideo': 'Ver Video',
       'addExercise': 'Agregar Ejercicios',
       'notes': 'Notas',
-      
+
       // --- Admin / Management ---
       'manageUsers': 'Gestionar Usuarios',
       'managePlans': 'Gestionar Planes',
@@ -158,10 +160,12 @@ class AppLocalizations {
       'created': 'Creado:',
       'viewDetails': 'Ver Detalles',
       'deletePlanTitle': 'Eliminar Plan',
-      'deletePlanConfirm': '¿Estás seguro que deseas eliminar este plan? Esta acción no se puede deshacer.',
+      'deletePlanConfirm':
+          '¿Estás seguro que deseas eliminar este plan? Esta acción no se puede deshacer.',
       'deletePlanSuccess': 'Plan eliminado',
-      'deletePlanError': 'Error al eliminar plan. Solo puedes eliminar tus propios planes.',
-      
+      'deletePlanError':
+          'Error al eliminar plan. Solo puedes eliminar tus propios planes.',
+
       // --- Placeholders / Errors ---
       'fieldRequired': 'Campo requerido',
       'invalidEmail': 'Email inválido',
@@ -179,7 +183,7 @@ class AppLocalizations {
   String get(String key) {
     return _localizedValues[locale.languageCode]?[key] ?? key;
   }
-  
+
   // Getters for Type Safety (Partial List for critical items)
   String get loginTitle => get('loginTitle');
   String get emailLabel => get('emailLabel');
@@ -191,7 +195,8 @@ class AppLocalizations {
   String get invalidCredentials => get('invalidCredentials');
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override

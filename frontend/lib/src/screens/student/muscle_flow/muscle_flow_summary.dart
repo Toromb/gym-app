@@ -33,16 +33,20 @@ class MuscleFlowSummary extends StatelessWidget {
         runSpacing: 8,
         alignment: WrapAlignment.center,
         children: [
-          _buildChip(context, overload, 'Sobrecarga', MuscleFlowUtils.getColor(90)),
-          _buildChip(context, fatigued, 'Fatigado', MuscleFlowUtils.getColor(60)),
+          _buildChip(
+              context, overload, 'Sobrecarga', MuscleFlowUtils.getColor(90)),
+          _buildChip(
+              context, fatigued, 'Fatigado', MuscleFlowUtils.getColor(60)),
           _buildChip(context, active, 'Activo', MuscleFlowUtils.getColor(30)),
-          _buildChip(context, recovered, 'Recuperado', MuscleFlowUtils.getColor(10)),
+          _buildChip(
+              context, recovered, 'Recuperado', MuscleFlowUtils.getColor(10)),
         ],
       ),
     );
   }
 
-  Widget _buildChip(BuildContext context, int count, String label, Color color) {
+  Widget _buildChip(
+      BuildContext context, int count, String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(

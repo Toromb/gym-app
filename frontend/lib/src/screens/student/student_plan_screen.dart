@@ -13,7 +13,6 @@ class StudentPlanScreen extends StatefulWidget {
 }
 
 class _StudentPlanScreenState extends State<StudentPlanScreen> {
-
   @override
   void initState() {
     super.initState();
@@ -34,11 +33,11 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
           if (planProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           final assignment = planProvider.activeAssignment;
           // Fallback to _myPlan if assignment not explicitly calculated but myPlan exists (legacy)
           final plan = assignment?.plan ?? planProvider.myPlan;
-          
+
           if (plan == null) {
             return const Center(child: Text('No hay plan asignado.'));
           }
@@ -50,9 +49,12 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
               children: [
                 _buildPlanSummaryCard(context, plan, assignment?.id),
                 const SizedBox(height: 24),
-                const Text('Cronograma Semanal', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('Cronograma Semanal',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
-                ...plan.weeks.map((week) => _buildWeekCard(context, week, plan.id!)),
+                ...plan.weeks
+                    .map((week) => _buildWeekCard(context, week, plan.id!)),
               ],
             ),
           );
@@ -61,7 +63,8 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
     );
   }
 
-  Widget _buildPlanSummaryCard(BuildContext context, dynamic plan, String? assignmentId) {
+  Widget _buildPlanSummaryCard(
+      BuildContext context, dynamic plan, String? assignmentId) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -88,31 +91,39 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
                 children: [
                   Text(
                     'Plan Actual',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14),
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 14),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     plan.name,
-                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
-              if (assignmentId != null) 
-                 IconButton(
-                   icon: const Icon(Icons.refresh, color: Colors.white, size: 28),
-                   onPressed: () => _confirmRestart(context, assignmentId),
-                   tooltip: 'Reiniciar Plan',
-                 ),
+              if (assignmentId != null)
+                IconButton(
+                  icon:
+                      const Icon(Icons.refresh, color: Colors.white, size: 28),
+                  onPressed: () => _confirmRestart(context, assignmentId),
+                  tooltip: 'Reiniciar Plan',
+                ),
             ],
           ),
           if (plan.objective != null) ...[
             const SizedBox(height: 8),
-             Chip(
-               label: Text(plan.objective!),
-               backgroundColor: Colors.white, 
-               labelStyle: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
-               side: BorderSide.none,
-             ),
+            Chip(
+              label: Text(plan.objective!),
+              backgroundColor: Colors.white,
+              labelStyle: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.bold),
+              side: BorderSide.none,
+            ),
           ],
         ],
       ),
@@ -136,15 +147,17 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.of(ctx).pop();
-              final success = await context.read<PlanProvider>().restartPlan(assignmentId);
+              final success =
+                  await context.read<PlanProvider>().restartPlan(assignmentId);
               if (success && context.mounted) {
-                 ScaffoldMessenger.of(context).showSnackBar(
-                   const SnackBar(content: Text('El plan se ha reiniciado correctamente.')),
-                 );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('El plan se ha reiniciado correctamente.')),
+                );
               } else if (context.mounted) {
-                 ScaffoldMessenger.of(context).showSnackBar(
-                   const SnackBar(content: Text('Error al reiniciar el plan.')),
-                 );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Error al reiniciar el plan.')),
+                );
               }
             },
             style: ElevatedButton.styleFrom(
@@ -164,15 +177,24 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Text('${AppLocalizations.of(context)!.get('week').toUpperCase()} ${week.weekNumber}', style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Colors.grey)),
+          child: Text(
+              '${AppLocalizations.of(context)!.get('week').toUpperCase()} ${week.weekNumber}',
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                  color: Colors.grey)),
         ),
-        ...week.days.map<Widget>((day) => _buildDayCard(context, day, planId, week.weekNumber)).toList(),
+        ...week.days
+            .map<Widget>(
+                (day) => _buildDayCard(context, day, planId, week.weekNumber))
+            .toList(),
         const SizedBox(height: 16),
       ],
     );
   }
 
-  Widget _buildDayCard(BuildContext context, dynamic day, String planId, int weekNumber) {
+  Widget _buildDayCard(
+      BuildContext context, dynamic day, String planId, int weekNumber) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
@@ -184,7 +206,7 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => DayDetailScreen(
-                day: day, 
+                day: day,
                 planId: planId,
                 weekNumber: weekNumber,
               ),
@@ -211,7 +233,8 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
                   children: [
                     Text(
                       day.title ?? 'Día ${day.dayOfWeek}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(

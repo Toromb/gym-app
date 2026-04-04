@@ -1,4 +1,3 @@
-
 import '../models/plan_model.dart';
 import 'api_client.dart';
 
@@ -6,18 +5,21 @@ class ExerciseService {
   final ApiClient _api = ApiClient();
 
   // Helper to safely parse lists
-  List<T> _parseList<T>(dynamic response, T Function(Map<String, dynamic>) fromJson) {
-      if (response is List) {
-          return response.map((json) => fromJson(json)).toList();
-      }
-      return [];
+  List<T> _parseList<T>(
+      dynamic response, T Function(Map<String, dynamic>) fromJson) {
+    if (response is List) {
+      return response.map((json) => fromJson(json)).toList();
+    }
+    return [];
   }
 
-  Future<List<Exercise>> getExercises({String? muscleId, String? role, List<String>? equipmentIds}) async {
+  Future<List<Exercise>> getExercises(
+      {String? muscleId, String? role, List<String>? equipmentIds}) async {
     final uri = Uri(path: '/exercises', queryParameters: {
       if (muscleId != null) 'muscleId': muscleId,
       if (role != null) 'role': role,
-      if (equipmentIds != null && equipmentIds.isNotEmpty) 'equipmentIds': equipmentIds,
+      if (equipmentIds != null && equipmentIds.isNotEmpty)
+        'equipmentIds': equipmentIds,
     });
 
     final response = await _api.get(uri.toString());
@@ -28,7 +30,8 @@ class ExerciseService {
     await _api.post('/exercises', exerciseData);
   }
 
-  Future<void> updateExercise(String id, Map<String, dynamic> exerciseData) async {
+  Future<void> updateExercise(
+      String id, Map<String, dynamic> exerciseData) async {
     await _api.patch('/exercises/$id', exerciseData);
   }
 

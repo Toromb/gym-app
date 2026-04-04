@@ -50,7 +50,8 @@ class GymsProvider with ChangeNotifier {
         final List<dynamic> data = json.decode(response.body);
         _gyms = data.map((json) => Gym.fromJson(json)).toList();
       } else {
-        _error = 'Failed to load gyms: ${response.statusCode} - ${response.body}';
+        _error =
+            'Failed to load gyms: ${response.statusCode} - ${response.body}';
       }
     } catch (e) {
       _error = 'Error fetching gyms: $e';
@@ -90,111 +91,108 @@ class GymsProvider with ChangeNotifier {
   }
 
   Future<void> createGym(Gym gym) async {
-      _isLoading = true;
-      notifyListeners();
-      try {
-          final token = await _getToken();
-          if (token == null) throw Exception('No authentication token found');
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final token = await _getToken();
+      if (token == null) throw Exception('No authentication token found');
 
-          final response = await http.post(
-              Uri.parse('$_baseUrl/gyms'),
-              headers: {
-                  'Authorization': 'Bearer $token',
-                  'Content-Type': 'application/json'
-              },
-              body: json.encode({
-                  'businessName': gym.businessName,
-                  'address': gym.address,
-                  'email': gym.email,
-                  'maxProfiles': gym.maxProfiles,
-                  'status': gym.status,
-              })
-          );
-          if (response.statusCode == 201) {
-              final newGym = Gym.fromJson(json.decode(response.body));
-              _gyms.add(newGym);
-              notifyListeners();
-          } else {
-              throw Exception('Failed to create gym: ${response.body}');
-          }
-      } finally {
-          _isLoading = false;
-          notifyListeners();
+      final response = await http.post(Uri.parse('$_baseUrl/gyms'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json'
+          },
+          body: json.encode({
+            'businessName': gym.businessName,
+            'address': gym.address,
+            'email': gym.email,
+            'maxProfiles': gym.maxProfiles,
+            'status': gym.status,
+          }));
+      if (response.statusCode == 201) {
+        final newGym = Gym.fromJson(json.decode(response.body));
+        _gyms.add(newGym);
+        notifyListeners();
+      } else {
+        throw Exception('Failed to create gym: ${response.body}');
       }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<Gym?> updateGym(String id, Gym gym) async {
-       _isLoading = true;
-      notifyListeners();
-      try {
-          final token = await _getToken();
-          if (token == null) throw Exception('No authentication token found');
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final token = await _getToken();
+      if (token == null) throw Exception('No authentication token found');
 
-          final response = await http.patch(
-              Uri.parse('$_baseUrl/gyms/$id'),
-              headers: {
-                  'Authorization': 'Bearer $token',
-                  'Content-Type': 'application/json'
-              },
-              body: json.encode({
-                  'businessName': gym.businessName,
-                  'address': gym.address,
-                  'phone': gym.phone, // Added missing phone field
-                  'email': gym.email,
-                  'maxProfiles': gym.maxProfiles,
-                  'status': gym.status,
-                  'primaryColor': gym.primaryColor,
-                  'secondaryColor': gym.secondaryColor,
-                  'welcomeMessage': gym.welcomeMessage,
-                  'openingHours': gym.openingHours,
-                  'logoUrl': gym.logoUrl,
-                  'paymentAlias': gym.paymentAlias,
-                  'paymentCbu': gym.paymentCbu,
-                  'paymentAccountName': gym.paymentAccountName,
-                  'paymentBankName': gym.paymentBankName,
-                  'paymentNotes': gym.paymentNotes,
-              })
-          );
-          if (response.statusCode == 200) {
-              final updatedGym = Gym.fromJson(json.decode(response.body));
-              final index = _gyms.indexWhere((g) => g.id == id);
-              if (index != -1) {
-                  _gyms[index] = updatedGym;
-                  notifyListeners();
-              }
-              return updatedGym;
-          } else {
-              throw Exception('Failed to update gym: ${response.body}');
-          }
-      } finally {
-          _isLoading = false;
+      final response = await http.patch(Uri.parse('$_baseUrl/gyms/$id'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json'
+          },
+          body: json.encode({
+            'businessName': gym.businessName,
+            'address': gym.address,
+            'phone': gym.phone, // Added missing phone field
+            'email': gym.email,
+            'maxProfiles': gym.maxProfiles,
+            'status': gym.status,
+            'primaryColor': gym.primaryColor,
+            'secondaryColor': gym.secondaryColor,
+            'welcomeMessage': gym.welcomeMessage,
+            'openingHours': gym.openingHours,
+            'logoUrl': gym.logoUrl,
+            'paymentAlias': gym.paymentAlias,
+            'paymentCbu': gym.paymentCbu,
+            'paymentAccountName': gym.paymentAccountName,
+            'paymentBankName': gym.paymentBankName,
+            'paymentNotes': gym.paymentNotes,
+          }));
+      if (response.statusCode == 200) {
+        final updatedGym = Gym.fromJson(json.decode(response.body));
+        final index = _gyms.indexWhere((g) => g.id == id);
+        if (index != -1) {
+          _gyms[index] = updatedGym;
           notifyListeners();
+        }
+        return updatedGym;
+      } else {
+        throw Exception('Failed to update gym: ${response.body}');
       }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
-  Future<void> deleteGym(String id) async {
-       _isLoading = true;
-      notifyListeners();
-      try {
-          final token = await _getToken();
-          if (token == null) throw Exception('No authentication token found');
 
-          final response = await http.delete(
-              Uri.parse('$_baseUrl/gyms/$id'),
-              headers: {
-                  'Authorization': 'Bearer $token',
-                  'Content-Type': 'application/json'
-              },
-          );
-          if (response.statusCode == 200 || response.statusCode == 204) {
-              _gyms.removeWhere((g) => g.id == id);
-              notifyListeners();
-          } else {
-              throw Exception('Failed to delete gym: ${response.body}');
-          }
-      } finally {
-          _isLoading = false;
-          notifyListeners();
+  Future<void> deleteGym(String id) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final token = await _getToken();
+      if (token == null) throw Exception('No authentication token found');
+
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/gyms/$id'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json'
+        },
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        _gyms.removeWhere((g) => g.id == id);
+        notifyListeners();
+      } else {
+        throw Exception('Failed to delete gym: ${response.body}');
       }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<String?> uploadLogo(String gymId, XFile file) async {
@@ -204,7 +202,8 @@ class GymsProvider with ChangeNotifier {
       final token = await _getToken();
       if (token == null) throw Exception('No authentication token found');
 
-      var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/gyms/$gymId/logo'));
+      var request = http.MultipartRequest(
+          'POST', Uri.parse('$_baseUrl/gyms/$gymId/logo'));
       request.headers['Authorization'] = 'Bearer $token';
 
       final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
@@ -213,11 +212,9 @@ class GymsProvider with ChangeNotifier {
       if (kIsWeb) {
         request.files.add(http.MultipartFile.fromBytes(
             'file', await file.readAsBytes(),
-            filename: file.name,
-            contentType: mediaType));
+            filename: file.name, contentType: mediaType));
       } else {
-        request.files.add(await http.MultipartFile.fromPath(
-            'file', file.path,
+        request.files.add(await http.MultipartFile.fromPath('file', file.path,
             contentType: mediaType));
       }
 
