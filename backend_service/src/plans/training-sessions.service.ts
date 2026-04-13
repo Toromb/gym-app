@@ -22,6 +22,7 @@ import { SessionSynchronizer } from './utils/session-synchronizer';
 import { UsersService } from '../users/users.service';
 import { UserRole } from '../users/entities/user.entity';
 import { FreeTrainingDefinition } from './entities/free-training-definition.entity';
+import { AssignedPlan } from './entities/assigned-plan.entity';
 
 @Injectable()
 export class TrainingSessionsService {
@@ -63,16 +64,50 @@ export class TrainingSessionsService {
 
         const dayKey = `W${weekNumber}-D${dayOrder}`;
 
-        const existingInProgress = await this.sessionRepo.findOne({
-          where: {
+        // Determine if it's new AssignedPlan or legacy Plan
+        const assignedPlan = await this.sessionRepo.manager.findOne(AssignedPlan, {
+          where: { id: planId },
+          relations: [
+            'weeks',
+            'weeks.days',
+            'weeks.days.exercises',
+            'weeks.days.exercises.exercise',
+            'weeks.days.exercises.equipments',
+          ],
+        });
+
+        const legacyPlan = !assignedPlan ? await this.planRepo.findOne({
+          where: { id: planId },
+          relations: [
+            'weeks',
+            'weeks.days',
+            'weeks.days.exercises',
+            'weeks.days.exercises.exercise',
+            'weeks.days.exercises.equipments',
+          ],
+        }) : null;
+
+        if (!assignedPlan && !legacyPlan) throw new NotFoundException('Plan not found');
+
+        const activePlanStructure = assignedPlan || legacyPlan;
+
+        const sessionSearchWhere: any = {
             student: { id: userId },
-            plan: { id: planId },
             dayKey: dayKey,
             date: finalDate,
             status: ExecutionStatus.IN_PROGRESS,
-          },
+        };
+        if (assignedPlan) {
+            sessionSearchWhere.assignedPlan = { id: planId };
+        } else {
+            sessionSearchWhere.plan = { id: planId };
+        }
+
+        const existingInProgress = await this.sessionRepo.findOne({
+          where: sessionSearchWhere,
           relations: [
             'plan',
+            'assignedPlan',
             'exercises',
             'exercises.exercise',
             'exercises.exercise.exerciseMuscles',
@@ -85,27 +120,17 @@ export class TrainingSessionsService {
         }
 
         // Create NEW Plan Session
-        const plan = await this.planRepo.findOne({
-          where: { id: planId },
-          relations: [
-            'weeks',
-            'weeks.days',
-            'weeks.days.exercises',
-            'weeks.days.exercises.exercise',
-            'weeks.days.exercises.equipments',
-          ],
-        });
-        if (!plan) throw new NotFoundException('Plan not found');
 
-        const week = plan.weeks.find((w) => w.weekNumber === weekNumber);
+        const week = activePlanStructure!.weeks?.find((w: any) => w.weekNumber === weekNumber);
         if (!week) throw new NotFoundException(`Week ${weekNumber} not found`);
 
-        const day = week.days.find((d) => d.order === dayOrder);
+        const day = week.days?.find((d: any) => d.order === dayOrder);
         if (!day) throw new NotFoundException(`Day ${dayOrder} not found`);
 
-        const newSession = this.sessionRepo.create({
-          student: { id: userId } as User,
-          plan: { id: planId } as Plan,
+        const newSessionData: any = {
+          student: { id: userId },
+          plan: legacyPlan ? { id: planId } : null,
+          assignedPlan: assignedPlan ? { id: planId } : null,
           date: finalDate,
           dayKey: dayKey,
           weekNumber,
@@ -113,7 +138,8 @@ export class TrainingSessionsService {
           source: 'PLAN',
           status: ExecutionStatus.IN_PROGRESS,
           exercises: [],
-        });
+        };
+        const newSession = this.sessionRepo.create(newSessionData as any) as unknown as TrainingSession;
 
         // Create SessionExercises with Snapshots
         const sessionExercises: SessionExercise[] = day.exercises.map(
@@ -347,7 +373,7 @@ export class TrainingSessionsService {
   ): Promise<any> {
     const session = await this.sessionRepo.findOne({
       where: { id: sessionId, student: { id: userId } },
-      relations: ['plan'],
+      relations: ['plan', 'assignedPlan'],
     });
     if (!session) throw new NotFoundException('Session not found');
 
@@ -364,27 +390,35 @@ export class TrainingSessionsService {
     await this._trySyncLoad(saved.id);
 
     // LEGACY SYNC (Deprecated)
-    // We keep it ONLY if linked to a plan, for backward compat with StudentPlan.progress
-    if (session.plan) {
+    // We keep it ONLY if linked to a plan or assignedPlan, for backward compat with StudentPlan.progress
+    if (session.plan || session.assignedPlan) {
+      const planReferenceId = session.assignedPlan ? session.assignedPlan.id : session.plan?.id;
       const studentPlan = await this.studentPlanRepo.findOne({
-        where: {
-          student: { id: userId },
-          plan: { id: session.plan.id },
-          isActive: true
-        },
+        where: [
+          { student: { id: userId }, assignedPlan: { id: planReferenceId }, isActive: true },
+          { student: { id: userId }, plan: { id: planReferenceId }, isActive: true },
+        ],
         order: { createdAt: 'DESC' }
       });
 
-      if (studentPlan) {
+        if (studentPlan) {
         // Simplified Legacy Sync: just mark day as done
-        const planStruct = await this.planRepo.findOne({
-          where: { id: session.plan.id },
-          relations: ['weeks', 'weeks.days'],
-        });
+        let planStruct: any;
+        if (session.assignedPlan) {
+            planStruct = await this.sessionRepo.manager.findOne(AssignedPlan, {
+              where: { id: session.assignedPlan.id },
+              relations: ['weeks', 'weeks.days'],
+            });
+        } else if (session.plan) {
+            planStruct = await this.planRepo.findOne({
+              where: { id: session.plan.id },
+              relations: ['weeks', 'weeks.days'],
+            });
+        }
 
         if (planStruct && session.weekNumber && session.dayOrder) {
-          const week = planStruct.weeks.find(w => w.weekNumber === session.weekNumber);
-          const day = week?.days.find(d => d.order === session.dayOrder);
+          const week = planStruct.weeks?.find((w: any) => w.weekNumber === session.weekNumber);
+          const day = week?.days?.find((d: any) => d.order === session.dayOrder);
 
           if (day) {
             const progress = studentPlan.progress ? JSON.parse(JSON.stringify(studentPlan.progress)) : {};
@@ -435,6 +469,7 @@ export class TrainingSessionsService {
         'exercises.exercise.exerciseMuscles',
         'exercises.exercise.exerciseMuscles.muscle',
         'plan',
+        'assignedPlan'
       ],
     });
 
@@ -452,59 +487,89 @@ export class TrainingSessionsService {
     try {
       const whereClause: any = {
         student: { id: userId },
-        plan: { id: planId },
         weekNumber: weekNumber,
         dayOrder: dayOrder,
       };
 
+      // Check if planId is assignedPlan or legacy plan. 
+      // At this point we don't know, so we can try OR using QueryBuilder, but TypeORM 0.3+ find can handle arrays of conditions
       if (startDate) {
-        whereClause.date = MoreThanOrEqual(startDate);
+        return await this._findSessionByStructureOr(userId, planId, weekNumber, dayOrder, startDate);
+      } else {
+        return await this._findSessionByStructureOr(userId, planId, weekNumber, dayOrder);
       }
-
-      const session = await this.sessionRepo.findOne({
-        where: whereClause,
-        order: { createdAt: 'DESC' },
-        relations: [
-          'exercises',
-          'exercises.exercise',
-          'exercises.exercise.exerciseMuscles',
-          'exercises.exercise.exerciseMuscles.muscle',
-          'plan', // Ensure plan is loaded for sync
-        ],
-      });
-
-      if (!session) return null;
-      return this._syncSnapshots(session);
     } catch (e) {
       console.error('Error finding session by structure:', e);
       throw e;
     }
   }
 
+  private async _findSessionByStructureOr(userId: string, planId: string, weekNumber: number, dayOrder: number, startDate?: string) {
+     const commonWhere = {
+        student: { id: userId },
+        weekNumber: weekNumber,
+        dayOrder: dayOrder,
+        ...(startDate ? { date: MoreThanOrEqual(startDate) } : {})
+     };
+     
+     const session = await this.sessionRepo.findOne({
+        where: [
+          { ...commonWhere, assignedPlan: { id: planId } },
+          { ...commonWhere, plan: { id: planId } }
+        ],
+        order: { createdAt: 'DESC' },
+        relations: [
+          'exercises',
+          'exercises.exercise',
+          'exercises.exercise.exerciseMuscles',
+          'exercises.exercise.exerciseMuscles.muscle',
+          'plan', 
+          'assignedPlan'
+        ],
+      });
+
+      if (!session) return null;
+      return this._syncSnapshots(session);
+  }
+
+
   private async _syncSnapshots(
     session: TrainingSession,
   ): Promise<TrainingSession> {
     try {
-      if (!session.plan || !session.weekNumber || !session.dayOrder) {
+      if ((!session.plan && !session.assignedPlan) || !session.weekNumber || !session.dayOrder) {
         return session;
       }
 
-      // 1. Fetch Definitive Plan Day Structure
-      const plan = await this.planRepo.findOne({
-        where: { id: session.plan.id },
-        relations: [
-          'weeks',
-          'weeks.days',
-          'weeks.days.exercises',
-          'weeks.days.exercises.exercise',
-          'weeks.days.exercises.equipments',
-        ],
-      });
+      let planStruct: any;
+      if (session.assignedPlan) {
+          planStruct = await this.sessionRepo.manager.findOne(AssignedPlan, {
+            where: { id: session.assignedPlan.id },
+            relations: [
+              'weeks',
+              'weeks.days',
+              'weeks.days.exercises',
+              'weeks.days.exercises.exercise',
+              'weeks.days.exercises.equipments',
+            ],
+          });
+      } else if (session.plan) {
+          planStruct = await this.planRepo.findOne({
+            where: { id: session.plan.id },
+            relations: [
+              'weeks',
+              'weeks.days',
+              'weeks.days.exercises',
+              'weeks.days.exercises.exercise',
+              'weeks.days.exercises.equipments',
+            ],
+          });
+      }
 
-      if (!plan) return session;
+      if (!planStruct) return session;
 
-      const week = plan.weeks.find((w) => w.weekNumber === session.weekNumber);
-      const day = week?.days.find((d) => d.order === session.dayOrder);
+      const week = planStruct.weeks?.find((w: any) => w.weekNumber === session.weekNumber);
+      const day = week?.days?.find((d: any) => d.order === session.dayOrder);
 
       if (!day) return session;
 

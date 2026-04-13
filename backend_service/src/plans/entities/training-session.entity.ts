@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Plan } from './plan.entity';
+import { AssignedPlan } from './assigned-plan.entity';
 import { SessionExercise } from './session-exercise.entity';
 
 import { FreeTrainingDefinition } from './free-training-definition.entity';
@@ -29,6 +30,9 @@ export class TrainingSession {
 
   @ManyToOne(() => Plan, { onDelete: 'CASCADE', nullable: true })
   plan: Plan | null;
+
+  @ManyToOne(() => AssignedPlan, { onDelete: 'CASCADE', nullable: true })
+  assignedPlan: AssignedPlan | null;
 
   @ManyToOne(() => FreeTrainingDefinition, { nullable: true, onDelete: 'SET NULL' })
   freeTrainingDefinition: FreeTrainingDefinition | null;

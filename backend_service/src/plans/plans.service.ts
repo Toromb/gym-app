@@ -13,6 +13,11 @@ import { StudentPlan } from './entities/student-plan.entity';
 import { User, UserRole } from '../users/entities/user.entity';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
+import { AssignedPlan } from './entities/assigned-plan.entity';
+import { AssignedPlanWeek } from './entities/assigned-plan-week.entity';
+import { AssignedPlanDay } from './entities/assigned-plan-day.entity';
+import { AssignedPlanExercise } from './entities/assigned-plan-exercise.entity';
+import { AssignedPlanMapper } from './dto/assigned-plan.mapper';
 
 @Injectable()
 export class PlansService {
@@ -154,7 +159,52 @@ export class PlansService {
       isActive: true,
     });
 
-    return this.studentPlanRepository.save(studentPlan);
+    const assignedPlan = new AssignedPlan();
+    assignedPlan.originalPlanId = plan.id;
+    assignedPlan.originalPlanName = plan.name;
+    assignedPlan.assignedAt = new Date();
+    assignedPlan.assignedByUserId = assigner.id;
+    assignedPlan.name = plan.name;
+    assignedPlan.description = plan.description;
+    assignedPlan.objective = plan.objective;
+    assignedPlan.generalNotes = plan.generalNotes;
+    assignedPlan.durationWeeks = plan.durationWeeks;
+
+    assignedPlan.weeks = (plan.weeks || []).map(w => {
+      const assignedWeek = new AssignedPlanWeek();
+      assignedWeek.weekNumber = w.weekNumber;
+      assignedWeek.days = (w.days || []).map(d => {
+        const assignedDay = new AssignedPlanDay();
+        assignedDay.title = d.title;
+        assignedDay.dayOfWeek = d.dayOfWeek;
+        assignedDay.order = d.order;
+        assignedDay.trainingIntent = d.trainingIntent;
+        assignedDay.dayNotes = d.dayNotes;
+        assignedDay.exercises = (d.exercises || []).map(e => {
+          const assignedEx = new AssignedPlanExercise();
+          assignedEx.exercise = e.exercise;
+          assignedEx.sets = e.sets;
+          assignedEx.reps = e.reps;
+          assignedEx.suggestedLoad = e.suggestedLoad;
+          assignedEx.rest = e.rest;
+          assignedEx.notes = e.notes;
+          assignedEx.videoUrl = e.videoUrl;
+          assignedEx.targetTime = e.targetTime;
+          assignedEx.targetDistance = e.targetDistance;
+          assignedEx.order = e.order;
+          assignedEx.equipments = e.equipments || [];
+          return assignedEx;
+        });
+        return assignedDay;
+      });
+      return assignedWeek;
+    });
+
+    return this.plansRepository.manager.transaction(async transactionalEntityManager => {
+      const savedAssignedPlan = await transactionalEntityManager.save(AssignedPlan, assignedPlan);
+      studentPlan.assignedPlan = savedAssignedPlan;
+      return await transactionalEntityManager.save(StudentPlan, studentPlan);
+    });
   }
 
   async update(
@@ -311,11 +361,17 @@ export class PlansService {
       .then((saved) => this.findOne(saved.id) as Promise<Plan>);
   }
 
-  async findStudentPlan(studentId: string): Promise<Plan | null> {
+  async findStudentPlan(studentId: string): Promise<any | null> {
     const studentPlan = await this.studentPlanRepository.findOne({
       where: { student: { id: studentId }, isActive: true },
       relations: [
         'plan',
+        'assignedPlan',
+        'assignedPlan.weeks',
+        'assignedPlan.weeks.days',
+        'assignedPlan.weeks.days.exercises',
+        'assignedPlan.weeks.days.exercises.exercise',
+        'assignedPlan.weeks.days.exercises.equipments',
         'plan.weeks',
         'plan.weeks.days',
         'plan.weeks.days.exercises',
@@ -323,36 +379,40 @@ export class PlansService {
       ],
       order: {
         assignedAt: 'DESC',
-        plan: {
-          weeks: {
-            weekNumber: 'ASC',
-            days: {
-              order: 'ASC',
-              exercises: {
-                order: 'ASC',
-              },
-            },
-          },
-        },
       },
     });
 
-    return studentPlan ? studentPlan.plan : null;
+    if (!studentPlan) return null;
+
+    if (studentPlan.assignedPlan) {
+      // Return the DTO exactly shaped like a Plan for the frontend
+      return AssignedPlanMapper.assignedPlanToPlanDto(studentPlan.assignedPlan);
+    }
+
+    // Fallback for pre-migration data
+    return studentPlan.plan;
   }
 
-  async findAllAssignmentsByStudent(studentId: string): Promise<StudentPlan[]> {
-    return this.studentPlanRepository.find({
+  async findAllAssignmentsByStudent(studentId: string): Promise<any[]> {
+    const assignments = await this.studentPlanRepository.find({
       where: { student: { id: studentId } },
-      relations: ['plan'],
+      relations: ['plan', 'assignedPlan'],
       order: { assignedAt: 'DESC' },
     });
+    return assignments.map(a => AssignedPlanMapper.toResponseDto(a));
   }
 
-  async findStudentAssignments(studentId: string): Promise<StudentPlan[]> {
-    return this.studentPlanRepository.find({
+  async findStudentAssignments(studentId: string): Promise<any[]> {
+    const assignments = await this.studentPlanRepository.find({
       where: { student: { id: studentId } },
       relations: [
         'plan',
+        'assignedPlan',
+        'assignedPlan.weeks',
+        'assignedPlan.weeks.days',
+        'assignedPlan.weeks.days.exercises',
+        'assignedPlan.weeks.days.exercises.exercise',
+        'assignedPlan.weeks.days.exercises.equipments',
         'plan.weeks',
         'plan.weeks.days',
         'plan.weeks.days.exercises',
@@ -360,19 +420,9 @@ export class PlansService {
       ],
       order: {
         assignedAt: 'DESC',
-        plan: {
-          weeks: {
-            weekNumber: 'ASC',
-            days: {
-              order: 'ASC',
-              exercises: {
-                order: 'ASC',
-              },
-            },
-          },
-        },
       },
     });
+    return assignments.map(a => AssignedPlanMapper.toResponseDto(a));
   }
 
   async removeAssignment(assignmentId: string, user: User): Promise<void> {
@@ -518,17 +568,81 @@ export class PlansService {
         oldAssignment.endDate = new Date().toISOString();
         await transactionalEntityManager.save(oldAssignment);
 
-        // 3. Create a fresh copy
+        // 3. Re-assign using the underlying assignPlan method if we have originalPlanId
+        // However, we need 'assigner' which we don't have.
+        // We'll emulate it by directly calling the private equivalent or just reloading and cloning.
+        // For simplicity and to reuse the logic:
+        const originalPlanId = oldAssignment.assignedPlan?.originalPlanId || oldAssignment.plan?.id;
+        if (!originalPlanId) throw new ConflictException('Cannot restart a plan with no original origin');
+        
+        const teacher = oldAssignment.plan?.teacher || { id: oldAssignment.assignedPlan?.assignedByUserId || userId, role: UserRole.ALUMNO } as User;
+        
+        // Save the archived one first
+        await transactionalEntityManager.save(oldAssignment);
+        
+        // We defer to the standard assignPlan mechanism, but wait, assignPlan requires a separate transaction or handles its own.
+        // Let's just emulate the creation logic without the transaction:
+        
         const newAssignment = this.studentPlanRepository.create({
-          plan: { id: oldAssignment.plan.id } as any,
+          plan: { id: originalPlanId } as any,
           student: { id: userId } as any,
           assignedAt: new Date().toISOString(),
           startDate: new Date().toISOString(),
           isActive: true,
-          progress: { exercises: {}, days: {} }, // Explicitly empty
+          progress: { exercises: {}, days: {} },
         });
 
-        return await transactionalEntityManager.save(newAssignment);
+        const planTemplate = await transactionalEntityManager.findOne(Plan, {
+          where: { id: originalPlanId },
+          relations: ['weeks', 'weeks.days', 'weeks.days.exercises', 'weeks.days.exercises.exercise', 'weeks.days.exercises.equipments'],
+        });
+
+        if (planTemplate) {
+            const assignedPlan = new AssignedPlan();
+            assignedPlan.originalPlanId = planTemplate.id;
+            assignedPlan.originalPlanName = planTemplate.name;
+            assignedPlan.assignedAt = new Date();
+            assignedPlan.assignedByUserId = teacher.id;
+            assignedPlan.name = planTemplate.name;
+            assignedPlan.description = planTemplate.description;
+            assignedPlan.objective = planTemplate.objective;
+            assignedPlan.generalNotes = planTemplate.generalNotes;
+            assignedPlan.durationWeeks = planTemplate.durationWeeks;
+
+            assignedPlan.weeks = (planTemplate.weeks || []).map(w => {
+              const assignedWeek = new AssignedPlanWeek();
+              assignedWeek.weekNumber = w.weekNumber;
+              assignedWeek.days = (w.days || []).map(d => {
+                const assignedDay = new AssignedPlanDay();
+                assignedDay.title = d.title;
+                assignedDay.dayOfWeek = d.dayOfWeek;
+                assignedDay.order = d.order;
+                assignedDay.trainingIntent = d.trainingIntent;
+                assignedDay.dayNotes = d.dayNotes;
+                assignedDay.exercises = (d.exercises || []).map(e => {
+                  const assignedEx = new AssignedPlanExercise();
+                  assignedEx.exercise = e.exercise;
+                  assignedEx.sets = e.sets;
+                  assignedEx.reps = e.reps;
+                  assignedEx.suggestedLoad = e.suggestedLoad;
+                  assignedEx.rest = e.rest;
+                  assignedEx.notes = e.notes;
+                  assignedEx.videoUrl = e.videoUrl;
+                  assignedEx.targetTime = e.targetTime;
+                  assignedEx.targetDistance = e.targetDistance;
+                  assignedEx.order = e.order;
+                  assignedEx.equipments = e.equipments || [];
+                  return assignedEx;
+                });
+                return assignedDay;
+              });
+              return assignedWeek;
+            });
+            const savedAssignedPlan = await transactionalEntityManager.save(AssignedPlan, assignedPlan);
+            newAssignment.assignedPlan = savedAssignedPlan;
+        }
+
+        return await transactionalEntityManager.save(StudentPlan, newAssignment);
       },
     );
   }

@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Plan } from './plan.entity';
+import { AssignedPlan } from './assigned-plan.entity';
 
 @Entity('student_plans')
 export class StudentPlan {
@@ -17,8 +18,11 @@ export class StudentPlan {
   @ManyToOne(() => User, (user) => user.studentPlans, { onDelete: 'CASCADE' })
   student: User;
 
-  @ManyToOne(() => Plan, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Plan, { onDelete: 'CASCADE', nullable: true })
   plan: Plan;
+
+  @ManyToOne(() => AssignedPlan, (ap) => ap.studentPlans, { onDelete: 'CASCADE', nullable: true })
+  assignedPlan: AssignedPlan;
 
   @Column({ type: 'date' })
   assignedAt: string;
