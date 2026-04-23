@@ -27,10 +27,7 @@ export class StatsController {
 
   @Get('progress')
   async getMyProgress(@Request() req: any) {
-    console.log(`[StatsController] GET /progress for user ${req.user.id}`);
-    const result = await this.statsService.getProgress(req.user.id);
-    console.log(`[StatsController] Result:`, JSON.stringify(result));
-    return result;
+    return this.statsService.getProgress(req.user.id);
   }
 
   @Get('progress/:userId')

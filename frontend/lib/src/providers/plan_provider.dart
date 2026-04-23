@@ -22,11 +22,9 @@ class PlanProvider with ChangeNotifier {
   final SyncService _syncService = SyncService();
 
   List<Plan> _plans = [];
-  Plan? _myPlan;
   bool _isLoading = false;
 
   List<Plan> get plans => _plans;
-  Plan? get myPlan => _myPlan;
   List<StudentAssignment> get assignments => _assignments;
   bool get isLoading => _isLoading;
 
@@ -43,15 +41,11 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-  // Legacy/Convenience wrapper
-  Future<List<Exercise>> fetchExercisesByMuscle(String muscleId) =>
-      fetchExercises(muscleId: muscleId, role: 'PRIMARY');
-
   int _weeklyWorkoutCount = 0;
   int get weeklyWorkoutCount => _weeklyWorkoutCount;
 
-  int _monthlyWorkoutCount = 0;
-  int get monthlyWorkoutCount => _monthlyWorkoutCount;
+  Future<List<Exercise>> fetchExercisesByMuscle(String muscleId) =>
+      fetchExercises(muscleId: muscleId, role: 'PRIMARY');
 
   List<StudentAssignment> _assignments = [];
 
@@ -79,7 +73,6 @@ class PlanProvider with ChangeNotifier {
   }
 
   bool _isPlansLoaded = false;
-  bool _isMyPlanLoaded = false;
 
   Future<void> fetchPlans({bool forceRefresh = false}) async {
     if (_isPlansLoaded && !forceRefresh) return;
@@ -140,21 +133,6 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchMyPlan({bool forceRefresh = false}) async {
-    if (_isMyPlanLoaded && !forceRefresh) return;
-
-    _isLoading = true;
-    notifyListeners();
-    try {
-      _myPlan = await _planService.getMyPlan();
-      _isMyPlanLoaded = true;
-    } catch (e) {
-      debugPrint('Error fetching my plan: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
 
   // Changed to return typed list
   Future<List<StudentAssignment>> fetchMyAssignments({bool notify = true}) async {
@@ -180,7 +158,6 @@ class PlanProvider with ChangeNotifier {
       await Future.wait([
         fetchMyAssignments(notify: false),
         computeWeeklyStats(notify: false),
-        computeMonthlyStats(notify: false),
       ]);
     } finally {
       _isLoading = false;
@@ -577,26 +554,9 @@ class PlanProvider with ChangeNotifier {
           .toSet();
 
       _weeklyWorkoutCount = uniqueDays.length;
-      debugPrint(
-          'Weekly Stats: ${executions.length} executions -> $_weeklyWorkoutCount unique days');
       if (notify) notifyListeners();
     } catch (e) {
       debugPrint('Error computing stats: $e');
-    }
-  }
-
-  Future<void> computeMonthlyStats({bool notify = true}) async {
-    final now = DateTime.now();
-    final startOfMonth = DateTime(now.year, now.month, 1);
-    final endOfMonth = DateTime(now.year, now.month + 1, 0);
-
-    try {
-      final executions = await fetchCalendar(startOfMonth, endOfMonth);
-      _monthlyWorkoutCount =
-          executions.where((e) => e.status == 'COMPLETED').length;
-      if (notify) notifyListeners();
-    } catch (e) {
-      debugPrint('Error computing monthly stats: $e');
     }
   }
 
@@ -804,21 +764,9 @@ class PlanProvider with ChangeNotifier {
 
   void clear() {
     _plans = [];
-    _myPlan = null;
     _assignments = [];
-
     _currentSession = null;
     _isPlansLoaded = false;
-    _isMyPlanLoaded = false;
     notifyListeners();
-  }
-}
-
-// Helper class for UI feedback (if needed, or move to utils)
-class ScaffoldMessengerHelper {
-  static void showOfflineSnack(String msg) {
-    // Implementation depends on access to BuildContext or GlobalKey
-    // For Provider, usually we return status and let UI handle showing Snackbars.
-    // We ignored this for now in logic, just using debugPrint.
   }
 }

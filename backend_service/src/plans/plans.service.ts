@@ -400,40 +400,6 @@ export class PlansService {
       .then((saved) => this.findOne(saved.id) as Promise<Plan>);
   }
 
-  async findStudentPlan(studentId: string): Promise<any | null> {
-    const studentPlan = await this.studentPlanRepository.findOne({
-      where: { student: { id: studentId }, isActive: true },
-      relations: [
-        'plan',
-        'assignedPlan',
-        'assignedPlan.weeks',
-        'assignedPlan.weeks.days',
-        'assignedPlan.weeks.days.exercises',
-        'assignedPlan.weeks.days.exercises.exercise',
-        'assignedPlan.weeks.days.exercises.equipments',
-        'plan.weeks',
-        'plan.weeks.days',
-        'plan.weeks.days.exercises',
-        'plan.weeks.days.exercises.exercise',
-      ],
-      order: {
-        assignedAt: 'DESC',
-      },
-    });
-
-    if (!studentPlan) return null;
-    
-    // Defensa: si el plan asignado no tiene ni assignedPlan ni plan, es corrupto.
-    if (!studentPlan.assignedPlan && !studentPlan.plan) return null;
-
-    if (studentPlan.assignedPlan) {
-      // Return the DTO exactly shaped like a Plan for the frontend
-      return AssignedPlanMapper.assignedPlanToPlanDto(studentPlan.assignedPlan);
-    }
-
-    // Fallback for pre-migration data
-    return studentPlan.plan;
-  }
 
   async findAllAssignmentsByStudent(studentId: string): Promise<any[]> {
     const assignments = await this.studentPlanRepository.find({

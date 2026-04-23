@@ -45,24 +45,12 @@ export class PlansController {
 
     if (req.user.role === UserRole.PROFE || req.user.role === UserRole.ADMIN) {
       const gymId = req.user.gym?.id;
-      // console.log(`[PlansController] findAll - User: ${req.user.email}, Role: ${req.user.role}, Gym: ${gymId}`);
-      if (!gymId) {
-        return [];
-      }
       return this.plansService.findAll(gymId);
     }
 
     return [];
   }
 
-  @Get('student/my-plan')
-  async getMyPlan(@Request() req: any) {
-    const plan = await this.plansService.findStudentPlan(req.user.id);
-    if (!plan) {
-      throw new NotFoundException('No active plan found');
-    }
-    return plan;
-  }
 
   @Get('student/assignments')
   async getMyAssignments(@Request() req: any) {

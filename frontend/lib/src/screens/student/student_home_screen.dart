@@ -58,7 +58,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // debugPrint('StudentHomeScreen build called');
     final app_models.User? user = context.watch<AuthProvider>().user;
 
     return BackgroundPageWrapper(

@@ -61,9 +61,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           widget.studentId != null &&
           widget.planId != null &&
           widget.day != null) {
-        debugPrint(
-            'DayDetailScreen: Fetching session for student ${widget.studentId}, Plan ${widget.planId}, W${widget.weekNumber} D${widget.day!.order}');
-        setState(() => _isLoadingReadOnly = true);
+      setState(() => _isLoadingReadOnly = true);
         context
             .read<PlanProvider>()
             .fetchStudentSession(
@@ -74,8 +72,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               startDate: widget.assignedAt,
             )
             .then((session) {
-          debugPrint(
-              'DayDetailScreen: Fetched session: ${session?.id ?? "NULL"}');
           if (mounted) {
             setState(() {
               _readOnlySession = session;
@@ -180,10 +176,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     List<SessionExercise> exercisesToRender = [];
     String status = 'READ_ONLY';
 
-    if (widget.day != null) {
-      debugPrint('DAY DEBUG INFO: ${widget.day!.exercises.length} exercises');
-      widget.day!.exercises.forEach((ex) => debugPrint('EX: sets=${ex.sets}, reps=${ex.reps}, targetTime=${ex.targetTime}'));
-    }
 
     if (widget.readOnly) {
       if (_readOnlySession != null) {
