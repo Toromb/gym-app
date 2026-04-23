@@ -6,7 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThanOrEqual } from 'typeorm';
+import { Repository, Between, MoreThanOrEqual, IsNull } from 'typeorm';
 import {
   TrainingSession,
   ExecutionStatus,
@@ -95,7 +95,7 @@ export class TrainingSessionsService {
             student: { id: userId },
             dayKey: dayKey,
             date: finalDate,
-            status: ExecutionStatus.IN_PROGRESS,
+            completedPlan: IsNull(),
         };
         if (assignedPlan) {
             sessionSearchWhere.assignedPlan = { id: planId };
@@ -265,42 +265,59 @@ export class TrainingSessionsService {
   ): Promise<SessionExercise> {
     const sessionEx = await this.sessionExerciseRepo.findOne({
       where: { id: exerciseId },
-      relations: ['session', 'exercise', 'exercise.equipments', 'equipmentsSnapshot'],
+      relations: ['session', 'session.completedPlan', 'exercise', 'exercise.equipments', 'equipmentsSnapshot'],
     });
 
     if (!sessionEx)
       throw new NotFoundException('Session exercise not found');
+
+    if (sessionEx.session.completedPlan) {
+      throw new ForbiddenException('Cannot modify a historical session exercise');
+    }
 
     // Auto-fill actuals
     if (updateData.isCompleted === true) {
       if (!sessionEx.setsDone || sessionEx.setsDone === '0') {
         sessionEx.setsDone = (sessionEx.targetSetsSnapshot ?? 0).toString();
       }
-      if (!sessionEx.repsDone) {
-        sessionEx.repsDone = sessionEx.targetRepsSnapshot ?? '';
-      }
+      
+      const metricType = sessionEx.exercise?.metricType || 'REPS';
 
-      // WEIGHT LOGIC: Check if it's Body Weight
-      const isBodyWeight = sessionEx.exercise?.equipments?.some(e => e.isBodyWeight)
-        || sessionEx.equipmentsSnapshot?.some(e => e.isBodyWeight);
+      if (metricType === 'REPS') {
+        if (!sessionEx.repsDone) {
+          sessionEx.repsDone = sessionEx.targetRepsSnapshot ?? '';
+        }
 
-      if (isBodyWeight) {
-        // Fetch User Weight
-        const sessionWithUser = await this.sessionRepo.findOne({
-          where: { id: sessionEx.session.id },
-          relations: ['student'],
-        });
-        const currentWeight = sessionWithUser?.student?.currentWeight || sessionWithUser?.student?.initialWeight || 0;
-        const addedWeight = updateData.addedWeight || sessionEx.addedWeight || 0;
+        // WEIGHT LOGIC: Check if it's Body Weight (Usually applies mostly to REPS, but safe to do here)
+        const isBodyWeight = sessionEx.exercise?.equipments?.some(e => e.isBodyWeight)
+          || sessionEx.equipmentsSnapshot?.some(e => e.isBodyWeight);
 
-        // Total Load = Body + Added
-        sessionEx.weightUsed = (currentWeight + addedWeight).toString();
-        // Ensure addedWeight is saved
-        if (updateData.addedWeight !== undefined) sessionEx.addedWeight = updateData.addedWeight;
-      } else {
-        // Standard Logic
-        if (!sessionEx.weightUsed) {
-          sessionEx.weightUsed = sessionEx.targetWeightSnapshot ?? '';
+        if (isBodyWeight) {
+          // Fetch User Weight
+          const sessionWithUser = await this.sessionRepo.findOne({
+            where: { id: sessionEx.session.id },
+            relations: ['student'],
+          });
+          const currentWeight = sessionWithUser?.student?.currentWeight || sessionWithUser?.student?.initialWeight || 0;
+          const addedWeight = updateData.addedWeight || sessionEx.addedWeight || 0;
+
+          // Total Load = Body + Added
+          sessionEx.weightUsed = (currentWeight + addedWeight).toString();
+          // Ensure addedWeight is saved
+          if (updateData.addedWeight !== undefined) sessionEx.addedWeight = updateData.addedWeight;
+        } else {
+          // Standard Logic
+          if (!sessionEx.weightUsed) {
+            sessionEx.weightUsed = sessionEx.targetWeightSnapshot ?? '';
+          }
+        }
+      } else if (metricType === 'TIME') {
+        if (!sessionEx.timeSpent) {
+          sessionEx.timeSpent = (sessionEx.targetTimeSnapshot ?? '').toString();
+        }
+      } else if (metricType === 'DISTANCE') {
+        if (sessionEx.distanceCovered === undefined || sessionEx.distanceCovered === null) {
+          sessionEx.distanceCovered = sessionEx.targetDistanceSnapshot;
         }
       }
     }
@@ -331,14 +348,23 @@ export class TrainingSessionsService {
       }
     }
 
-    // Sync Load
+    // Sync Load (Asynchronous logic for rapid UI response)
     if (updateData.isCompleted !== undefined) {
-      if (sessionEx.session) { // if loaded
-        await this._trySyncLoad(sessionEx.session.id);
+      if (sessionEx.session) {
+        this._trySyncLoad(sessionEx.session.id).catch(e => 
+          console.error(`[MuscleLoad] Fallo al sincronizar carga asincrona para sesion ${sessionEx.session.id}:`, e)
+        );
       } else {
         // reload
-        const fresh = await this.sessionExerciseRepo.findOne({ where: { id: exerciseId }, relations: ['session'] });
-        if (fresh && fresh.session) await this._trySyncLoad(fresh.session.id);
+        this.sessionExerciseRepo.findOne({ where: { id: exerciseId }, relations: ['session'] })
+          .then(fresh => {
+             if (fresh && fresh.session) {
+               this._trySyncLoad(fresh.session.id).catch(e => 
+                 console.error(`[MuscleLoad] Fallo al sincronizar carga asincrona para sesion ${fresh.session.id}:`, e)
+               );
+             }
+          })
+          .catch(e => console.error('[MuscleLoad] Fallo obteniendo sesion para sync asincrona:', e));
       }
     }
 
@@ -373,9 +399,41 @@ export class TrainingSessionsService {
   ): Promise<any> {
     const session = await this.sessionRepo.findOne({
       where: { id: sessionId, student: { id: userId } },
-      relations: ['plan', 'assignedPlan'],
+      relations: ['plan', 'assignedPlan', 'completedPlan', 'exercises', 'exercises.exercise'],
     });
     if (!session) throw new NotFoundException('Session not found');
+
+    if (session.completedPlan) {
+      throw new ForbiddenException('Cannot modify a historical session');
+    }
+
+    // STRICT VALIDATION
+    const exercises = session.exercises || [];
+    for (const ex of exercises) {
+      if (!ex.isCompleted) {
+        throw new BadRequestException('Hay ejercicios sin marcar como completados.');
+      }
+
+      const metricType = ex.exercise?.metricType || 'REPS';
+      const setsDoneStr = ex.setsDone || '';
+      const setsValid = setsDoneStr.trim() !== '' && setsDoneStr !== '0';
+
+      if (metricType === 'REPS') {
+        if (!setsValid || !ex.repsDone || ex.repsDone.trim() === '' || ex.repsDone === '0') {
+          throw new BadRequestException('Hay ejercicios incompletos. Verifica repeticiones y series.');
+        }
+      } else if (metricType === 'TIME') {
+        const timeVal = parseFloat(ex.timeSpent || '0');
+        if (!setsValid || isNaN(timeVal) || timeVal <= 0) {
+          throw new BadRequestException('Hay ejercicios por tiempo incompletos. Ingresa un valor mayor a 0.');
+        }
+      } else if (metricType === 'DISTANCE') {
+        const distVal = ex.distanceCovered || 0;
+        if (!setsValid || distVal <= 0) {
+          throw new BadRequestException('Hay ejercicios por distancia incompletos. Ingresa un valor válido mayor a 0.');
+        }
+      }
+    }
 
     // REMOVED: Conflict Check (Allow multiple sessions per day)
 
@@ -658,11 +716,15 @@ export class TrainingSessionsService {
   async deleteSessionExercise(exerciseExecId: string, requester: any): Promise<void> {
     const sessionExercise = await this.sessionExerciseRepo.findOne({
       where: { id: exerciseExecId },
-      relations: ['session', 'session.student', 'session.student.gym', 'exercise'], // Include gym and exercise
+      relations: ['session', 'session.completedPlan', 'session.student', 'session.student.gym', 'exercise'], // Include gym and exercise
     });
 
     if (!sessionExercise) {
       throw new NotFoundException('Session exercise not found');
+    }
+
+    if (sessionExercise.session.completedPlan) {
+      throw new ForbiddenException('Cannot delete a historical session exercise');
     }
 
     const session = sessionExercise.session;

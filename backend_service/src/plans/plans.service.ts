@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,9 +15,11 @@ import { User, UserRole } from '../users/entities/user.entity';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
 import { AssignedPlan } from './entities/assigned-plan.entity';
+import { CompletedPlan, CompletedReason } from './entities/completed-plan.entity';
 import { AssignedPlanWeek } from './entities/assigned-plan-week.entity';
 import { AssignedPlanDay } from './entities/assigned-plan-day.entity';
 import { AssignedPlanExercise } from './entities/assigned-plan-exercise.entity';
+import { TrainingSession } from './entities/training-session.entity';
 import { AssignedPlanMapper } from './dto/assigned-plan.mapper';
 
 @Injectable()
@@ -135,11 +138,6 @@ export class PlansService {
     const planTeacherRole = plan.teacher?.role;
     const isAssignerAdmin = assigner.role === UserRole.ADMIN || assigner.role === UserRole.SUPER_ADMIN;
 
-    // Allow if:
-    // 1. Plan belongs to the assigner
-    // 2. Plan belongs to an Admin (Global) (and user can see it)
-    // 3. Assigner is Admin (can assign any plan)
-
     const isOwner = planTeacherId === assigner.id;
     const isAdminPlan = planTeacherRole === UserRole.ADMIN || planTeacherRole === UserRole.SUPER_ADMIN;
 
@@ -151,14 +149,7 @@ export class PlansService {
     const student = await this.plansRepository.manager.findOne(User, { where: { id: studentId }, relations: ['professor', 'gym'] });
     if (!student) throw new NotFoundException('Student not found');
 
-    const studentPlan = this.studentPlanRepository.create({
-      plan: { id: planId } as any,
-      student: { id: studentId } as any,
-      assignedAt: new Date().toISOString(),
-      startDate: new Date().toISOString(), // Default to today
-      isActive: true,
-    });
-
+    // Generate the new snapshot of the plan
     const assignedPlan = new AssignedPlan();
     assignedPlan.originalPlanId = plan.id;
     assignedPlan.originalPlanName = plan.name;
@@ -201,8 +192,56 @@ export class PlansService {
     });
 
     return this.plansRepository.manager.transaction(async transactionalEntityManager => {
+      // 1. Save the new snapshot
       const savedAssignedPlan = await transactionalEntityManager.save(AssignedPlan, assignedPlan);
-      studentPlan.assignedPlan = savedAssignedPlan;
+
+      // 2. Check if student already has this exact Library Plan assigned
+      let studentPlan = await transactionalEntityManager.findOne(StudentPlan, {
+        where: {
+          student: { id: studentId },
+          plan: { id: planId }
+        },
+        relations: ['assignedPlan']
+      });
+
+      const existingActive = await transactionalEntityManager.findOne(StudentPlan, {
+        where: { student: { id: studentId }, isActive: true }
+      });
+
+      if (studentPlan) {
+        // --- EXISTING PLAN REASSIGNMENT LOGIC ---
+        // 1. Snapshot: We update the reference so the student gets the newest version of the exercises.
+        //    (Old snapshot remains in DB for any completed histories that point to it).
+        studentPlan.assignedPlan = savedAssignedPlan;
+        
+        // 2. isActive: 
+        //    - If this plan is ALREADY active, we leave it active (true). This updates the ongoing routine in real-time.
+        //    - If this plan is reusable/pending (false), we leave it false UNLESS they have absolutely no active plan!
+        if (!studentPlan.isActive && !existingActive) {
+           studentPlan.isActive = true;
+           studentPlan.startDate = new Date().toISOString();
+        }
+
+        // 3. progress: We DO NOT touch the progress JSON! 
+        //    This completely avoids implicitly wiping the student's partial progress just because the professor bumped the routine.
+        
+        // 4. assignedAt / startDate: 
+        //    - `assignedAt` dates up to today (bumps the card up in "Seleccionar plan" or lists).
+        //    - `startDate` is NOT altered unless it was newly auto-activated just now.
+        studentPlan.assignedAt = new Date().toISOString();
+
+      } else {
+        // --- NEW PLAN ASSIGNMENT LOGIC ---
+        studentPlan = this.studentPlanRepository.create({
+          plan: { id: planId } as any,
+          student: { id: studentId } as any,
+          assignedAt: new Date().toISOString(),
+          startDate: new Date().toISOString(), // First activation default
+          isActive: existingActive ? false : true,
+          assignedPlan: savedAssignedPlan
+        });
+      }
+
       return await transactionalEntityManager.save(StudentPlan, studentPlan);
     });
   }
@@ -383,6 +422,9 @@ export class PlansService {
     });
 
     if (!studentPlan) return null;
+    
+    // Defensa: si el plan asignado no tiene ni assignedPlan ni plan, es corrupto.
+    if (!studentPlan.assignedPlan && !studentPlan.plan) return null;
 
     if (studentPlan.assignedPlan) {
       // Return the DTO exactly shaped like a Plan for the frontend
@@ -396,10 +438,25 @@ export class PlansService {
   async findAllAssignmentsByStudent(studentId: string): Promise<any[]> {
     const assignments = await this.studentPlanRepository.find({
       where: { student: { id: studentId } },
-      relations: ['plan', 'assignedPlan'],
+      relations: [
+        'plan',
+        'assignedPlan',
+        'assignedPlan.weeks',
+        'assignedPlan.weeks.days',
+        'assignedPlan.weeks.days.exercises',
+        'assignedPlan.weeks.days.exercises.exercise',
+        'assignedPlan.weeks.days.exercises.equipments',
+        'plan.weeks',
+        'plan.weeks.days',
+        'plan.weeks.days.exercises',
+        'plan.weeks.days.exercises.exercise',
+      ],
       order: { assignedAt: 'DESC' },
     });
-    return assignments.map(a => AssignedPlanMapper.toResponseDto(a));
+    // Filtrar asignaciones corruptas (sin plan) para que no compitan con las sanas
+    const validAssignments = assignments.filter((a) => a.assignedPlan != null || a.plan != null);
+    
+    return validAssignments.map(a => AssignedPlanMapper.toResponseDto(a));
   }
 
   async findStudentAssignments(studentId: string): Promise<any[]> {
@@ -422,13 +479,44 @@ export class PlansService {
         assignedAt: 'DESC',
       },
     });
-    return assignments.map(a => AssignedPlanMapper.toResponseDto(a));
+    
+    // Filtrar asignaciones corruptas
+    const validAssignments = assignments.filter((a) => a.assignedPlan != null || a.plan != null);
+    return validAssignments.map(a => AssignedPlanMapper.toResponseDto(a));
+  }
+
+  async activateAssignment(assignmentId: string, studentId: string): Promise<void> {
+    const assignment = await this.studentPlanRepository.findOne({
+      where: { id: assignmentId, student: { id: studentId } },
+    });
+    
+    if (!assignment) {
+      throw new NotFoundException('Assignment not found for this student');
+    }
+    
+    if (!assignment.assignedPlan && !assignment.plan) {
+      throw new BadRequestException('Cannot activate a corrupted assignment without a valid plan structure.');
+    }
+
+    await this.studentPlanRepository.manager.transaction(async (manager) => {
+      // 1. Mark all other assignments for this student as inactive
+      await manager.query(
+        `UPDATE student_plans SET "isActive" = false WHERE "studentId" = $1`,
+        [studentId]
+      );
+      
+      // 2. Mark this assignment as active
+      await manager.query(
+        `UPDATE student_plans SET "isActive" = true, "startDate" = $1 WHERE "id" = $2 AND "studentId" = $3`,
+        [new Date().toISOString(), assignmentId, studentId]
+      );
+    });
   }
 
   async removeAssignment(assignmentId: string, user: User): Promise<void> {
     const assignment = await this.studentPlanRepository.findOne({
       where: { id: assignmentId },
-      relations: ['student', 'student.professor'],
+      relations: ['student', 'student.professor', 'student.gym', 'plan', 'assignedPlan'],
     });
 
     if (!assignment) throw new NotFoundException('Assignment not found');
@@ -451,7 +539,48 @@ export class PlansService {
       throw new ForbiddenException('Not authorized');
     }
 
-    await this.studentPlanRepository.remove(assignment);
+    const originalPlanId = assignment.assignedPlan?.originalPlanId || assignment.plan?.id;
+    const planNameSnapshot = assignment.assignedPlan?.name || assignment.plan?.name || 'Unknown Plan';
+
+    const assignedPlanId = assignment.assignedPlan?.id || null;
+    const legacyPlanId = assignment.plan?.id || null;
+
+    const countRes = await this.studentPlanRepository.manager.query(
+      `SELECT COUNT(*) as count FROM training_sessions WHERE "studentId" = $1 AND ("assignedPlanId" = $2 OR "planId" = $3) AND "completedPlanId" IS NULL`,
+      [assignment.student.id, assignedPlanId, legacyPlanId]
+    );
+      
+    const hasSessions = parseInt(countRes[0].count, 10) > 0;
+    const progress = assignment.progress || {};
+    const hasLegacyProgress = Object.keys(progress.exercises || {}).length > 0 || Object.keys(progress.days || {}).length > 0;
+    const hasEvidencia = hasSessions || hasLegacyProgress;
+
+    if (hasEvidencia) {
+      const completedPlan = new CompletedPlan();
+      completedPlan.student = assignment.student;
+      completedPlan.gym = assignment.student.gym;
+      completedPlan.assignedPlanId = assignedPlanId;
+      completedPlan.originalPlanId = originalPlanId;
+      completedPlan.planNameSnapshot = planNameSnapshot;
+      completedPlan.startedAt = assignment.startDate;
+      completedPlan.completedAt = new Date();
+      completedPlan.completedReason = CompletedReason.CANCELLED;
+
+      const savedCompletedPlan = await this.studentPlanRepository.manager.save(CompletedPlan, completedPlan);
+
+      await this.studentPlanRepository.manager.query(
+        `UPDATE training_sessions 
+         SET "completedPlanId" = $1 
+         WHERE "studentId" = $2 AND ("assignedPlanId" = $3 OR "planId" = $4) AND "completedPlanId" IS NULL`,
+        [savedCompletedPlan.id, assignment.student.id, assignedPlanId, legacyPlanId]
+      );
+    }
+
+    assignment.isActive = false;
+    assignment.progress = { exercises: {}, days: {} };
+    assignment.startDate = null as any;
+
+    await this.studentPlanRepository.save(assignment);
   }
 
   async remove(id: string, user: User): Promise<void> {
@@ -555,94 +684,219 @@ export class PlansService {
           StudentPlan,
           {
             where: { id: assignmentId },
-            relations: ['student', 'plan'],
+            relations: ['student', 'student.gym', 'plan', 'assignedPlan'],
           },
         );
 
         if (!oldAssignment) throw new NotFoundException('Assignment not found');
         if (oldAssignment.student.id !== userId)
           throw new ForbiddenException('Access denied');
-
-        // 2. Archive the old one
-        oldAssignment.isActive = false;
-        oldAssignment.endDate = new Date().toISOString();
-        await transactionalEntityManager.save(oldAssignment);
-
-        // 3. Re-assign using the underlying assignPlan method if we have originalPlanId
-        // However, we need 'assigner' which we don't have.
-        // We'll emulate it by directly calling the private equivalent or just reloading and cloning.
-        // For simplicity and to reuse the logic:
-        const originalPlanId = oldAssignment.assignedPlan?.originalPlanId || oldAssignment.plan?.id;
-        if (!originalPlanId) throw new ConflictException('Cannot restart a plan with no original origin');
-        
-        const teacher = oldAssignment.plan?.teacher || { id: oldAssignment.assignedPlan?.assignedByUserId || userId, role: UserRole.ALUMNO } as User;
-        
-        // Save the archived one first
-        await transactionalEntityManager.save(oldAssignment);
-        
-        // We defer to the standard assignPlan mechanism, but wait, assignPlan requires a separate transaction or handles its own.
-        // Let's just emulate the creation logic without the transaction:
-        
-        const newAssignment = this.studentPlanRepository.create({
-          plan: { id: originalPlanId } as any,
-          student: { id: userId } as any,
-          assignedAt: new Date().toISOString(),
-          startDate: new Date().toISOString(),
-          isActive: true,
-          progress: { exercises: {}, days: {} },
-        });
-
-        const planTemplate = await transactionalEntityManager.findOne(Plan, {
-          where: { id: originalPlanId },
-          relations: ['weeks', 'weeks.days', 'weeks.days.exercises', 'weeks.days.exercises.exercise', 'weeks.days.exercises.equipments'],
-        });
-
-        if (planTemplate) {
-            const assignedPlan = new AssignedPlan();
-            assignedPlan.originalPlanId = planTemplate.id;
-            assignedPlan.originalPlanName = planTemplate.name;
-            assignedPlan.assignedAt = new Date();
-            assignedPlan.assignedByUserId = teacher.id;
-            assignedPlan.name = planTemplate.name;
-            assignedPlan.description = planTemplate.description;
-            assignedPlan.objective = planTemplate.objective;
-            assignedPlan.generalNotes = planTemplate.generalNotes;
-            assignedPlan.durationWeeks = planTemplate.durationWeeks;
-
-            assignedPlan.weeks = (planTemplate.weeks || []).map(w => {
-              const assignedWeek = new AssignedPlanWeek();
-              assignedWeek.weekNumber = w.weekNumber;
-              assignedWeek.days = (w.days || []).map(d => {
-                const assignedDay = new AssignedPlanDay();
-                assignedDay.title = d.title;
-                assignedDay.dayOfWeek = d.dayOfWeek;
-                assignedDay.order = d.order;
-                assignedDay.trainingIntent = d.trainingIntent;
-                assignedDay.dayNotes = d.dayNotes;
-                assignedDay.exercises = (d.exercises || []).map(e => {
-                  const assignedEx = new AssignedPlanExercise();
-                  assignedEx.exercise = e.exercise;
-                  assignedEx.sets = e.sets;
-                  assignedEx.reps = e.reps;
-                  assignedEx.suggestedLoad = e.suggestedLoad;
-                  assignedEx.rest = e.rest;
-                  assignedEx.notes = e.notes;
-                  assignedEx.videoUrl = e.videoUrl;
-                  assignedEx.targetTime = e.targetTime;
-                  assignedEx.targetDistance = e.targetDistance;
-                  assignedEx.order = e.order;
-                  assignedEx.equipments = e.equipments || [];
-                  return assignedEx;
-                });
-                return assignedDay;
-              });
-              return assignedWeek;
-            });
-            const savedAssignedPlan = await transactionalEntityManager.save(AssignedPlan, assignedPlan);
-            newAssignment.assignedPlan = savedAssignedPlan;
+          
+        if (!oldAssignment.assignedPlan && !oldAssignment.plan) {
+          throw new BadRequestException('Cannot restart a corrupted assignment without a valid plan structure.');
         }
 
-        return await transactionalEntityManager.save(StudentPlan, newAssignment);
+        // 2. Archive the old one and generate CompletedPlan historical wrapper
+        const originalPlanId = oldAssignment.assignedPlan?.originalPlanId || oldAssignment.plan?.id;
+        const planNameSnapshot = oldAssignment.assignedPlan?.name || oldAssignment.plan?.name || 'Unknown Plan';
+
+        const assignedPlanId = oldAssignment.assignedPlan?.id || null;
+        const legacyPlanId = oldAssignment.plan?.id || null;
+
+        // Clean up ghost/empty IN_PROGRESS sessions from DB physically
+        await transactionalEntityManager.query(`
+          DELETE FROM training_sessions
+          WHERE id IN (
+            SELECT ts.id FROM training_sessions ts
+            WHERE ts."studentId" = $1 
+              AND (ts."assignedPlanId" = $2 OR ts."planId" = $3) 
+              AND ts."completedPlanId" IS NULL
+              AND ts."status" = 'IN_PROGRESS'
+              AND NOT EXISTS (
+                SELECT 1 FROM session_exercises se 
+                WHERE se."sessionId" = ts.id 
+                  AND (se."isCompleted" = true 
+                       OR (se."setsDone" IS NOT NULL AND se."setsDone" != '0')
+                       OR (se."repsDone" IS NOT NULL AND se."repsDone" != '0')
+                       OR (se."timeSpent" IS NOT NULL AND se."timeSpent" != '0')
+                       OR (se."distanceCovered" IS NOT NULL AND se."distanceCovered" != 0)
+                       OR (se."weightUsed" IS NOT NULL AND se."weightUsed" != '0'))
+              )
+          )
+        `, [userId, assignedPlanId, legacyPlanId]);
+
+        const countRes = await transactionalEntityManager.query(
+          `SELECT COUNT(*) as count FROM training_sessions WHERE "studentId" = $1 AND ("assignedPlanId" = $2 OR "planId" = $3) AND "completedPlanId" IS NULL`,
+          [userId, assignedPlanId, legacyPlanId]
+        );
+          
+        const hasSessions = parseInt(countRes[0].count, 10) > 0;
+        const progress = oldAssignment.progress || {};
+        const hasLegacyProgress = Object.keys(progress.exercises || {}).length > 0 || Object.keys(progress.days || {}).length > 0;
+        const hasEvidencia = hasSessions || hasLegacyProgress;
+
+        if (hasEvidencia) {
+          const completedPlan = new CompletedPlan();
+          completedPlan.student = oldAssignment.student;
+          completedPlan.gym = oldAssignment.student.gym;
+          completedPlan.assignedPlanId = assignedPlanId;
+          completedPlan.originalPlanId = originalPlanId;
+          completedPlan.planNameSnapshot = planNameSnapshot;
+          completedPlan.startedAt = oldAssignment.startDate;
+          completedPlan.completedAt = new Date();
+          completedPlan.completedReason = CompletedReason.RESTARTED;
+
+          const savedCompletedPlan = await transactionalEntityManager.save(CompletedPlan, completedPlan);
+
+          await transactionalEntityManager.query(
+            `UPDATE training_sessions 
+             SET "completedPlanId" = $1 
+             WHERE "studentId" = $2 AND ("assignedPlanId" = $3 OR "planId" = $4) AND "completedPlanId" IS NULL`,
+            [savedCompletedPlan.id, userId, assignedPlanId, legacyPlanId]
+          );
+        }
+
+        // Ensure other assignments are inactive
+        await transactionalEntityManager.query(
+          `UPDATE student_plans SET "isActive" = false WHERE "studentId" = $1 AND "id" != $2`,
+          [userId, oldAssignment.id]
+        );
+
+        // 3. Reset the current assignment instead of duplicating it using raw query to ensure JSONb reset
+        await transactionalEntityManager.query(
+          `UPDATE student_plans SET "isActive" = true, "startDate" = $1, "progress" = '{"exercises":{},"days":{}}'::jsonb WHERE "id" = $2`,
+          [new Date().toISOString(), oldAssignment.id]
+        );
+        
+        const updated = await transactionalEntityManager.findOne(StudentPlan, { where: { id: oldAssignment.id }, relations: ['student', 'student.gym', 'plan', 'assignedPlan'] });
+        return updated as StudentPlan;
+      },
+    );
+  }
+
+  async getHistoricalPlans(studentId: string): Promise<CompletedPlan[]> {
+    const plans = await this.studentPlanRepository.manager.find(CompletedPlan, {
+      where: { student: { id: studentId } },
+      relations: [
+        'sessions',
+        'sessions.exercises',
+        'sessions.exercises.exercise',
+        'sessions.assignedPlan' 
+      ],
+      order: {
+        completedAt: 'DESC',
+      },
+    });
+
+    return plans.map(plan => {
+      if (plan.sessions) {
+        plan.sessions = plan.sessions.filter(session => {
+          // Include completed sessions
+          if (session.status === 'COMPLETED') return true;
+          
+          // For IN_PROGRESS sessions, include only if they have actual progress
+          const hasProgress = session.exercises?.some(ex => {
+            return ex.isCompleted === true || 
+                   (ex.setsDone && ex.setsDone !== '0') ||
+                   (ex.repsDone && ex.repsDone !== '0') ||
+                   (ex.timeSpent && ex.timeSpent !== '0') ||
+                   (ex.distanceCovered && ex.distanceCovered !== 0) ||
+                   (ex.weightUsed && ex.weightUsed !== '0');
+          });
+          
+          return hasProgress;
+        });
+      }
+      return plan;
+    });
+  }
+
+  async finishAssignment(
+    assignmentId: string,
+    userId: string,
+  ): Promise<void> {
+    return this.studentPlanRepository.manager.transaction(
+      async (transactionalEntityManager) => {
+        const assignment = await transactionalEntityManager.findOne(
+          StudentPlan,
+          {
+            where: { id: assignmentId },
+            relations: ['student', 'student.gym', 'plan', 'assignedPlan'],
+          },
+        );
+
+        if (!assignment) throw new NotFoundException('Assignment not found');
+        if (assignment.student.id !== userId)
+          throw new ForbiddenException('Access denied');
+
+        const originalPlanId = assignment.assignedPlan?.originalPlanId || assignment.plan?.id;
+        const planNameSnapshot = assignment.assignedPlan?.name || assignment.plan?.name || 'Unknown Plan';
+
+        const assignedPlanId = assignment.assignedPlan?.id || null;
+        const legacyPlanId = assignment.plan?.id || null;
+
+        // Clean up ghost/empty IN_PROGRESS sessions from DB physically
+        await transactionalEntityManager.query(`
+          DELETE FROM training_sessions
+          WHERE id IN (
+            SELECT ts.id FROM training_sessions ts
+            WHERE ts."studentId" = $1 
+              AND (ts."assignedPlanId" = $2 OR ts."planId" = $3) 
+              AND ts."completedPlanId" IS NULL
+              AND ts."status" = 'IN_PROGRESS'
+              AND NOT EXISTS (
+                SELECT 1 FROM session_exercises se 
+                WHERE se."sessionId" = ts.id 
+                  AND (se."isCompleted" = true 
+                       OR (se."setsDone" IS NOT NULL AND se."setsDone" != '0')
+                       OR (se."repsDone" IS NOT NULL AND se."repsDone" != '0')
+                       OR (se."timeSpent" IS NOT NULL AND se."timeSpent" != '0')
+                       OR (se."distanceCovered" IS NOT NULL AND se."distanceCovered" != 0)
+                       OR (se."weightUsed" IS NOT NULL AND se."weightUsed" != '0'))
+              )
+          )
+        `, [userId, assignedPlanId, legacyPlanId]);
+
+        const countRes = await transactionalEntityManager.query(
+          `SELECT COUNT(*) as count FROM training_sessions WHERE "studentId" = $1 AND ("assignedPlanId" = $2 OR "planId" = $3) AND "completedPlanId" IS NULL`,
+          [userId, assignedPlanId, legacyPlanId]
+        );
+          
+        const hasSessions = parseInt(countRes[0].count, 10) > 0;
+        const progress = assignment.progress || {};
+        const hasLegacyProgress = Object.keys(progress.exercises || {}).length > 0 || Object.keys(progress.days || {}).length > 0;
+        const hasEvidencia = hasSessions || hasLegacyProgress;
+
+        if (!hasEvidencia) {
+          throw new ConflictException('No se puede finalizar el plan: no hay sesiones registradas ni progreso para enviar al historial.');
+        }
+
+        const completedPlan = new CompletedPlan();
+        completedPlan.student = assignment.student;
+        completedPlan.gym = assignment.student.gym;
+        completedPlan.assignedPlanId = assignedPlanId;
+        completedPlan.originalPlanId = originalPlanId;
+        completedPlan.planNameSnapshot = planNameSnapshot;
+        completedPlan.startedAt = assignment.startDate;
+        completedPlan.completedAt = new Date();
+        completedPlan.completedReason = CompletedReason.COMPLETED;
+
+        const savedCompletedPlan = await transactionalEntityManager.save(CompletedPlan, completedPlan);
+
+        await transactionalEntityManager.query(
+          `UPDATE training_sessions 
+           SET "completedPlanId" = $1 
+           WHERE "studentId" = $2 AND ("assignedPlanId" = $3 OR "planId" = $4) AND "completedPlanId" IS NULL`,
+          [savedCompletedPlan.id, userId, assignedPlanId, legacyPlanId]
+        );
+
+        assignment.isActive = false;
+        // Reiniciamos explícitamente el progreso y la fecha de inicio para que la asignación
+        // base quede limpia y lista para ser reutilizada por el estudiante en un nuevo ciclo.
+        assignment.progress = { exercises: {}, days: {} };
+        assignment.startDate = null as any; 
+
+        await transactionalEntityManager.save(assignment);
       },
     );
   }

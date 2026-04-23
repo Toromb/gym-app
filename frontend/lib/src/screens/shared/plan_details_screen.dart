@@ -6,6 +6,7 @@ import '../../models/student_assignment_model.dart';
 import '../../providers/plan_provider.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart'; // Added
+import '../../models/logic/plan_traversal_logic.dart';
 import 'day_detail_screen.dart';
 import '../teacher/create_plan_screen.dart';
 
@@ -139,6 +140,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
             ),
         ],
       ),
+      bottomNavigationBar: _buildActivationCTA(context),
       body: RefreshIndicator(
         onRefresh: () async {
           if (_plan.id != null) {
@@ -152,7 +154,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
             }
             // Reload Progress if assignment exists
             if (_currentAssignment != null) {
-              await context.read<PlanProvider>().fetchMyHistory();
+              await context.read<PlanProvider>().fetchMyAssignments();
               // Update current assignment reference from provider
               // This is tricky because we need to find OUR assignment in the list.
               // For now, reloading Plan is key for Sets/Reps.
@@ -317,12 +319,12 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
 
           if (result == true && !widget.readOnly && mounted) {
             // User finished workout.
-            await context.read<PlanProvider>().fetchMyHistory();
+            await context.read<PlanProvider>().fetchMyAssignments();
             if (mounted)
               Navigator.of(context).popUntil((route) => route.isFirst);
           } else if (!widget.readOnly && mounted) {
             // Refresh
-            context.read<PlanProvider>().fetchMyHistory().then((assignments) {
+            context.read<PlanProvider>().fetchMyAssignments().then((assignments) {
               if (mounted) {
                 try {
                   StudentAssignment updated;
@@ -415,6 +417,66 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                 Icon(Icons.arrow_forward_ios,
                     size: 16, color: colorScheme.onSurfaceVariant),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget? _buildActivationCTA(BuildContext context) {
+    if (widget.canEdit || widget.readOnly || _currentAssignment == null) {
+      return null;
+    }
+
+    final provider = context.read<PlanProvider>();
+    final activeAssignmentId = provider.activeAssignment?.id;
+
+    if (_currentAssignment!.id == activeAssignmentId) {
+      return null;
+    }
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SizedBox(
+          width: double.infinity,
+          height: 60,
+          child: ElevatedButton.icon(
+            onPressed: () async {
+              final provider = context.read<PlanProvider>();
+              final isFullyCompleted = _currentAssignment!.plan.weeks.isNotEmpty && _currentAssignment!.nextWorkout == null;
+              
+              bool success;
+              if (isFullyCompleted) {
+                // If the plan is 100% completed, "activating" it should start a new cycle.
+                success = await provider.restartPlan(_currentAssignment!.id);
+              } else {
+                success = await provider.activateAssignment(_currentAssignment!.id);
+              }
+
+              if (success && mounted) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              } else if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(AppLocalizations.of(context)!.get('errorGeneral') ?? 'Error')),
+                );
+              }
+            },
+            icon: context.watch<PlanProvider>().isLoading
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Icon(Icons.play_arrow, size: 28),
+            label: Text(
+              'Elegir y comenzar este plan',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 4,
+            ),
           ),
         ),
       ),

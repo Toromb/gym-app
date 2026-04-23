@@ -43,6 +43,9 @@ class ApiClient {
     final token = await _getToken();
     return {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
@@ -65,7 +68,18 @@ class ApiClient {
       case 204:
         return null;
       case 400:
-        throw ApiException('Bad Request: ${response.body}', 400);
+        String errorMsg = 'Bad Request';
+        try {
+          final dyn = jsonDecode(response.body);
+          if (dyn['message'] != null) {
+            errorMsg = dyn['message'] is List ? dyn['message'].join(', ') : dyn['message'].toString();
+          } else {
+            errorMsg = response.body;
+          }
+        } catch (_) {
+          errorMsg = response.body;
+        }
+        throw BadRequestException(errorMsg);
       case 401:
         throw UnauthorizedException();
       case 403:
@@ -85,7 +99,15 @@ class ApiClient {
 
   Future<dynamic> _requestWithRetry(String endpoint, String method,
       {dynamic body, bool disableInterceptor = false}) async {
-    final url = Uri.parse('$baseUrl$endpoint');
+    
+    // Bypass GET cache explicitly
+    String finalEndpoint = endpoint;
+    if (method == 'GET') {
+      final connector = endpoint.contains('?') ? '&' : '?';
+      finalEndpoint = '$endpoint${connector}_t=${DateTime.now().millisecondsSinceEpoch}';
+    }
+
+    final url = Uri.parse('$baseUrl$finalEndpoint');
 
     Future<http.Response> makeRequest() async {
       final headers = await _getHeaders();

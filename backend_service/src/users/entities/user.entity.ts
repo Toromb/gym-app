@@ -9,6 +9,7 @@ import {
   OneToOne,
 } from 'typeorm';
 import { StudentPlan } from '../../plans/entities/student-plan.entity';
+import { CompletedPlan } from '../../plans/entities/completed-plan.entity';
 import { Exclude } from 'class-transformer';
 import { Gym } from '../../gyms/entities/gym.entity';
 import { OnboardingProfile } from './onboarding-profile.entity';
@@ -153,6 +154,9 @@ export class User {
 
   @OneToMany(() => StudentPlan, (studentPlan) => studentPlan.student)
   studentPlans: StudentPlan[];
+
+  @OneToMany(() => CompletedPlan, (completedPlan) => completedPlan.student)
+  completedPlans: CompletedPlan[];
 
   @ManyToOne(() => User, (user) => user.students, {
     nullable: true,

@@ -145,12 +145,26 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         }
       } catch (e) {
         if (mounted) {
-          String msg = AppLocalizations.of(context)!.get('errorFinish');
-          if (e.toString().contains('Conflict')) {
+          // Si e es una excepcion del backend (ej: ApiException), mostramos directamente su mensaje.
+          String msg = e.toString();
+          if (msg.contains('Conflict') || msg.contains('409')) {
             msg = 'Date already has a completed workout!';
+          } else if (msg.contains('Exception:')) {
+            msg = msg.replaceAll('Exception:', '').trim();
+          } else if (msg.contains('ApiException:')) {
+            msg = msg.replaceAll('ApiException:', '').trim();
+          } else if (msg.contains('BadRequestException:')) {
+            msg = msg.replaceAll('BadRequestException:', '').trim();
+          } else if (msg.startsWith('Exception')) {
+             msg = AppLocalizations.of(context)!.get('errorFinish');
           }
+
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(msg, style: const TextStyle(color: Colors.white)),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
           );
         }
       }
@@ -165,6 +179,11 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
 
     List<SessionExercise> exercisesToRender = [];
     String status = 'READ_ONLY';
+
+    if (widget.day != null) {
+      debugPrint('DAY DEBUG INFO: ${widget.day!.exercises.length} exercises');
+      widget.day!.exercises.forEach((ex) => debugPrint('EX: sets=${ex.sets}, reps=${ex.reps}, targetTime=${ex.targetTime}'));
+    }
 
     if (widget.readOnly) {
       if (_readOnlySession != null) {

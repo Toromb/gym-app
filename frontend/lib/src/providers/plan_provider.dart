@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:uuid/uuid.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import '../models/plan_model.dart';
 import '../models/student_assignment_model.dart';
 import '../models/execution_model.dart';
+import '../models/completed_plan_model.dart';
 
 import '../models/logic/student_assignment_logic.dart';
 import '../models/logic/plan_traversal_logic.dart';
@@ -65,6 +68,8 @@ class PlanProvider with ChangeNotifier {
     final next = assignment.nextWorkout;
 
     if (next != null) {
+      if (next['empty'] == true) return null; // Treat plan with 0 days as essentially empty.
+      
       // Inject assignment for UI usage (StudentHomeScreen)
       return {...next, 'assignment': assignment};
     }
@@ -152,14 +157,49 @@ class PlanProvider with ChangeNotifier {
   }
 
   // Changed to return typed list
-  Future<List<StudentAssignment>> fetchMyHistory() async {
+  Future<List<StudentAssignment>> fetchMyAssignments({bool notify = true}) async {
+    _isLoading = true;
+    if (notify) notifyListeners();
+    try {
+      _assignments = await _planService.getMyAssignments();
+      return _assignments;
+    } catch (e) {
+      debugPrint('Error fetching my assignments: $e');
+      return [];
+    } finally {
+      _isLoading = false;
+      if (notify) notifyListeners();
+    }
+  }
+
+  Future<void> refreshDashboard() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await Future.wait([
+        fetchMyAssignments(notify: false),
+        computeWeeklyStats(notify: false),
+        computeMonthlyStats(notify: false),
+      ]);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // --- COMPLETED PLAN HISTORY (FASE 2) --- //
+  List<CompletedPlan> _completedHistory = [];
+  List<CompletedPlan> get completedHistory => _completedHistory;
+
+  Future<List<CompletedPlan>> fetchCompletedHistory() async {
     _isLoading = true;
     notifyListeners();
     try {
-      _assignments = await _planService.getMyHistory();
-      return _assignments;
+      _completedHistory = await _planService.getCompletedHistory();
+      return _completedHistory;
     } catch (e) {
-      debugPrint('Error fetching my history: $e');
+      debugPrint('Error fetching completed history: $e');
       return [];
     } finally {
       _isLoading = false;
@@ -439,42 +479,29 @@ class PlanProvider with ChangeNotifier {
   Future<void> completeSession(String date, {String? dayId}) async {
     if (_currentSession == null) return;
 
-    // 1. Optimistic Local Update (Session Status)
-    _currentSession = _currentSession!.copyWith(status: 'COMPLETED');
-    notifyListeners();
-
-    // 2. Optimistic Local Update (Assignment Progress)
-    if (dayId != null && activeAssignment != null) {
-      // Find current assignment index
-      final index =
-          _assignments.indexWhere((a) => a.id == activeAssignment!.id);
-      if (index != -1) {
-        final assignment = _assignments[index];
-        final newProgress = Map<String, dynamic>.from(assignment.progress);
-
-        // Ensure structure
-        if (newProgress['days'] == null) newProgress['days'] = {};
-        final daysMap = Map<String, dynamic>.from(newProgress['days']);
-
-        // Mark day as completed
-        daysMap[dayId!] = {'completed': true, 'date': date};
-        newProgress['days'] = daysMap;
-
-        // Update Assignment
-        final updatedAssignment =
-            assignment.copyWithProgress(newProgress: newProgress);
-        _assignments[index] = updatedAssignment;
-        notifyListeners();
-        debugPrint(
-            '✅ Optimistically updated Assignment Progress for day $dayId');
-      }
+    // On web, InternetConnectionChecker throws, so we assume online.
+    bool hasInternet = true;
+    if (!kIsWeb) {
+      try {
+        hasInternet = await InternetConnectionChecker.instance.hasConnection;
+      } catch (_) {}
     }
 
-    // 3. Persist Cache
-    await _localStorage.saveSession(_currentSession!.toJson());
+    if (hasInternet) {
+      // 1. Fire-and-forget the offline queue flush so pending exercise metrics
+      //    reach the backend. We do NOT await it here — awaiting each queued
+      //    PATCH one-by-one causes the noticeable freeze the user reported.
+      //    The completeSession call below is independent and fast.
+      unawaited(_syncService.triggerSync());
 
-    try {
-      // 4. Queue Request
+      // 2. Direct Online Call
+      try {
+        await _planService.completeSession(_currentSession!.id, date);
+      } catch (e) {
+        rethrow;
+      }
+    } else {
+      // Offline fallback: Queue Request
       final request = {
         'id': const Uuid().v4(),
         'method': 'PATCH',
@@ -482,17 +509,37 @@ class PlanProvider with ChangeNotifier {
         'body': {'date': date},
         'timestamp': DateTime.now().toIso8601String(),
       };
-
       await _localStorage.addToQueue(request);
-
-      // 5. Trigger Sync (and hold future)
       _activeSyncRequest = _syncService.triggerSync();
-      // We do NOT await here to keep UI responsive (Optimistic).
-      // But we captured the future so result can be retrieved later.
-    } catch (e) {
-      debugPrint('Error completing session logic: $e');
-      rethrow;
     }
+
+    // 2. Optimistic Local Update (Session Status)
+    _currentSession = _currentSession!.copyWith(status: 'COMPLETED');
+    notifyListeners();
+
+    // 3. Optimistic Local Update (Assignment Progress)
+    if (dayId != null && activeAssignment != null) {
+      final index =
+          _assignments.indexWhere((a) => a.id == activeAssignment!.id);
+      if (index != -1) {
+        final assignment = _assignments[index];
+        final newProgress = Map<String, dynamic>.from(assignment.progress);
+
+        if (newProgress['days'] == null) newProgress['days'] = {};
+        final daysMap = Map<String, dynamic>.from(newProgress['days']);
+
+        daysMap[dayId] = {'completed': true, 'date': date};
+        newProgress['days'] = daysMap;
+
+        final updatedAssignment =
+            assignment.copyWithProgress(newProgress: newProgress);
+        _assignments[index] = updatedAssignment;
+        notifyListeners();
+      }
+    }
+
+    // 4. Persist Cache
+    await _localStorage.saveSession(_currentSession!.toJson());
   }
 
   // Clean cache manually if needed (e.g. leaving screen)
@@ -516,7 +563,7 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-  Future<void> computeWeeklyStats() async {
+  Future<void> computeWeeklyStats({bool notify = true}) async {
     final now = DateTime.now();
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     final endOfWeek = startOfWeek.add(const Duration(days: 6));
@@ -532,13 +579,13 @@ class PlanProvider with ChangeNotifier {
       _weeklyWorkoutCount = uniqueDays.length;
       debugPrint(
           'Weekly Stats: ${executions.length} executions -> $_weeklyWorkoutCount unique days');
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       debugPrint('Error computing stats: $e');
     }
   }
 
-  Future<void> computeMonthlyStats() async {
+  Future<void> computeMonthlyStats({bool notify = true}) async {
     final now = DateTime.now();
     final startOfMonth = DateTime(now.year, now.month, 1);
     final endOfMonth = DateTime(now.year, now.month + 1, 0);
@@ -547,7 +594,7 @@ class PlanProvider with ChangeNotifier {
       final executions = await fetchCalendar(startOfMonth, endOfMonth);
       _monthlyWorkoutCount =
           executions.where((e) => e.status == 'COMPLETED').length;
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       debugPrint('Error computing monthly stats: $e');
     }
@@ -587,12 +634,49 @@ class PlanProvider with ChangeNotifier {
     try {
       final success = await _planService.restartPlan(assignmentId);
       if (success) {
-        await fetchMyHistory(); // Refresh assignments list
+        // CRITICAL: Refresh assignments from backend so in-memory progress
+        // is replaced with the empty progress returned by restartAssignment.
+        // Without this, nextWorkout() keeps reading the old completed progress.
+        await fetchMyAssignments(notify: false);
+      }
+      return success;
+    } catch (e) {
+      debugPrint('Error restarting plan: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> finishAssignment(String assignmentId) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final success = await _planService.finishAssignment(assignmentId);
+      if (success) {
+        await fetchMyAssignments(); // Refresh assignments list
         return true;
       }
       return false;
     } catch (e) {
-      debugPrint('Error restarting plan: $e');
+      debugPrint('Error finishing plan: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> activateAssignment(String assignmentId) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _planService.activateAssignment(assignmentId);
+      await fetchMyAssignments(); // Refresh assignments list and active tracker
+      return true;
+    } catch (e) {
+      debugPrint('Error activating plan: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -605,6 +689,15 @@ class PlanProvider with ChangeNotifier {
       return await _planService.getStudentAssignments(studentId);
     } catch (e) {
       debugPrint('Error fetching assignments: $e');
+      return [];
+    }
+  }
+
+  Future<List<CompletedPlan>> fetchStudentHistory(String studentId) async {
+    try {
+      return await _planService.getStudentHistory(studentId);
+    } catch (e) {
+      debugPrint('Error fetching student history: $e');
       return [];
     }
   }

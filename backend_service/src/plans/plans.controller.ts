@@ -64,10 +64,23 @@ export class PlansController {
     return plan;
   }
 
+  @Get('student/assignments')
+  async getMyAssignments(@Request() req: any) {
+    return this.plansService.findStudentAssignments(req.user.id);
+  }
+
+  @Post('student/assignments/:assignmentId/activate')
+  async activateAssignment(
+    @Param('assignmentId') assignmentId: string,
+    @Request() req: any,
+  ) {
+    return this.plansService.activateAssignment(assignmentId, req.user.id);
+  }
+
   @Get('student/history')
   async getMyHistory(@Request() req: any) {
-    // Allow student to see their own history
-    return this.plansService.findStudentAssignments(req.user.id);
+    // Return the new consolidated CompletedPlan history
+    return this.plansService.getHistoricalPlans(req.user.id);
   }
 
   @Get(':id')
@@ -90,6 +103,17 @@ export class PlansController {
   @Roles(UserRole.ADMIN, UserRole.PROFE)
   assignPlan(@Body() body: { planId: string; studentId: string }, @Request() req: any) {
     return this.plansService.assignPlan(body.planId, body.studentId, req.user);
+  }
+
+  @Get('history/student/:studentId')
+  getStudentHistory(
+    @Param('studentId') studentId: string,
+    @Request() req: any,
+  ) {
+    if (req.user.role !== UserRole.PROFE && req.user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException('Access denied');
+    }
+    return this.plansService.getHistoricalPlans(studentId);
   }
 
   @Get('assignments/student/:studentId')
@@ -143,5 +167,13 @@ export class PlansController {
     @Request() req: any,
   ) {
     return this.plansService.restartAssignment(assignmentId, req.user.id);
+  }
+
+  @Post('student/finish/:assignmentId')
+  finishAssignment(
+    @Param('assignmentId') assignmentId: string,
+    @Request() req: any,
+  ) {
+    return this.plansService.finishAssignment(assignmentId, req.user.id);
   }
 }

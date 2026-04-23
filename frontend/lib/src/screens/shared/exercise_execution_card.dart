@@ -33,20 +33,35 @@ class ExerciseExecutionCard extends StatefulWidget {
 class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   // Common
   late TextEditingController _setsController;
+  late FocusNode _setsFocusNode;
   late bool _isCompleted;
   // REPS Mode
   late TextEditingController _repsController;
+  late FocusNode _repsFocusNode;
   late TextEditingController _weightController;
+  late FocusNode _weightFocusNode;
   // TIME Mode
   late TextEditingController _timeController;
+  late FocusNode _timeFocusNode;
   // DISTANCE Mode
   late TextEditingController _distanceController;
+  late FocusNode _distanceFocusNode;
 
   // BODY WEIGHT Mode
   late TextEditingController _addedWeightController;
+  late FocusNode _addedWeightFocusNode;
+
   bool _isBodyWeight = false;
 
   late String _metricType;
+
+  late PlanProvider _planProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _planProvider = context.read<PlanProvider>();
+  }
 
   @override
   void initState() {
@@ -64,6 +79,29 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
         text: widget.execution.setsDone?.toString() ??
             widget.execution.targetSetsSnapshot?.toString() ??
             '');
+
+    _setsFocusNode = FocusNode();
+    _repsFocusNode = FocusNode();
+    _weightFocusNode = FocusNode();
+    _timeFocusNode = FocusNode();
+    _distanceFocusNode = FocusNode();
+    _addedWeightFocusNode = FocusNode();
+
+    void flushOnFocusLoss(FocusNode node) {
+      if (!node.hasFocus) {
+        if (_debounce?.isActive ?? false) {
+          _debounce!.cancel();
+          _saveChanges();
+        }
+      }
+    }
+
+    _setsFocusNode.addListener(() => flushOnFocusLoss(_setsFocusNode));
+    _repsFocusNode.addListener(() => flushOnFocusLoss(_repsFocusNode));
+    _weightFocusNode.addListener(() => flushOnFocusLoss(_weightFocusNode));
+    _timeFocusNode.addListener(() => flushOnFocusLoss(_timeFocusNode));
+    _distanceFocusNode.addListener(() => flushOnFocusLoss(_distanceFocusNode));
+    _addedWeightFocusNode.addListener(() => flushOnFocusLoss(_addedWeightFocusNode));
 
     // Initialize specific controllers
     _repsController = TextEditingController(
@@ -94,22 +132,36 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
       final newSets = widget.execution.setsDone?.toString() ??
           widget.execution.targetSetsSnapshot?.toString() ??
           '';
-      if (_setsController.text != newSets) {
+      if (_setsController.text != newSets && !_setsFocusNode.hasFocus) {
         _setsController.text = newSets;
       }
 
       final newReps = widget.execution.repsDone ??
           widget.execution.targetRepsSnapshot ??
           '';
-      if (_repsController.text != newReps) {
+      if (_repsController.text != newReps && !_repsFocusNode.hasFocus) {
         _repsController.text = newReps;
       }
 
       final newWeight = widget.execution.weightUsed ??
           widget.execution.targetWeightSnapshot ??
           '';
-      if (_weightController.text != newWeight) {
+      if (_weightController.text != newWeight && !_weightFocusNode.hasFocus) {
         _weightController.text = newWeight;
+      }
+
+      final newTime = widget.execution.timeSpent ??
+          widget.execution.targetTimeSnapshot?.toString() ??
+          '';
+      if (_timeController.text != newTime && !_timeFocusNode.hasFocus) {
+        _timeController.text = newTime;
+      }
+
+      final newDistance = widget.execution.distanceCovered?.toString() ??
+          widget.execution.targetDistanceSnapshot?.toString() ??
+          '';
+      if (_distanceController.text != newDistance && !_distanceFocusNode.hasFocus) {
+        _distanceController.text = newDistance;
       }
 
       if (widget.execution.isCompleted != oldWidget.execution.isCompleted) {
@@ -117,7 +169,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
       }
 
       final newAddedWeight = widget.execution.addedWeight?.toString() ?? '';
-      if (_addedWeightController.text != newAddedWeight) {
+      if (_addedWeightController.text != newAddedWeight && !_addedWeightFocusNode.hasFocus) {
         _addedWeightController.text = newAddedWeight;
       }
 
@@ -130,17 +182,41 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
 
   @override
   void dispose() {
+    // SECURITY FLUSH: Ensure final keystrokes are saved before widget is destroyed
+    if (_debounce?.isActive ?? false) {
+      _debounce!.cancel();
+      // Use the cached provider reference, as context is no longer safe to read during unmount
+      final updateData = _buildUpdateData();
+      _planProvider.updateSessionExercise(widget.execution.id, updateData);
+    }
+
     _repsController.dispose();
+    _repsFocusNode.dispose();
     _weightController.dispose();
+    _weightFocusNode.dispose();
     _setsController.dispose();
+    _setsFocusNode.dispose();
     _timeController.dispose();
+    _timeFocusNode.dispose();
     _distanceController.dispose();
+    _distanceFocusNode.dispose();
     _addedWeightController.dispose();
+    _addedWeightFocusNode.dispose();
     super.dispose();
+  }
+
+  String _fallbackHint(String? val) {
+    if (val == null || val.trim().isEmpty) return '-';
+    return val;
   }
 
   Future<void> _toggleCompletion(bool? value) async {
     if (value == null) return;
+
+    // Flush debounce: cancel any pending save because we are about to save everything right now
+    if (_debounce?.isActive ?? false) {
+      _debounce!.cancel();
+    }
 
     setState(() {
       _isCompleted = value;
@@ -203,14 +279,20 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
 
     final bool readOnly = widget.readOnly;
 
+    // Pick a solid card background when completed so numbers stay readable
+    // over any page background (image/dark/light).
+    final completedCardColor = Theme.of(context).brightness == Brightness.dark
+        ? Colors.green.shade900.withValues(alpha: 0.85)
+        : Colors.green.shade50;
+
     return Card(
-      elevation: _isCompleted ? 1 : 4,
+      elevation: _isCompleted ? 2 : 4,
       margin: const EdgeInsets.only(bottom: 20),
-      color: _isCompleted ? Colors.green.withValues(alpha: 0.15) : null,
+      color: _isCompleted ? completedCardColor : null,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: _isCompleted
-            ? const BorderSide(color: Colors.green, width: 2)
+            ? BorderSide(color: Colors.green.shade400, width: 2)
             : BorderSide.none,
       ),
       child: Padding(
@@ -495,9 +577,9 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                   child: _buildInputMetric(
                     context,
                     controller: _setsController,
+                    focusNode: _setsFocusNode,
                     label: AppLocalizations.of(context)!.get('sets'),
-                    hint:
-                        widget.execution.targetSetsSnapshot?.toString() ?? '-',
+                    hint: _fallbackHint(widget.execution.targetSetsSnapshot?.toString()),
                     icon: Icons.repeat,
                   ),
                 ),
@@ -507,8 +589,9 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                     child: _buildInputMetric(
                       context,
                       controller: _repsController,
+                      focusNode: _repsFocusNode,
                       label: AppLocalizations.of(context)!.get('reps'),
-                      hint: widget.execution.targetRepsSnapshot ?? '-',
+                      hint: _fallbackHint(widget.execution.targetRepsSnapshot),
                       icon: Icons.refresh,
                     ),
                   ),
@@ -546,6 +629,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                       child: _buildInputMetric(
                         context,
                         controller: _addedWeightController,
+                        focusNode: _addedWeightFocusNode,
                         label: 'Lastre (kg)',
                         hint: '0',
                         icon: Icons.add_circle_outline,
@@ -557,8 +641,9 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                       child: _buildInputMetric(
                         context,
                         controller: _weightController,
+                        focusNode: _weightFocusNode,
                         label: AppLocalizations.of(context)!.get('load'),
-                        hint: widget.execution.targetWeightSnapshot ?? '-',
+                        hint: _fallbackHint(widget.execution.targetWeightSnapshot),
                         icon: Icons.fitness_center,
                       ),
                     ),
@@ -569,9 +654,9 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                     child: _buildInputMetric(
                       context,
                       controller: _timeController,
+                      focusNode: _timeFocusNode,
                       label: 'Tiempo (seg)', // Localize later
-                      hint: widget.execution.targetTimeSnapshot?.toString() ??
-                          '-',
+                      hint: _fallbackHint(widget.execution.targetTimeSnapshot?.toString()),
                       icon: Icons.timer,
                     ),
                   ),
@@ -581,10 +666,9 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                     child: _buildInputMetric(
                       context,
                       controller: _distanceController,
+                      focusNode: _distanceFocusNode,
                       label: 'Distancia (m)', // Localize later
-                      hint:
-                          widget.execution.targetDistanceSnapshot?.toString() ??
-                              '-',
+                      hint: _fallbackHint(widget.execution.targetDistanceSnapshot?.toString()),
                       icon: Icons.directions_run,
                     ),
                   ),
@@ -599,11 +683,13 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
 
   Widget _buildInputMetric(BuildContext context,
       {required TextEditingController controller,
+      required FocusNode focusNode,
       required String label,
       required String hint,
       required IconData icon}) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: TextInputType.text,
       decoration: InputDecoration(
         labelText: '$label (Sugg: $hint)',
@@ -614,6 +700,12 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
             top: 12,
             bottom: 12,
             right: 30), // Increased right padding to prevent overlap
+        fillColor: widget.readOnly
+            ? (Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.05))
+            : null,
+        filled: widget.readOnly,
         isDense: true,
         suffixIcon: Padding(
           padding: const EdgeInsets.only(right: 8.0),
@@ -622,10 +714,14 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
         suffixIconConstraints:
             const BoxConstraints(maxHeight: 40, maxWidth: 40),
       ),
-      style: const TextStyle(fontWeight: FontWeight.bold),
+      style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: widget.readOnly
+              ? Theme.of(context).textTheme.bodyLarge?.color
+              : null),
       onChanged: widget.readOnly ? null : _onFieldChanged,
       readOnly: widget.readOnly,
-      enabled: !widget.readOnly,
+      // Removed `enabled: !widget.readOnly` so the text is fully opaque and visible
     );
   }
 

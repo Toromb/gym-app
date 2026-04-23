@@ -18,7 +18,7 @@ class _StudentPlanScreenState extends State<StudentPlanScreen> {
     super.initState();
     // Fetch history to get the active assignment structure (ID needed for restart)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PlanProvider>().fetchMyHistory();
+      context.read<PlanProvider>().fetchMyAssignments();
     });
   }
 

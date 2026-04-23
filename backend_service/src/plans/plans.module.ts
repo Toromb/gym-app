@@ -22,6 +22,7 @@ import { AssignedPlan } from './entities/assigned-plan.entity';
 import { AssignedPlanWeek } from './entities/assigned-plan-week.entity';
 import { AssignedPlanDay } from './entities/assigned-plan-day.entity';
 import { AssignedPlanExercise } from './entities/assigned-plan-exercise.entity';
+import { CompletedPlan } from './entities/completed-plan.entity';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AssignedPlanExercise } from './entities/assigned-plan-exercise.entity';
       AssignedPlanWeek,
       AssignedPlanDay,
       AssignedPlanExercise,
+      CompletedPlan,
     ]),
     ExercisesModule,
     UsersModule,
