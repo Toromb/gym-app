@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/plan_provider.dart';
@@ -445,7 +446,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
           title:
               Text(widget.planToEdit == null ? 'Crear Plan' : 'Editar Plan')),
       body: Column(

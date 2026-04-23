@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -180,7 +181,7 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
   Widget build(BuildContext context) {
     if (_currentGym == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Configuración del Gym')),
+        appBar: ConstrainedAppBar(title: const Text('Configuración del Gym')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -191,7 +192,7 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Configuración del Gym')),
+      appBar: ConstrainedAppBar(title: const Text('Configuración del Gym')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),

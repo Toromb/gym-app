@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../localization/app_localizations.dart';
 import '../../providers/plan_provider.dart';
@@ -28,7 +29,7 @@ class _PlansListScreenState extends State<PlansListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
           title: Text(AppLocalizations.of(context)!.get('plansLibrary'))),
       body: Center(
         child: ConstrainedBox(

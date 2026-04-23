@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
@@ -35,7 +36,7 @@ class _GymScheduleScreenState extends State<GymScheduleScreen> {
       overlayOpacity: 0.85, // Very dark so text remains 100% legible
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
+        appBar: ConstrainedAppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           title: Text(AppLocalizations.of(context)!.get('gymSchedule')),
@@ -129,11 +130,7 @@ class _GymScheduleScreenState extends State<GymScheduleScreen> {
 
         return Card(
           elevation: 0,
-          color: Theme.of(context)
-              .colorScheme
-              .surface
-              .withOpacity(0.9), // Subtle transparency
-          margin: const EdgeInsets.only(bottom: 12),
+                    margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -189,11 +186,7 @@ class _GymScheduleScreenState extends State<GymScheduleScreen> {
         final schedule = _editedSchedules[index];
         return Card(
           elevation: 0,
-          color: Theme.of(context)
-              .colorScheme
-              .surface
-              .withOpacity(0.9), // Subtle transparency
-          child: Padding(
+                    child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [

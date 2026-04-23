@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
 // Keep for Plan refs if needed
@@ -8,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../localization/app_localizations.dart';
 import '../shared/plan_details_screen.dart';
 import '../../widgets/background_page_wrapper.dart';
+import 'student_history_screen.dart';
 
 class StudentPlansListScreen extends StatefulWidget {
   const StudentPlansListScreen({super.key});
@@ -27,10 +29,10 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
   }
 
   Future<void> _loadHistory() async {
-    final history = await context.read<PlanProvider>().fetchMyHistory();
+    final history = await context.read<PlanProvider>().fetchMyAssignments();
     if (mounted) {
       setState(() {
-        _assignments = history.where((a) => a.isActive).toList();
+        _assignments = history;
         _isLoading = false;
       });
     }
@@ -42,10 +44,28 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
       overlayOpacity: 0.85,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
+        appBar: ConstrainedAppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           title: Text(AppLocalizations.of(context)!.get('navPlans')),
+          actions: [
+            TextButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const StudentHistoryScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.history, color: AppColors.accent),
+              label: const Text(
+                'Ver Historial',
+                style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -75,11 +95,7 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
 
                           return Card(
                             elevation: 0,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surface
-                                .withOpacity(0.9),
-                            margin: const EdgeInsets.only(bottom: 16),
+                                                        margin: const EdgeInsets.only(bottom: 16),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () {
@@ -116,20 +132,25 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 12, vertical: 6),
                                           decoration: BoxDecoration(
-                                            color: AppColors.success
-                                                .withValues(alpha: 0.1),
+                                            color: isActive
+                                                ? AppColors.success.withValues(alpha: 0.1)
+                                                : Colors.amber.withValues(alpha: 0.1),
                                             borderRadius:
                                                 BorderRadius.circular(20),
                                             border: Border.all(
-                                                color: AppColors.success
-                                                    .withValues(alpha: 0.2)),
+                                                color: isActive
+                                                    ? AppColors.success.withValues(alpha: 0.2)
+                                                    : Colors.amber.withValues(alpha: 0.2)),
                                           ),
                                           child: Text(
-                                              AppLocalizations.of(context)!
-                                                  .get('statusActive'),
+                                              isActive
+                                                  ? AppLocalizations.of(context)!.get('statusActive')
+                                                  : 'Pendiente',
                                               style: textTheme.labelSmall
                                                   ?.copyWith(
-                                                      color: AppColors.success,
+                                                      color: isActive
+                                                          ? AppColors.success
+                                                          : Colors.amber.shade800,
                                                       fontWeight:
                                                           FontWeight.bold)),
                                         ),

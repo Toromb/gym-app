@@ -52,8 +52,16 @@ class SyncService {
   Future<List<Map<String, dynamic>>> _processQueue() async {
     final List<Map<String, dynamic>> results = [];
 
-    // Double check real internet
-    bool hasInternet = await InternetConnectionChecker.instance.hasConnection;
+    // Double check real internet safely
+    bool hasInternet = true;
+    if (!kIsWeb) {
+      try {
+        hasInternet = await InternetConnectionChecker.instance.hasConnection;
+      } catch (e) {
+        if (kDebugMode) print('⚠️ Error checking internet: $e');
+      }
+    }
+
     if (!hasInternet) {
       if (kDebugMode) print('⚠️ Network connected but no Internet access.');
       return results;

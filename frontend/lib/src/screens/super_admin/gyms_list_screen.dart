@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/gyms_provider.dart';
 import 'manage_gym_screen.dart';
@@ -22,7 +23,7 @@ class _GymsListScreenState extends State<GymsListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: const Text('Manage Gyms'),
         actions: [
           IconButton(

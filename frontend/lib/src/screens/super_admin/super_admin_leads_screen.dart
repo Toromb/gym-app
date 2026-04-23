@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../services/api_client.dart';
 import '../../providers/theme_provider.dart';
@@ -342,7 +343,7 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: const Text('Leads Comerciales'),
         actions: [
           IconButton(

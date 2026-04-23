@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 
 class TermsScreen extends StatelessWidget {
   const TermsScreen({super.key});
@@ -13,7 +14,7 @@ class TermsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: const Text('Términos y Condiciones'),
         centerTitle: true,
         backgroundColor: Colors.white,

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import '../../constants/app_constants.dart';
@@ -37,7 +38,7 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: const Text('Manage Gym Admins'),
         actions: [
           IconButton(

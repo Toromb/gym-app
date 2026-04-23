@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../public/register_with_invite_screen.dart';
 
@@ -64,7 +65,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: const Text('Escanear QR del Gimnasio'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

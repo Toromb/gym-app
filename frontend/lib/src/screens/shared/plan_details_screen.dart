@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../models/plan_model.dart';
@@ -6,8 +7,11 @@ import '../../models/student_assignment_model.dart';
 import '../../providers/plan_provider.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart'; // Added
+import '../../models/logic/plan_traversal_logic.dart';
 import 'day_detail_screen.dart';
 import '../teacher/create_plan_screen.dart';
+import '../../widgets/background_page_wrapper.dart';
+import '../../theme/background_styles.dart';
 
 class PlanDetailsScreen extends StatefulWidget {
   final Plan plan;
@@ -108,82 +112,82 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
   Widget build(BuildContext context) {
     // If canEdit is false, we assume it might be a student view.
     // However, widget.assignment is the source of truth for tracking.
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_plan.name),
-        actions: [
-          if (widget.canEdit)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          CreatePlanScreen(planToEdit: _plan)),
-                );
-                if (result == true && mounted) {
-                  // Refresh plan specifically from server to ensure fresh data
-                  if (_plan.id != null) {
-                    final updatedPlan = await context
-                        .read<PlanProvider>()
-                        .getPlanById(_plan.id!);
-                    if (updatedPlan != null) {
-                      setState(() {
-                        _plan = updatedPlan;
-                      });
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.82,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: ConstrainedAppBar(
+          title: Text(_plan.name),
+          actions: [
+            if (widget.canEdit)
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            CreatePlanScreen(planToEdit: _plan)),
+                  );
+                  if (result == true && mounted) {
+                    if (_plan.id != null) {
+                      final updatedPlan = await context
+                          .read<PlanProvider>()
+                          .getPlanById(_plan.id!);
+                      if (updatedPlan != null) {
+                        setState(() {
+                          _plan = updatedPlan;
+                        });
+                      }
                     }
                   }
-                }
-              },
-            ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          if (_plan.id != null) {
-            // Reload plan
-            final updatedPlan =
-                await context.read<PlanProvider>().getPlanById(_plan.id!);
-            if (updatedPlan != null) {
-              setState(() {
-                _plan = updatedPlan;
-              });
-            }
-            // Reload Progress if assignment exists
-            if (_currentAssignment != null) {
-              await context.read<PlanProvider>().fetchMyHistory();
-              // Update current assignment reference from provider
-              // This is tricky because we need to find OUR assignment in the list.
-              // For now, reloading Plan is key for Sets/Reps.
-              final assignments = context.read<PlanProvider>().assignments;
-              try {
-                final updatedAss = assignments
-                    .firstWhere((a) => a.id == _currentAssignment!.id);
+                },
+              ),
+          ],
+        ),
+        bottomNavigationBar: _buildActivationCTA(context),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            if (_plan.id != null) {
+              final updatedPlan =
+                  await context.read<PlanProvider>().getPlanById(_plan.id!);
+              if (updatedPlan != null) {
                 setState(() {
-                  _currentAssignment = updatedAss;
+                  _plan = updatedPlan;
                 });
-              } catch (_) {}
+              }
+              if (_currentAssignment != null) {
+                await context.read<PlanProvider>().fetchMyAssignments();
+                final assignments = context.read<PlanProvider>().assignments;
+                try {
+                  final updatedAss = assignments
+                      .firstWhere((a) => a.id == _currentAssignment!.id);
+                  setState(() {
+                    _currentAssignment = updatedAss;
+                  });
+                } catch (_) {}
+              }
             }
-          }
-        },
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildPlanSummaryCard(context, _plan),
-                  const SizedBox(height: 24),
-                  Text(AppLocalizations.of(context)!.get('weeklySchedule'),
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  ..._plan.weeks.map((week) => _buildWeekCard(context, week)),
-                ],
+          },
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPlanSummaryCard(context, _plan),
+                    const SizedBox(height: 24),
+                    Text(AppLocalizations.of(context)!.get('weeklySchedule'),
+                        style: BackgroundStyles.fromTheme(
+                          Theme.of(context).textTheme.titleLarge,
+                        ).copyWith(fontSize: 20)),
+                    const SizedBox(height: 16),
+                    ..._plan.weeks.map((week) => _buildWeekCard(context, week)),
+                  ],
+                ),
               ),
             ),
           ),
@@ -262,10 +266,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Text(
               '${AppLocalizations.of(context)!.get('week').toUpperCase()} ${week.weekNumber}',
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  color: Colors.grey)),
+              style: BackgroundStyles.label),
         ),
         ...week.days
             .map<Widget>((day) => _buildDayCard(context, day, week.weekNumber))
@@ -317,12 +318,12 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
 
           if (result == true && !widget.readOnly && mounted) {
             // User finished workout.
-            await context.read<PlanProvider>().fetchMyHistory();
+            await context.read<PlanProvider>().fetchMyAssignments();
             if (mounted)
               Navigator.of(context).popUntil((route) => route.isFirst);
           } else if (!widget.readOnly && mounted) {
             // Refresh
-            context.read<PlanProvider>().fetchMyHistory().then((assignments) {
+            context.read<PlanProvider>().fetchMyAssignments().then((assignments) {
               if (mounted) {
                 try {
                   StudentAssignment updated;
@@ -415,6 +416,66 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                 Icon(Icons.arrow_forward_ios,
                     size: 16, color: colorScheme.onSurfaceVariant),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget? _buildActivationCTA(BuildContext context) {
+    if (widget.canEdit || widget.readOnly || _currentAssignment == null) {
+      return null;
+    }
+
+    final provider = context.read<PlanProvider>();
+    final activeAssignmentId = provider.activeAssignment?.id;
+
+    if (_currentAssignment!.id == activeAssignmentId) {
+      return null;
+    }
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SizedBox(
+          width: double.infinity,
+          height: 60,
+          child: ElevatedButton.icon(
+            onPressed: () async {
+              final provider = context.read<PlanProvider>();
+              final isFullyCompleted = _currentAssignment!.plan.weeks.isNotEmpty && _currentAssignment!.nextWorkout == null;
+              
+              bool success;
+              if (isFullyCompleted) {
+                // If the plan is 100% completed, "activating" it should start a new cycle.
+                success = await provider.restartPlan(_currentAssignment!.id);
+              } else {
+                success = await provider.activateAssignment(_currentAssignment!.id);
+              }
+
+              if (success && mounted) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              } else if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(AppLocalizations.of(context)!.get('errorGeneral') ?? 'Error')),
+                );
+              }
+            },
+            icon: context.watch<PlanProvider>().isLoading
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Icon(Icons.play_arrow, size: 28),
+            label: Text(
+              'Elegir y comenzar este plan',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 4,
+            ),
           ),
         ),
       ),

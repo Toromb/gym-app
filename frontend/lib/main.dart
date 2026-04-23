@@ -48,16 +48,21 @@ void main() async {
 
   ApiClient.onSessionTerminated = () {
     // Force an immediate UI redirect to Login when session dies
-    AuthService().logout().then((_) {
-      navigatorKey.currentState
-          ?.pushNamedAndRemoveUntil('/login', (route) => false);
-      final context = navigatorKey.currentContext;
-      if (context != null) {
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      Provider.of<AuthProvider>(context, listen: false).logout().then((_) {
+        navigatorKey.currentState
+            ?.pushNamedAndRemoveUntil('/login', (route) => false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Tu sesión ha expirado por seguridad.')),
         );
-      }
-    });
+      });
+    } else {
+      AuthService().logout().then((_) {
+        navigatorKey.currentState
+            ?.pushNamedAndRemoveUntil('/login', (route) => false);
+      });
+    }
   };
 
   runApp(

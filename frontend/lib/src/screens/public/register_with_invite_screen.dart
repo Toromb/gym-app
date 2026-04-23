@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
@@ -270,7 +271,7 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: const Text("Completar Registro"),
         elevation: 0,
         backgroundColor: Colors.transparent,

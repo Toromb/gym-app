@@ -1,6 +1,7 @@
 import '../models/plan_model.dart';
 import '../models/student_assignment_model.dart';
 import '../models/execution_model.dart';
+import '../models/completed_plan_model.dart';
 import 'api_client.dart';
 import 'api_exceptions.dart';
 
@@ -45,9 +46,18 @@ class PlanService {
     return Plan.fromJson(response);
   }
 
-  Future<List<StudentAssignment>> getMyHistory() async {
-    final response = await _api.get('/plans/student/history');
+  Future<List<StudentAssignment>> getMyAssignments() async {
+    final response = await _api.get('/plans/student/assignments');
     return _parseList(response, (json) => StudentAssignment.fromJson(json));
+  }
+
+  Future<List<CompletedPlan>> getCompletedHistory() async {
+    final response = await _api.get('/plans/student/history');
+    return _parseList(response, (json) => CompletedPlan.fromJson(json));
+  }
+
+  Future<void> activateAssignment(String assignmentId) async {
+    await _api.post('/plans/student/assignments/$assignmentId/activate', {});
   }
 
   Future<bool> updateProgress(
@@ -88,6 +98,11 @@ class PlanService {
     return response as List<dynamic>;
   }
 
+  Future<List<CompletedPlan>> getStudentHistory(String studentId) async {
+    final response = await _api.get('/plans/history/student/$studentId');
+    return _parseList(response, (json) => CompletedPlan.fromJson(json));
+  }
+
   Future<bool> deleteAssignment(String assignmentId) async {
     await _api.delete('/plans/assignments/$assignmentId');
     return true;
@@ -109,6 +124,11 @@ class PlanService {
 
   Future<bool> restartPlan(String assignmentId) async {
     await _api.post('/plans/student/restart/$assignmentId', {});
+    return true;
+  }
+
+  Future<bool> finishAssignment(String assignmentId) async {
+    await _api.post('/plans/student/finish/$assignmentId', {});
     return true;
   }
 

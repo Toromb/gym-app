@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
@@ -61,9 +62,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           widget.studentId != null &&
           widget.planId != null &&
           widget.day != null) {
-        debugPrint(
-            'DayDetailScreen: Fetching session for student ${widget.studentId}, Plan ${widget.planId}, W${widget.weekNumber} D${widget.day!.order}');
-        setState(() => _isLoadingReadOnly = true);
+      setState(() => _isLoadingReadOnly = true);
         context
             .read<PlanProvider>()
             .fetchStudentSession(
@@ -74,8 +73,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               startDate: widget.assignedAt,
             )
             .then((session) {
-          debugPrint(
-              'DayDetailScreen: Fetched session: ${session?.id ?? "NULL"}');
           if (mounted) {
             setState(() {
               _readOnlySession = session;
@@ -145,12 +142,26 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         }
       } catch (e) {
         if (mounted) {
-          String msg = AppLocalizations.of(context)!.get('errorFinish');
-          if (e.toString().contains('Conflict')) {
+          // Si e es una excepcion del backend (ej: ApiException), mostramos directamente su mensaje.
+          String msg = e.toString();
+          if (msg.contains('Conflict') || msg.contains('409')) {
             msg = 'Date already has a completed workout!';
+          } else if (msg.contains('Exception:')) {
+            msg = msg.replaceAll('Exception:', '').trim();
+          } else if (msg.contains('ApiException:')) {
+            msg = msg.replaceAll('ApiException:', '').trim();
+          } else if (msg.contains('BadRequestException:')) {
+            msg = msg.replaceAll('BadRequestException:', '').trim();
+          } else if (msg.startsWith('Exception')) {
+             msg = AppLocalizations.of(context)!.get('errorFinish');
           }
+
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(msg, style: const TextStyle(color: Colors.white)),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
           );
         }
       }
@@ -165,6 +176,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
 
     List<SessionExercise> exercisesToRender = [];
     String status = 'READ_ONLY';
+
 
     if (widget.readOnly) {
       if (_readOnlySession != null) {
@@ -184,7 +196,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               body: Center(child: CircularProgressIndicator()));
         }
         return Scaffold(
-          appBar: AppBar(title: Text(widget.day?.title ?? 'Entrenamiento')),
+          appBar: ConstrainedAppBar(title: Text(widget.day?.title ?? 'Entrenamiento')),
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -216,7 +228,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           0.9, // Alta opacidad priorizando la legibilidad (funcionalidad)
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
+        appBar: ConstrainedAppBar(
           backgroundColor: Colors.transparent,
           title: Text(widget.day?.title ??
               (widget.freeTrainingId != null

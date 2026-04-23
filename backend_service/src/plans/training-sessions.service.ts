@@ -6,7 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThanOrEqual } from 'typeorm';
+import { Repository, Between, MoreThanOrEqual, IsNull } from 'typeorm';
 import {
   TrainingSession,
   ExecutionStatus,
@@ -22,6 +22,7 @@ import { SessionSynchronizer } from './utils/session-synchronizer';
 import { UsersService } from '../users/users.service';
 import { UserRole } from '../users/entities/user.entity';
 import { FreeTrainingDefinition } from './entities/free-training-definition.entity';
+import { AssignedPlan } from './entities/assigned-plan.entity';
 
 @Injectable()
 export class TrainingSessionsService {
@@ -63,16 +64,50 @@ export class TrainingSessionsService {
 
         const dayKey = `W${weekNumber}-D${dayOrder}`;
 
-        const existingInProgress = await this.sessionRepo.findOne({
-          where: {
+        // Determine if it's new AssignedPlan or legacy Plan
+        const assignedPlan = await this.sessionRepo.manager.findOne(AssignedPlan, {
+          where: { id: planId },
+          relations: [
+            'weeks',
+            'weeks.days',
+            'weeks.days.exercises',
+            'weeks.days.exercises.exercise',
+            'weeks.days.exercises.equipments',
+          ],
+        });
+
+        const legacyPlan = !assignedPlan ? await this.planRepo.findOne({
+          where: { id: planId },
+          relations: [
+            'weeks',
+            'weeks.days',
+            'weeks.days.exercises',
+            'weeks.days.exercises.exercise',
+            'weeks.days.exercises.equipments',
+          ],
+        }) : null;
+
+        if (!assignedPlan && !legacyPlan) throw new NotFoundException('Plan not found');
+
+        const activePlanStructure = assignedPlan || legacyPlan;
+
+        const sessionSearchWhere: any = {
             student: { id: userId },
-            plan: { id: planId },
             dayKey: dayKey,
             date: finalDate,
-            status: ExecutionStatus.IN_PROGRESS,
-          },
+            completedPlan: IsNull(),
+        };
+        if (assignedPlan) {
+            sessionSearchWhere.assignedPlan = { id: planId };
+        } else {
+            sessionSearchWhere.plan = { id: planId };
+        }
+
+        const existingInProgress = await this.sessionRepo.findOne({
+          where: sessionSearchWhere,
           relations: [
             'plan',
+            'assignedPlan',
             'exercises',
             'exercises.exercise',
             'exercises.exercise.exerciseMuscles',
@@ -85,27 +120,17 @@ export class TrainingSessionsService {
         }
 
         // Create NEW Plan Session
-        const plan = await this.planRepo.findOne({
-          where: { id: planId },
-          relations: [
-            'weeks',
-            'weeks.days',
-            'weeks.days.exercises',
-            'weeks.days.exercises.exercise',
-            'weeks.days.exercises.equipments',
-          ],
-        });
-        if (!plan) throw new NotFoundException('Plan not found');
 
-        const week = plan.weeks.find((w) => w.weekNumber === weekNumber);
+        const week = activePlanStructure!.weeks?.find((w: any) => w.weekNumber === weekNumber);
         if (!week) throw new NotFoundException(`Week ${weekNumber} not found`);
 
-        const day = week.days.find((d) => d.order === dayOrder);
+        const day = week.days?.find((d: any) => d.order === dayOrder);
         if (!day) throw new NotFoundException(`Day ${dayOrder} not found`);
 
-        const newSession = this.sessionRepo.create({
-          student: { id: userId } as User,
-          plan: { id: planId } as Plan,
+        const newSessionData: any = {
+          student: { id: userId },
+          plan: legacyPlan ? { id: planId } : null,
+          assignedPlan: assignedPlan ? { id: planId } : null,
           date: finalDate,
           dayKey: dayKey,
           weekNumber,
@@ -113,7 +138,8 @@ export class TrainingSessionsService {
           source: 'PLAN',
           status: ExecutionStatus.IN_PROGRESS,
           exercises: [],
-        });
+        };
+        const newSession = this.sessionRepo.create(newSessionData as any) as unknown as TrainingSession;
 
         // Create SessionExercises with Snapshots
         const sessionExercises: SessionExercise[] = day.exercises.map(
@@ -239,42 +265,59 @@ export class TrainingSessionsService {
   ): Promise<SessionExercise> {
     const sessionEx = await this.sessionExerciseRepo.findOne({
       where: { id: exerciseId },
-      relations: ['session', 'exercise', 'exercise.equipments', 'equipmentsSnapshot'],
+      relations: ['session', 'session.completedPlan', 'exercise', 'exercise.equipments', 'equipmentsSnapshot'],
     });
 
     if (!sessionEx)
       throw new NotFoundException('Session exercise not found');
+
+    if (sessionEx.session.completedPlan) {
+      throw new ForbiddenException('Cannot modify a historical session exercise');
+    }
 
     // Auto-fill actuals
     if (updateData.isCompleted === true) {
       if (!sessionEx.setsDone || sessionEx.setsDone === '0') {
         sessionEx.setsDone = (sessionEx.targetSetsSnapshot ?? 0).toString();
       }
-      if (!sessionEx.repsDone) {
-        sessionEx.repsDone = sessionEx.targetRepsSnapshot ?? '';
-      }
+      
+      const metricType = sessionEx.exercise?.metricType || 'REPS';
 
-      // WEIGHT LOGIC: Check if it's Body Weight
-      const isBodyWeight = sessionEx.exercise?.equipments?.some(e => e.isBodyWeight)
-        || sessionEx.equipmentsSnapshot?.some(e => e.isBodyWeight);
+      if (metricType === 'REPS') {
+        if (!sessionEx.repsDone) {
+          sessionEx.repsDone = sessionEx.targetRepsSnapshot ?? '';
+        }
 
-      if (isBodyWeight) {
-        // Fetch User Weight
-        const sessionWithUser = await this.sessionRepo.findOne({
-          where: { id: sessionEx.session.id },
-          relations: ['student'],
-        });
-        const currentWeight = sessionWithUser?.student?.currentWeight || sessionWithUser?.student?.initialWeight || 0;
-        const addedWeight = updateData.addedWeight || sessionEx.addedWeight || 0;
+        // WEIGHT LOGIC: Check if it's Body Weight (Usually applies mostly to REPS, but safe to do here)
+        const isBodyWeight = sessionEx.exercise?.equipments?.some(e => e.isBodyWeight)
+          || sessionEx.equipmentsSnapshot?.some(e => e.isBodyWeight);
 
-        // Total Load = Body + Added
-        sessionEx.weightUsed = (currentWeight + addedWeight).toString();
-        // Ensure addedWeight is saved
-        if (updateData.addedWeight !== undefined) sessionEx.addedWeight = updateData.addedWeight;
-      } else {
-        // Standard Logic
-        if (!sessionEx.weightUsed) {
-          sessionEx.weightUsed = sessionEx.targetWeightSnapshot ?? '';
+        if (isBodyWeight) {
+          // Fetch User Weight
+          const sessionWithUser = await this.sessionRepo.findOne({
+            where: { id: sessionEx.session.id },
+            relations: ['student'],
+          });
+          const currentWeight = sessionWithUser?.student?.currentWeight || sessionWithUser?.student?.initialWeight || 0;
+          const addedWeight = updateData.addedWeight || sessionEx.addedWeight || 0;
+
+          // Total Load = Body + Added
+          sessionEx.weightUsed = (currentWeight + addedWeight).toString();
+          // Ensure addedWeight is saved
+          if (updateData.addedWeight !== undefined) sessionEx.addedWeight = updateData.addedWeight;
+        } else {
+          // Standard Logic
+          if (!sessionEx.weightUsed) {
+            sessionEx.weightUsed = sessionEx.targetWeightSnapshot ?? '';
+          }
+        }
+      } else if (metricType === 'TIME') {
+        if (!sessionEx.timeSpent) {
+          sessionEx.timeSpent = (sessionEx.targetTimeSnapshot ?? '').toString();
+        }
+      } else if (metricType === 'DISTANCE') {
+        if (sessionEx.distanceCovered === undefined || sessionEx.distanceCovered === null) {
+          sessionEx.distanceCovered = sessionEx.targetDistanceSnapshot;
         }
       }
     }
@@ -305,14 +348,23 @@ export class TrainingSessionsService {
       }
     }
 
-    // Sync Load
+    // Sync Load (Asynchronous logic for rapid UI response)
     if (updateData.isCompleted !== undefined) {
-      if (sessionEx.session) { // if loaded
-        await this._trySyncLoad(sessionEx.session.id);
+      if (sessionEx.session) {
+        this._trySyncLoad(sessionEx.session.id).catch(e => 
+          console.error(`[MuscleLoad] Fallo al sincronizar carga asincrona para sesion ${sessionEx.session.id}:`, e)
+        );
       } else {
         // reload
-        const fresh = await this.sessionExerciseRepo.findOne({ where: { id: exerciseId }, relations: ['session'] });
-        if (fresh && fresh.session) await this._trySyncLoad(fresh.session.id);
+        this.sessionExerciseRepo.findOne({ where: { id: exerciseId }, relations: ['session'] })
+          .then(fresh => {
+             if (fresh && fresh.session) {
+               this._trySyncLoad(fresh.session.id).catch(e => 
+                 console.error(`[MuscleLoad] Fallo al sincronizar carga asincrona para sesion ${fresh.session.id}:`, e)
+               );
+             }
+          })
+          .catch(e => console.error('[MuscleLoad] Fallo obteniendo sesion para sync asincrona:', e));
       }
     }
 
@@ -347,9 +399,41 @@ export class TrainingSessionsService {
   ): Promise<any> {
     const session = await this.sessionRepo.findOne({
       where: { id: sessionId, student: { id: userId } },
-      relations: ['plan'],
+      relations: ['plan', 'assignedPlan', 'completedPlan', 'exercises', 'exercises.exercise'],
     });
     if (!session) throw new NotFoundException('Session not found');
+
+    if (session.completedPlan) {
+      throw new ForbiddenException('Cannot modify a historical session');
+    }
+
+    // STRICT VALIDATION
+    const exercises = session.exercises || [];
+    for (const ex of exercises) {
+      if (!ex.isCompleted) {
+        throw new BadRequestException('Hay ejercicios sin marcar como completados.');
+      }
+
+      const metricType = ex.exercise?.metricType || 'REPS';
+      const setsDoneStr = ex.setsDone || '';
+      const setsValid = setsDoneStr.trim() !== '' && setsDoneStr !== '0';
+
+      if (metricType === 'REPS') {
+        if (!setsValid || !ex.repsDone || ex.repsDone.trim() === '' || ex.repsDone === '0') {
+          throw new BadRequestException('Hay ejercicios incompletos. Verifica repeticiones y series.');
+        }
+      } else if (metricType === 'TIME') {
+        const timeVal = parseFloat(ex.timeSpent || '0');
+        if (!setsValid || isNaN(timeVal) || timeVal <= 0) {
+          throw new BadRequestException('Hay ejercicios por tiempo incompletos. Ingresa un valor mayor a 0.');
+        }
+      } else if (metricType === 'DISTANCE') {
+        const distVal = ex.distanceCovered || 0;
+        if (!setsValid || distVal <= 0) {
+          throw new BadRequestException('Hay ejercicios por distancia incompletos. Ingresa un valor válido mayor a 0.');
+        }
+      }
+    }
 
     // REMOVED: Conflict Check (Allow multiple sessions per day)
 
@@ -364,27 +448,35 @@ export class TrainingSessionsService {
     await this._trySyncLoad(saved.id);
 
     // LEGACY SYNC (Deprecated)
-    // We keep it ONLY if linked to a plan, for backward compat with StudentPlan.progress
-    if (session.plan) {
+    // We keep it ONLY if linked to a plan or assignedPlan, for backward compat with StudentPlan.progress
+    if (session.plan || session.assignedPlan) {
+      const planReferenceId = session.assignedPlan ? session.assignedPlan.id : session.plan?.id;
       const studentPlan = await this.studentPlanRepo.findOne({
-        where: {
-          student: { id: userId },
-          plan: { id: session.plan.id },
-          isActive: true
-        },
+        where: [
+          { student: { id: userId }, assignedPlan: { id: planReferenceId }, isActive: true },
+          { student: { id: userId }, plan: { id: planReferenceId }, isActive: true },
+        ],
         order: { createdAt: 'DESC' }
       });
 
-      if (studentPlan) {
+        if (studentPlan) {
         // Simplified Legacy Sync: just mark day as done
-        const planStruct = await this.planRepo.findOne({
-          where: { id: session.plan.id },
-          relations: ['weeks', 'weeks.days'],
-        });
+        let planStruct: any;
+        if (session.assignedPlan) {
+            planStruct = await this.sessionRepo.manager.findOne(AssignedPlan, {
+              where: { id: session.assignedPlan.id },
+              relations: ['weeks', 'weeks.days'],
+            });
+        } else if (session.plan) {
+            planStruct = await this.planRepo.findOne({
+              where: { id: session.plan.id },
+              relations: ['weeks', 'weeks.days'],
+            });
+        }
 
         if (planStruct && session.weekNumber && session.dayOrder) {
-          const week = planStruct.weeks.find(w => w.weekNumber === session.weekNumber);
-          const day = week?.days.find(d => d.order === session.dayOrder);
+          const week = planStruct.weeks?.find((w: any) => w.weekNumber === session.weekNumber);
+          const day = week?.days?.find((d: any) => d.order === session.dayOrder);
 
           if (day) {
             const progress = studentPlan.progress ? JSON.parse(JSON.stringify(studentPlan.progress)) : {};
@@ -435,6 +527,7 @@ export class TrainingSessionsService {
         'exercises.exercise.exerciseMuscles',
         'exercises.exercise.exerciseMuscles.muscle',
         'plan',
+        'assignedPlan'
       ],
     });
 
@@ -452,59 +545,89 @@ export class TrainingSessionsService {
     try {
       const whereClause: any = {
         student: { id: userId },
-        plan: { id: planId },
         weekNumber: weekNumber,
         dayOrder: dayOrder,
       };
 
+      // Check if planId is assignedPlan or legacy plan. 
+      // At this point we don't know, so we can try OR using QueryBuilder, but TypeORM 0.3+ find can handle arrays of conditions
       if (startDate) {
-        whereClause.date = MoreThanOrEqual(startDate);
+        return await this._findSessionByStructureOr(userId, planId, weekNumber, dayOrder, startDate);
+      } else {
+        return await this._findSessionByStructureOr(userId, planId, weekNumber, dayOrder);
       }
-
-      const session = await this.sessionRepo.findOne({
-        where: whereClause,
-        order: { createdAt: 'DESC' },
-        relations: [
-          'exercises',
-          'exercises.exercise',
-          'exercises.exercise.exerciseMuscles',
-          'exercises.exercise.exerciseMuscles.muscle',
-          'plan', // Ensure plan is loaded for sync
-        ],
-      });
-
-      if (!session) return null;
-      return this._syncSnapshots(session);
     } catch (e) {
       console.error('Error finding session by structure:', e);
       throw e;
     }
   }
 
+  private async _findSessionByStructureOr(userId: string, planId: string, weekNumber: number, dayOrder: number, startDate?: string) {
+     const commonWhere = {
+        student: { id: userId },
+        weekNumber: weekNumber,
+        dayOrder: dayOrder,
+        ...(startDate ? { date: MoreThanOrEqual(startDate) } : {})
+     };
+     
+     const session = await this.sessionRepo.findOne({
+        where: [
+          { ...commonWhere, assignedPlan: { id: planId } },
+          { ...commonWhere, plan: { id: planId } }
+        ],
+        order: { createdAt: 'DESC' },
+        relations: [
+          'exercises',
+          'exercises.exercise',
+          'exercises.exercise.exerciseMuscles',
+          'exercises.exercise.exerciseMuscles.muscle',
+          'plan', 
+          'assignedPlan'
+        ],
+      });
+
+      if (!session) return null;
+      return this._syncSnapshots(session);
+  }
+
+
   private async _syncSnapshots(
     session: TrainingSession,
   ): Promise<TrainingSession> {
     try {
-      if (!session.plan || !session.weekNumber || !session.dayOrder) {
+      if ((!session.plan && !session.assignedPlan) || !session.weekNumber || !session.dayOrder) {
         return session;
       }
 
-      // 1. Fetch Definitive Plan Day Structure
-      const plan = await this.planRepo.findOne({
-        where: { id: session.plan.id },
-        relations: [
-          'weeks',
-          'weeks.days',
-          'weeks.days.exercises',
-          'weeks.days.exercises.exercise',
-          'weeks.days.exercises.equipments',
-        ],
-      });
+      let planStruct: any;
+      if (session.assignedPlan) {
+          planStruct = await this.sessionRepo.manager.findOne(AssignedPlan, {
+            where: { id: session.assignedPlan.id },
+            relations: [
+              'weeks',
+              'weeks.days',
+              'weeks.days.exercises',
+              'weeks.days.exercises.exercise',
+              'weeks.days.exercises.equipments',
+            ],
+          });
+      } else if (session.plan) {
+          planStruct = await this.planRepo.findOne({
+            where: { id: session.plan.id },
+            relations: [
+              'weeks',
+              'weeks.days',
+              'weeks.days.exercises',
+              'weeks.days.exercises.exercise',
+              'weeks.days.exercises.equipments',
+            ],
+          });
+      }
 
-      if (!plan) return session;
+      if (!planStruct) return session;
 
-      const week = plan.weeks.find((w) => w.weekNumber === session.weekNumber);
-      const day = week?.days.find((d) => d.order === session.dayOrder);
+      const week = planStruct.weeks?.find((w: any) => w.weekNumber === session.weekNumber);
+      const day = week?.days?.find((d: any) => d.order === session.dayOrder);
 
       if (!day) return session;
 
@@ -593,11 +716,15 @@ export class TrainingSessionsService {
   async deleteSessionExercise(exerciseExecId: string, requester: any): Promise<void> {
     const sessionExercise = await this.sessionExerciseRepo.findOne({
       where: { id: exerciseExecId },
-      relations: ['session', 'session.student', 'session.student.gym', 'exercise'], // Include gym and exercise
+      relations: ['session', 'session.completedPlan', 'session.student', 'session.student.gym', 'exercise'], // Include gym and exercise
     });
 
     if (!sessionExercise) {
       throw new NotFoundException('Session exercise not found');
+    }
+
+    if (sessionExercise.session.completedPlan) {
+      throw new ForbiddenException('Cannot delete a historical session exercise');
     }
 
     const session = sessionExercise.session;

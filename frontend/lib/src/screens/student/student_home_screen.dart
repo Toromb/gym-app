@@ -7,6 +7,7 @@ import '../../providers/stats_provider.dart'; // Import StatsProvider
 import '../../models/user_model.dart' as app_models;
 import '../../models/stats_model.dart'; // Import StatsModel
 import '../../localization/app_localizations.dart';
+import '../../utils/app_colors.dart';
 import '../../models/plan_model.dart';
 import '../../models/student_assignment_model.dart';
 import '../shared/day_detail_screen.dart';
@@ -46,9 +47,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
       // Load Dashboard Data
       final planProvider = context.read<PlanProvider>();
-      planProvider.fetchMyHistory();
-      planProvider.computeWeeklyStats();
-      planProvider.computeMonthlyStats();
+      planProvider.refreshDashboard();
 
       context.read<GymScheduleProvider>().fetchSchedule();
 
@@ -60,7 +59,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // debugPrint('StudentHomeScreen build called');
     final app_models.User? user = context.watch<AuthProvider>().user;
 
     return BackgroundPageWrapper(
@@ -361,7 +359,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 context,
                 MaterialPageRoute(
                     builder: (context) => const StudentPlansListScreen()))
-            .then((_) => context.read<PlanProvider>().fetchMyHistory());
+            .then((_) => context.read<PlanProvider>().fetchMyAssignments());
       });
     }
 
@@ -393,12 +391,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   'Felicitaciones. Has completado todos los entrenamientos de este plan.',
                   style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Reiniciar Plan'),
-                  onPressed: () {
+              Builder(
+                builder: (context) {
+                  final hasOtherPlans = provider.assignments.length > 1;
+
+                  void handleRestart() {
                     if (assignment == null) return;
                     showDialog(
                       context: context,
@@ -417,20 +414,56 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                                     .read<PlanProvider>()
                                     .restartPlan(assignment.id);
 
-                                if (!mounted) return;
+                                if (!context.mounted) return;
                                 if (success) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                           content: Text(
                                               'Plan reiniciado exitosamente')));
+                                  _refreshDashboardStats();
                                 }
                               },
                               child: const Text('Reiniciar')),
                         ],
                       ),
                     );
-                  },
-                ),
+                  }
+
+                  return Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: hasOtherPlans
+                              ? () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const StudentPlansListScreen()),
+                                  ).then((_) => _refreshDashboardStats());
+                                }
+                              : null,
+                          icon: const Icon(Icons.list),
+                          label: const Text('Seleccionar otro plan'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: hasOtherPlans
+                            ? TextButton.icon(
+                                onPressed: handleRestart,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Reiniciar Plan'),
+                              )
+                            : FilledButton.icon(
+                                onPressed: handleRestart,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Reiniciar Plan'),
+                              ),
+                      ),
+                    ],
+                  );
+                }
               ),
             ],
           ),
@@ -556,7 +589,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       decoration: BoxDecoration(
           color: isDark
               ? colorScheme.surfaceContainer
-              : Colors.white, // Dark mode aware
+              : AppColors.cardSurface, // Pastel teal-green in light mode
           borderRadius: BorderRadius.circular(20),
           border:
               Border.all(color: isDark ? Colors.white10 : Colors.grey.shade100),
@@ -733,9 +766,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         await context.read<StatsProvider>().fetchProgress();
       }
 
-      context.read<PlanProvider>().fetchMyHistory();
-      context.read<PlanProvider>().computeWeeklyStats();
-      context.read<PlanProvider>().computeMonthlyStats();
+      context.read<PlanProvider>().refreshDashboard();
     }
   }
 }

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../models/user_model.dart';
@@ -31,7 +32,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Gestionar Alumnos')),
+      appBar: ConstrainedAppBar(title: const Text('Gestionar Alumnos')),
       // FAB removed to restrict student creation for Professors.
       body: Consumer<UserProvider>(
         builder: (context, userProvider, _) {

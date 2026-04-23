@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import '../../models/plan_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'create_exercise_screen.dart'; // For edit navigation
@@ -11,7 +12,7 @@ class ExerciseDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: Text(exercise.name),
         actions: [
           IconButton(
