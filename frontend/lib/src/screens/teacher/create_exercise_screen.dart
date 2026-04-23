@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import '../../models/plan_model.dart'; // Exercise model
 import '../../services/exercise_api_service.dart';
 
@@ -503,7 +504,7 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
           title: Text(widget.exercise == null
               ? 'Crear Ejercicio'
               : 'Editar Ejercicio')),

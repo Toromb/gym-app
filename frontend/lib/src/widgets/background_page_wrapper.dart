@@ -34,10 +34,25 @@ class BackgroundPageWrapper extends StatelessWidget {
           ),
         ),
 
-        // 2. Overlay oscuro para legibilidad (ajustable por pantalla)
+        // 2. Overlay degradado para garantizar legibilidad en zonas críticas.
+        // Más oscuro arriba (donde viven los headers/títulos flotantes),
+        // manteniendo la opacidad base en el resto. Funciona con cualquier imagen.
         Positioned.fill(
           child: Container(
-            color: Colors.black.withOpacity(overlayOpacity),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.35, 1.0],
+                colors: [
+                  Colors.black
+                      .withOpacity((overlayOpacity + 0.15).clamp(0.0, 1.0)),
+                  Colors.black.withOpacity(overlayOpacity),
+                  Colors.black
+                      .withOpacity((overlayOpacity + 0.05).clamp(0.0, 1.0)),
+                ],
+              ),
+            ),
           ),
         ),
 

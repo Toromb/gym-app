@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../theme/background_styles.dart';
+import '../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
@@ -143,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       overlayOpacity: 0.85,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
+        appBar: ConstrainedAppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           title: const Text('Mi Perfil'),
@@ -250,10 +252,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 16),
         Text(_user!.name,
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold)),
+            style: BackgroundStyles.fromTheme(
+              Theme.of(context).textTheme.headlineSmall,
+            ).copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -275,8 +276,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       {required String title, required IconData icon, required Widget child}) {
     return Card(
       elevation: 0,
-      color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
-      shape: RoundedRectangleBorder(
+            shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),

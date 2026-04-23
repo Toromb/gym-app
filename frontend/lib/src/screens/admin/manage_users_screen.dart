@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
@@ -41,7 +42,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     final isAdmin = userRole == AppRoles.admin;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: const Text('Gestionar Usuarios'),
         actions: [
           IconButton(

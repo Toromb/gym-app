@@ -7,6 +7,7 @@ import '../../providers/stats_provider.dart'; // Import StatsProvider
 import '../../models/user_model.dart' as app_models;
 import '../../models/stats_model.dart'; // Import StatsModel
 import '../../localization/app_localizations.dart';
+import '../../utils/app_colors.dart';
 import '../../models/plan_model.dart';
 import '../../models/student_assignment_model.dart';
 import '../shared/day_detail_screen.dart';
@@ -588,7 +589,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       decoration: BoxDecoration(
           color: isDark
               ? colorScheme.surfaceContainer
-              : Colors.white, // Dark mode aware
+              : AppColors.cardSurface, // Pastel teal-green in light mode
           borderRadius: BorderRadius.circular(20),
           border:
               Border.all(color: isDark ? Colors.white10 : Colors.grey.shade100),

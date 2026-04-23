@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/stats_provider.dart';
 import '../../../providers/user_provider.dart';
@@ -197,7 +198,6 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
 
     return Card(
       elevation: 0,
-      color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -410,7 +410,9 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor.withOpacity(0.9),
+        color: Theme.of(context).brightness == Brightness.light
+            ? AppColors.cardSurface
+            : Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -483,7 +485,6 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
 
     return Card(
       elevation: 0,
-      color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -696,7 +697,6 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
 
     return Card(
       elevation: 0,
-      color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -812,7 +812,6 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
   Widget _buildMuscleFlowCard() {
     return Card(
       elevation: 0,
-      color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {

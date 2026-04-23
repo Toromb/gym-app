@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 
@@ -39,7 +40,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Agregar Alumno')),
+      appBar: ConstrainedAppBar(title: const Text('Agregar Alumno')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(

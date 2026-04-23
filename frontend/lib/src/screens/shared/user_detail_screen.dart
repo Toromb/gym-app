@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../models/user_model.dart';
 import '../../constants/app_constants.dart';
@@ -60,7 +61,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalle de Alumno')),
+      appBar: ConstrainedAppBar(title: const Text('Detalle de Alumno')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),

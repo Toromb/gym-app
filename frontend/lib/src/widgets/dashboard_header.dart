@@ -6,6 +6,7 @@ import '../models/user_model.dart' as app_models;
 import 'package:intl/intl.dart';
 import 'dashboard_payment_button.dart';
 import 'payment_status_badge.dart'; // Ensure this is imported if used inside DashboardPaymentButton or elsewhere
+import '../theme/background_styles.dart';
 
 class GymDashboardHeader extends StatelessWidget {
   final app_models.User? user;
@@ -90,16 +91,14 @@ class GymDashboardHeader extends StatelessWidget {
                 children: [
                   Text(
                     roleDisplay,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurface),
+                    style: BackgroundStyles.fromTheme(
+                        Theme.of(context).textTheme.titleMedium),
                   ),
                   Text(
                     '¡Hola, ${user?.firstName ?? "Usuario"}!',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: Colors.grey[600]),
+                    style: BackgroundStyles.fromTheme(
+                        Theme.of(context).textTheme.bodyMedium,
+                        color: Colors.white70),
                   ),
                 ],
               ),
@@ -166,18 +165,17 @@ class GymDashboardHeader extends StatelessWidget {
                 children: [
                   Text(
                     '${user?.firstName} ${user?.lastName ?? ""}'.trim(),
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold, fontSize: 22),
+                    style: BackgroundStyles.fromTheme(
+                      Theme.of(context).textTheme.headlineSmall,
+                    ).copyWith(fontWeight: FontWeight.bold, fontSize: 22),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     user?.gym?.businessName ?? 'GYM APP',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Colors.grey,
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w600),
+                    style: BackgroundStyles.fromTheme(
+                      Theme.of(context).textTheme.labelLarge,
+                      color: Colors.white70,
+                    ).copyWith(letterSpacing: 1.2, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),

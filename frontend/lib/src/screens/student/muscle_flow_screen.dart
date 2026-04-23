@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/stats_provider.dart';
 import '../../models/stats_model.dart';
@@ -54,7 +55,7 @@ class _MuscleFlowScreenState extends State<MuscleFlowScreen> {
     // Main Scaffold handling
     // If embedded (Professor view), we might not want another Scaffold, but keeping for AppBar consistency if pushed.
     return Scaffold(
-      appBar: AppBar(title: const Text('Estado Muscular')),
+      appBar: ConstrainedAppBar(title: const Text('Estado Muscular')),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(

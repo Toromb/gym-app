@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
 import '../../models/completed_plan_model.dart';
@@ -49,7 +50,7 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
       overlayOpacity: 0.85,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
+        appBar: ConstrainedAppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           title: const Text('Mi Historial'),

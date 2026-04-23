@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../widgets/constrained_app_bar.dart';
 import '../../../models/free_training_model.dart';
 import '../../../models/plan_model.dart';
 import '../../../services/free_training_service.dart';
@@ -194,7 +195,7 @@ class _FreeTrainingEditorScreenState extends State<FreeTrainingEditorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: Text(widget.training == null
             ? 'Crear Entrenamiento'
             : 'Editar Entrenamiento'),

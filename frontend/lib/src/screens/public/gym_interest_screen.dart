@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import '../../services/api_client.dart';
@@ -263,7 +264,7 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
           );
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title:
             const Text('Implementar TuGymFlow', style: TextStyle(fontSize: 18)),
         backgroundColor: Colors.transparent,

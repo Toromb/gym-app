@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
 // Keep for Plan refs if needed
@@ -43,7 +44,7 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
       overlayOpacity: 0.85,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
+        appBar: ConstrainedAppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           title: Text(AppLocalizations.of(context)!.get('navPlans')),
@@ -94,11 +95,7 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
 
                           return Card(
                             elevation: 0,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surface
-                                .withOpacity(0.9),
-                            margin: const EdgeInsets.only(bottom: 16),
+                                                        margin: const EdgeInsets.only(bottom: 16),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () {

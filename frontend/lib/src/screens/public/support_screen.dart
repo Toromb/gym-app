@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SupportScreen extends StatelessWidget {
@@ -14,7 +15,7 @@ class SupportScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white, // var(--bg-color)
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: const Text('Soporte'),
         centerTitle: true,
         backgroundColor: Colors.white,

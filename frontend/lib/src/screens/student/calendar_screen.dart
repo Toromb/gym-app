@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/plan_provider.dart';
@@ -237,7 +238,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: Text(AppLocalizations.of(context)!.get('workoutHistory')),
         elevation: 0,
       ),

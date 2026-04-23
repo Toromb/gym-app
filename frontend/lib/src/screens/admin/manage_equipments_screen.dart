@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import '../../services/api_client.dart';
 import '../../models/plan_model.dart';
 
@@ -86,7 +87,7 @@ class _ManageEquipmentsScreenState extends State<ManageEquipmentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
           title: const Text('Gestionar Equipamiento'),
           leading: IconButton(
               icon: const Icon(Icons.arrow_back),

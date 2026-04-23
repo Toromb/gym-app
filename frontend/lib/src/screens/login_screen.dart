@@ -238,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 // Logo and Welcome Text Area (Top)
                 Expanded(
-                  flex: 4, // Takes up ~40% of space
+                  flex: 3, // Takes up ~30% of space
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -276,7 +276,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Login Form Area (Bottom Sheet)
                 Expanded(
-                  flex: 6, // Takes up ~60% of space
+                  flex: 7, // Takes up ~70% of space
                   child: Align(
                     alignment: Alignment.bottomCenter,
                     child: ConstrainedBox(
@@ -334,20 +334,30 @@ class _LoginScreenState extends State<LoginScreen> {
                                               const QRScannerScreen()),
                                     );
                                   },
-                                  icon: Icon(Icons.qr_code_scanner,
-                                      color: Theme.of(context).primaryColor),
+                                  icon: Icon(
+                                    Icons.qr_code_scanner,
+                                    color: isDark
+                                        ? Colors.white
+                                        : Theme.of(context).primaryColor,
+                                  ),
                                   label: Text(
                                     '¿Sos nuevo? Escaneá el QR de tu gimnasio',
                                     style: TextStyle(
                                       fontSize: 15,
-                                      color: Theme.of(context).primaryColor,
+                                      fontWeight: FontWeight.w500,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Theme.of(context).primaryColor,
                                     ),
                                   ),
                                   style: OutlinedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 14),
                                     side: BorderSide(
-                                        color: Colors.grey.withOpacity(0.5)),
+                                      color: isDark
+                                          ? Colors.white54
+                                          : Colors.grey.withOpacity(0.5),
+                                    ),
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(12)),
@@ -518,22 +528,26 @@ class _LoginScreenState extends State<LoginScreen> {
                                 _buildSocialButtons(),
 
                                 const SizedBox(height: 32),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      '¿No tienes una cuenta? ',
-                                      style: TextStyle(color: Colors.grey[600]),
-                                    ),
-                                    Text(
-                                      "Habla con tu gimnasio",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context).primaryColor,
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        '¿No tienes una cuenta? ',
+                                        style: TextStyle(color: Colors.grey[600]),
                                       ),
-                                    ),
-                                  ],
+                                      Text(
+                                        "Habla con tu gimnasio",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+
                                 const SizedBox(height: 32),
 
                                 // B2B Commercial Block - Clearly separated

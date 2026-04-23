@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/exercise_api_service.dart';
 import '../../models/plan_model.dart';
@@ -72,7 +73,7 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Biblioteca de Ejercicios')),
+      appBar: ConstrainedAppBar(title: const Text('Biblioteca de Ejercicios')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),

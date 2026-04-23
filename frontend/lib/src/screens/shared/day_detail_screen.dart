@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
@@ -195,7 +196,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               body: Center(child: CircularProgressIndicator()));
         }
         return Scaffold(
-          appBar: AppBar(title: Text(widget.day?.title ?? 'Entrenamiento')),
+          appBar: ConstrainedAppBar(title: Text(widget.day?.title ?? 'Entrenamiento')),
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -227,7 +228,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           0.9, // Alta opacidad priorizando la legibilidad (funcionalidad)
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
+        appBar: ConstrainedAppBar(
           backgroundColor: Colors.transparent,
           title: Text(widget.day?.title ??
               (widget.freeTrainingId != null

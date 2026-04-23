@@ -4,6 +4,7 @@ import '../../../services/free_training_service.dart';
 import '../../shared/day_detail_screen.dart';
 import '../../../models/plan_model.dart'; // For DayDetailScreen if needed
 import '../../../widgets/background_page_wrapper.dart';
+import '../../../theme/background_styles.dart';
 
 class FreeTrainingSelectorScreen extends StatefulWidget {
   final bool isAdminMode;
@@ -217,15 +218,16 @@ class _FreeTrainingSelectorScreenState
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back),
+                          icon: const Icon(Icons.arrow_back,
+                              color: BackgroundStyles.iconColor),
                           onPressed: _prevPage,
                         ),
                         Expanded(
                           child: Center(
                             child: Text(
                               title,
-                              style: theme.textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.bold),
+                              style: BackgroundStyles.fromTheme(
+                                  theme.textTheme.titleMedium),
                             ),
                           ),
                         ),
@@ -233,7 +235,8 @@ class _FreeTrainingSelectorScreenState
                             width: 48,
                             child: _currentStep > 0
                                 ? IconButton(
-                                    icon: const Icon(Icons.refresh),
+                                    icon: const Icon(Icons.refresh,
+                                        color: BackgroundStyles.iconColor),
                                     onPressed: _reset)
                                 : null),
                       ],
@@ -280,8 +283,7 @@ class _FreeTrainingSelectorScreenState
       children: [
         Text(
           '¿Qué querés entrenar hoy?',
-          style: theme.textTheme.headlineSmall
-              ?.copyWith(fontWeight: FontWeight.bold),
+          style: BackgroundStyles.fromTheme(theme.textTheme.headlineSmall),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
@@ -343,8 +345,7 @@ class _FreeTrainingSelectorScreenState
       children: [
         Text(
           'Elegí la intensidad',
-          style: theme.textTheme.headlineSmall
-              ?.copyWith(fontWeight: FontWeight.bold),
+          style: BackgroundStyles.fromTheme(theme.textTheme.headlineSmall),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
@@ -394,8 +395,7 @@ class _FreeTrainingSelectorScreenState
     return ListView(padding: const EdgeInsets.all(24), children: [
       Text(
         'Zona Corporal',
-        style: theme.textTheme.headlineSmall
-            ?.copyWith(fontWeight: FontWeight.bold),
+        style: BackgroundStyles.fromTheme(theme.textTheme.headlineSmall),
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 32),
@@ -453,8 +453,7 @@ class _FreeTrainingSelectorScreenState
     return ListView(padding: const EdgeInsets.all(24), children: [
       Text(
         'Intensidad Cardio',
-        style: theme.textTheme.headlineSmall
-            ?.copyWith(fontWeight: FontWeight.bold),
+        style: BackgroundStyles.fromTheme(theme.textTheme.headlineSmall),
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 32),

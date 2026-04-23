@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
 import '../../models/completed_plan_model.dart';
@@ -82,7 +83,7 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
+        appBar: ConstrainedAppBar(
           title: Text('Planes: ${widget.student.firstName}'),
           bottom: const TabBar(
             tabs: [
