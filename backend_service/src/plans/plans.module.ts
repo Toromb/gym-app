@@ -18,6 +18,11 @@ import { FreeTrainingDefinition } from './entities/free-training-definition.enti
 import { FreeTrainingDefinitionExercise } from './entities/free-training-definition-exercise.entity';
 import { FreeTrainingsService } from './free-trainings.service';
 import { FreeTrainingsController } from './free-trainings.controller';
+import { AssignedPlan } from './entities/assigned-plan.entity';
+import { AssignedPlanWeek } from './entities/assigned-plan-week.entity';
+import { AssignedPlanDay } from './entities/assigned-plan-day.entity';
+import { AssignedPlanExercise } from './entities/assigned-plan-exercise.entity';
+import { CompletedPlan } from './entities/completed-plan.entity';
 
 @Module({
   imports: [
@@ -29,9 +34,14 @@ import { FreeTrainingsController } from './free-trainings.controller';
       StudentPlan,
       TrainingSession,
       SessionExercise,
-      Exercise, // Added for Free Session injection
+      Exercise,
       FreeTrainingDefinition,
       FreeTrainingDefinitionExercise,
+      AssignedPlan,
+      AssignedPlanWeek,
+      AssignedPlanDay,
+      AssignedPlanExercise,
+      CompletedPlan,
     ]),
     ExercisesModule,
     UsersModule,

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import '../../models/plan_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'create_exercise_screen.dart'; // For edit navigation
@@ -11,7 +12,7 @@ class ExerciseDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: Text(exercise.name),
         actions: [
           IconButton(
@@ -19,10 +20,13 @@ class ExerciseDetailScreen extends StatelessWidget {
             onPressed: () async {
               final result = await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CreateExerciseScreen(exercise: exercise)),
+                MaterialPageRoute(
+                    builder: (context) =>
+                        CreateExerciseScreen(exercise: exercise)),
               );
               if (result == true) {
-                 Navigator.pop(context, true); // Pop back to list with refresh signal
+                Navigator.pop(
+                    context, true); // Pop back to list with refresh signal
               }
             },
           ),
@@ -32,22 +36,22 @@ class ExerciseDetailScreen extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
           child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context),
-            const SizedBox(height: 20),
-            _buildDefaultsSection(context),
-            const SizedBox(height: 20),
-            _buildNotesSection(context),
-            const SizedBox(height: 20),
-            if (exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty)
-              _buildVideoSection(context),
-          ],
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context),
+                const SizedBox(height: 20),
+                _buildDefaultsSection(context),
+                const SizedBox(height: 20),
+                _buildNotesSection(context),
+                const SizedBox(height: 20),
+                if (exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty)
+                  _buildVideoSection(context),
+              ],
+            ),
+          ),
         ),
-      ),
-      ),
       ),
     );
   }
@@ -64,15 +68,21 @@ class ExerciseDetailScreen extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  child: Text(exercise.name[0], style: const TextStyle(fontSize: 24)),
+                  child: Text(exercise.name[0],
+                      style: const TextStyle(fontSize: 24)),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(exercise.name, style: Theme.of(context).textTheme.headlineSmall),
-                      Text(exercise.muscleGroup, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
+                      Text(exercise.name,
+                          style: Theme.of(context).textTheme.headlineSmall),
+                      Text(exercise.muscleGroup,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(color: Colors.grey)),
                     ],
                   ),
                 ),
@@ -80,19 +90,22 @@ class ExerciseDetailScreen extends StatelessWidget {
             ),
             if (exercise.type != null) ...[
               const SizedBox(height: 10),
-              Chip(label: Text(exercise.type!), backgroundColor: Colors.blue.shade50),
+              Chip(
+                  label: Text(exercise.type!),
+                  backgroundColor: Colors.blue.shade50),
             ],
             if (exercise.equipments.isNotEmpty) ...[
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
-                children: exercise.equipments.map((e) => 
-                  Chip(
-                    label: Text(e.name, style: const TextStyle(fontSize: 12)), 
-                    backgroundColor: Colors.orange.shade50,
-                    visualDensity: VisualDensity.compact,
-                  )
-                ).toList(),
+                children: exercise.equipments
+                    .map((e) => Chip(
+                          label: Text(e.name,
+                              style: const TextStyle(fontSize: 12)),
+                          backgroundColor: Colors.orange.shade50,
+                          visualDensity: VisualDensity.compact,
+                        ))
+                    .toList(),
               )
             ]
           ],
@@ -105,44 +118,64 @@ class ExerciseDetailScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Valores por Defecto', style: Theme.of(context).textTheme.titleMedium),
+        Text('Valores por Defecto',
+            style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 10),
-        
+
         // Métrica Label
         if (exercise.metricType != 'REPS')
-            Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Chip(
-                    label: Text('Métrica: ${exercise.metricType}'), 
-                    backgroundColor: Colors.purple.shade50,
-                    avatar: Icon(
-                        exercise.metricType == 'TIME' ? Icons.timer : Icons.directions_run, 
-                        size: 16, color: Colors.purple
-                    ),
-                ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Chip(
+              label: Text('Métrica: ${exercise.metricType}'),
+              backgroundColor: Colors.purple.shade50,
+              avatar: Icon(
+                  exercise.metricType == 'TIME'
+                      ? Icons.timer
+                      : Icons.directions_run,
+                  size: 16,
+                  color: Colors.purple),
             ),
+          ),
 
         Wrap(
           spacing: 16,
           runSpacing: 10,
           children: [
-             _buildInfoCard('Series', exercise.sets?.toString() ?? exercise.defaultSets?.toString() ?? '-'),
-             _buildInfoCard('Descanso', exercise.rest ?? '-'),
-             
-             if (exercise.metricType == 'REPS') ...[
-                _buildInfoCard('Reps', exercise.reps ?? '-'),
-                _buildInfoCard('Carga', exercise.load ?? '-'),
-                if (exercise.minReps != null) _buildInfoCard('Min Reps', exercise.minReps.toString()),
-                if (exercise.maxReps != null) _buildInfoCard('Max Reps', exercise.maxReps.toString()),
-             ] else if (exercise.metricType == 'TIME') ...[
-                _buildInfoCard('Tiempo', exercise.defaultTime != null ? '${exercise.defaultTime}s' : '-'),
-                if (exercise.minTime != null) _buildInfoCard('Min T', '${exercise.minTime}s'),
-                if (exercise.maxTime != null) _buildInfoCard('Max T', '${exercise.maxTime}s'),
-             ] else if (exercise.metricType == 'DISTANCE') ...[
-                _buildInfoCard('Distancia', exercise.defaultDistance != null ? '${exercise.defaultDistance}m' : '-'),
-                if (exercise.minDistance != null) _buildInfoCard('Min Dist', '${exercise.minDistance}m'),
-                if (exercise.maxDistance != null) _buildInfoCard('Max Dist', '${exercise.maxDistance}m'),
-             ]
+            _buildInfoCard(
+                'Series',
+                exercise.sets?.toString() ??
+                    exercise.defaultSets?.toString() ??
+                    '-'),
+            _buildInfoCard('Descanso', exercise.rest ?? '-'),
+            if (exercise.metricType == 'REPS') ...[
+              _buildInfoCard('Reps', exercise.reps ?? '-'),
+              _buildInfoCard('Carga', exercise.load ?? '-'),
+              if (exercise.minReps != null)
+                _buildInfoCard('Min Reps', exercise.minReps.toString()),
+              if (exercise.maxReps != null)
+                _buildInfoCard('Max Reps', exercise.maxReps.toString()),
+            ] else if (exercise.metricType == 'TIME') ...[
+              _buildInfoCard(
+                  'Tiempo',
+                  exercise.defaultTime != null
+                      ? '${exercise.defaultTime}s'
+                      : '-'),
+              if (exercise.minTime != null)
+                _buildInfoCard('Min T', '${exercise.minTime}s'),
+              if (exercise.maxTime != null)
+                _buildInfoCard('Max T', '${exercise.maxTime}s'),
+            ] else if (exercise.metricType == 'DISTANCE') ...[
+              _buildInfoCard(
+                  'Distancia',
+                  exercise.defaultDistance != null
+                      ? '${exercise.defaultDistance}m'
+                      : '-'),
+              if (exercise.minDistance != null)
+                _buildInfoCard('Min Dist', '${exercise.minDistance}m'),
+              if (exercise.maxDistance != null)
+                _buildInfoCard('Max Dist', '${exercise.maxDistance}m'),
+            ]
           ],
         ),
       ],
@@ -168,7 +201,8 @@ class ExerciseDetailScreen extends StatelessWidget {
   }
 
   Widget _buildNotesSection(BuildContext context) {
-    if (exercise.notes == null || exercise.notes!.isEmpty) return const SizedBox.shrink();
+    if (exercise.notes == null || exercise.notes!.isEmpty)
+      return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -194,23 +228,24 @@ class ExerciseDetailScreen extends StatelessWidget {
       children: [
         Text('Video', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 10),
-         ListTile(
-            leading: const Icon(Icons.video_library, color: Colors.red),
-            title: const Text('Ver Video de Instrucción'),
-            subtitle: Text(exercise.videoUrl!),
-            onTap: () async {
-               if (exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty) {
-                 final uri = Uri.parse(exercise.videoUrl!);
-                 if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                 } else {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open video link')));
-                    }
-                 }
-               }
-            },
-         ),
+        ListTile(
+          leading: const Icon(Icons.video_library, color: Colors.red),
+          title: const Text('Ver Video de Instrucción'),
+          subtitle: Text(exercise.videoUrl!),
+          onTap: () async {
+            if (exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty) {
+              final uri = Uri.parse(exercise.videoUrl!);
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              } else {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Could not open video link')));
+                }
+              }
+            }
+          },
+        ),
       ],
     );
   }

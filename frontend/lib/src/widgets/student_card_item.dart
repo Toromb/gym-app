@@ -35,7 +35,9 @@ class StudentCardItem extends StatelessWidget {
                   backgroundColor: colorScheme.primaryContainer,
                   radius: 20,
                   child: Text(
-                    student.firstName.isNotEmpty ? student.firstName[0].toUpperCase() : '?',
+                    student.firstName.isNotEmpty
+                        ? student.firstName[0].toUpperCase()
+                        : '?',
                     style: TextStyle(
                       color: colorScheme.onPrimaryContainer,
                       fontWeight: FontWeight.bold,
@@ -94,14 +96,16 @@ class StudentCardItem extends StatelessWidget {
                   icon: const Icon(Icons.assignment_ind, size: 16),
                   label: const Text('Asignar Plan'),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     textStyle: const TextStyle(fontSize: 12),
                     visualDensity: VisualDensity.compact,
                   ),
                   onPressed: () {
                     showDialog(
                       context: context,
-                      builder: (context) => AssignPlanModal(preselectedStudent: student),
+                      builder: (context) =>
+                          AssignPlanModal(preselectedStudent: student),
                     );
                   },
                 ),
@@ -110,7 +114,8 @@ class StudentCardItem extends StatelessWidget {
                   icon: const Icon(Icons.list_alt, size: 16),
                   label: const Text('Planes'),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     textStyle: const TextStyle(fontSize: 12),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -118,7 +123,8 @@ class StudentCardItem extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => StudentPlansScreen(student: student),
+                        builder: (context) =>
+                            StudentPlansScreen(student: student),
                       ),
                     );
                   },

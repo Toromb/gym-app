@@ -46,17 +46,21 @@ class GymSchedule {
   }
 
   // Helper for UI
-  String get rangeMorning => (openTimeMorning != null && closeTimeMorning != null) 
-      ? '$openTimeMorning - $closeTimeMorning' : '';
-  
-  String get rangeAfternoon => (openTimeAfternoon != null && closeTimeAfternoon != null)
-      ? '$openTimeAfternoon - $closeTimeAfternoon' : '';
-      
+  String get rangeMorning =>
+      (openTimeMorning != null && closeTimeMorning != null)
+          ? '$openTimeMorning - $closeTimeMorning'
+          : '';
+
+  String get rangeAfternoon =>
+      (openTimeAfternoon != null && closeTimeAfternoon != null)
+          ? '$openTimeAfternoon - $closeTimeAfternoon'
+          : '';
+
   String get displayHours {
-      if (isClosed) return 'Closed';
-      List<String> parts = [];
-      if (rangeMorning.isNotEmpty) parts.add(rangeMorning);
-      if (rangeAfternoon.isNotEmpty) parts.add(rangeAfternoon);
-      return parts.isEmpty ? 'Closed' : parts.join(' / ');
+    if (isClosed) return 'Closed';
+    List<String> parts = [];
+    if (rangeMorning.isNotEmpty) parts.add(rangeMorning);
+    if (rangeAfternoon.isNotEmpty) parts.add(rangeAfternoon);
+    return parts.isEmpty ? 'Closed' : parts.join(' / ');
   }
 }

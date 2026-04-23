@@ -39,11 +39,11 @@ class User {
 
   // Admin Specific
   final String? adminNotes;
-  
+
   // Gym Info
   final String? gymName;
   final Gym? gym;
-  
+
   // Professor Info (for students)
   final String? professorId;
   final String? professorName;
@@ -92,7 +92,8 @@ class User {
       final dob = DateTime.parse(birthDate!);
       final now = DateTime.now();
       int age = now.year - dob.year;
-      if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+      if (now.month < dob.month ||
+          (now.month == dob.month && now.day < dob.day)) {
         age--;
       }
       return age;
@@ -114,11 +115,16 @@ class User {
       notes: json['notes'],
       paymentStatus: json['paymentStatus'],
       lastPaymentDate: json['lastPaymentDate'],
-      height: json['height'] != null ? (json['height'] as num).toDouble() : null,
+      height:
+          json['height'] != null ? (json['height'] as num).toDouble() : null,
       trainingGoal: json['trainingGoal'],
       professorObservations: json['professorObservations'],
-      initialWeight: json['initialWeight'] != null ? (json['initialWeight'] as num).toDouble() : null,
-      currentWeight: json['currentWeight'] != null ? (json['currentWeight'] as num).toDouble() : null,
+      initialWeight: json['initialWeight'] != null
+          ? (json['initialWeight'] as num).toDouble()
+          : null,
+      currentWeight: json['currentWeight'] != null
+          ? (json['currentWeight'] as num).toDouble()
+          : null,
       weightUpdateDate: json['weightUpdateDate'],
       personalComment: json['personalComment'],
       isActive: json['isActive'],
@@ -131,7 +137,9 @@ class User {
       gymName: json['gym'] != null ? json['gym']['businessName'] : null,
       gym: json['gym'] != null ? Gym.fromJson(json['gym']) : null,
       professorId: json['professor'] != null ? json['professor']['id'] : null,
-      professorName: json['professor'] != null ? "${json['professor']['firstName']} ${json['professor']['lastName']}" : null,
+      professorName: json['professor'] != null
+          ? "${json['professor']['firstName']} ${json['professor']['lastName']}"
+          : null,
       profilePictureUrl: json['profilePictureUrl'],
     );
   }

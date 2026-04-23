@@ -33,12 +33,16 @@ class OnboardingProfile {
       goal: json['goal'],
       goalDetails: json['goalDetails'],
       experience: json['experience'],
-      injuries: (json['injuries'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      injuries: (json['injuries'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       injuryDetails: json['injuryDetails'],
       activityLevel: json['activityLevel'],
       desiredFrequency: json['desiredFrequency'],
       preferences: json['preferences'],
-      canLieDown: json['canLieDown'] ?? true, // Default safe assumption? Or explicit?
+      canLieDown:
+          json['canLieDown'] ?? true, // Default safe assumption? Or explicit?
       canKneel: json['canKneel'] ?? true,
       createdAt: DateTime.parse(json['createdAt']),
     );
@@ -56,7 +60,7 @@ class CreateOnboardingDto {
   final String? preferences;
   final bool canLieDown;
   final bool canKneel;
-  
+
   // User updates
   final String? birthDate; // YYYY-MM-DD
   final double? weight;

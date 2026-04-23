@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../services/api_client.dart';
 import '../../providers/theme_provider.dart';
@@ -34,8 +35,9 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
     });
 
     try {
-      final results = await _apiClient.getGymLeads(page: _currentPage, limit: _limit);
-      
+      final results =
+          await _apiClient.getGymLeads(page: _currentPage, limit: _limit);
+
       // La API devuelve ordenados por createdAt descendente por default
       setState(() {
         _leads = results;
@@ -43,7 +45,8 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'No se pudieron cargar los leads comerciales: ${e.toString()}';
+        _errorMessage =
+            'No se pudieron cargar los leads comerciales: ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -99,7 +102,10 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
             const SizedBox(height: 16),
             Text(
               'Aún no hay leads de gimnasios',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey[600]),
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
             Text(
@@ -111,7 +117,7 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
             OutlinedButton.icon(
               onPressed: _fetchLeads,
               icon: const Icon(Icons.refresh),
-               label: const Text('Actualizar panel'),
+              label: const Text('Actualizar panel'),
             )
           ],
         ),
@@ -123,21 +129,41 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: ConstrainedBox(
-        constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width),
+        constraints:
+            BoxConstraints(minWidth: MediaQuery.of(context).size.width),
         child: DataTable(
           headingRowColor: WidgetStateProperty.resolveWith<Color?>(
-            (Set<WidgetState> states) => isDark ? Colors.grey[900] : Colors.blue[50],
+            (Set<WidgetState> states) =>
+                isDark ? Colors.grey[900] : Colors.blue[50],
           ),
           columns: const [
-            DataColumn(label: Text('Fecha', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Nombre', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Gimnasio', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Email', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('WhatsApp', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Ciudad', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Alumnos', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Origen', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Mensaje', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('Fecha',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('Nombre',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('Gimnasio',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('Email',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('WhatsApp',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('Ciudad',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('Alumnos',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('Origen',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+                label: Text('Mensaje',
+                    style: TextStyle(fontWeight: FontWeight.bold))),
           ],
           rows: _leads.map((lead) {
             return DataRow(
@@ -155,7 +181,9 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
                       lead['source'] == 'mobile_app' ? 'Mobile App' : 'Web App',
                       style: const TextStyle(fontSize: 12),
                     ),
-                    backgroundColor: lead['source'] == 'mobile_app' ? Colors.purple[100] : Colors.blue[100],
+                    backgroundColor: lead['source'] == 'mobile_app'
+                        ? Colors.purple[100]
+                        : Colors.blue[100],
                     side: BorderSide.none,
                   ),
                 ),
@@ -189,7 +217,8 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
         return Card(
           elevation: 2,
           margin: const EdgeInsets.only(bottom: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -201,45 +230,63 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
                     Expanded(
                       child: Text(
                         lead['gymName'] ?? '-',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: lead['source'] == 'mobile_app' 
-                              ? (isDark ? Colors.purple[900] : Colors.purple[100])
-                              : (isDark ? Colors.blue[900] : Colors.blue[100]),
+                        color: lead['source'] == 'mobile_app'
+                            ? (isDark ? Colors.purple[900] : Colors.purple[100])
+                            : (isDark ? Colors.blue[900] : Colors.blue[100]),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        lead['source'] == 'mobile_app' ? 'Mobile App' : 'Web App',
+                        lead['source'] == 'mobile_app'
+                            ? 'Mobile App'
+                            : 'Web App',
                         style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: lead['source'] == 'mobile_app' 
-                                ? (isDark ? Colors.purple[100] : Colors.purple[900])
-                                : (isDark ? Colors.blue[100] : Colors.blue[900]),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: lead['source'] == 'mobile_app'
+                              ? (isDark
+                                  ? Colors.purple[100]
+                                  : Colors.purple[900])
+                              : (isDark ? Colors.blue[100] : Colors.blue[900]),
                         ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('👤 ${lead['fullName'] ?? '-'}', style: TextStyle(fontSize: 15, color: isDark ? Colors.grey[300] : Colors.grey[800])),
+                Text('👤 ${lead['fullName'] ?? '-'}',
+                    style: TextStyle(
+                        fontSize: 15,
+                        color: isDark ? Colors.grey[300] : Colors.grey[800])),
                 const SizedBox(height: 4),
-                Text('📍 ${lead['city'] ?? '-'}', style: TextStyle(fontSize: 14, color: isDark ? Colors.grey[400] : Colors.grey[700])),
+                Text('📍 ${lead['city'] ?? '-'}',
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey[400] : Colors.grey[700])),
                 const SizedBox(height: 4),
-                Text('👥 Alumnos aprox: ${lead['studentsCount'] ?? '-'}', style: TextStyle(fontSize: 14, color: isDark ? Colors.grey[400] : Colors.grey[700])),
+                Text('👥 Alumnos aprox: ${lead['studentsCount'] ?? '-'}',
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey[400] : Colors.grey[700])),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8.0),
                   child: Divider(),
                 ),
-                SelectableText('✉️ ${lead['email'] ?? '-'}', style: const TextStyle(fontSize: 14)),
+                SelectableText('✉️ ${lead['email'] ?? '-'}',
+                    style: const TextStyle(fontSize: 14)),
                 const SizedBox(height: 4),
-                SelectableText('📞 ${lead['phone'] ?? '-'}', style: const TextStyle(fontSize: 14)),
-                if (lead['message'] != null && lead['message'].toString().isNotEmpty) ...[
+                SelectableText('📞 ${lead['phone'] ?? '-'}',
+                    style: const TextStyle(fontSize: 14)),
+                if (lead['message'] != null &&
+                    lead['message'].toString().isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Container(
                     width: double.infinity,
@@ -250,7 +297,9 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
                     ),
                     child: Text(
                       '💬 "${lead['message']}"',
-                      style: TextStyle(fontStyle: FontStyle.italic, color: isDark ? Colors.grey[300] : Colors.grey[800]),
+                      style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: isDark ? Colors.grey[300] : Colors.grey[800]),
                     ),
                   )
                 ],
@@ -259,7 +308,9 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
                   alignment: Alignment.centerRight,
                   child: Text(
                     _formatDate(lead['createdAt'] ?? ''),
-                    style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[500] : Colors.grey[500]),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.grey[500] : Colors.grey[500]),
                   ),
                 ),
               ],
@@ -274,10 +325,11 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
-    final isDesktop = MediaQuery.of(context).size.width > 800; // Responsive breakpoint
+    final isDesktop =
+        MediaQuery.of(context).size.width > 800; // Responsive breakpoint
 
     Widget bodyContent;
-    
+
     if (_isLoading) {
       bodyContent = _buildLoadingState();
     } else if (_errorMessage != null) {
@@ -286,18 +338,19 @@ class _SuperAdminLeadsScreenState extends State<SuperAdminLeadsScreen> {
       bodyContent = _buildEmptyState();
     } else {
       // Content loaded
-      bodyContent = isDesktop ? _buildDesktopTable(isDark) : _buildMobileList(isDark);
+      bodyContent =
+          isDesktop ? _buildDesktopTable(isDark) : _buildMobileList(isDark);
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: const Text('Leads Comerciales'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Recargar',
             onPressed: () {
-               _fetchLeads();
+              _fetchLeads();
             },
           ),
         ],

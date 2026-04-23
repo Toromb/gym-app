@@ -16,7 +16,7 @@ class OnboardingService {
       return false;
     } catch (e) {
       print('Error checking onboarding status: $e');
-      return false; 
+      return false;
     }
   }
 
@@ -31,8 +31,10 @@ class OnboardingService {
   Future<OnboardingProfile?> getUserOnboarding(String userId) async {
     try {
       final data = await _client.get('/users/onboarding/user/$userId');
-      if (data != null && data['hasCompletedOnboarding'] == true && data['profile'] != null) {
-          return OnboardingProfile.fromJson(data['profile']);
+      if (data != null &&
+          data['hasCompletedOnboarding'] == true &&
+          data['profile'] != null) {
+        return OnboardingProfile.fromJson(data['profile']);
       }
       return null;
     } catch (e) {

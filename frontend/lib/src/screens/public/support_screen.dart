@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SupportScreen extends StatelessWidget {
@@ -14,7 +15,7 @@ class SupportScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white, // var(--bg-color)
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: const Text('Soporte'),
         centerTitle: true,
         backgroundColor: Colors.white,
@@ -84,7 +85,7 @@ class SupportScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                
+
                 // Response Time (H3 equivalent)
                 const SizedBox(height: 24),
                 const Text(
@@ -138,52 +139,59 @@ class SupportScreen extends StatelessWidget {
                 const SizedBox(height: 16), // H2 margin-bottom
 
                 const _FaqItem(
-                  question: '1. ¿Puedo crear una cuenta directamente desde la app?',
-                  answer: 'No. TuGymFlow está orientada a gimnasios y entrenadores registrados. El acceso se realiza únicamente mediante invitación generada por el administrador del gimnasio.',
+                  question:
+                      '1. ¿Puedo crear una cuenta directamente desde la app?',
+                  answer:
+                      'No. TuGymFlow está orientada a gimnasios y entrenadores registrados. El acceso se realiza únicamente mediante invitación generada por el administrador del gimnasio.',
                   headingColor: headingColor,
                   textColor: textColor,
                 ),
                 const _FaqItem(
                   question: '2. Soy alumno, ¿cómo obtengo acceso?',
-                  answer: 'Debés solicitar el enlace de invitación a tu gimnasio o entrenador. Una vez recibido, podrás registrarte y acceder a tu cuenta.',
+                  answer:
+                      'Debés solicitar el enlace de invitación a tu gimnasio o entrenador. Una vez recibido, podrás registrarte y acceder a tu cuenta.',
                   headingColor: headingColor,
                   textColor: textColor,
                 ),
                 const _FaqItem(
-                  question: '3. ¿Qué métodos de inicio de sesión están disponibles?',
+                  question:
+                      '3. ¿Qué métodos de inicio de sesión están disponibles?',
                   answer: 'La aplicación permite iniciar sesión mediante:\n'
-                          '- Correo electrónico y contraseña\n'
-                          '- Google\n'
-                          '- Apple\n'
-                          'Siempre vinculando la cuenta a un gimnasio activo.',
+                      '- Correo electrónico y contraseña\n'
+                      '- Google\n'
+                      '- Apple\n'
+                      'Siempre vinculando la cuenta a un gimnasio activo.',
                   headingColor: headingColor,
                   textColor: textColor,
                 ),
                 const _FaqItem(
-                  question: '4. ¿Puedo usar la app si no pertenezco a un gimnasio?',
-                  answer: 'No. La plataforma está diseñada para uso interno de gimnasios y sus alumnos registrados.',
+                  question:
+                      '4. ¿Puedo usar la app si no pertenezco a un gimnasio?',
+                  answer:
+                      'No. La plataforma está diseñada para uso interno de gimnasios y sus alumnos registrados.',
                   headingColor: headingColor,
                   textColor: textColor,
                 ),
 
                 const SizedBox(height: 48),
-                
+
                 // Footer Links
                 Wrap(
                   alignment: WrapAlignment.center,
                   spacing: 20,
                   runSpacing: 10,
                   children: [
-                     TextButton(
-                      onPressed: () => _launchUrl('https://www.tugymflow.com/privacy/'),
+                    TextButton(
+                      onPressed: () =>
+                          _launchUrl('https://www.tugymflow.com/privacy/'),
                       child: const Text(
                         'Política de Privacidad',
-                         style: TextStyle(color: linkColor, fontSize: 16),
+                        style: TextStyle(color: linkColor, fontSize: 16),
                       ),
                     ),
                     TextButton(
                       onPressed: () {
-                         Navigator.of(context).pushNamed('/terminos');
+                        Navigator.of(context).pushNamed('/terminos');
                       },
                       child: const Text(
                         'Términos y Condiciones',
@@ -215,7 +223,7 @@ class _FaqItem extends StatelessWidget {
   final Color textColor;
 
   const _FaqItem({
-    required this.question, 
+    required this.question,
     required this.answer,
     required this.headingColor,
     required this.textColor,
@@ -231,7 +239,8 @@ class _FaqItem extends StatelessWidget {
           Text(
             question,
             style: TextStyle(
-              fontSize: 17, // Just slightly bigger/bolder than text, distinct from H3
+              fontSize:
+                  17, // Just slightly bigger/bolder than text, distinct from H3
               fontWeight: FontWeight.w600,
               color: headingColor,
             ),

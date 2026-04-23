@@ -38,25 +38,31 @@ void main() async {
   await Hive.initFlutter();
   await LocalStorageService().init();
   SyncService().init();
-  
+
   // ---------------------------------------------------------
   // SESSION MANAGEMENT INTERCEPTORS
   // ---------------------------------------------------------
   ApiClient.onTokenExpired = () async {
-     return await AuthService().refreshToken();
+    return await AuthService().refreshToken();
   };
 
   ApiClient.onSessionTerminated = () {
-     // Force an immediate UI redirect to Login when session dies
-     AuthService().logout().then((_) {
-        navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
-        final context = navigatorKey.currentContext;
-        if (context != null) {
-           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Tu sesión ha expirado por seguridad.')),
-           );
-        }
-     });
+    // Force an immediate UI redirect to Login when session dies
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      Provider.of<AuthProvider>(context, listen: false).logout().then((_) {
+        navigatorKey.currentState
+            ?.pushNamedAndRemoveUntil('/login', (route) => false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tu sesión ha expirado por seguridad.')),
+        );
+      });
+    } else {
+      AuthService().logout().then((_) {
+        navigatorKey.currentState
+            ?.pushNamedAndRemoveUntil('/login', (route) => false);
+      });
+    }
   };
 
   runApp(
@@ -74,8 +80,8 @@ void main() async {
         ChangeNotifierProxyProvider<AuthProvider, ExerciseProvider>(
           create: (_) => ExerciseProvider(),
           update: (_, auth, prev) {
-             if (!auth.isAuthenticated) prev?.clear();
-             return prev!;
+            if (!auth.isAuthenticated) prev?.clear();
+            return prev!;
           },
         ),
         ChangeNotifierProxyProvider<AuthProvider, GymScheduleProvider>(
@@ -96,42 +102,42 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<AuthProvider, ThemeProvider>( 
+    return Consumer2<AuthProvider, ThemeProvider>(
       builder: (context, auth, themeProvider, _) {
-         // Sync User ID safely
-         WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (auth.user?.id != null) {
-              themeProvider.setUserId(auth.user!.id);
-            } else {
-              themeProvider.setUserId(null); 
-            }
-         });
+        // Sync User ID safely
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (auth.user?.id != null) {
+            themeProvider.setUserId(auth.user!.id);
+          } else {
+            themeProvider.setUserId(null);
+          }
+        });
 
         // Resolve colors dynamically
         Color primaryColor = AppColors.primary;
         Color secondaryColor = AppColors.primary;
 
         if (auth.user?.gym?.primaryColor != null) {
-           try {
-             String hex = auth.user!.gym!.primaryColor!.replaceAll('#', '');
-             if (hex.length == 6) hex = 'FF$hex';
-             primaryColor = Color(int.parse(hex, radix: 16));
-           } catch (_) {}
+          try {
+            String hex = auth.user!.gym!.primaryColor!.replaceAll('#', '');
+            if (hex.length == 6) hex = 'FF$hex';
+            primaryColor = Color(int.parse(hex, radix: 16));
+          } catch (_) {}
         }
-        
-         if (auth.user?.gym?.secondaryColor != null) {
-           try {
-             String hex = auth.user!.gym!.secondaryColor!.replaceAll('#', '');
-             if (hex.length == 6) hex = 'FF$hex';
-             secondaryColor = Color(int.parse(hex, radix: 16));
-           } catch (_) {}
+
+        if (auth.user?.gym?.secondaryColor != null) {
+          try {
+            String hex = auth.user!.gym!.secondaryColor!.replaceAll('#', '');
+            if (hex.length == 6) hex = 'FF$hex';
+            secondaryColor = Color(int.parse(hex, radix: 16));
+          } catch (_) {}
         }
 
         return MaterialApp(
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
           title: 'GymFlow',
-          themeMode: themeProvider.themeMode, 
+          themeMode: themeProvider.themeMode,
           theme: AppTheme.createTheme(
             primaryColor: primaryColor,
             secondaryColor: secondaryColor,
@@ -164,59 +170,62 @@ class MyApp extends StatelessWidget {
           },
           initialRoute: '/',
           onGenerateRoute: (settings) {
-            
             final uri = Uri.parse(settings.name ?? '/');
             final queryParams = uri.queryParameters;
-            
+
             // 0. Handle Invite Link Deep Link (e.g. gymflow://invite?token=XYZ)
             if (uri.path == '/invite' || uri.path.contains('invite')) {
-               final token = queryParams['token'];
-               if (token != null) {
-                 // Push to LoginScreen but pass the token to trigger invite flow
-                 // Handling removed for MVP as it caused compile errors and we are moving to In-App scanning.
-                 return MaterialPageRoute(
-                   builder: (_) => const LoginScreen(),
-                 );
-               }
+              final token = queryParams['token'];
+              if (token != null) {
+                // Push to LoginScreen but pass the token to trigger invite flow
+                // Handling removed for MVP as it caused compile errors and we are moving to In-App scanning.
+                return MaterialPageRoute(
+                  builder: (_) => const LoginScreen(),
+                );
+              }
             }
 
             // 1. Handle Activation/Reset (Public)
-            if (uri.path == '/activate-account' || uri.path.contains('activate-account')) {
+            if (uri.path == '/activate-account' ||
+                uri.path.contains('activate-account')) {
               final token = queryParams['token'];
               return MaterialPageRoute(
-                builder: (_) => ActivateAccountScreen(token: token, mode: 'activate'),
+                builder: (_) =>
+                    ActivateAccountScreen(token: token, mode: 'activate'),
               );
             }
-            
-            if (uri.path == '/reset-password' || uri.path.contains('reset-password')) {
+
+            if (uri.path == '/reset-password' ||
+                uri.path.contains('reset-password')) {
               final token = queryParams['token'];
               return MaterialPageRoute(
-                builder: (_) => ActivateAccountScreen(token: token, mode: 'reset'),
+                builder: (_) =>
+                    ActivateAccountScreen(token: token, mode: 'reset'),
               );
             }
 
             if (uri.path == '/soporte') {
-               return MaterialPageRoute(builder: (_) => const SupportScreen());
+              return MaterialPageRoute(builder: (_) => const SupportScreen());
             }
 
             if (uri.path == '/terminos') {
-               return MaterialPageRoute(builder: (_) => const TermsScreen());
+              return MaterialPageRoute(builder: (_) => const TermsScreen());
             }
 
             // 2. Handle Root / Login (Auth Guarded)
             // If path is / or /login, we apply the auth check logic
             if (uri.path == '/' || uri.path == '/login') {
-               return MaterialPageRoute(
-                 builder: (_) {
-                    if (auth.status == AuthStatus.loading || auth.status == AuthStatus.unknown) {
-                       return const Scaffold(body: Center(child: CircularProgressIndicator()));
-                    }
-                    if (auth.isAuthenticated) {
-                       return const HomeScreen();
-                    }
-                    return const LoginScreen();
-                 }
-               );
+              return MaterialPageRoute(builder: (_) {
+                if (auth.status == AuthStatus.loading ||
+                    auth.status == AuthStatus.unknown) {
+                  return const Scaffold(
+                      body: Center(child: CircularProgressIndicator()));
+                }
+                if (auth.isAuthenticated) {
+                  return const HomeScreen();
+                }
+                return const LoginScreen();
+              });
             }
 
             // Default fallback
@@ -229,4 +238,3 @@ class MyApp extends StatelessWidget {
 }
 
 // DeepLinkHandler Widget to wrap MaterialApp and listen for links
-

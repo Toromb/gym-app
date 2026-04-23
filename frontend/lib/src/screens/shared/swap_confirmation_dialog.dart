@@ -29,11 +29,16 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
   @override
   void initState() {
     super.initState();
-    _weightController = TextEditingController(text: widget.suggestion.suggestedWeight ?? '');
-    _setsController = TextEditingController(text: widget.suggestion.suggestedSets);
-    _repsController = TextEditingController(text: widget.suggestion.suggestedReps);
-    _timeController = TextEditingController(text: widget.suggestion.suggestedTime ?? '');
-    _distanceController = TextEditingController(text: widget.suggestion.suggestedDistance ?? '');
+    _weightController =
+        TextEditingController(text: widget.suggestion.suggestedWeight ?? '');
+    _setsController =
+        TextEditingController(text: widget.suggestion.suggestedSets);
+    _repsController =
+        TextEditingController(text: widget.suggestion.suggestedReps);
+    _timeController =
+        TextEditingController(text: widget.suggestion.suggestedTime ?? '');
+    _distanceController =
+        TextEditingController(text: widget.suggestion.suggestedDistance ?? '');
   }
 
   @override
@@ -58,11 +63,17 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Vas a cambiar:'),
-            Text(widget.oldExerciseName, style: const TextStyle(fontWeight: FontWeight.bold, decoration: TextDecoration.lineThrough, color: Colors.grey)),
+            Text(widget.oldExerciseName,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.lineThrough,
+                    color: Colors.grey)),
             const Icon(Icons.arrow_downward, size: 16),
-            Text(widget.newExercise.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+            Text(widget.newExercise.name,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.blue)),
             const SizedBox(height: 16),
-            
+
             // Warning
             if (widget.suggestion.warning != null)
               Container(
@@ -71,15 +82,16 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
                 decoration: BoxDecoration(
                     color: Colors.amber.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.amber)
-                ),
-                child: Row(
-                    children: [
-                        const Icon(Icons.warning_amber, color: Colors.amber, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(widget.suggestion.warning!, style: const TextStyle(fontSize: 12, color: Colors.black87))),
-                    ]
-                ),
+                    border: Border.all(color: Colors.amber)),
+                child: Row(children: [
+                  const Icon(Icons.warning_amber,
+                      color: Colors.amber, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                      child: Text(widget.suggestion.warning!,
+                          style: const TextStyle(
+                              fontSize: 12, color: Colors.black87))),
+                ]),
               ),
 
             Container(
@@ -98,56 +110,62 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
 
             Row(
               children: [
-                 Expanded(
-                   child: TextField(
-                     controller: _setsController,
-                     decoration: const InputDecoration(labelText: 'Series', isDense: true),
-                     keyboardType: TextInputType.number,
-                   ),
-                 ),
-                 const SizedBox(width: 8),
-                 
-                 // METRIC SPECIFIC INPUTS
-                 if (metricType == 'REPS') ...[
-                     Expanded(
-                        child: TextField(
-                            controller: _repsController,
-                            decoration: const InputDecoration(labelText: 'Reps', isDense: true),
-                        ),
-                     ),
-                 ] else if (metricType == 'TIME') ...[
-                     Expanded(
-                         flex: 2,
-                        child: TextField(
-                            controller: _timeController,
-                            decoration: const InputDecoration(labelText: 'Tiempo (seg)', isDense: true),
-                            keyboardType: TextInputType.number,
-                        ),
-                     ),
-                 ] else if (metricType == 'DISTANCE') ...[
-                     Expanded(
-                         flex: 2,
-                        child: TextField(
-                            controller: _distanceController,
-                            decoration: const InputDecoration(labelText: 'Distancia (m)', isDense: true),
-                            keyboardType: TextInputType.number,
-                        ),
-                     ),
-                 ],
+                Expanded(
+                  child: TextField(
+                    controller: _setsController,
+                    decoration: const InputDecoration(
+                        labelText: 'Series', isDense: true),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 8),
 
+                // METRIC SPECIFIC INPUTS
+                if (metricType == 'REPS') ...[
+                  Expanded(
+                    child: TextField(
+                      controller: _repsController,
+                      decoration: const InputDecoration(
+                          labelText: 'Reps', isDense: true),
+                    ),
+                  ),
+                ] else if (metricType == 'TIME') ...[
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      controller: _timeController,
+                      decoration: const InputDecoration(
+                          labelText: 'Tiempo (seg)', isDense: true),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ] else if (metricType == 'DISTANCE') ...[
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      controller: _distanceController,
+                      decoration: const InputDecoration(
+                          labelText: 'Distancia (m)', isDense: true),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 12),
-            
+
             if (metricType == 'REPS')
-             TextField(
-               controller: _weightController,
-               decoration: InputDecoration(
-                 labelText: widget.suggestion.isWeightEstimated ? 'Peso Sugerido (Est)' : 'Peso Sugerido', 
-                 helperText: widget.suggestion.isWeightEstimated ? 'Calculado por equivalencia de fuerza' : 'Sin datos suficientes para sugerir',
-                 isDense: true
-               ),
-             ),
+              TextField(
+                controller: _weightController,
+                decoration: InputDecoration(
+                    labelText: widget.suggestion.isWeightEstimated
+                        ? 'Peso Sugerido (Est)'
+                        : 'Peso Sugerido',
+                    helperText: widget.suggestion.isWeightEstimated
+                        ? 'Calculado por equivalencia de fuerza'
+                        : 'Sin datos suficientes para sugerir',
+                    isDense: true),
+              ),
           ],
         ),
       ),
@@ -162,7 +180,7 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
               'sets': _setsController.text,
               'reps': _repsController.text,
               'weight': _weightController.text,
-               // New
+              // New
               'time': _timeController.text,
               'distance': _distanceController.text,
             });

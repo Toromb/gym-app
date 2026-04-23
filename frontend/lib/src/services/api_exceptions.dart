@@ -5,11 +5,13 @@ class ApiException implements Exception {
   ApiException(this.message, [this.statusCode]);
 
   @override
-  String toString() => 'ApiException: $message ${statusCode != null ? "($statusCode)" : ""}';
+  String toString() =>
+      'ApiException: $message ${statusCode != null ? "($statusCode)" : ""}';
 }
 
 class UnauthorizedException extends ApiException {
-  UnauthorizedException([String message = 'Unauthorized']) : super(message, 401);
+  UnauthorizedException([String message = 'Unauthorized'])
+      : super(message, 401);
 }
 
 class ForbiddenException extends ApiException {

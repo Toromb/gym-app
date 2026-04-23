@@ -44,8 +44,13 @@ backend_service/dist/
 dist/
 
 # Local logs
-backend/*.log
-backend/**/*.log
+backend_service/*.log
+backend_service/**/*.log
+
+# Temporary/debug output dumps
+*.diff
+*_dump.txt
+*_log.txt
 
 
 # Temporary python scripts

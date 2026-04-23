@@ -28,7 +28,7 @@ class AuthProvider with ChangeNotifier {
   String? get token => _token;
   User? get user => _user;
   String? get role => _user?.role;
-  
+
   bool _isOnboarded = true; // Default to true to assume done until checked
   bool get isOnboarded => _isOnboarded;
 
@@ -54,40 +54,40 @@ class AuthProvider with ChangeNotifier {
       final idToken = googleAuth.idToken;
 
       if (idToken == null) {
-          return 'Error: No se pudo obtener el ID Token de Google';
+        return 'Error: No se pudo obtener el ID Token de Google';
       }
 
       // 2. Backend Validation & Login using AuthService which accepts optional named params or positional
       // AuthService logic needs update to match
       final result = await _authService.loginWithGoogle(idToken, inviteToken);
-      
+
       // 3. Handle Result (Success or Error Message)
       return _handleAuthResult(result);
-
     } catch (e) {
       return 'Error iniciando sesión con Google: $e';
     }
   }
 
   Future<String?> loginWithApple({String? inviteToken}) async {
-      try {
-          final credential = await _appleAuthService.signIn();
-          if (credential == null) return 'Inicio de sesión cancelado';
+    try {
+      final credential = await _appleAuthService.signIn();
+      if (credential == null) return 'Inicio de sesión cancelado';
 
-          final identityToken = credential.identityToken;
-          if (identityToken == null) return 'Error: No se pudo obtener el Identity Token de Apple';
+      final identityToken = credential.identityToken;
+      if (identityToken == null)
+        return 'Error: No se pudo obtener el Identity Token de Apple';
 
-          final result = await _authService.loginWithApple(
-              identityToken: identityToken,
-              inviteToken: inviteToken,
-              firstName: credential.givenName,
-              lastName: credential.familyName,
-          );
+      final result = await _authService.loginWithApple(
+        identityToken: identityToken,
+        inviteToken: inviteToken,
+        firstName: credential.givenName,
+        lastName: credential.familyName,
+      );
 
-          return _handleAuthResult(result);
-      } catch (e) {
-          return 'Error iniciando sesión con Apple: $e';
-      }
+      return _handleAuthResult(result);
+    } catch (e) {
+      return 'Error iniciando sesión con Apple: $e';
+    }
   }
 
   Future<String?> _handleAuthResult(dynamic result) async {
@@ -103,7 +103,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return null; // Success (no error)
     } else {
-       return result.toString(); // Error message
+      return result.toString(); // Error message
     }
   }
 
@@ -127,9 +127,9 @@ class AuthProvider with ChangeNotifier {
         _user = user;
         _isAuthenticated = true;
         _status = AuthStatus.authenticated;
-        
+
         // Check onboarding if needed
-        await checkOnboardingStatus(); 
+        await checkOnboardingStatus();
       } else {
         // Token invalid or user not found
         _status = AuthStatus.unauthenticated;
@@ -152,39 +152,40 @@ class AuthProvider with ChangeNotifier {
     _user = null;
     notifyListeners();
   }
-  
-  Future<void> changePassword(String currentPassword, String newPassword) async {
+
+  Future<void> changePassword(
+      String currentPassword, String newPassword) async {
     await _authService.changePassword(currentPassword, newPassword);
   }
 
   void updateGym(Gym updatedGym) {
-     if (_user != null) {
-        _user = _user!.copyWith(gym: updatedGym);
-        notifyListeners();
-     }
+    if (_user != null) {
+      _user = _user!.copyWith(gym: updatedGym);
+      notifyListeners();
+    }
   }
 
   Future<void> checkOnboardingStatus() async {
-      if (_user == null) return;
-      if (_user!.role == 'alumno') {
-          _isOnboarded = await _onboardingService.getMyStatus();
-          notifyListeners();
-      } else {
-          _isOnboarded = true; // Teachers/Admins don't need onboarding
-      }
+    if (_user == null) return;
+    if (_user!.role == 'alumno') {
+      _isOnboarded = await _onboardingService.getMyStatus();
+      notifyListeners();
+    } else {
+      _isOnboarded = true; // Teachers/Admins don't need onboarding
+    }
   }
 
   // Force local update (e.g. after submitting form)
   void setOnboarded(bool value) {
-      _isOnboarded = value;
-      notifyListeners();
+    _isOnboarded = value;
+    notifyListeners();
   }
 
   Future<void> refreshUser() async {
-      final updatedUser = await _userService.getProfile();
-      if (updatedUser != null) {
-          _user = updatedUser;
-          notifyListeners();
-      }
+    final updatedUser = await _userService.getProfile();
+    if (updatedUser != null) {
+      _user = updatedUser;
+      notifyListeners();
+    }
   }
 }

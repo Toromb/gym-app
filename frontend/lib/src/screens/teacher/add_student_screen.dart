@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 
@@ -39,7 +40,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Agregar Alumno')),
+      appBar: ConstrainedAppBar(title: const Text('Agregar Alumno')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -53,15 +54,18 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                       child: TextFormField(
                         controller: _firstNameController,
                         decoration: const InputDecoration(labelText: 'Nombre'),
-                        validator: (value) => value!.isEmpty ? 'Requerido' : null,
+                        validator: (value) =>
+                            value!.isEmpty ? 'Requerido' : null,
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: TextFormField(
                         controller: _lastNameController,
-                        decoration: const InputDecoration(labelText: 'Apellido'),
-                        validator: (value) => value!.isEmpty ? 'Requerido' : null,
+                        decoration:
+                            const InputDecoration(labelText: 'Apellido'),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Requerido' : null,
                       ),
                     ),
                   ],
@@ -142,7 +146,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
                             setState(() => _isLoading = true);
-                            final success = await context.read<UserProvider>().addStudent(
+                            final success = await context
+                                .read<UserProvider>()
+                                .addStudent(
                                   email: _emailController.text,
                                   // Password not sent, handled by backend
                                   firstName: _firstNameController.text,
@@ -152,18 +158,26 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
                                   gender: _genderController.text,
                                   notes: _notesController.text,
-                                  initialWeight: double.tryParse(_weightController.text), // Add initial weight
-                                  membershipStartDate: _membershipDateController.text.isNotEmpty ? _membershipDateController.text : null,
+                                  initialWeight: double.tryParse(
+                                      _weightController
+                                          .text), // Add initial weight
+                                  membershipStartDate:
+                                      _membershipDateController.text.isNotEmpty
+                                          ? _membershipDateController.text
+                                          : null,
                                 );
                             setState(() => _isLoading = false);
                             if (success && mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Alumno agregado exitosamente')),
+                                const SnackBar(
+                                    content:
+                                        Text('Alumno agregado exitosamente')),
                               );
                             } else if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Error al agregar alumno')),
+                                const SnackBar(
+                                    content: Text('Error al agregar alumno')),
                               );
                             }
                           }

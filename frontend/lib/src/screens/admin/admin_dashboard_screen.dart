@@ -21,7 +21,6 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-
   @override
   void initState() {
     super.initState();
@@ -41,179 +40,217 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 900),
             child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                 // Header Section
-                 GymDashboardHeader(user: user, showPaymentStatus: false),
-                const SizedBox(height: 32),
-                
-                _buildDashboardCard(
-                  context,
-                  title: 'Gestionar Usuarios',
-                  subtitle: 'Altas, bajas y modificaciones',
-                  icon: Icons.people,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ManageUsersScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-      
-                _buildDashboardCard(
-                  context,
-                  title: 'Biblioteca de Planes',
-                  subtitle: 'Crear y editar planes base',
-                  icon: Icons.library_books,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const PlansListScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildDashboardCard(
-                  context,
-                  title: 'Entrenamientos Libres',
-                  subtitle: 'Gestionar rutinas públicas',
-                  icon: Icons.repeat,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ManageFreeTrainingsScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildDashboardCard(
-                  context,
-                  title: 'Biblioteca de Ejercicios',
-                  subtitle: 'Gestionar ejercicios disponibles',
-                  icon: Icons.fitness_center,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ExercisesListScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildDashboardCard(
-                  context,
-                  title: 'Gestionar Equipamiento',
-                  subtitle: 'Equipos, máquinas y accesorios',
-                  icon: Icons.category, 
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ManageEquipmentsScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildDashboardCard(
-                  context,
-                  title: 'Horarios del Gimnasio',
-                  subtitle: _getTodayScheduleText(context),
-                  icon: Icons.access_time, 
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const GymScheduleScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildDashboardCard(
-                  context,
-                  title: 'Configuración del Gym',
-                  subtitle: 'Logo, nombre y mensajes',
-                  icon: Icons.settings,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const GymConfigScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                 _buildDashboardCard(
-                  context,
-                  title: 'Mi Perfil',
-                  subtitle: 'Tus datos personales',
-                  icon: Icons.person,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                    );
-                  },
-                ),
-                // Add more admin features here
-              ],
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Section
+                  GymDashboardHeader(user: user, showPaymentStatus: false),
+                  const SizedBox(height: 32),
+
+                  _buildDashboardCard(
+                    context,
+                    title: 'Gestionar Usuarios',
+                    subtitle: 'Altas, bajas y modificaciones',
+                    icon: Icons.people,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const ManageUsersScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildDashboardCard(
+                    context,
+                    title: 'Biblioteca de Planes',
+                    subtitle: 'Crear y editar planes base',
+                    icon: Icons.library_books,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const PlansListScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDashboardCard(
+                    context,
+                    title: 'Entrenamientos Libres',
+                    subtitle: 'Gestionar rutinas públicas',
+                    icon: Icons.repeat,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                const ManageFreeTrainingsScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDashboardCard(
+                    context,
+                    title: 'Biblioteca de Ejercicios',
+                    subtitle: 'Gestionar ejercicios disponibles',
+                    icon: Icons.fitness_center,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const ExercisesListScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDashboardCard(
+                    context,
+                    title: 'Gestionar Equipamiento',
+                    subtitle: 'Equipos, máquinas y accesorios',
+                    icon: Icons.category,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                const ManageEquipmentsScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDashboardCard(
+                    context,
+                    title: 'Horarios del Gimnasio',
+                    subtitle: _getTodayScheduleText(context),
+                    icon: Icons.access_time,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const GymScheduleScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDashboardCard(
+                    context,
+                    title: 'Configuración del Gym',
+                    subtitle: 'Logo, nombre y mensajes',
+                    icon: Icons.settings,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const GymConfigScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDashboardCard(
+                    context,
+                    title: 'Mi Perfil',
+                    subtitle: 'Tus datos personales',
+                    icon: Icons.person,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const ProfileScreen()),
+                      );
+                    },
+                  ),
+                  // Add more admin features here
+                ],
+              ),
             ),
           ),
-      ),
-      ),
+        ),
       ),
     );
   }
 
   String _getTodayScheduleText(BuildContext context) {
-      final schedules = context.watch<GymScheduleProvider>().schedules;
-      if (schedules.isEmpty) return 'Configurar horarios de apertura'; // Fallback
+    final schedules = context.watch<GymScheduleProvider>().schedules;
+    if (schedules.isEmpty) return 'Configurar horarios de apertura'; // Fallback
 
-      final now = DateTime.now();
-      String dayKey = '';
-      switch (now.weekday) {
-          case 1: dayKey = 'MONDAY'; break;
-          case 2: dayKey = 'TUESDAY'; break;
-          case 3: dayKey = 'WEDNESDAY'; break;
-          case 4: dayKey = 'THURSDAY'; break;
-          case 5: dayKey = 'FRIDAY'; break;
-          case 6: dayKey = 'SATURDAY'; break;
-          case 7: dayKey = 'SUNDAY'; break;
-      }
+    final now = DateTime.now();
+    String dayKey = '';
+    switch (now.weekday) {
+      case 1:
+        dayKey = 'MONDAY';
+        break;
+      case 2:
+        dayKey = 'TUESDAY';
+        break;
+      case 3:
+        dayKey = 'WEDNESDAY';
+        break;
+      case 4:
+        dayKey = 'THURSDAY';
+        break;
+      case 5:
+        dayKey = 'FRIDAY';
+        break;
+      case 6:
+        dayKey = 'SATURDAY';
+        break;
+      case 7:
+        dayKey = 'SUNDAY';
+        break;
+    }
 
-      // Find schedule or return default closed
-      final todaySchedule = schedules.firstWhere(
-        (s) => s.dayOfWeek == dayKey, 
-        orElse: () => GymSchedule(id: 0, dayOfWeek: dayKey, isClosed: true)
-      );
-      
-      // Get localized day name
-      // Note: We might not have access to AppLocalizations in Admin context if not careful, but it should be there.
-      // Reuse logic or simple map if needed. Assuming AppLocalizations works.
-      String dayName = dayKey; 
-      // Reuse Student Home simple logic if no localization context easily available? 
-      // Admin dashboard already uses AppLocalizations elsewhere? No, it uses hardcoded strings in this file.
-      // So I'll just use a simple map for Admin to be safe, or try AppLocalizations if available.
-      // Actually AdminDashboard doesn't import AppLocalizations. I should avoid adding a dependency if not needed.
-      // I'll use a simple Spanish map for now since existing text is Spanish.
-      switch (dayKey) {
-        case 'MONDAY': dayName = 'Lunes'; break;
-        case 'TUESDAY': dayName = 'Martes'; break;
-        case 'WEDNESDAY': dayName = 'Miércoles'; break;
-        case 'THURSDAY': dayName = 'Jueves'; break;
-        case 'FRIDAY': dayName = 'Viernes'; break;
-        case 'SATURDAY': dayName = 'Sábado'; break;
-        case 'SUNDAY': dayName = 'Domingo'; break;
-      }
+    // Find schedule or return default closed
+    final todaySchedule = schedules.firstWhere((s) => s.dayOfWeek == dayKey,
+        orElse: () => GymSchedule(id: 0, dayOfWeek: dayKey, isClosed: true));
 
-      if (todaySchedule.isClosed || todaySchedule.displayHours == 'Closed') {
-          return 'Hoy $dayName: CERRADO';
-      }
-      
-      return 'Hoy $dayName: ${todaySchedule.displayHours}';
+    // Get localized day name
+    // Note: We might not have access to AppLocalizations in Admin context if not careful, but it should be there.
+    // Reuse logic or simple map if needed. Assuming AppLocalizations works.
+    String dayName = dayKey;
+    // Reuse Student Home simple logic if no localization context easily available?
+    // Admin dashboard already uses AppLocalizations elsewhere? No, it uses hardcoded strings in this file.
+    // So I'll just use a simple map for Admin to be safe, or try AppLocalizations if available.
+    // Actually AdminDashboard doesn't import AppLocalizations. I should avoid adding a dependency if not needed.
+    // I'll use a simple Spanish map for now since existing text is Spanish.
+    switch (dayKey) {
+      case 'MONDAY':
+        dayName = 'Lunes';
+        break;
+      case 'TUESDAY':
+        dayName = 'Martes';
+        break;
+      case 'WEDNESDAY':
+        dayName = 'Miércoles';
+        break;
+      case 'THURSDAY':
+        dayName = 'Jueves';
+        break;
+      case 'FRIDAY':
+        dayName = 'Viernes';
+        break;
+      case 'SATURDAY':
+        dayName = 'Sábado';
+        break;
+      case 'SUNDAY':
+        dayName = 'Domingo';
+        break;
+    }
+
+    if (todaySchedule.isClosed || todaySchedule.displayHours == 'Closed') {
+      return 'Hoy $dayName: CERRADO';
+    }
+
+    return 'Hoy $dayName: ${todaySchedule.displayHours}';
   }
 
   Widget _buildDashboardCard(BuildContext context,
-      {required String title, String? subtitle, required IconData icon, required VoidCallback onTap}) {
-    
+      {required String title,
+      String? subtitle,
+      required IconData icon,
+      required VoidCallback onTap}) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
@@ -229,22 +266,32 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, size: 32, color: colorScheme.onPrimaryContainer),
+                child:
+                    Icon(icon, size: 32, color: colorScheme.onPrimaryContainer),
               ),
               const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(title,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold)),
                     if (subtitle != null) ...[
                       const SizedBox(height: 4),
-                       Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                      Text(subtitle,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: colorScheme.onSurfaceVariant)),
                     ]
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.outline),
+              Icon(Icons.arrow_forward_ios,
+                  size: 16, color: colorScheme.outline),
             ],
           ),
         ),

@@ -10,7 +10,7 @@ class TrainingSession {
   final String status; // 'IN_PROGRESS', 'COMPLETED', 'ABANDONED'
   final List<SessionExercise> exercises;
   // Legacy fields adapting to new model
-  final String? dayKey; 
+  final String? dayKey;
 
   TrainingSession({
     required this.id,
@@ -27,9 +27,11 @@ class TrainingSession {
     return TrainingSession(
       id: json['id'],
       date: json['date'],
-      planId: json['plan'] != null ? (json['plan'] is String ? json['plan'] : json['plan']['id']) : null,
-      freeTrainingDefinition: json['freeTrainingDefinition'] != null 
-          ? FreeTraining.fromJson(json['freeTrainingDefinition']) 
+      planId: json['plan'] != null
+          ? (json['plan'] is String ? json['plan'] : json['plan']['id'])
+          : null,
+      freeTrainingDefinition: json['freeTrainingDefinition'] != null
+          ? FreeTraining.fromJson(json['freeTrainingDefinition'])
           : null,
       source: json['source'] ?? 'PLAN',
       status: json['status'],
@@ -59,8 +61,9 @@ class TrainingSession {
     return {
       'id': id,
       'date': date,
-      'plan': planId, 
-      'freeTrainingDefinition': freeTrainingDefinition != null, // We generally don't serialize full object recursively for cache if we can avoid it, but here we need it for validation.
+      'plan': planId,
+      'freeTrainingDefinition': freeTrainingDefinition !=
+          null, // We generally don't serialize full object recursively for cache if we can avoid it, but here we need it for validation.
       // Wait, 'freeTrainingDefinition': freeTrainingDefinition != null. toJson() expects Map?
       // Actually, local_storage simply encodes this map. If I pass object, it needs toJson.
       // FreeTraining has toJson? NO. I need to add toJson to FreeTraining if I want to persist it.
@@ -80,7 +83,7 @@ class TrainingSession {
       // FreeTraining currently lacks toJson. I should add it or just serialize ID.
       // Checking FreeTraining code -> no toJson.
       // I'll add toJson to FreeTraining later?
-      // For now, let's just ignore persisting the Definition in toJson to avoid errors, 
+      // For now, let's just ignore persisting the Definition in toJson to avoid errors,
       // OR pass null.
       // Actually, if I don't persist it, I can't validate cache properly by ID.
       // I'll try to persist ID at least?
@@ -106,15 +109,15 @@ class SessionExercise {
   final double? targetDistanceSnapshot; // Meters
   final String? videoUrl;
   final List<Equipment> equipmentsSnapshot;
-  
+
   final Exercise? exercise;
-  
+
   // Real Data
   final bool isCompleted;
-  final String? setsDone; 
+  final String? setsDone;
   final String? repsDone;
   final String? weightUsed;
-  final String? timeSpent; 
+  final String? timeSpent;
   final double? distanceCovered;
   final String? notes;
   final double? addedWeight; // Lastre
@@ -128,10 +131,10 @@ class SessionExercise {
     this.targetTimeSnapshot,
     this.targetDistanceSnapshot,
     this.videoUrl,
-    required this.equipmentsSnapshot, 
+    required this.equipmentsSnapshot,
     this.exercise,
     required this.isCompleted,
-    this.setsDone, 
+    this.setsDone,
     this.repsDone,
     this.weightUsed,
     this.timeSpent,
@@ -168,7 +171,8 @@ class SessionExercise {
       targetRepsSnapshot: targetRepsSnapshot ?? this.targetRepsSnapshot,
       targetWeightSnapshot: targetWeightSnapshot ?? this.targetWeightSnapshot,
       targetTimeSnapshot: targetTimeSnapshot ?? this.targetTimeSnapshot,
-      targetDistanceSnapshot: targetDistanceSnapshot ?? this.targetDistanceSnapshot,
+      targetDistanceSnapshot:
+          targetDistanceSnapshot ?? this.targetDistanceSnapshot,
       videoUrl: videoUrl ?? this.videoUrl,
       equipmentsSnapshot: equipmentsSnapshot ?? this.equipmentsSnapshot,
       exercise: exercise ?? this.exercise,
@@ -184,7 +188,6 @@ class SessionExercise {
   }
 
   factory SessionExercise.fromJson(Map<String, dynamic> json) {
-
     return SessionExercise(
       id: json['id'],
       exerciseNameSnapshot: json['exerciseNameSnapshot'] ?? 'Unknown Exercise',
@@ -192,21 +195,28 @@ class SessionExercise {
       targetRepsSnapshot: json['targetRepsSnapshot'],
       targetWeightSnapshot: json['targetWeightSnapshot'],
       targetTimeSnapshot: json['targetTimeSnapshot'],
-      targetDistanceSnapshot: json['targetDistanceSnapshot'] != null ? (json['targetDistanceSnapshot'] as num).toDouble() : null,
+      targetDistanceSnapshot: json['targetDistanceSnapshot'] != null
+          ? (json['targetDistanceSnapshot'] as num).toDouble()
+          : null,
       videoUrl: json['videoUrl'],
       equipmentsSnapshot: (json['equipmentsSnapshot'] as List<dynamic>?)
               ?.map((e) => Equipment.fromJson(e))
               .toList() ??
           [],
-      exercise: json['exercise'] != null ? Exercise.fromJson(json['exercise']) : null,
+      exercise:
+          json['exercise'] != null ? Exercise.fromJson(json['exercise']) : null,
       isCompleted: json['isCompleted'] ?? false,
-      setsDone: json['setsDone']?.toString(), 
+      setsDone: json['setsDone']?.toString(),
       repsDone: json['repsDone'],
       weightUsed: json['weightUsed'],
       timeSpent: json['timeSpent'],
-      distanceCovered: json['distanceCovered'] != null ? (json['distanceCovered'] as num).toDouble() : null,
+      distanceCovered: json['distanceCovered'] != null
+          ? (json['distanceCovered'] as num).toDouble()
+          : null,
       notes: json['notes'],
-      addedWeight: json['addedWeight'] != null ? (json['addedWeight'] as num).toDouble() : null,
+      addedWeight: json['addedWeight'] != null
+          ? (json['addedWeight'] as num).toDouble()
+          : null,
     );
   }
 
@@ -218,7 +228,7 @@ class SessionExercise {
       targetSetsSnapshot: pe.sets,
       targetRepsSnapshot: pe.reps,
       targetWeightSnapshot: pe.suggestedLoad,
-      // PlanExercise doesn't have targetTime/Distance yet in my Plan update? 
+      // PlanExercise doesn't have targetTime/Distance yet in my Plan update?
       // I need to check PlanExercise update. Assuming I'll add them there too.
       // But for now, let's keep it robust.
       targetTimeSnapshot: pe.targetTime,
@@ -227,7 +237,7 @@ class SessionExercise {
       equipmentsSnapshot: pe.equipments,
       exercise: pe.exercise,
       isCompleted: false,
-      setsDone: pe.sets.toString(), 
+      setsDone: pe.sets.toString(),
     );
   }
   Map<String, dynamic> toJson() {

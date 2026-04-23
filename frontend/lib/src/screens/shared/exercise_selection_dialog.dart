@@ -7,7 +7,8 @@ class ExerciseSelectionDialog extends StatefulWidget {
   const ExerciseSelectionDialog({super.key});
 
   @override
-  State<ExerciseSelectionDialog> createState() => _ExerciseSelectionDialogState();
+  State<ExerciseSelectionDialog> createState() =>
+      _ExerciseSelectionDialogState();
 }
 
 class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
@@ -40,8 +41,8 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
     } else {
       setState(() {
         _filteredExercises = _allExercises!.where((e) {
-          return e.name.toLowerCase().contains(query.toLowerCase()) || 
-                 e.muscleGroup.toLowerCase().contains(query.toLowerCase());
+          return e.name.toLowerCase().contains(query.toLowerCase()) ||
+              e.muscleGroup.toLowerCase().contains(query.toLowerCase());
         }).toList();
       });
     }
@@ -56,40 +57,42 @@ class _ExerciseSelectionDialogState extends State<ExerciseSelectionDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-             TextField(
-               controller: _searchController,
-               decoration: const InputDecoration(
-                 labelText: 'Search',
-                 prefixIcon: Icon(Icons.search),
-               ),
-               onChanged: _filter,
-             ),
-             const SizedBox(height: 10),
-             Expanded(
-               child: _isLoading 
-                 ? const Center(child: CircularProgressIndicator())
-                 : _filteredExercises!.isEmpty 
-                    ? const Center(child: Text('No exercises found'))
-                    : ListView.builder(
-                        itemCount: _filteredExercises!.length,
-                        itemBuilder: (ctx, i) {
-                          final ex = _filteredExercises![i];
-                          return ListTile(
-                            leading: const Icon(Icons.fitness_center),
-                            title: Text(ex.name),
-                            subtitle: Text(ex.muscleGroup),
-                            onTap: () {
-                              Navigator.pop(ctx, ex);
-                            },
-                          );
-                        },
-                      ),
-             ),
+            TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                labelText: 'Search',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: _filter,
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _filteredExercises!.isEmpty
+                      ? const Center(child: Text('No exercises found'))
+                      : ListView.builder(
+                          itemCount: _filteredExercises!.length,
+                          itemBuilder: (ctx, i) {
+                            final ex = _filteredExercises![i];
+                            return ListTile(
+                              leading: const Icon(Icons.fitness_center),
+                              title: Text(ex.name),
+                              subtitle: Text(ex.muscleGroup),
+                              onTap: () {
+                                Navigator.pop(ctx, ex);
+                              },
+                            );
+                          },
+                        ),
+            ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
       ],
     );
   }

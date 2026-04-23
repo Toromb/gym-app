@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/stats_provider.dart';
 import '../../../providers/user_provider.dart';
@@ -15,6 +16,7 @@ import 'package:collection/collection.dart'; // Import for firstWhereOrNull
 import '../calendar_screen.dart'; // Import CalendarScreen for embedding
 import 'package:intl/intl.dart'; // For date formatting
 import '../muscle_flow_screen.dart';
+import '../../../widgets/background_page_wrapper.dart';
 
 class ProfileProgressScreen extends StatefulWidget {
   final String? userId; // Optional: If null, shows current user's progress
@@ -44,51 +46,55 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userService = UserService(); // Instantiate locally for specific fetch
-    
+
     User? targetUser;
-    
+
     if (widget.userId == null) {
-        // Force refresh current user info to get latest fields (like trainingGoal)
-        // AuthProvider might be stale if it only loaded on login.
-        print('ProfileProgress: Improving data freshness for current user...');
-        try {
-             final freshUser = await userService.getProfile();
-             if (freshUser != null) {
-                 // Update the local resolved user. 
-                 // Note: This won't update AuthProvider unless we call refreshUser on it, 
-                 // but for this screen's purpose, we just need the data.
-                 authProvider.refreshUser(); // Should update global state too
-                 // user = freshUser; // Removed erroneous line
-                 targetUser = freshUser;
-             } else {
-                 targetUser = authProvider.user; // Fallback
-             }
-        } catch (e) {
-             print('ProfileProgress: Error refreshing profile: $e');
-             targetUser = authProvider.user;
+      // Force refresh current user info to get latest fields (like trainingGoal)
+      // AuthProvider might be stale if it only loaded on login.
+      print('ProfileProgress: Improving data freshness for current user...');
+      try {
+        final freshUser = await userService.getProfile();
+        if (freshUser != null) {
+          // Update the local resolved user.
+          // Note: This won't update AuthProvider unless we call refreshUser on it,
+          // but for this screen's purpose, we just need the data.
+          authProvider.refreshUser(); // Should update global state too
+          // user = freshUser; // Removed erroneous line
+          targetUser = freshUser;
+        } else {
+          targetUser = authProvider.user; // Fallback
         }
+      } catch (e) {
+        print('ProfileProgress: Error refreshing profile: $e');
+        targetUser = authProvider.user;
+      }
     } else {
-        targetUser = userProvider.students.firstWhereOrNull((u) => u.id == widget.userId);
+      targetUser =
+          userProvider.students.firstWhereOrNull((u) => u.id == widget.userId);
     }
-    
-    if (targetUser != null && (targetUser.trainingGoal == null || targetUser.trainingGoal!.isEmpty)) {
-        print('ProfileProgress: User goal IS STILL missing after refresh. Fetching onboarding...');
-        try {
-            final service = OnboardingService(ApiClient()); 
-            final profile = await service.getUserOnboarding(targetUser.id);
-            print('ProfileProgress: Onboarding result: ${profile?.goal}');
-            if (profile != null && profile.goal != null) {
-                if (mounted) {
-                    setState(() {
-                        _fallbackGoal = profile.goal;
-                    });
-                }
-            }
-        } catch (e) {
-            print('ProfileProgress: Error fetching fallback goal: $e');
+
+    if (targetUser != null &&
+        (targetUser.trainingGoal == null || targetUser.trainingGoal!.isEmpty)) {
+      print(
+          'ProfileProgress: User goal IS STILL missing after refresh. Fetching onboarding...');
+      try {
+        final service = OnboardingService(ApiClient());
+        final profile = await service.getUserOnboarding(targetUser.id);
+        print('ProfileProgress: Onboarding result: ${profile?.goal}');
+        if (profile != null && profile.goal != null) {
+          if (mounted) {
+            setState(() {
+              _fallbackGoal = profile.goal;
+            });
+          }
         }
+      } catch (e) {
+        print('ProfileProgress: Error fetching fallback goal: $e');
+      }
     } else {
-        print('ProfileProgress: User goal IS present: ${targetUser?.trainingGoal}');
+      print(
+          'ProfileProgress: User goal IS present: ${targetUser?.trainingGoal}');
     }
   }
 
@@ -97,11 +103,11 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
     final statsProvider = Provider.of<StatsProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
-    
+
     User? user;
     if (widget.userId == null) {
       // Prioritize AuthProvider for current user to ensure we have the latest profile data including onboarding
-      user = authProvider.user; 
+      user = authProvider.user;
     } else {
       try {
         user = userProvider.students.firstWhere((u) => u.id == widget.userId);
@@ -122,41 +128,51 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
     if (progress == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Mi Progreso')),
-        body: const Center(child: Text('No se pudieron cargar los datos de progreso.')),
+        body: const Center(
+            child: Text('No se pudieron cargar los datos de progreso.')),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mi Progreso'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadData,
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _safelyBuild(() => _buildOnboardingSection(user)),
-                const SizedBox(height: 24),
-                _safelyBuild(() => const CalendarScreen(isEmbedded: true)), // Embedded Calendar
-                const SizedBox(height: 24),
-                _safelyBuild(() => _buildLevelCard(progress.level)), // New Level Card
-                const SizedBox(height: 24),
-                _safelyBuild(() => _buildMuscleFlowCard()), // New Muscle Flow Link
-                const SizedBox(height: 24),
-                _safelyBuild(() => _buildStatusCards(progress)),
-                const SizedBox(height: 24),
-                _safelyBuild(() => _buildVolumeChart(progress.volume)),
-                // Muscle Load removed for V1
-              ],
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.85,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Text('Mi Progreso'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadData,
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _safelyBuild(() => _buildOnboardingSection(user)),
+                  const SizedBox(height: 24),
+                  _safelyBuild(() => const CalendarScreen(
+                      isEmbedded: true)), // Embedded Calendar
+                  const SizedBox(height: 24),
+                  _safelyBuild(
+                      () => _buildLevelCard(progress.level)), // New Level Card
+                  const SizedBox(height: 24),
+                  _safelyBuild(
+                      () => _buildMuscleFlowCard()), // New Muscle Flow Link
+                  const SizedBox(height: 24),
+                  _safelyBuild(() => _buildStatusCards(progress)),
+                  const SizedBox(height: 24),
+                  _safelyBuild(() => _buildVolumeChart(progress.volume)),
+                  // Muscle Load removed for V1
+                ],
+              ),
             ),
           ),
         ),
@@ -165,23 +181,23 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
   }
 
   Widget _safelyBuild(Widget Function() builder) {
-      try {
-          return builder();
-      } catch (e, stack) {
-          debugPrint('UI Error: $e\n$stack');
-          return Container(
-            color: Colors.red.shade100, 
-            padding: const EdgeInsets.all(8), 
-            child: Text('Error de renderizado: $e', style: const TextStyle(color: Colors.red))
-          );
-      }
+    try {
+      return builder();
+    } catch (e, stack) {
+      debugPrint('UI Error: $e\n$stack');
+      return Container(
+          color: Colors.red.shade100,
+          padding: const EdgeInsets.all(8),
+          child: Text('Error de renderizado: $e',
+              style: const TextStyle(color: Colors.red)));
+    }
   }
 
   Widget _buildOnboardingSection(User? user) {
     if (user == null) return const SizedBox.shrink();
 
     return Card(
-      elevation: 2,
+      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -190,13 +206,19 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
           children: [
             Text(
               'Perfil Inicial',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const Divider(),
             const SizedBox(height: 8),
-            _buildInfoRow('Objetivo', user.trainingGoal ?? _fallbackGoal ?? 'No definido'),
-            _buildInfoRow('Experiencia', 'Nivel Intermedio'), // Hardcoded/Logic needed if logic in FE
-            _buildInfoRow('Frecuencia', '3 veces por semana'), // Hardcoded/Logic needed
+            _buildInfoRow('Objetivo',
+                user.trainingGoal ?? _fallbackGoal ?? 'No definido'),
+            _buildInfoRow('Experiencia',
+                'Nivel Intermedio'), // Hardcoded/Logic needed if logic in FE
+            _buildInfoRow(
+                'Frecuencia', '3 veces por semana'), // Hardcoded/Logic needed
             _buildInfoRow('Inicio', user.membershipStartDate ?? 'N/A'),
           ],
         ),
@@ -231,7 +253,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: Colors.grey)),
-          Text(translatedValue, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Text(translatedValue,
+              style: const TextStyle(fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -241,7 +264,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
     final width = MediaQuery.of(context).size.width;
     double aspectRatio = 1.4;
     if (width < 400) {
-      aspectRatio = 0.95; // More height for very small screens (iPhone SE etc) to be safe
+      aspectRatio =
+          0.95; // More height for very small screens (iPhone SE etc) to be safe
     } else if (width < 600) {
       aspectRatio = 1.2;
     }
@@ -252,7 +276,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
       mainAxisSpacing: 12,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: aspectRatio, 
+      childAspectRatio: aspectRatio,
       children: [
         _buildWorkoutsCard(progress.workouts),
         _buildHistoryCard(progress.workouts),
@@ -269,7 +293,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
       color: Colors.purple,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.center, // Centered
-        mainAxisAlignment: MainAxisAlignment.center, 
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _buildDataLine('${workouts.total}', 'Histórico', isPrimary: true),
           const SizedBox(height: 4),
@@ -288,7 +312,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center, // Added Center
         children: [
-          _buildDataLine('${workouts.thisWeek}', 'Esta Semana', isPrimary: true),
+          _buildDataLine('${workouts.thisWeek}', 'Esta Semana',
+              isPrimary: true),
           const SizedBox(height: 4),
           _buildDataLine('${workouts.thisMonth}', 'Este Mes'),
         ],
@@ -299,13 +324,14 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
   Widget _buildVolumeCard(VolumeStats volume) {
     return _buildUnifiedCard(
       title: "Volumen Levantado",
-      icon: Icons.line_weight, 
+      icon: Icons.line_weight,
       color: Colors.green,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center, // Added Center
         children: [
-          _buildDataLine(_formatSmartVolume(volume.thisWeek), 'Esta Semana', isPrimary: true),
+          _buildDataLine(_formatSmartVolume(volume.thisWeek), 'Esta Semana',
+              isPrimary: true),
           const SizedBox(height: 4),
           _buildDataLine(_formatSmartVolume(volume.thisMonth), 'Este Mes'),
           const SizedBox(height: 4),
@@ -320,7 +346,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
     final diff = weight.current - initial;
     final sign = diff > 0 ? '+' : '';
     final diffText = '$sign${diff.toStringAsFixed(1)}';
-    
+
     return _buildUnifiedCard(
       title: "Peso Corporal",
       icon: Icons.monitor_weight,
@@ -337,18 +363,20 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                 diffText,
-                 style: TextStyle(
-                   fontSize: 14, 
-                   fontWeight: FontWeight.bold,
-                   color: diff > 0 ? Colors.red : (diff < 0 ? Colors.green : Colors.grey),
-                 ),
-               ),
-               const SizedBox(width: 4),
-               Text(
-                 'Diferencia',
-                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-               ),
+                diffText,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: diff > 0
+                      ? Colors.red
+                      : (diff < 0 ? Colors.green : Colors.grey),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Diferencia',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
             ],
           )
         ],
@@ -356,14 +384,15 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, String subtitle, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, String subtitle, IconData icon, Color color) {
     return _buildUnifiedCard(
       title: title,
       icon: icon,
       color: color,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center, 
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _buildDataLine(value, subtitle, isPrimary: true),
         ],
@@ -381,7 +410,9 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: Theme.of(context).brightness == Brightness.light
+            ? AppColors.cardSurface
+            : Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -396,9 +427,13 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-           Icon(icon, color: color, size: 24),
-           Expanded(child: Center(child: SizedBox(width: double.infinity, child: content))),
-           Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          Icon(icon, color: color, size: 24),
+          Expanded(
+              child: Center(
+                  child: SizedBox(width: double.infinity, child: content))),
+          Text(title,
+              style:
+                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -414,7 +449,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
         ),
         const SizedBox(width: 5),
-        Flexible( // Allow text to shrink/wrap
+        Flexible(
+          // Allow text to shrink/wrap
           child: Text(
             label, // Removed leading space in string to handle alignment safely
             style: TextStyle(fontSize: 12, color: Colors.grey[700]),
@@ -434,20 +470,21 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
     return '${volume.toStringAsFixed(0)} kg';
   }
 
-
-
   Widget _buildVolumeChart(VolumeStats volumeStats) {
-     if (volumeStats.chart.isEmpty) {
-       return const Card(child: Padding(padding: EdgeInsets.all(16), child: Text("No hay datos recientes de volumen.")));
-     }
+    if (volumeStats.chart.isEmpty) {
+      return const Card(
+          child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Text("No hay datos recientes de volumen.")));
+    }
 
     // Calculate dynamic maxY for visual breathing room
-    double maxVal = volumeStats.chart.map((e) => e.volume).reduce((a, b) => a > b ? a : b);
+    double maxVal =
+        volumeStats.chart.map((e) => e.volume).reduce((a, b) => a > b ? a : b);
     if (maxVal == 0) maxVal = 100;
-    
+
     return Card(
-      elevation: 4,
-      shadowColor: Colors.black12,
+      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -456,9 +493,12 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
           children: [
             Text(
               'Volumen Semanal',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
-             const SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               'Tendencia de las últimas 4 semanas',
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
@@ -473,9 +513,11 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                   barTouchData: BarTouchData(
                     enabled: true,
                     touchTooltipData: BarTouchTooltipData(
-                      tooltipBgColor: Theme.of(context).colorScheme.inverseSurface,
+                      tooltipBgColor:
+                          Theme.of(context).colorScheme.inverseSurface,
                       tooltipRoundedRadius: 8,
-                      tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      tooltipPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       tooltipMargin: 8,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final dateStr = volumeStats.chart[group.x.toInt()].date;
@@ -487,7 +529,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                           startDate = DateTime.now();
                         }
                         final endDate = startDate.add(const Duration(days: 6));
-                        
+
                         // Format: dd/MM a dd/MM
                         final startFmt = DateFormat('dd/MM').format(startDate);
                         final endFmt = DateFormat('dd/MM').format(endDate);
@@ -495,12 +537,23 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
 
                         return BarTooltipItem(
                           '${_formatSmartVolume(rod.toY)}\n',
-                          TextStyle(color: Theme.of(context).colorScheme.onInverseSurface, fontWeight: FontWeight.bold, fontSize: 14),
+                          TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onInverseSurface,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14),
                           children: [
-                             TextSpan(
-                               text: rangeStr,
-                               style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.normal),
-                             ),
+                            TextSpan(
+                              text: rangeStr,
+                              style: TextStyle(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onInverseSurface
+                                      .withOpacity(0.8),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.normal),
+                            ),
                           ],
                         );
                       },
@@ -518,20 +571,22 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                             fontSize: 12,
                           );
                           if (value.toInt() < volumeStats.chart.length) {
-                              final dateStr = volumeStats.chart[value.toInt()].date;
-                              
-                              // Parse and format to dd/MM
-                              try {
-                                 final date = DateTime.parse(dateStr);
-                                 final dateLabel = DateFormat('dd/MM').format(date);
-                                 return SideTitleWidget(
-                                   axisSide: meta.axisSide,
-                                   space: 8,
-                                   child: Text(dateLabel, style: style),
-                                 );
-                              } catch (e) {
-                                return const SizedBox.shrink();
-                              }
+                            final dateStr =
+                                volumeStats.chart[value.toInt()].date;
+
+                            // Parse and format to dd/MM
+                            try {
+                              final date = DateTime.parse(dateStr);
+                              final dateLabel =
+                                  DateFormat('dd/MM').format(date);
+                              return SideTitleWidget(
+                                axisSide: meta.axisSide,
+                                space: 8,
+                                child: Text(dateLabel, style: style),
+                              );
+                            } catch (e) {
+                              return const SizedBox.shrink();
+                            }
                           }
                           return const SizedBox.shrink();
                         },
@@ -542,24 +597,27 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                         showTitles: true,
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
-                           if (value == 0) return const SizedBox.shrink();
-                           // K formatting
-                           String text;
-                           if (value >= 1000) {
-                             text = '${(value / 1000).toStringAsFixed(0)}k';
-                           } else {
-                             text = value.toInt().toString();
-                           }
-                           return SideTitleWidget(
-                             axisSide: meta.axisSide, 
-                             space: 4, 
-                             child: Text(text, style: const TextStyle(color: Colors.grey, fontSize: 10))
-                           );
+                          if (value == 0) return const SizedBox.shrink();
+                          // K formatting
+                          String text;
+                          if (value >= 1000) {
+                            text = '${(value / 1000).toStringAsFixed(0)}k';
+                          } else {
+                            text = value.toInt().toString();
+                          }
+                          return SideTitleWidget(
+                              axisSide: meta.axisSide,
+                              space: 4,
+                              child: Text(text,
+                                  style: const TextStyle(
+                                      color: Colors.grey, fontSize: 10)));
                         },
                       ),
                     ),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
                   ),
                   gridData: FlGridData(
                     show: true,
@@ -582,17 +640,21 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                           gradient: LinearGradient(
                             colors: [
                               Theme.of(context).colorScheme.primary,
-                              Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                              Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.6),
                             ],
                             begin: Alignment.bottomCenter,
                             end: Alignment.topCenter,
                           ),
                           width: 20,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(6)),
                           backDrawRodData: BackgroundBarChartRodData(
-                             show: true,
-                             toY: maxVal * 1.2,
-                             color: Colors.grey.withOpacity(0.05),
+                            show: true,
+                            toY: maxVal * 1.2,
+                            color: Colors.grey.withOpacity(0.05),
                           ),
                         )
                       ],
@@ -607,15 +669,12 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
     );
   }
 
-
-
-
   Widget _buildLevelCard(LevelStats level) {
     // 1. Calculate Progress
     final currentExp = level.exp;
     final nextLevelExp = _getNextLevelExpThreshold(level.exp);
     final prevLevelExp = _getPrevLevelExpThreshold(level.exp);
-    
+
     // Progress for this specific level range
     final range = nextLevelExp - prevLevelExp;
     final progressInLevel = currentExp - prevLevelExp;
@@ -623,92 +682,101 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
 
     // 2. Difficulty Label
     String difficulty = "Novato";
-    if (level.current >= 80) difficulty = "Extremadamente Difícil";
-    else if (level.current >= 50) difficulty = "Muy Difícil";
-    else if (level.current >= 30) difficulty = "Difícil";
-    else if (level.current >= 20) difficulty = "Medio–Difícil";
-    else if (level.current >= 10) difficulty = "Medio";
-    else difficulty = "Fácil";
+    if (level.current >= 80)
+      difficulty = "Extremadamente Difícil";
+    else if (level.current >= 50)
+      difficulty = "Muy Difícil";
+    else if (level.current >= 30)
+      difficulty = "Difícil";
+    else if (level.current >= 20)
+      difficulty = "Medio–Difícil";
+    else if (level.current >= 10)
+      difficulty = "Medio";
+    else
+      difficulty = "Fácil";
 
     return Card(
-      elevation: 2,
+      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
-            children: [
-                // Badge
-                Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                            colors: [Theme.of(context).primaryColor, Theme.of(context).primaryColorDark],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                        ),
-                        boxShadow: [
-                            BoxShadow(
-                                color: Theme.of(context).primaryColor.withOpacity(0.4),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                            )
-                        ]
-                    ),
-                    child: Center(
-                        child: Text(
-                            '${level.current}',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 24,
-                            ),
-                        ),
-                    ),
+          children: [
+            // Badge
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).primaryColor,
+                      Theme.of(context).primaryColorDark
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).primaryColor.withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    )
+                  ]),
+              child: Center(
+                child: Text(
+                  '${level.current}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                  ),
                 ),
-                const SizedBox(width: 16),
-                // Info & Bar
-                Expanded(
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                           Row(
-                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                               children: [
-                                   Text(
-                                       'Nivel ${level.current}',
-                                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                   ),
-                                   Text(
-                                       difficulty,
-                                       style: TextStyle(
-                                           color: Colors.grey[600],
-                                           fontSize: 12,
-                                           fontWeight: FontWeight.w500
-                                       ),
-                                   ),
-                               ],
-                           ),
-                           const SizedBox(height: 8),
-                           ClipRRect(
-                               borderRadius: BorderRadius.circular(10),
-                               child: LinearProgressIndicator(
-                                   value: percent,
-                                   minHeight: 10,
-                                   backgroundColor: Colors.grey[200],
-                                   valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                               ),
-                           ),
-                           const SizedBox(height: 4),
-                           Text(
-                               '${currentExp} / ${nextLevelExp} XP',
-                               style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                           ),
-                        ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Info & Bar
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Nivel ${level.current}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      Text(
+                        difficulty,
+                        style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: percent,
+                      minHeight: 10,
+                      backgroundColor: Colors.grey[200],
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).primaryColor),
                     ),
-                ),
-            ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${currentExp} / ${nextLevelExp} XP',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -716,33 +784,34 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
 
   // Thresholds identical to Backend logic
   int _getNextLevelExpThreshold(int currentExp) {
-      if (currentExp < 100) return 100;
-      if (currentExp < 300) return 300;
-      if (currentExp < 1300) return 1300;
-      if (currentExp < 3000) return 3000;
-      if (currentExp < 6000) return 6000;
-      if (currentExp < 10000) return 10000;
-      if (currentExp < 16000) return 16000;
-      if (currentExp < 30000) return 30000;
-      if (currentExp < 50000) return 50000;
-      return 1000000; // 100+
+    if (currentExp < 100) return 100;
+    if (currentExp < 300) return 300;
+    if (currentExp < 1300) return 1300;
+    if (currentExp < 3000) return 3000;
+    if (currentExp < 6000) return 6000;
+    if (currentExp < 10000) return 10000;
+    if (currentExp < 16000) return 16000;
+    if (currentExp < 30000) return 30000;
+    if (currentExp < 50000) return 50000;
+    return 1000000; // 100+
   }
 
   int _getPrevLevelExpThreshold(int currentExp) {
-      if (currentExp < 100) return 0;
-      if (currentExp < 300) return 100;
-      if (currentExp < 1300) return 300;
-      if (currentExp < 3000) return 1300;
-      if (currentExp < 6000) return 3000;
-      if (currentExp < 10000) return 6000;
-      if (currentExp < 16000) return 10000;
-      if (currentExp < 30000) return 16000;
-      if (currentExp < 50000) return 30000;
-      return 50000;
+    if (currentExp < 100) return 0;
+    if (currentExp < 300) return 100;
+    if (currentExp < 1300) return 300;
+    if (currentExp < 3000) return 1300;
+    if (currentExp < 6000) return 3000;
+    if (currentExp < 10000) return 6000;
+    if (currentExp < 16000) return 10000;
+    if (currentExp < 30000) return 16000;
+    if (currentExp < 50000) return 30000;
+    return 50000;
   }
+
   Widget _buildMuscleFlowCard() {
     return Card(
-      elevation: 2,
+      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
@@ -753,37 +822,41 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-                children: [
-                    Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                            color: Colors.redAccent.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.accessibility_new, color: Colors.redAccent),
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.accessibility_new,
+                    color: Colors.redAccent),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Estado Muscular',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                                Text(
-                                    'Estado Muscular',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                    'Ver recuperación y fatiga',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                ),
-                            ],
-                        ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Ver recuperación y fatiga',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
-                    const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                ],
-            ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+            ],
+          ),
         ),
       ),
     );

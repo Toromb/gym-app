@@ -11,11 +11,12 @@ class MuscleFlowList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isEmpty) {
-        return const Center(child: Text("No hay datos disponibles."));
+      return const Center(child: Text("No hay datos disponibles."));
     }
 
     // Ensure sorted
-    final sortedLoads = List<MuscleLoad>.from(loads)..sort((a, b) => b.load.compareTo(a.load));
+    final sortedLoads = List<MuscleLoad>.from(loads)
+      ..sort((a, b) => b.load.compareTo(a.load));
 
     return ListView.builder(
       physics: const NeverScrollableScrollPhysics(),
@@ -36,13 +37,17 @@ class MuscleFlowList extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(item.muscleName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(item.muscleName,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
                 Row(
                   children: [
-                    Text('${item.load.toStringAsFixed(0)}%', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('${item.load.toStringAsFixed(0)}%',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: color.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),

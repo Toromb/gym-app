@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../models/user_model.dart';
@@ -22,13 +23,14 @@ class _EditUserScreenState extends State<EditUserScreen> {
   late TextEditingController _birthDateController;
   late TextEditingController _notesController;
   late TextEditingController _lastPaymentDateController;
-  late TextEditingController _membershipDateController; // Added membership start date controller
-  
+  late TextEditingController
+      _membershipDateController; // Added membership start date controller
+
   late String _selectedRole;
   late String _selectedGender;
   late String _paymentStatus;
   bool _paysMembership = true;
-  
+
   String? _selectedProfessorId;
   List<User> _professors = [];
   bool _isLoadingProfessors = false;
@@ -42,60 +44,61 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _firstNameController = TextEditingController(text: widget.user.firstName);
     _lastNameController = TextEditingController(text: widget.user.lastName);
     _phoneController = TextEditingController(text: widget.user.phone ?? '');
-    _birthDateController = TextEditingController(text: widget.user.birthDate ?? '');
+    _birthDateController =
+        TextEditingController(text: widget.user.birthDate ?? '');
     _notesController = TextEditingController(text: widget.user.notes ?? '');
-    _lastPaymentDateController = TextEditingController(text: widget.user.lastPaymentDate ?? '');
-    
+    _lastPaymentDateController =
+        TextEditingController(text: widget.user.lastPaymentDate ?? '');
+
     // Handle Membership Start Date
-    _membershipDateController = TextEditingController(text: widget.user.membershipStartDate?.split('T')[0] ?? '');
-    
+    _membershipDateController = TextEditingController(
+        text: widget.user.membershipStartDate?.split('T')[0] ?? '');
+
     _selectedRole = widget.user.role;
     _selectedProfessorId = widget.user.professorId;
-    
+
     print("DEBUG: EditUserScreen role='$_selectedRole'");
-    
+
     // Validate Gender
     const validGenders = ['M', 'F', 'O'];
     _selectedGender = widget.user.gender ?? 'M';
     if (!validGenders.contains(_selectedGender)) {
-        _selectedGender = 'M';
+      _selectedGender = 'M';
     }
 
     // Validate Payment Status
     const validPaymentStatuses = ['pending', 'paid', 'overdue'];
     _paymentStatus = widget.user.paymentStatus ?? 'pending';
     if (!validPaymentStatuses.contains(_paymentStatus)) {
-        _paymentStatus = 'pending';
+      _paymentStatus = 'pending';
     }
-
-
 
     _paysMembership = widget.user.paysMembership ?? true;
 
     // Case-insensitive check just to be safe
     if (_selectedRole.toLowerCase() == UserRoles.alumno.toLowerCase()) {
-        print("DEBUG: Fetching professors for student");
-        _fetchProfessors();
+      print("DEBUG: Fetching professors for student");
+      _fetchProfessors();
     } else {
-        print("DEBUG: Role $_selectedRole is not student");
+      print("DEBUG: Role $_selectedRole is not student");
     }
   }
 
   Future<void> _fetchProfessors() async {
-      setState(() => _isLoadingProfessors = true);
-      try {
-          // Use UserService directly to avoid overwriting UserProvider state
-          final professors = await UserService().getUsers(role: UserRoles.profe);
-          if (mounted) {
-              setState(() {
-                  _professors = professors;
-                  _isLoadingProfessors = false;
-              });
-          }
-      } catch (e) {
-          if (mounted) setState(() => _isLoadingProfessors = false);
-          print("Error fetching professors: $e");
+    setState(() => _isLoadingProfessors = true);
+    try {
+      // Use UserService directly to avoid overwriting UserProvider state
+      final professors = await UserService().getUsers(role: UserRoles.profe);
+      if (mounted) {
+        setState(() {
+          _professors = professors;
+          _isLoadingProfessors = false;
+        });
       }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingProfessors = false);
+      print("Error fetching professors: $e");
+    }
   }
 
   @override
@@ -113,7 +116,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Editar Usuario')),
+      appBar: ConstrainedAppBar(title: const Text('Editar Usuario')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -125,83 +128,94 @@ class _EditUserScreenState extends State<EditUserScreen> {
                 // If Profe, they arguably shouldn't change role of student to Admin.
                 // For MVP simplicity, we keep it disabled or read-only if desired, or allow if we trust backend validation.
                 // Let's assume for this screen we just show it read-only to avoid complexity.
-                 Padding(
-                   padding: const EdgeInsets.symmetric(vertical: 16.0),
-                   child: TextFormField(
-                     initialValue: _selectedRole.toUpperCase(),
-                     readOnly: true,
-                     decoration: const InputDecoration(labelText: 'Rol'),
-                   ),
-                 ),
-                 
-                 // Assign Professor Dropdown (Visible only if Student)
-                 if (_selectedRole.toLowerCase() == UserRoles.alumno.toLowerCase()) ...[
-                     if (_isLoadingProfessors)
-                         const LinearProgressIndicator()
-                     else
-                         DropdownButtonFormField<String>(
-                             initialValue: _professors.any((p) => p.id == _selectedProfessorId) ? _selectedProfessorId : null,
-                             decoration: const InputDecoration(
-                                 labelText: 'Profesor Asignado',
-                                 helperText: 'Selecciona un profesor para supervisar a este alumno',
-                             ),
-                             items: [
-                                 const DropdownMenuItem<String>(
-                                     value: null,
-                                     child: Text('Sin Profesor'),
-                                 ),
-                                 ..._professors.map((p) => DropdownMenuItem(
-                                     value: p.id,
-                                     child: Text(p.name),
-                                 )),
-                             ],
-                             onChanged: (val) => setState(() => _selectedProfessorId = val),
-                         ),
-                     const SizedBox(height: 16),
-                 ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: TextFormField(
+                    initialValue: _selectedRole.toUpperCase(),
+                    readOnly: true,
+                    decoration: const InputDecoration(labelText: 'Rol'),
+                  ),
+                ),
 
-                 // Membership options for Professor
-                 if (_selectedRole.toLowerCase() == UserRoles.profe.toLowerCase()) ...[
-                      SwitchListTile(
-                        title: const Text('¿Paga Membresía?'),
-                        subtitle: const Text('Define si este profesor abona membresía del sistema'),
-                        value: _paysMembership,
-                        onChanged: (val) => setState(() => _paysMembership = val),
+                // Assign Professor Dropdown (Visible only if Student)
+                if (_selectedRole.toLowerCase() ==
+                    UserRoles.alumno.toLowerCase()) ...[
+                  if (_isLoadingProfessors)
+                    const LinearProgressIndicator()
+                  else
+                    DropdownButtonFormField<String>(
+                      initialValue:
+                          _professors.any((p) => p.id == _selectedProfessorId)
+                              ? _selectedProfessorId
+                              : null,
+                      decoration: const InputDecoration(
+                        labelText: 'Profesor Asignado',
+                        helperText:
+                            'Selecciona un profesor para supervisar a este alumno',
                       ),
-                      const SizedBox(height: 16),
-                 ],
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('Sin Profesor'),
+                        ),
+                        ..._professors.map((p) => DropdownMenuItem(
+                              value: p.id,
+                              child: Text(p.name),
+                            )),
+                      ],
+                      onChanged: (val) =>
+                          setState(() => _selectedProfessorId = val),
+                    ),
+                  const SizedBox(height: 16),
+                ],
 
-                 if (_paysMembership) ...[
-                     TextFormField(
-                       controller: _membershipDateController,
-                       decoration: const InputDecoration(
-                         labelText: 'Fecha Inicio Membresía (YYYY-MM-DD)',
-                         hintText: 'Selecciona la fecha',
-                         suffixIcon: Icon(Icons.calendar_today),
-                       ),
-                       readOnly: true,
-                       onTap: () async {
-                           final DateTime? picked = await showDatePicker(
-                             context: context,
-                             initialDate: DateTime.now(),
-                             firstDate: DateTime(2000),
-                             lastDate: DateTime(2101),
-                           );
-                           if (picked != null) {
-                             setState(() {
-                               _membershipDateController.text = picked.toIso8601String().split('T')[0];
-                             });
-                           }
-                       },
-                       validator: (value) {
-                           if (_paysMembership) {
-                              return value == null || value.isEmpty ? 'Requerido si paga membresía' : null;
-                           }
-                           return null;
-                       },
-                     ),
-                     const SizedBox(height: 16),
-                 ],
+                // Membership options for Professor
+                if (_selectedRole.toLowerCase() ==
+                    UserRoles.profe.toLowerCase()) ...[
+                  SwitchListTile(
+                    title: const Text('¿Paga Membresía?'),
+                    subtitle: const Text(
+                        'Define si este profesor abona membresía del sistema'),
+                    value: _paysMembership,
+                    onChanged: (val) => setState(() => _paysMembership = val),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                if (_paysMembership) ...[
+                  TextFormField(
+                    controller: _membershipDateController,
+                    decoration: const InputDecoration(
+                      labelText: 'Fecha Inicio Membresía (YYYY-MM-DD)',
+                      hintText: 'Selecciona la fecha',
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    readOnly: true,
+                    onTap: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2101),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _membershipDateController.text =
+                              picked.toIso8601String().split('T')[0];
+                        });
+                      }
+                    },
+                    validator: (value) {
+                      if (_paysMembership) {
+                        return value == null || value.isEmpty
+                            ? 'Requerido si paga membresía'
+                            : null;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 TextFormField(
                   controller: _firstNameController,
@@ -240,67 +254,81 @@ class _EditUserScreenState extends State<EditUserScreen> {
                     );
                     if (picked != null) {
                       setState(() {
-                         _birthDateController.text = picked.toIso8601String().split('T')[0];
+                        _birthDateController.text =
+                            picked.toIso8601String().split('T')[0];
                       });
                     }
                   },
                 ),
                 if (widget.user.age != null)
-                   Padding(
-                     padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                     child: Align(
-                       alignment: Alignment.centerLeft,
-                       child: Text("Edad actual: ${widget.user.age} años", style: const TextStyle(fontWeight: FontWeight.bold)),
-                     ),
-                   ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text("Edad actual: ${widget.user.age} años",
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 DropdownButtonFormField<String>(
-                  initialValue: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
+                  initialValue: ['M', 'F', 'O'].contains(_selectedGender)
+                      ? _selectedGender
+                      : 'M',
                   decoration: const InputDecoration(labelText: 'Sexo'),
                   items: const [
                     DropdownMenuItem(value: 'M', child: Text('Masculino')),
                     DropdownMenuItem(value: 'F', child: Text('Femenino')),
                     DropdownMenuItem(value: 'O', child: Text('Otro')),
                   ],
-                  onChanged: (value) => setState(() => _selectedGender = value!),
+                  onChanged: (value) =>
+                      setState(() => _selectedGender = value!),
                 ),
                 if (_paysMembership) ...[
-                 DropdownButtonFormField<String>(
-                  initialValue: ['pending', 'paid', 'overdue'].contains(_paymentStatus) ? _paymentStatus : 'pending',
-                  decoration: const InputDecoration(labelText: 'Estado de Pago'),
-                  items: const [
-                    DropdownMenuItem(value: 'pending', child: Text('Pendiente')),
-                    DropdownMenuItem(value: 'paid', child: Text('Pagado')),
-                    DropdownMenuItem(value: 'overdue', child: Text('Vencido')),
-                  ],
-                  onChanged: (value) => setState(() => _paymentStatus = value!),
-                ),
-                TextFormField(
-                  controller: _lastPaymentDateController,
-                  decoration: const InputDecoration(
-                    labelText: 'Última Fecha de Pago (YYYY-MM-DD)',
-                    hintText: '2024-01-01',
+                  DropdownButtonFormField<String>(
+                    initialValue:
+                        ['pending', 'paid', 'overdue'].contains(_paymentStatus)
+                            ? _paymentStatus
+                            : 'pending',
+                    decoration:
+                        const InputDecoration(labelText: 'Estado de Pago'),
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'pending', child: Text('Pendiente')),
+                      DropdownMenuItem(value: 'paid', child: Text('Pagado')),
+                      DropdownMenuItem(
+                          value: 'overdue', child: Text('Vencido')),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _paymentStatus = value!),
                   ),
-                  onTap: () async {
-                    FocusScope.of(context).requestFocus(FocusNode());
-                    DateTime initialDate = DateTime.now();
-                    if (_lastPaymentDateController.text.isNotEmpty) {
-                      try {
-                        initialDate = DateTime.parse(_lastPaymentDateController.text);
-                      } catch (_) {}
-                    }
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: initialDate,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                         _lastPaymentDateController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-                      });
-                    }
-                  },
-                ),
+                  TextFormField(
+                    controller: _lastPaymentDateController,
+                    decoration: const InputDecoration(
+                      labelText: 'Última Fecha de Pago (YYYY-MM-DD)',
+                      hintText: '2024-01-01',
+                    ),
+                    onTap: () async {
+                      FocusScope.of(context).requestFocus(FocusNode());
+                      DateTime initialDate = DateTime.now();
+                      if (_lastPaymentDateController.text.isNotEmpty) {
+                        try {
+                          initialDate =
+                              DateTime.parse(_lastPaymentDateController.text);
+                        } catch (_) {}
+                      }
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: initialDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _lastPaymentDateController.text =
+                              "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                        });
+                      }
+                    },
+                  ),
                 ],
                 TextFormField(
                   controller: _notesController,
@@ -314,48 +342,62 @@ class _EditUserScreenState extends State<EditUserScreen> {
                       : () async {
                           if (_formKey.currentState!.validate()) {
                             setState(() => _isLoading = true);
-                            
+
                             final updateData = {
                               'email': _emailController.text,
                               'firstName': _firstNameController.text,
                               'lastName': _lastNameController.text,
                               'phone': _phoneController.text,
-                              'birthDate': _birthDateController.text.isEmpty ? null : _birthDateController.text,
+                              'birthDate': _birthDateController.text.isEmpty
+                                  ? null
+                                  : _birthDateController.text,
                               'gender': _selectedGender,
                               'notes': _notesController.text,
                               'paymentStatus': _paymentStatus,
                               'paymentStatus': _paymentStatus,
-                              'lastPaymentDate': _lastPaymentDateController.text.isEmpty ? null : _lastPaymentDateController.text,
-                              'membershipStartDate': _membershipDateController.text.isNotEmpty ? _membershipDateController.text : null,
+                              'lastPaymentDate':
+                                  _lastPaymentDateController.text.isEmpty
+                                      ? null
+                                      : _lastPaymentDateController.text,
+                              'membershipStartDate':
+                                  _membershipDateController.text.isNotEmpty
+                                      ? _membershipDateController.text
+                                      : null,
                               // Send professorId (null if explicitly unassigned)
                               'professorId': _selectedProfessorId,
-                              'paysMembership': _paysMembership, 
+                              'paysMembership': _paysMembership,
                             };
-                            
 
-                            final success = await context.read<UserProvider>().updateUser(
-                                  widget.user.id,
-                                  updateData
-                                );
-                            
+                            final success = await context
+                                .read<UserProvider>()
+                                .updateUser(widget.user.id, updateData);
+
                             if (!mounted) return;
                             setState(() => _isLoading = false);
-                            
+
                             if (success) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Usuario actualizado exitosamente')),
+                                const SnackBar(
+                                    content: Text(
+                                        'Usuario actualizado exitosamente')),
                               );
                               // Refresh list
-                              context.read<UserProvider>().fetchUsers(forceRefresh: true);
+                              context
+                                  .read<UserProvider>()
+                                  .fetchUsers(forceRefresh: true);
                             } else {
-                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Error al actualizar usuario')),
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text('Error al actualizar usuario')),
                               );
                             }
                           }
                         },
-                  child: _isLoading ? const CircularProgressIndicator() : const Text('Guardar Cambios'),
+                  child: _isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('Guardar Cambios'),
                 ),
               ],
             ),

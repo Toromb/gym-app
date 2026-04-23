@@ -32,89 +32,191 @@ class ExerciseExecutionCard extends StatefulWidget {
 
 class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   // Common
-  late TextEditingController _setsController; 
+  late TextEditingController _setsController;
+  late FocusNode _setsFocusNode;
   late bool _isCompleted;
   // REPS Mode
   late TextEditingController _repsController;
+  late FocusNode _repsFocusNode;
   late TextEditingController _weightController;
+  late FocusNode _weightFocusNode;
   // TIME Mode
-  late TextEditingController _timeController; 
+  late TextEditingController _timeController;
+  late FocusNode _timeFocusNode;
   // DISTANCE Mode
   late TextEditingController _distanceController;
+  late FocusNode _distanceFocusNode;
 
   // BODY WEIGHT Mode
   late TextEditingController _addedWeightController;
+  late FocusNode _addedWeightFocusNode;
+
   bool _isBodyWeight = false;
 
   late String _metricType;
-  
+
+  late PlanProvider _planProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _planProvider = context.read<PlanProvider>();
+  }
+
   @override
   void initState() {
     super.initState();
     _isCompleted = widget.execution.isCompleted;
     _metricType = widget.execution.exercise?.metricType ?? 'REPS';
-    
-    // Check Body Weight
-    _isBodyWeight = widget.execution.equipmentsSnapshot.any((e) => e.isBodyWeight) 
-                 || (widget.execution.exercise?.equipments.any((e) => e.isBodyWeight) ?? false);
 
-    _setsController = TextEditingController(text: widget.execution.setsDone?.toString() ?? widget.execution.targetSetsSnapshot?.toString() ?? '');
-    
+    // Check Body Weight
+    _isBodyWeight =
+        widget.execution.equipmentsSnapshot.any((e) => e.isBodyWeight) ||
+            (widget.execution.exercise?.equipments.any((e) => e.isBodyWeight) ??
+                false);
+
+    _setsController = TextEditingController(
+        text: widget.execution.setsDone?.toString() ??
+            widget.execution.targetSetsSnapshot?.toString() ??
+            '');
+
+    _setsFocusNode = FocusNode();
+    _repsFocusNode = FocusNode();
+    _weightFocusNode = FocusNode();
+    _timeFocusNode = FocusNode();
+    _distanceFocusNode = FocusNode();
+    _addedWeightFocusNode = FocusNode();
+
+    void flushOnFocusLoss(FocusNode node) {
+      if (!node.hasFocus) {
+        if (_debounce?.isActive ?? false) {
+          _debounce!.cancel();
+          _saveChanges();
+        }
+      }
+    }
+
+    _setsFocusNode.addListener(() => flushOnFocusLoss(_setsFocusNode));
+    _repsFocusNode.addListener(() => flushOnFocusLoss(_repsFocusNode));
+    _weightFocusNode.addListener(() => flushOnFocusLoss(_weightFocusNode));
+    _timeFocusNode.addListener(() => flushOnFocusLoss(_timeFocusNode));
+    _distanceFocusNode.addListener(() => flushOnFocusLoss(_distanceFocusNode));
+    _addedWeightFocusNode.addListener(() => flushOnFocusLoss(_addedWeightFocusNode));
+
     // Initialize specific controllers
-    _repsController = TextEditingController(text: widget.execution.repsDone ?? widget.execution.targetRepsSnapshot ?? '');
-    _weightController = TextEditingController(text: widget.execution.weightUsed ?? widget.execution.targetWeightSnapshot ?? '');
-    
-    _timeController = TextEditingController(text: widget.execution.timeSpent ?? widget.execution.targetTimeSnapshot?.toString() ?? '');
-    _distanceController = TextEditingController(text: widget.execution.distanceCovered?.toString() ?? widget.execution.targetDistanceSnapshot?.toString() ?? '');
-    _addedWeightController = TextEditingController(text: widget.execution.addedWeight?.toString() ?? '');
+    _repsController = TextEditingController(
+        text: widget.execution.repsDone ??
+            widget.execution.targetRepsSnapshot ??
+            '');
+    _weightController = TextEditingController(
+        text: widget.execution.weightUsed ??
+            widget.execution.targetWeightSnapshot ??
+            '');
+
+    _timeController = TextEditingController(
+        text: widget.execution.timeSpent ??
+            widget.execution.targetTimeSnapshot?.toString() ??
+            '');
+    _distanceController = TextEditingController(
+        text: widget.execution.distanceCovered?.toString() ??
+            widget.execution.targetDistanceSnapshot?.toString() ??
+            '');
+    _addedWeightController = TextEditingController(
+        text: widget.execution.addedWeight?.toString() ?? '');
   }
 
   @override
   void didUpdateWidget(ExerciseExecutionCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.execution != oldWidget.execution) {
-       final newSets = widget.execution.setsDone?.toString() ?? widget.execution.targetSetsSnapshot?.toString() ?? '';
-       if (_setsController.text != newSets) {
-          _setsController.text = newSets;
-       }
-       
-       final newReps = widget.execution.repsDone ?? widget.execution.targetRepsSnapshot ?? '';
-       if (_repsController.text != newReps) {
-          _repsController.text = newReps;
-       }
+      final newSets = widget.execution.setsDone?.toString() ??
+          widget.execution.targetSetsSnapshot?.toString() ??
+          '';
+      if (_setsController.text != newSets && !_setsFocusNode.hasFocus) {
+        _setsController.text = newSets;
+      }
 
-       final newWeight = widget.execution.weightUsed ?? widget.execution.targetWeightSnapshot ?? '';
-       if (_weightController.text != newWeight) {
-          _weightController.text = newWeight;
-       }
-       
-       if (widget.execution.isCompleted != oldWidget.execution.isCompleted) {
-          _isCompleted = widget.execution.isCompleted;
-       }
-       
-       final newAddedWeight = widget.execution.addedWeight?.toString() ?? '';
-       if (_addedWeightController.text != newAddedWeight) {
-           _addedWeightController.text = newAddedWeight;
-       }
-       
-       _isBodyWeight = widget.execution.equipmentsSnapshot.any((e) => e.isBodyWeight) 
-                 || (widget.execution.exercise?.equipments.any((e) => e.isBodyWeight) ?? false);
+      final newReps = widget.execution.repsDone ??
+          widget.execution.targetRepsSnapshot ??
+          '';
+      if (_repsController.text != newReps && !_repsFocusNode.hasFocus) {
+        _repsController.text = newReps;
+      }
+
+      final newWeight = widget.execution.weightUsed ??
+          widget.execution.targetWeightSnapshot ??
+          '';
+      if (_weightController.text != newWeight && !_weightFocusNode.hasFocus) {
+        _weightController.text = newWeight;
+      }
+
+      final newTime = widget.execution.timeSpent ??
+          widget.execution.targetTimeSnapshot?.toString() ??
+          '';
+      if (_timeController.text != newTime && !_timeFocusNode.hasFocus) {
+        _timeController.text = newTime;
+      }
+
+      final newDistance = widget.execution.distanceCovered?.toString() ??
+          widget.execution.targetDistanceSnapshot?.toString() ??
+          '';
+      if (_distanceController.text != newDistance && !_distanceFocusNode.hasFocus) {
+        _distanceController.text = newDistance;
+      }
+
+      if (widget.execution.isCompleted != oldWidget.execution.isCompleted) {
+        _isCompleted = widget.execution.isCompleted;
+      }
+
+      final newAddedWeight = widget.execution.addedWeight?.toString() ?? '';
+      if (_addedWeightController.text != newAddedWeight && !_addedWeightFocusNode.hasFocus) {
+        _addedWeightController.text = newAddedWeight;
+      }
+
+      _isBodyWeight = widget.execution.equipmentsSnapshot
+              .any((e) => e.isBodyWeight) ||
+          (widget.execution.exercise?.equipments.any((e) => e.isBodyWeight) ??
+              false);
     }
   }
 
   @override
   void dispose() {
+    // SECURITY FLUSH: Ensure final keystrokes are saved before widget is destroyed
+    if (_debounce?.isActive ?? false) {
+      _debounce!.cancel();
+      // Use the cached provider reference, as context is no longer safe to read during unmount
+      final updateData = _buildUpdateData();
+      _planProvider.updateSessionExercise(widget.execution.id, updateData);
+    }
+
     _repsController.dispose();
+    _repsFocusNode.dispose();
     _weightController.dispose();
+    _weightFocusNode.dispose();
     _setsController.dispose();
+    _setsFocusNode.dispose();
     _timeController.dispose();
+    _timeFocusNode.dispose();
     _distanceController.dispose();
+    _distanceFocusNode.dispose();
     _addedWeightController.dispose();
+    _addedWeightFocusNode.dispose();
     super.dispose();
+  }
+
+  String _fallbackHint(String? val) {
+    if (val == null || val.trim().isEmpty) return '-';
+    return val;
   }
 
   Future<void> _toggleCompletion(bool? value) async {
     if (value == null) return;
+
+    // Flush debounce: cancel any pending save because we are about to save everything right now
+    if (_debounce?.isActive ?? false) {
+      _debounce!.cancel();
+    }
 
     setState(() {
       _isCompleted = value;
@@ -123,15 +225,17 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     final updateData = _buildUpdateData();
     updateData['isCompleted'] = value;
 
-    final success = await context.read<PlanProvider>().updateSessionExercise(widget.execution.id, updateData);
-    
+    final success = await context
+        .read<PlanProvider>()
+        .updateSessionExercise(widget.execution.id, updateData);
+
     if (!success && mounted) {
       setState(() {
         _isCompleted = !value;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.get('errorUpdate')), backgroundColor: Colors.red)
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context)!.get('errorUpdate')),
+          backgroundColor: Colors.red));
     }
   }
 
@@ -147,11 +251,13 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
 
   Future<void> _saveChanges() async {
     final updateData = _buildUpdateData();
-    await context.read<PlanProvider>().updateSessionExercise(widget.execution.id, updateData);
+    await context
+        .read<PlanProvider>()
+        .updateSessionExercise(widget.execution.id, updateData);
   }
 
   Map<String, dynamic> _buildUpdateData() {
-     return {
+    return {
       'setsDone': _setsController.text,
       // REPS
       'repsDone': _repsController.text,
@@ -173,16 +279,24 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
 
     final bool readOnly = widget.readOnly;
 
+    // Pick a solid card background when completed so numbers stay readable
+    // over any page background (image/dark/light).
+    final completedCardColor = Theme.of(context).brightness == Brightness.dark
+        ? Colors.green.shade900.withValues(alpha: 0.85)
+        : Colors.green.shade50;
+
     return Card(
-      elevation: _isCompleted ? 1 : 4,
+      elevation: _isCompleted ? 2 : 4,
       margin: const EdgeInsets.only(bottom: 20),
-      color: _isCompleted ? Colors.green.withValues(alpha: 0.15) : null, 
+      color: _isCompleted ? completedCardColor : null,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: _isCompleted ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
+        side: _isCompleted
+            ? BorderSide(color: Colors.green.shade400, width: 2)
+            : BorderSide.none,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12.0), 
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -190,25 +304,29 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                  Container(
-                    padding: const EdgeInsets.all(8), 
-                    decoration: BoxDecoration(
-                      color: _isCompleted ? completedColor.withValues(alpha: 0.2) : defaultColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '#${widget.index}',
-                      style: TextStyle(
-                        color: _isCompleted 
-                            ? completedColor 
-                            : (Theme.of(context).brightness == Brightness.dark ? Colors.white : Theme.of(context).primaryColor),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14, 
-                      ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _isCompleted
+                        ? completedColor.withValues(alpha: 0.2)
+                        : defaultColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '#${widget.index}',
+                    style: TextStyle(
+                      color: _isCompleted
+                          ? completedColor
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Theme.of(context).primaryColor),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
                     ),
                   ),
+                ),
                 const SizedBox(width: 12),
-                
+
                 // Name & Video & Swap & Delete
                 Expanded(
                   child: Column(
@@ -221,10 +339,17 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                             TextSpan(
                               text: widget.execution.exerciseNameSnapshot,
                               style: TextStyle(
-                                fontSize: 16, 
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                decoration: _isCompleted ? TextDecoration.lineThrough : null,
-                                color: _isCompleted ? Colors.green : Theme.of(context).textTheme.bodyLarge?.color,
+                                decoration: _isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                                color: _isCompleted
+                                    ? Colors.green
+                                    : Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color,
                               ),
                             ),
                             if (!readOnly && widget.canDelete)
@@ -233,7 +358,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                                 child: Padding(
                                   padding: const EdgeInsets.only(left: 8.0),
                                   child: IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.grey, size: 20),
+                                    icon: const Icon(Icons.delete_outline,
+                                        color: Colors.grey, size: 20),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
                                     tooltip: 'Eliminar ejercicio',
@@ -241,7 +367,11 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                                   ),
                                 ),
                               ),
-                            if (!readOnly && !widget.canDelete && (widget.execution.exercise?.muscles.any((m) => m.role == 'PRIMARY') ?? false))
+                            if (!readOnly &&
+                                !widget.canDelete &&
+                                (widget.execution.exercise?.muscles
+                                        .any((m) => m.role == 'PRIMARY') ??
+                                    false))
                               WidgetSpan(
                                 alignment: PlaceholderAlignment.middle,
                                 child: Padding(
@@ -250,13 +380,19 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                                     scale: 0.9,
                                     alignment: Alignment.centerLeft,
                                     child: TextButton.icon(
-                                      icon: const Icon(Icons.swap_horiz, color: Colors.blueGrey, size: 16),
-                                      label: const Text('Cambiar ejercicio', style: TextStyle(color: Colors.blueGrey, fontSize: 11)),
+                                      icon: const Icon(Icons.swap_horiz,
+                                          color: Colors.blueGrey, size: 16),
+                                      label: const Text('Cambiar ejercicio',
+                                          style: TextStyle(
+                                              color: Colors.blueGrey,
+                                              fontSize: 11)),
                                       onPressed: () => _showSwapDialog(context),
                                       style: TextButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0), 
-                                        minimumSize: Size.zero, 
-                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 4, vertical: 0),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
                                         visualDensity: VisualDensity.compact,
                                       ),
                                     ),
@@ -266,19 +402,27 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                           ],
                         ),
                       ),
-                      
+
                       const SizedBox(height: 4),
-                      if ((widget.execution.videoUrl?.isNotEmpty ?? false) || (widget.execution.exercise?.videoUrl?.isNotEmpty ?? false))
+                      if ((widget.execution.videoUrl?.isNotEmpty ?? false) ||
+                          (widget.execution.exercise?.videoUrl?.isNotEmpty ??
+                              false))
                         InkWell(
-                          onTap: () => _launchVideo(context, (widget.execution.videoUrl ?? widget.execution.exercise?.videoUrl)!),
+                          onTap: () => _launchVideo(
+                              context,
+                              (widget.execution.videoUrl ??
+                                  widget.execution.exercise?.videoUrl)!),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.play_circle_outline, size: 16, color: Colors.red),
+                              const Icon(Icons.play_circle_outline,
+                                  size: 16, color: Colors.red),
                               const SizedBox(width: 4),
                               Text(
                                 AppLocalizations.of(context)!.get('watchVideo'),
-                                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold),
                               )
                             ],
                           ),
@@ -287,14 +431,15 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                   ),
                 ),
 
-                // Checkbox 
+                // Checkbox
                 const SizedBox(width: 8),
                 Transform.scale(
                   scale: 1.3,
                   child: Checkbox(
                     value: _isCompleted,
                     activeColor: completedColor,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4)),
                     onChanged: readOnly ? null : _toggleCompletion,
                   ),
                 ),
@@ -302,98 +447,127 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
             ),
 
             // Muscles & Equipment (Side by Side)
-            if ((widget.execution.exercise?.muscles.isNotEmpty ?? false) || widget.execution.equipmentsSnapshot.isNotEmpty) ...[
-               const SizedBox(height: 8),
-               Row(
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                   // Muscles (Left)
-                   if (widget.execution.exercise?.muscles.isNotEmpty ?? false)
-                     Expanded(
-                       child: Column(
-                         crossAxisAlignment: CrossAxisAlignment.start,
-                         children: [
-                           Text(
-                             'Músculos a trabajar',
-                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[700]),
-                           ),
-                           const SizedBox(height: 4),
-                           Wrap(
-                             spacing: 4,
-                             runSpacing: 4,
-                             children: widget.execution.exercise!.muscles.map((em) {
-                               final isPrimary = em.role == 'PRIMARY'; 
-                               final color = Theme.of(context).primaryColor;
-                               return Container(
-                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                 decoration: BoxDecoration(
-                                   color: isPrimary ? color.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
-                                   borderRadius: BorderRadius.circular(4),
-                                   border: isPrimary ? Border.all(color: color.withOpacity(0.5), width: 0.5) : null,
-                                 ),
-                                 child: Text(
-                                   em.muscle.name,
-                                   style: TextStyle(
-                                     fontSize: 11,
-                                     fontWeight: isPrimary ? FontWeight.w900 : FontWeight.w500,
-                                     color: isPrimary 
-                                         ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : color)
-                                         : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[300] : Colors.grey[700]),
-                                   ),
-                                 ),
-                               );
-                             }).toList(),
-                           ),
-                         ],
-                       ),
-                     ),
-                   
-                   // Spacer if both exist
-                   if ((widget.execution.exercise?.muscles.isNotEmpty ?? false) && widget.execution.equipmentsSnapshot.isNotEmpty)
-                     const SizedBox(width: 12),
+            if ((widget.execution.exercise?.muscles.isNotEmpty ?? false) ||
+                widget.execution.equipmentsSnapshot.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Muscles (Left)
+                  if (widget.execution.exercise?.muscles.isNotEmpty ?? false)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Músculos a trabajar',
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[700]),
+                          ),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
+                            children:
+                                widget.execution.exercise!.muscles.map((em) {
+                              final isPrimary = em.role == 'PRIMARY';
+                              final color = Theme.of(context).primaryColor;
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: isPrimary
+                                      ? color.withOpacity(0.15)
+                                      : Colors.grey.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: isPrimary
+                                      ? Border.all(
+                                          color: color.withOpacity(0.5),
+                                          width: 0.5)
+                                      : null,
+                                ),
+                                child: Text(
+                                  em.muscle.name,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: isPrimary
+                                        ? FontWeight.w900
+                                        : FontWeight.w500,
+                                    color: isPrimary
+                                        ? (Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.white
+                                            : color)
+                                        : (Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.grey[300]
+                                            : Colors.grey[700]),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
 
-                   // Equipment (Right)
-                   if (widget.execution.equipmentsSnapshot.isNotEmpty)
-                     Expanded(
-                       child: Column(
-                         crossAxisAlignment: CrossAxisAlignment.start,
-                         children: [
-                            Text(
-                             'Equipamiento a utilizar',
-                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[700]),
-                            ),
-                            const SizedBox(height: 4),
-                            Wrap(
-                              spacing: 4,
-                              runSpacing: 4,
-                              children: widget.execution.equipmentsSnapshot.map((eq) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blueAccent.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+                  // Spacer if both exist
+                  if ((widget.execution.exercise?.muscles.isNotEmpty ??
+                          false) &&
+                      widget.execution.equipmentsSnapshot.isNotEmpty)
+                    const SizedBox(width: 12),
+
+                  // Equipment (Right)
+                  if (widget.execution.equipmentsSnapshot.isNotEmpty)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Equipamiento a utilizar',
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[700]),
+                          ),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
+                            children:
+                                widget.execution.equipmentsSnapshot.map((eq) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.blueAccent.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                      color:
+                                          Colors.blueAccent.withOpacity(0.3)),
+                                ),
+                                child: Text(
+                                  eq.name,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blueAccent,
                                   ),
-                                  child: Text(
-                                    eq.name,
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blueAccent,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                         ],
-                       ),
-                     ),
-                 ],
-               ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ],
-            
+
             const SizedBox(height: 16),
-            const Divider(height: 1), 
+            const Divider(height: 1),
             const SizedBox(height: 16),
 
             // Inputs Row
@@ -401,92 +575,100 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
               children: [
                 Expanded(
                   child: _buildInputMetric(
-                    context, 
-                    controller: _setsController, 
+                    context,
+                    controller: _setsController,
+                    focusNode: _setsFocusNode,
                     label: AppLocalizations.of(context)!.get('sets'),
-                    hint: widget.execution.targetSetsSnapshot?.toString() ?? '-',
+                    hint: _fallbackHint(widget.execution.targetSetsSnapshot?.toString()),
                     icon: Icons.repeat,
                   ),
                 ),
                 const SizedBox(width: 16),
-                
                 if (_metricType == 'REPS') ...[
                   Expanded(
                     child: _buildInputMetric(
-                      context, 
-                      controller: _repsController, 
+                      context,
+                      controller: _repsController,
+                      focusNode: _repsFocusNode,
                       label: AppLocalizations.of(context)!.get('reps'),
-                      hint: widget.execution.targetRepsSnapshot ?? '-',
+                      hint: _fallbackHint(widget.execution.targetRepsSnapshot),
                       icon: Icons.refresh,
                     ),
                   ),
                   const SizedBox(width: 16),
                   const SizedBox(width: 16),
-                  
                   if (_isBodyWeight) ...[
-                      // Body Weight UI
-                      Expanded(
-                        child: Consumer<AuthProvider>(
-                            builder: (ctx, auth, _) {
-                                final weight = auth.user?.currentWeight ?? auth.user?.initialWeight ?? 0;
-                                return TextField(
-                                    controller: TextEditingController(text: '$weight kg'),
-                                    readOnly: true,
-                                    decoration: InputDecoration(
-                                        labelText: 'Peso Corp.',
-                                        floatingLabelBehavior: FloatingLabelBehavior.always,
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                                        isDense: true,
-                                        suffixIcon: const Icon(Icons.person, size: 16, color: Colors.grey),
-                                        suffixIconConstraints: const BoxConstraints(maxHeight: 40, maxWidth: 40),
-                                    ),
-                                    style: const TextStyle(color: Colors.grey),
-                                );
-                            }
-                        ),
+                    // Body Weight UI
+                    Expanded(
+                      child: Consumer<AuthProvider>(builder: (ctx, auth, _) {
+                        final weight = auth.user?.currentWeight ??
+                            auth.user?.initialWeight ??
+                            0;
+                        return TextField(
+                          controller: TextEditingController(text: '$weight kg'),
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'Peso Corp.',
+                            floatingLabelBehavior: FloatingLabelBehavior.always,
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 12),
+                            isDense: true,
+                            suffixIcon: const Icon(Icons.person,
+                                size: 16, color: Colors.grey),
+                            suffixIconConstraints: const BoxConstraints(
+                                maxHeight: 40, maxWidth: 40),
+                          ),
+                          style: const TextStyle(color: Colors.grey),
+                        );
+                      }),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildInputMetric(
+                        context,
+                        controller: _addedWeightController,
+                        focusNode: _addedWeightFocusNode,
+                        label: 'Lastre (kg)',
+                        hint: '0',
+                        icon: Icons.add_circle_outline,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildInputMetric(
-                          context, 
-                          controller: _addedWeightController, 
-                          label: 'Lastre (kg)', 
-                          hint: '0',
-                          icon: Icons.add_circle_outline,
-                        ),
-                      ),
+                    ),
                   ] else ...[
-                      // Standard Load UI
-                      Expanded(
-                        child: _buildInputMetric(
-                          context, 
-                          controller: _weightController, 
-                          label: AppLocalizations.of(context)!.get('load'),
-                          hint: widget.execution.targetWeightSnapshot ?? '-',
-                          icon: Icons.fitness_center,
-                        ),
+                    // Standard Load UI
+                    Expanded(
+                      child: _buildInputMetric(
+                        context,
+                        controller: _weightController,
+                        focusNode: _weightFocusNode,
+                        label: AppLocalizations.of(context)!.get('load'),
+                        hint: _fallbackHint(widget.execution.targetWeightSnapshot),
+                        icon: Icons.fitness_center,
                       ),
+                    ),
                   ]
                 ] else if (_metricType == 'TIME') ...[
-                   Expanded(
-                    flex: 2, 
+                  Expanded(
+                    flex: 2,
                     child: _buildInputMetric(
-                      context, 
-                      controller: _timeController, 
+                      context,
+                      controller: _timeController,
+                      focusNode: _timeFocusNode,
                       label: 'Tiempo (seg)', // Localize later
-                      hint: widget.execution.targetTimeSnapshot?.toString() ?? '-',
+                      hint: _fallbackHint(widget.execution.targetTimeSnapshot?.toString()),
                       icon: Icons.timer,
                     ),
                   ),
                 ] else if (_metricType == 'DISTANCE') ...[
-                   Expanded(
+                  Expanded(
                     flex: 2,
                     child: _buildInputMetric(
-                      context, 
-                      controller: _distanceController, 
+                      context,
+                      controller: _distanceController,
+                      focusNode: _distanceFocusNode,
                       label: 'Distancia (m)', // Localize later
-                      hint: widget.execution.targetDistanceSnapshot?.toString() ?? '-',
+                      hint: _fallbackHint(widget.execution.targetDistanceSnapshot?.toString()),
                       icon: Icons.directions_run,
                     ),
                   ),
@@ -499,32 +681,47 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     );
   }
 
-  Widget _buildInputMetric(BuildContext context, {
-    required TextEditingController controller, 
-    required String label, 
-    required String hint,
-    required IconData icon
-  }) {
+  Widget _buildInputMetric(BuildContext context,
+      {required TextEditingController controller,
+      required FocusNode focusNode,
+      required String label,
+      required String hint,
+      required IconData icon}) {
     return TextField(
       controller: controller,
-      keyboardType: TextInputType.text, 
+      focusNode: focusNode,
+      keyboardType: TextInputType.text,
       decoration: InputDecoration(
-        labelText: '$label (Sugg: $hint)', 
+        labelText: '$label (Sugg: $hint)',
         floatingLabelBehavior: FloatingLabelBehavior.always,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.only(left: 8, top: 12, bottom: 12, right: 30), // Increased right padding to prevent overlap
+        contentPadding: const EdgeInsets.only(
+            left: 8,
+            top: 12,
+            bottom: 12,
+            right: 30), // Increased right padding to prevent overlap
+        fillColor: widget.readOnly
+            ? (Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.05))
+            : null,
+        filled: widget.readOnly,
         isDense: true,
         suffixIcon: Padding(
-           padding: const EdgeInsets.only(right: 8.0),
-           child: Icon(icon, size: 16, color: Colors.grey),
+          padding: const EdgeInsets.only(right: 8.0),
+          child: Icon(icon, size: 16, color: Colors.grey),
         ),
-        suffixIconConstraints: const BoxConstraints(maxHeight: 40, maxWidth: 40),
+        suffixIconConstraints:
+            const BoxConstraints(maxHeight: 40, maxWidth: 40),
       ),
-      style: const TextStyle(fontWeight: FontWeight.bold),
-
+      style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: widget.readOnly
+              ? Theme.of(context).textTheme.bodyLarge?.color
+              : null),
       onChanged: widget.readOnly ? null : _onFieldChanged,
       readOnly: widget.readOnly,
-      enabled: !widget.readOnly,
+      // Removed `enabled: !widget.readOnly` so the text is fully opaque and visible
     );
   }
 
@@ -535,7 +732,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     } else {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.get('errorVideo'))),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)!.get('errorVideo'))),
         );
       }
     }
@@ -543,16 +741,12 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
 
   void _showSwapDialog(BuildContext context) {
     if (widget.execution.exercise == null) return;
-    
+
     final muscles = widget.execution.exercise!.muscles;
-    final primary = muscles.firstWhere(
-      (m) => m.role == 'PRIMARY', 
-      orElse: () => muscles.isNotEmpty 
-          ? muscles.first 
-          : throw 'No muscles' 
-    );
-    
-    if (muscles.isEmpty) return; 
+    final primary = muscles.firstWhere((m) => m.role == 'PRIMARY',
+        orElse: () => muscles.isNotEmpty ? muscles.first : throw 'No muscles');
+
+    if (muscles.isEmpty) return;
 
     showDialog(
       context: context,
@@ -561,33 +755,40 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
         content: SizedBox(
           width: double.maxFinite,
           child: FutureBuilder<List<Exercise>>(
-            future: ctx.read<PlanProvider>().fetchExercisesByMuscle(primary.muscle.id),
+            future: ctx
+                .read<PlanProvider>()
+                .fetchExercisesByMuscle(primary.muscle.id),
             builder: (ctx, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()));
+                return const SizedBox(
+                    height: 100,
+                    child: Center(child: CircularProgressIndicator()));
               }
               if (snapshot.hasError) {
                 return const Text('Error loading exercises');
               }
               final fullList = snapshot.data ?? [];
-              final list = fullList.where((e) => e.id != widget.execution.exercise?.id).toList();
+              final list = fullList
+                  .where((e) => e.id != widget.execution.exercise?.id)
+                  .toList();
 
               if (list.isEmpty) {
-                 return const Padding(
-                   padding: EdgeInsets.all(16.0),
-                   child: Column(
-                     mainAxisSize: MainAxisSize.min,
-                     children: [
-                       Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 40),
-                       SizedBox(height: 12),
-                       Text(
-                         "No se encontraron ejercicios que coincidieran con el mismo músculo primario",
-                         textAlign: TextAlign.center,
-                         style: TextStyle(color: Colors.grey, fontSize: 14),
-                       ),
-                     ],
-                   ),
-                 );
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.warning_amber_rounded,
+                          color: Colors.orange, size: 40),
+                      SizedBox(height: 12),
+                      Text(
+                        "No se encontraron ejercicios que coincidieran con el mismo músculo primario",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                );
               }
 
               return ListView.builder(
@@ -595,7 +796,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                 itemCount: list.length,
                 itemBuilder: (ctx, i) {
                   final ex = list[i];
-                  
+
                   return ListTile(
                     leading: const Icon(Icons.fitness_center),
                     title: Text(ex.name),
@@ -624,13 +825,14 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   Future<void> _performSwap(Exercise newEx) async {
     final authValues = context.read<AuthProvider>();
     double? userWeight;
-    
-    if (authValues.user?.role == 'alumno') { 
-         userWeight = authValues.user?.currentWeight ?? authValues.user?.initialWeight;
+
+    if (authValues.user?.role == 'alumno') {
+      userWeight =
+          authValues.user?.currentWeight ?? authValues.user?.initialWeight;
     }
 
     final suggestion = SwapExerciseLogic.calculate(
-      oldExercise: widget.execution.exercise!, 
+      oldExercise: widget.execution.exercise!,
       newExercise: newEx,
       execution: widget.execution,
       intent: widget.intent,
@@ -638,7 +840,7 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     );
 
     if (!mounted) return;
-    
+
     final confirmed = await showDialog<Map<String, String>>(
       context: context,
       builder: (ctx) => SwapConfirmationDialog(
@@ -648,45 +850,48 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
       ),
     );
 
-    if (confirmed == null) return; 
+    if (confirmed == null) return;
 
     final updateData = {
       'exercise': {
         'id': newEx.id,
         'muscles': newEx.muscles,
         'equipments': newEx.equipments,
-        'metricType': newEx.metricType, 
+        'metricType': newEx.metricType,
       },
       'exerciseNameSnapshot': newEx.name,
       'videoUrl': newEx.videoUrl,
-      'planExerciseId': null, 
-      
+      'planExerciseId': null,
       'targetSetsSnapshot': int.tryParse(confirmed['sets']!),
-      
-      'targetRepsSnapshot': newEx.metricType == 'REPS' ? confirmed['reps'] : null,
-      'targetWeightSnapshot': newEx.metricType == 'REPS' ? confirmed['weight'] : null,
-      
-      'targetTimeSnapshot': newEx.metricType == 'TIME' ? int.tryParse(confirmed['time']!) : null,
-      'targetDistanceSnapshot': newEx.metricType == 'DISTANCE' ? double.tryParse(confirmed['distance']!) : null,
-      
+      'targetRepsSnapshot':
+          newEx.metricType == 'REPS' ? confirmed['reps'] : null,
+      'targetWeightSnapshot':
+          newEx.metricType == 'REPS' ? confirmed['weight'] : null,
+      'targetTimeSnapshot':
+          newEx.metricType == 'TIME' ? int.tryParse(confirmed['time']!) : null,
+      'targetDistanceSnapshot': newEx.metricType == 'DISTANCE'
+          ? double.tryParse(confirmed['distance']!)
+          : null,
     };
-    
-    final success = await context.read<PlanProvider>().updateSessionExercise(widget.execution.id, updateData);
-    
+
+    final success = await context
+        .read<PlanProvider>()
+        .updateSessionExercise(widget.execution.id, updateData);
+
     if (success && mounted) {
-       setState(() {
-          _metricType = newEx.metricType; 
-          _setsController.text = confirmed['sets']!;
-          
-          if (newEx.metricType == 'REPS') {
-              _repsController.text = confirmed['reps']!;
-              _weightController.text = confirmed['weight']!;
-          } else if (newEx.metricType == 'TIME') {
-              _timeController.text = confirmed['time']!;
-          } else if (newEx.metricType == 'DISTANCE') {
-              _distanceController.text = confirmed['distance']!;
-          }
-       });
+      setState(() {
+        _metricType = newEx.metricType;
+        _setsController.text = confirmed['sets']!;
+
+        if (newEx.metricType == 'REPS') {
+          _repsController.text = confirmed['reps']!;
+          _weightController.text = confirmed['weight']!;
+        } else if (newEx.metricType == 'TIME') {
+          _timeController.text = confirmed['time']!;
+        } else if (newEx.metricType == 'DISTANCE') {
+          _distanceController.text = confirmed['distance']!;
+        }
+      });
     }
   }
 
@@ -695,7 +900,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eliminar ejercicio'),
-        content: const Text('¿Estás seguro de que deseas eliminar este ejercicio de la sesión?'),
+        content: const Text(
+            '¿Estás seguro de que deseas eliminar este ejercicio de la sesión?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -711,7 +917,9 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     );
 
     if (confirm == true && mounted) {
-       await context.read<PlanProvider>().deleteSessionExercise(widget.execution.id);
+      await context
+          .read<PlanProvider>()
+          .deleteSessionExercise(widget.execution.id);
     }
   }
 }

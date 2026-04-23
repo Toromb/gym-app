@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../localization/app_localizations.dart';
 import '../../providers/plan_provider.dart';
@@ -28,64 +29,73 @@ class _PlansListScreenState extends State<PlansListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.get('plansLibrary'))),
+      appBar: ConstrainedAppBar(
+          title: Text(AppLocalizations.of(context)!.get('plansLibrary'))),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
           child: Consumer<PlanProvider>(
-        builder: (context, planProvider, _) {
-          if (planProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (planProvider.plans.isEmpty) {
-            return Center(child: Text(AppLocalizations.of(context)!.get('noPlansFound')));
-          }
-
-          // Group plans by creator
-          final Map<String, List<Plan>> groupedPlans = {};
-          
-          for (var plan in planProvider.plans) {
-            // Search Filter
-            if (_searchQuery.isNotEmpty && !plan.name.toLowerCase().contains(_searchQuery.toLowerCase())) {
-               continue;
-            }
-
-            final creatorName = plan.teacher != null 
-                ? '${plan.teacher!.firstName} ${plan.teacher!.lastName}' 
-                : AppLocalizations.of(context)!.get('withoutAuthor');
-            
-            if (!groupedPlans.containsKey(creatorName)) {
-              groupedPlans[creatorName] = [];
-            }
-            groupedPlans[creatorName]!.add(plan);
-          }
-          
-          final sortedKeys = groupedPlans.keys.toList()..sort();
-
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 100),
-            itemBuilder: (context, index) {
-              // Header index
-              if (index == 0) {
-                 return _buildSearch();
+            builder: (context, planProvider, _) {
+              if (planProvider.isLoading) {
+                return const Center(child: CircularProgressIndicator());
               }
-              final creatorName = sortedKeys[index - 1]; // Offset by 1 for search
-              final plans = groupedPlans[creatorName]!;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionHeader(context, creatorName, plans.length),
-                  ...plans.map((plan) => _buildPlanCard(context, plan)).toList(),
-                ],
+              if (planProvider.plans.isEmpty) {
+                return Center(
+                    child: Text(
+                        AppLocalizations.of(context)!.get('noPlansFound')));
+              }
+
+              // Group plans by creator
+              final Map<String, List<Plan>> groupedPlans = {};
+
+              for (var plan in planProvider.plans) {
+                // Search Filter
+                if (_searchQuery.isNotEmpty &&
+                    !plan.name
+                        .toLowerCase()
+                        .contains(_searchQuery.toLowerCase())) {
+                  continue;
+                }
+
+                final creatorName = plan.teacher != null
+                    ? '${plan.teacher!.firstName} ${plan.teacher!.lastName}'
+                    : AppLocalizations.of(context)!.get('withoutAuthor');
+
+                if (!groupedPlans.containsKey(creatorName)) {
+                  groupedPlans[creatorName] = [];
+                }
+                groupedPlans[creatorName]!.add(plan);
+              }
+
+              final sortedKeys = groupedPlans.keys.toList()..sort();
+
+              return ListView.builder(
+                padding: const EdgeInsets.only(bottom: 100),
+                itemBuilder: (context, index) {
+                  // Header index
+                  if (index == 0) {
+                    return _buildSearch();
+                  }
+                  final creatorName =
+                      sortedKeys[index - 1]; // Offset by 1 for search
+                  final plans = groupedPlans[creatorName]!;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionHeader(context, creatorName, plans.length),
+                      ...plans
+                          .map((plan) => _buildPlanCard(context, plan))
+                          .toList(),
+                    ],
+                  );
+                },
+                itemCount: sortedKeys.length + 1, // +1 for Search
               );
             },
-            itemCount: sortedKeys.length + 1, // +1 for Search
-          );
-        },
-      ),
-      ),
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -108,9 +118,9 @@ class _PlansListScreenState extends State<PlansListScreen> {
       child: Text(
         '$title ($count)',
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.primary,
-        ),
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
       ),
     );
   }
@@ -120,19 +130,20 @@ class _PlansListScreenState extends State<PlansListScreen> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: TextField(
-          decoration: InputDecoration(
-            hintText: 'Buscar plan por nombre...',
-            prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-            filled: true,
-            fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-          ),
-          onChanged: (val) {
-            setState(() {
-              _searchQuery = val;
-            });
-          },
+        decoration: InputDecoration(
+          hintText: 'Buscar plan por nombre...',
+          prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          filled: true,
+          fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        ),
+        onChanged: (val) {
+          setState(() {
+            _searchQuery = val;
+          });
+        },
       ),
     );
   }
@@ -141,56 +152,67 @@ class _PlansListScreenState extends State<PlansListScreen> {
     final date = plan.createdAt != null
         ? DateFormat('yyyy-MM-dd').format(DateTime.parse(plan.createdAt!))
         : 'N/A';
-    
+
     final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2), // Compact margin
+      margin: const EdgeInsets.symmetric(
+          horizontal: 16, vertical: 2), // Compact margin
       elevation: 0,
       shape: RoundedRectangleBorder(
-         borderRadius: BorderRadius.circular(12),
-         side: BorderSide(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colorScheme.outlineVariant),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Compact padding
+        padding: const EdgeInsets.symmetric(
+            horizontal: 12, vertical: 8), // Compact padding
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Expanded(
-                  child: Text(plan.name, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)), // Smaller title
+                  child: Text(plan.name,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold)), // Smaller title
                 ),
                 if (plan.objective != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: colorScheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       plan.objective ?? 'General',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colorScheme.onSecondaryContainer),
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelSmall
+                          ?.copyWith(color: colorScheme.onSecondaryContainer),
                     ),
                   ),
               ],
             ),
-             const SizedBox(height: 8),
-             Text(
-                '${AppLocalizations.of(context)!.get('created')} $date', 
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)
-             ),
-             const SizedBox(height: 12),
-             const Divider(),
+            const SizedBox(height: 8),
+            Text('${AppLocalizations.of(context)!.get('created')} $date',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 12),
+            const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 OutlinedButton.icon(
                   onPressed: () => _showPlanDetails(context, plan),
                   icon: const Icon(Icons.visibility, size: 16), // Smaller icon
-                  label: Text(AppLocalizations.of(context)!.get('viewDetails'), style: const TextStyle(fontSize: 12)),
+                  label: Text(AppLocalizations.of(context)!.get('viewDetails'),
+                      style: const TextStyle(fontSize: 12)),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), // Compact layout
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 4), // Compact layout
                     visualDensity: VisualDensity.compact,
                   ),
                 ),
@@ -220,6 +242,7 @@ class _PlansListScreenState extends State<PlansListScreen> {
       ),
     );
   }
+
   void _confirmDeletePlan(BuildContext context, Plan plan) {
     showDialog(
       context: context,
@@ -234,31 +257,35 @@ class _PlansListScreenState extends State<PlansListScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              final error = await context.read<PlanProvider>().deletePlan(plan.id!);
+              final error =
+                  await context.read<PlanProvider>().deletePlan(plan.id!);
               if (mounted) {
                 if (error == null) {
-                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLocalizations.of(context)!.get('deletePlanSuccess'))),
-                   );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(AppLocalizations.of(context)!
+                            .get('deletePlanSuccess'))),
+                  );
                 } else {
-                   // Show error dialog for conflicts (assigned plans)
-                   showDialog(
-                     context: context,
-                     builder: (context) => AlertDialog(
-                       title: Text(AppLocalizations.of(context)!.get('error')),
-                       content: Text(error),
-                       actions: [
-                         TextButton(
-                           onPressed: () => Navigator.pop(context),
-                           child: const Text('OK'),
-                         ),
-                       ],
-                     ),
-                   );
+                  // Show error dialog for conflicts (assigned plans)
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text(AppLocalizations.of(context)!.get('error')),
+                      content: Text(error),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
                 }
               }
             },
-            child: Text(AppLocalizations.of(context)!.get('delete'), style: const TextStyle(color: Colors.red)),
+            child: Text(AppLocalizations.of(context)!.get('delete'),
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),

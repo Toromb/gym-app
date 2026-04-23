@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import '../../models/plan_model.dart'; // Exercise model
 import '../../services/exercise_api_service.dart';
 
@@ -20,7 +21,7 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
   late TextEditingController _typeController;
   late TextEditingController _videoUrlController;
   late TextEditingController _notesController;
-  
+
   // Metric Type
   String _metricType = 'REPS';
 
@@ -39,8 +40,6 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
   late TextEditingController _defaultDistanceController;
   late TextEditingController _minDistanceController;
   late TextEditingController _maxDistanceController;
-
-
 
   // Advanced Config
   late TextEditingController _loadFactorController;
@@ -68,7 +67,7 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
     _typeController = TextEditingController(text: e?.type ?? '');
     _videoUrlController = TextEditingController(text: e?.videoUrl ?? '');
     _notesController = TextEditingController(text: e?.notes ?? '');
-    
+
     _setsController = TextEditingController(text: e?.sets?.toString() ?? '');
     _repsController = TextEditingController(text: e?.reps ?? '');
     _restController = TextEditingController(text: e?.rest ?? '');
@@ -77,18 +76,28 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
     _restController = TextEditingController(text: e?.rest ?? '');
     _loadController = TextEditingController(text: e?.load ?? '');
 
-    _loadFactorController = TextEditingController(text: e?.loadFactor?.toString() ?? '');
-    _defaultSetsController = TextEditingController(text: e?.defaultSets?.toString() ?? '');
-    _minRepsController = TextEditingController(text: e?.minReps?.toString() ?? '');
-    _maxRepsController = TextEditingController(text: e?.maxReps?.toString() ?? '');
+    _loadFactorController =
+        TextEditingController(text: e?.loadFactor?.toString() ?? '');
+    _defaultSetsController =
+        TextEditingController(text: e?.defaultSets?.toString() ?? '');
+    _minRepsController =
+        TextEditingController(text: e?.minReps?.toString() ?? '');
+    _maxRepsController =
+        TextEditingController(text: e?.maxReps?.toString() ?? '');
 
     _metricType = e?.metricType ?? 'REPS';
-    _defaultTimeController = TextEditingController(text: e?.defaultTime?.toString() ?? '');
-    _minTimeController = TextEditingController(text: e?.minTime?.toString() ?? '');
-    _maxTimeController = TextEditingController(text: e?.maxTime?.toString() ?? '');
-    _defaultDistanceController = TextEditingController(text: e?.defaultDistance?.toString() ?? '');
-    _minDistanceController = TextEditingController(text: e?.minDistance?.toString() ?? '');
-    _maxDistanceController = TextEditingController(text: e?.maxDistance?.toString() ?? '');
+    _defaultTimeController =
+        TextEditingController(text: e?.defaultTime?.toString() ?? '');
+    _minTimeController =
+        TextEditingController(text: e?.minTime?.toString() ?? '');
+    _maxTimeController =
+        TextEditingController(text: e?.maxTime?.toString() ?? '');
+    _defaultDistanceController =
+        TextEditingController(text: e?.defaultDistance?.toString() ?? '');
+    _minDistanceController =
+        TextEditingController(text: e?.minDistance?.toString() ?? '');
+    _maxDistanceController =
+        TextEditingController(text: e?.maxDistance?.toString() ?? '');
 
     _loadMuscles();
     _loadEquipments();
@@ -98,15 +107,17 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
     try {
       final equipments = await _exerciseService.getEquipments();
       setState(() {
-         _allEquipments = equipments;
-         _isLoadingEquipments = false;
+        _allEquipments = equipments;
+        _isLoadingEquipments = false;
 
-         if (widget.exercise != null) {
-            final e = widget.exercise!;
-            // Map existing IDs to current list objects
-            final existingIds = e.equipments.map((eq) => eq.id).toSet();
-            _selectedEquipments = _allEquipments.where((eq) => existingIds.contains(eq.id)).toList();
-         }
+        if (widget.exercise != null) {
+          final e = widget.exercise!;
+          // Map existing IDs to current list objects
+          final existingIds = e.equipments.map((eq) => eq.id).toSet();
+          _selectedEquipments = _allEquipments
+              .where((eq) => existingIds.contains(eq.id))
+              .toList();
+        }
       });
     } catch (e) {
       debugPrint('Error loading equipments: $e');
@@ -118,7 +129,7 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
     try {
       final muscles = await _exerciseService.getMuscles();
       muscles.sort((a, b) => a.order.compareTo(b.order));
-      
+
       setState(() {
         _allMuscles = muscles;
         _isLoadingMuscles = false;
@@ -126,27 +137,35 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
         // Initialize Selection for Edit Mode
         if (widget.exercise != null) {
           final e = widget.exercise!;
-          
+
           // Try to match Primary Muscle by ID or Name (legacy compatibility)
           if (e.muscles.isNotEmpty) {
             try {
-              final dbPrimary = e.muscles.firstWhere((m) => m.role == 'PRIMARY');
-              _primaryMuscle = _allMuscles.firstWhere((m) => m.id == dbPrimary.muscle.id, orElse: () => _allMuscles.first);
+              final dbPrimary =
+                  e.muscles.firstWhere((m) => m.role == 'PRIMARY');
+              _primaryMuscle = _allMuscles.firstWhere(
+                  (m) => m.id == dbPrimary.muscle.id,
+                  orElse: () => _allMuscles.first);
             } catch (_) {
-               // No explicitly marked primary
+              // No explicitly marked primary
             }
             // Secondaries
-             final dbSecondaries = e.muscles.where((m) => m.role == 'SECONDARY').map((em) => em.muscle.id).toSet();
-             _secondaryMuscles = _allMuscles.where((m) => dbSecondaries.contains(m.id)).toList();
+            final dbSecondaries = e.muscles
+                .where((m) => m.role == 'SECONDARY')
+                .map((em) => em.muscle.id)
+                .toSet();
+            _secondaryMuscles =
+                _allMuscles.where((m) => dbSecondaries.contains(m.id)).toList();
           }
 
           // Fallback: If no relations found, try matching 'muscleGroup' string to a muscle name
           if (_primaryMuscle == null && e.muscleGroup.isNotEmpty) {
-             try {
-                _primaryMuscle = _allMuscles.firstWhere((m) => m.name.toLowerCase() == e.muscleGroup.toLowerCase());
-             } catch (_) {
-                // No match found
-             }
+            try {
+              _primaryMuscle = _allMuscles.firstWhere(
+                  (m) => m.name.toLowerCase() == e.muscleGroup.toLowerCase());
+            } catch (_) {
+              // No match found
+            }
           }
         }
       });
@@ -195,11 +214,12 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
       // Calculate Load Percentages
       // Heuristic: Primary takes the majority. If secondaries exist, they share ~= 30%.
       int secondaryCount = _secondaryMuscles.length;
-      int secondaryShare = secondaryCount > 0 ? (30 / secondaryCount).floor() : 0;
+      int secondaryShare =
+          secondaryCount > 0 ? (30 / secondaryCount).floor() : 0;
       int primaryShare = 100 - (secondaryShare * secondaryCount);
 
       List<Map<String, dynamic>> musclesPayload = [];
-      
+
       // Add Primary
       musclesPayload.add({
         'muscleId': _primaryMuscle!.id,
@@ -221,9 +241,12 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
         'muscles': musclesPayload,
         'equipments': _selectedEquipments.map((e) => e.id).toList(),
         'type': _typeController.text.isNotEmpty ? _typeController.text : null,
-        'videoUrl': _videoUrlController.text.isNotEmpty ? _videoUrlController.text : null,
-        'notes': _notesController.text.isNotEmpty ? _notesController.text : null,
-        
+        'videoUrl': _videoUrlController.text.isNotEmpty
+            ? _videoUrlController.text
+            : null,
+        'notes':
+            _notesController.text.isNotEmpty ? _notesController.text : null,
+
         // Defaults
         'sets': int.tryParse(_setsController.text),
         'reps': _repsController.text.isNotEmpty ? _repsController.text : null,
@@ -249,13 +272,17 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
       if (widget.exercise == null) {
         await _exerciseService.createExercise(exerciseData);
       } else {
-        await _exerciseService.updateExercise(widget.exercise!.id, exerciseData);
+        await _exerciseService.updateExercise(
+            widget.exercise!.id, exerciseData);
       }
 
       if (mounted) {
         Navigator.pop(context, true); // Return true to refresh list
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(widget.exercise == null ? 'Ejercicio creado exitosamente' : 'Ejercicio actualizado exitosamente')),
+          SnackBar(
+              content: Text(widget.exercise == null
+                  ? 'Ejercicio creado exitosamente'
+                  : 'Ejercicio actualizado exitosamente')),
         );
       }
     } catch (e) {
@@ -272,28 +299,35 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
   // --- UI Helpers for Muscle Selection ---
 
   String _translateRegion(String region) {
-    switch(region) {
-      case 'UPPER': return 'Superior';
-      case 'CORE': return 'Core';
-      case 'LOWER': return 'Inferior';
-      default: return region;
+    switch (region) {
+      case 'UPPER':
+        return 'Superior';
+      case 'CORE':
+        return 'Core';
+      case 'LOWER':
+        return 'Inferior';
+      default:
+        return region;
     }
   }
 
   String _translateSide(String side) {
-    switch(side) {
-      case 'FRONT': return 'Frente';
-      case 'BACK': return 'Espalda';
-      default: return side;
+    switch (side) {
+      case 'FRONT':
+        return 'Frente';
+      case 'BACK':
+        return 'Espalda';
+      default:
+        return side;
     }
   }
 
   Map<String, Map<String, List<Muscle>>> _groupMuscles() {
     final grouped = <String, Map<String, List<Muscle>>>{};
-    
+
     // Define order of regions
     final regions = ['UPPER', 'CORE', 'LOWER'];
-    
+
     for (var r in regions) {
       grouped[r] = {'FRONT': [], 'BACK': []};
     }
@@ -303,7 +337,7 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
         grouped[m.region] = {};
       }
       if (!grouped[m.region]!.containsKey(m.bodySide)) {
-         grouped[m.region]![m.bodySide] = [];
+        grouped[m.region]![m.bodySide] = [];
       }
       grouped[m.region]![m.bodySide]!.add(m);
     }
@@ -316,10 +350,9 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
       isScrollControlled: true,
       builder: (context) {
         final grouped = _groupMuscles();
-        
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return DraggableScrollableSheet(
+
+        return StatefulBuilder(builder: (context, setModalState) {
+          return DraggableScrollableSheet(
               initialChildSize: 0.8,
               minChildSize: 0.5,
               maxChildSize: 0.95,
@@ -330,7 +363,9 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
-                        isPrimary ? 'Seleccionar Músculo Primario' : 'Seleccionar Músculos Secundarios',
+                        isPrimary
+                            ? 'Seleccionar Músculo Primario'
+                            : 'Seleccionar Músculos Secundarios',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
@@ -340,90 +375,101 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                         children: grouped.entries.map((regionEntry) {
                           final regionKey = regionEntry.key;
                           final sides = regionEntry.value;
-                          
+
                           // Hide empty regions
-                          if (sides.values.every((l) => l.isEmpty)) return const SizedBox.shrink();
+                          if (sides.values.every((l) => l.isEmpty))
+                            return const SizedBox.shrink();
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                                  color: Theme.of(context).brightness == Brightness.dark 
-                                      ? Colors.grey.shade800 
-                                      : Colors.grey.shade200,
-                                  width: double.infinity,
-                                  child: Text(
-                                    _translateRegion(regionKey), 
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8, horizontal: 16),
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.grey.shade800
+                                    : Colors.grey.shade200,
+                                width: double.infinity,
+                                child: Text(_translateRegion(regionKey),
                                     style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).textTheme.bodyLarge?.color
-                                    )
-                                  ),
-                                ),
-                                ...sides.entries.map((sideEntry) {
-                                  final sideKey = sideEntry.key;
-                                  final muscles = sideEntry.value;
-                                  if (muscles.isEmpty) return const SizedBox.shrink();
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color)),
+                              ),
+                              ...sides.entries.map((sideEntry) {
+                                final sideKey = sideEntry.key;
+                                final muscles = sideEntry.value;
+                                if (muscles.isEmpty)
+                                  return const SizedBox.shrink();
 
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 16, top: 8),
-                                        child: Text(
-                                          _translateSide(sideKey), 
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 16, top: 8),
+                                      child: Text(_translateSide(sideKey),
                                           style: TextStyle(
-                                            color: Theme.of(context).brightness == Brightness.dark 
-                                                ? Colors.grey.shade400 
-                                                : Colors.grey.shade700,
-                                            fontStyle: FontStyle.italic
-                                          )
-                                        ),
-                                      ),
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.grey.shade400
+                                                  : Colors.grey.shade700,
+                                              fontStyle: FontStyle.italic)),
+                                    ),
                                     ...muscles.map((muscle) {
-                                      final isSelected = isPrimary 
+                                      final isSelected = isPrimary
                                           ? _primaryMuscle?.id == muscle.id
-                                          : _secondaryMuscles.any((m) => m.id == muscle.id);
-                                          
+                                          : _secondaryMuscles
+                                              .any((m) => m.id == muscle.id);
+
                                       return ListTile(
                                         title: Text(muscle.name),
-                                        leading: isPrimary 
+                                        leading: isPrimary
                                             ? Radio<String>(
-                                                value: muscle.id, 
-                                                groupValue: _primaryMuscle?.id, 
+                                                value: muscle.id,
+                                                groupValue: _primaryMuscle?.id,
                                                 onChanged: (_) {
-                                                  setState(() => _primaryMuscle = muscle);
-                                                  setModalState((){});
-                                                  Navigator.pop(context); // Close on primary selection
-                                                }
-                                              )
+                                                  setState(() =>
+                                                      _primaryMuscle = muscle);
+                                                  setModalState(() {});
+                                                  Navigator.pop(
+                                                      context); // Close on primary selection
+                                                })
                                             : Checkbox(
-                                                value: isSelected, 
+                                                value: isSelected,
                                                 onChanged: (val) {
                                                   setState(() {
                                                     if (val == true) {
-                                                      _secondaryMuscles.add(muscle);
+                                                      _secondaryMuscles
+                                                          .add(muscle);
                                                     } else {
-                                                      _secondaryMuscles.removeWhere((m) => m.id == muscle.id);
+                                                      _secondaryMuscles
+                                                          .removeWhere((m) =>
+                                                              m.id ==
+                                                              muscle.id);
                                                     }
                                                   });
-                                                  setModalState((){});
-                                                }
-                                              ),
+                                                  setModalState(() {});
+                                                }),
                                         onTap: () {
                                           if (isPrimary) {
-                                            setState(() => _primaryMuscle = muscle);
+                                            setState(
+                                                () => _primaryMuscle = muscle);
                                             Navigator.pop(context);
                                           } else {
                                             setState(() {
                                               if (isSelected) {
-                                                _secondaryMuscles.removeWhere((m) => m.id == muscle.id);
+                                                _secondaryMuscles.removeWhere(
+                                                    (m) => m.id == muscle.id);
                                               } else {
                                                 _secondaryMuscles.add(muscle);
                                               }
                                             });
-                                            setModalState((){});
+                                            setModalState(() {});
                                           }
                                         },
                                       );
@@ -449,10 +495,8 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                       ),
                   ],
                 );
-              }
-            );
-          }
-        );
+              });
+        });
       },
     );
   }
@@ -460,7 +504,10 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.exercise == null ? 'Crear Ejercicio' : 'Editar Ejercicio')),
+      appBar: ConstrainedAppBar(
+          title: Text(widget.exercise == null
+              ? 'Crear Ejercicio'
+              : 'Editar Ejercicio')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -468,7 +515,8 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Información Básica', style: Theme.of(context).textTheme.titleMedium),
+              Text('Información Básica',
+                  style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _nameController,
@@ -476,11 +524,12 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                 validator: (v) => v!.isEmpty ? 'Requerido' : null,
               ),
               const SizedBox(height: 20),
-              
+
               // --- MUSCLE MAPPING SECTION ---
-              Text('Mapeo Muscular', style: Theme.of(context).textTheme.titleMedium),
+              Text('Mapeo Muscular',
+                  style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
-              
+
               // Primary Muscle (Required)
               Card(
                 margin: EdgeInsets.zero,
@@ -492,11 +541,12 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                 ),
               ),
               if (_primaryMuscle == null)
-                 const Padding(
-                   padding: EdgeInsets.only(left: 12, top: 4),
-                   child: Text('Requerido', style: TextStyle(color: Colors.red, fontSize: 12)),
-                 ),
-              
+                const Padding(
+                  padding: EdgeInsets.only(left: 12, top: 4),
+                  child: Text('Requerido',
+                      style: TextStyle(color: Colors.red, fontSize: 12)),
+                ),
+
               const SizedBox(height: 10),
 
               // Secondary Muscles (Optional)
@@ -504,8 +554,8 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                 margin: EdgeInsets.zero,
                 child: ListTile(
                   title: const Text('Músculos Secundarios (Opcional)'),
-                  subtitle: Text(_secondaryMuscles.isEmpty 
-                      ? 'Ninguno' 
+                  subtitle: Text(_secondaryMuscles.isEmpty
+                      ? 'Ninguno'
                       : _secondaryMuscles.map((m) => m.name).join(', ')),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () => _showMuscleSelector(isPrimary: false),
@@ -513,11 +563,12 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
               ),
 
               const SizedBox(height: 20),
-              
+
               // --- END MUSCLE MAPPING ---
 
               // --- EQUIPMENT SECTION ---
-              Text('Equipamiento', style: Theme.of(context).textTheme.titleMedium),
+              Text('Equipamiento',
+                  style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
               if (_isLoadingEquipments)
                 const LinearProgressIndicator()
@@ -526,7 +577,8 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                   spacing: 8.0,
                   runSpacing: 4.0,
                   children: _allEquipments.map((eq) {
-                    final isSelected = _selectedEquipments.any((s) => s.id == eq.id);
+                    final isSelected =
+                        _selectedEquipments.any((s) => s.id == eq.id);
                     return FilterChip(
                       label: Text(eq.name),
                       selected: isSelected,
@@ -535,19 +587,22 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                           if (selected) {
                             _selectedEquipments.add(eq);
                           } else {
-                            _selectedEquipments.removeWhere((s) => s.id == eq.id);
+                            _selectedEquipments
+                                .removeWhere((s) => s.id == eq.id);
                           }
                         });
                       },
                     );
                   }).toList(),
                 ),
-               const SizedBox(height: 20),
+              const SizedBox(height: 20),
               // --- END EQUIPMENT SECTION ---
 
-               TextFormField(
+              TextFormField(
                 controller: _typeController,
-                decoration: const InputDecoration(labelText: 'Tipo', hintText: 'Ej: Fuerza, Hipertrofia, Cardio'),
+                decoration: const InputDecoration(
+                    labelText: 'Tipo',
+                    hintText: 'Ej: Fuerza, Hipertrofia, Cardio'),
               ),
               const SizedBox(height: 20),
 
@@ -565,154 +620,212 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                 },
               ),
               const SizedBox(height: 20),
-               
-              Text('Parámetros por Defecto (Opcional)', style: Theme.of(context).textTheme.titleMedium),
-              const Text('Estos valores se precargarán al agregar el ejercicio a un plan.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+
+              Text('Parámetros por Defecto (Opcional)',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const Text(
+                  'Estos valores se precargarán al agregar el ejercicio a un plan.',
+                  style: TextStyle(color: Colors.grey, fontSize: 12)),
               const SizedBox(height: 10),
-              
+
               if (_metricType == 'REPS') ...[
                 Row(
                   children: [
-                    Expanded(child: TextFormField(controller: _setsController, decoration: const InputDecoration(labelText: 'Series'), keyboardType: TextInputType.number)),
+                    Expanded(
+                        child: TextFormField(
+                            controller: _setsController,
+                            decoration:
+                                const InputDecoration(labelText: 'Series'),
+                            keyboardType: TextInputType.number)),
                     const SizedBox(width: 10),
-                    Expanded(child: TextFormField(controller: _repsController, decoration: const InputDecoration(labelText: 'Reps'))),
+                    Expanded(
+                        child: TextFormField(
+                            controller: _repsController,
+                            decoration:
+                                const InputDecoration(labelText: 'Reps'))),
                   ],
                 ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Expanded(child: TextFormField(controller: _loadController, decoration: const InputDecoration(labelText: 'Peso/Int'))),
+                    Expanded(
+                        child: TextFormField(
+                            controller: _loadController,
+                            decoration:
+                                const InputDecoration(labelText: 'Peso/Int'))),
                     const SizedBox(width: 10),
-                    Expanded(child: TextFormField(controller: _restController, decoration: const InputDecoration(labelText: 'Descanso'))),
+                    Expanded(
+                        child: TextFormField(
+                            controller: _restController,
+                            decoration:
+                                const InputDecoration(labelText: 'Descanso'))),
                   ],
                 ),
               ] else if (_metricType == 'TIME') ...[
-                 Row(
+                Row(
                   children: [
-                    Expanded(child: TextFormField(controller: _setsController, decoration: const InputDecoration(labelText: 'Series'), keyboardType: TextInputType.number)),
-                     const SizedBox(width: 10),
-                    Expanded(child: TextFormField(controller: _defaultTimeController, decoration: const InputDecoration(labelText: 'Tiempo (seg)'), keyboardType: TextInputType.number)),
+                    Expanded(
+                        child: TextFormField(
+                            controller: _setsController,
+                            decoration:
+                                const InputDecoration(labelText: 'Series'),
+                            keyboardType: TextInputType.number)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                        child: TextFormField(
+                            controller: _defaultTimeController,
+                            decoration: const InputDecoration(
+                                labelText: 'Tiempo (seg)'),
+                            keyboardType: TextInputType.number)),
                   ],
-                 ),
-                 const SizedBox(height: 10),
-                 TextFormField(controller: _restController, decoration: const InputDecoration(labelText: 'Descanso')),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                    controller: _restController,
+                    decoration: const InputDecoration(labelText: 'Descanso')),
               ] else if (_metricType == 'DISTANCE') ...[
-                 Row(
+                Row(
                   children: [
-                    Expanded(child: TextFormField(controller: _setsController, decoration: const InputDecoration(labelText: 'Series'), keyboardType: TextInputType.number)),
-                     const SizedBox(width: 10),
-                    Expanded(child: TextFormField(controller: _defaultDistanceController, decoration: const InputDecoration(labelText: 'Distancia (m)'), keyboardType: TextInputType.number)),
+                    Expanded(
+                        child: TextFormField(
+                            controller: _setsController,
+                            decoration:
+                                const InputDecoration(labelText: 'Series'),
+                            keyboardType: TextInputType.number)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                        child: TextFormField(
+                            controller: _defaultDistanceController,
+                            decoration: const InputDecoration(
+                                labelText: 'Distancia (m)'),
+                            keyboardType: TextInputType.number)),
                   ],
-                 ),
-                 const SizedBox(height: 10),
-                 TextFormField(controller: _restController, decoration: const InputDecoration(labelText: 'Descanso')),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                    controller: _restController,
+                    decoration: const InputDecoration(labelText: 'Descanso')),
               ],
 
               const SizedBox(height: 20),
-              
-              Text('Configuración para sugerencias automáticas', style: Theme.of(context).textTheme.titleMedium),
+
+              Text('Configuración para sugerencias automáticas',
+                  style: Theme.of(context).textTheme.titleMedium),
               const Text(
                 'Estos valores se utilizan para sugerir peso, series y repeticiones cuando el alumno cambia de ejercicio. Son orientativos y editables.',
                 style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
               const SizedBox(height: 10),
-              
+
               // Common Fields
               Row(
                 children: [
                   Expanded(
                     child: TextFormField(
-                      controller: _loadFactorController, 
-                      decoration: const InputDecoration(labelText: 'Factor Carga (Ej: 1.0)'), 
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      controller: _loadFactorController,
+                      decoration: const InputDecoration(
+                          labelText: 'Factor Carga (Ej: 1.0)'),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: TextFormField(
-                      controller: _defaultSetsController, 
-                      decoration: const InputDecoration(labelText: 'Series Default'), 
+                      controller: _defaultSetsController,
+                      decoration:
+                          const InputDecoration(labelText: 'Series Default'),
                       keyboardType: TextInputType.number,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
-              
+
               // Metric Specific Logic Config
-               if (_metricType == 'REPS') ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _minRepsController, 
-                          decoration: const InputDecoration(labelText: 'Min Reps'), 
-                          keyboardType: TextInputType.number,
-                        ),
+              if (_metricType == 'REPS') ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _minRepsController,
+                        decoration:
+                            const InputDecoration(labelText: 'Min Reps'),
+                        keyboardType: TextInputType.number,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _maxRepsController, 
-                          decoration: const InputDecoration(labelText: 'Max Reps'), 
-                          keyboardType: TextInputType.number,
-                        ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _maxRepsController,
+                        decoration:
+                            const InputDecoration(labelText: 'Max Reps'),
+                        keyboardType: TextInputType.number,
                       ),
-                    ],
-                  ),
-               ] else if (_metricType == 'TIME') ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _minTimeController, 
-                          decoration: const InputDecoration(labelText: 'Min Tiempo (seg)'), 
-                          keyboardType: TextInputType.number,
-                        ),
+                    ),
+                  ],
+                ),
+              ] else if (_metricType == 'TIME') ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _minTimeController,
+                        decoration: const InputDecoration(
+                            labelText: 'Min Tiempo (seg)'),
+                        keyboardType: TextInputType.number,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _maxTimeController, 
-                          decoration: const InputDecoration(labelText: 'Max Tiempo (seg)'), 
-                          keyboardType: TextInputType.number,
-                        ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _maxTimeController,
+                        decoration: const InputDecoration(
+                            labelText: 'Max Tiempo (seg)'),
+                        keyboardType: TextInputType.number,
                       ),
-                    ],
-                  ),
-               ] else if (_metricType == 'DISTANCE') ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _minDistanceController, 
-                          decoration: const InputDecoration(labelText: 'Min Distancia (m)'), 
-                          keyboardType: TextInputType.number,
-                        ),
+                    ),
+                  ],
+                ),
+              ] else if (_metricType == 'DISTANCE') ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _minDistanceController,
+                        decoration: const InputDecoration(
+                            labelText: 'Min Distancia (m)'),
+                        keyboardType: TextInputType.number,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _maxDistanceController, 
-                          decoration: const InputDecoration(labelText: 'Max Distancia (m)'), 
-                          keyboardType: TextInputType.number,
-                        ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _maxDistanceController,
+                        decoration: const InputDecoration(
+                            labelText: 'Max Distancia (m)'),
+                        keyboardType: TextInputType.number,
                       ),
-                    ],
-                  ),
-               ],
+                    ),
+                  ],
+                ),
+              ],
 
               const SizedBox(height: 20),
-              Text('Multimedia y Notas', style: Theme.of(context).textTheme.titleMedium),
+              Text('Multimedia y Notas',
+                  style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _videoUrlController,
-                decoration: const InputDecoration(labelText: 'URL de Video (YouTube)', prefixIcon: Icon(Icons.video_library)),
+                decoration: const InputDecoration(
+                    labelText: 'URL de Video (YouTube)',
+                    prefixIcon: Icon(Icons.video_library)),
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _notesController,
-                decoration: const InputDecoration(labelText: 'Notas / Instrucciones'),
+                decoration:
+                    const InputDecoration(labelText: 'Notas / Instrucciones'),
                 maxLines: 3,
               ),
               const SizedBox(height: 24),
@@ -720,10 +833,15 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isLoading || _isLoadingMuscles || _isLoadingEquipments ? null : _saveExercise,
-                  child: _isLoading 
-                      ? const CircularProgressIndicator() 
-                      : Text(widget.exercise == null ? 'Guardar Ejercicio' : 'Actualizar Ejercicio'),
+                  onPressed:
+                      _isLoading || _isLoadingMuscles || _isLoadingEquipments
+                          ? null
+                          : _saveExercise,
+                  child: _isLoading
+                      ? const CircularProgressIndicator()
+                      : Text(widget.exercise == null
+                          ? 'Guardar Ejercicio'
+                          : 'Actualizar Ejercicio'),
                 ),
               ),
             ],

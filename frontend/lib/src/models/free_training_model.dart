@@ -32,7 +32,7 @@ enum CardioLevel {
 class FreeTraining {
   final String id;
   final String gymId;
-  final String name; 
+  final String name;
   final FreeTrainingType type;
   final TrainingLevel level;
   final BodySector? sector;
@@ -58,7 +58,9 @@ class FreeTraining {
       type: _parseType(json['type']),
       level: _parseLevel(json['level']),
       sector: json['sector'] != null ? _parseSector(json['sector']) : null,
-      cardioLevel: json['cardioLevel'] != null ? _parseCardioLevel(json['cardioLevel']) : null,
+      cardioLevel: json['cardioLevel'] != null
+          ? _parseCardioLevel(json['cardioLevel'])
+          : null,
       exercises: (json['exercises'] as List<dynamic>?)
               ?.map((e) => FreeTrainingExercise.fromJson(e))
               .toList() ??
@@ -91,7 +93,7 @@ class FreeTraining {
   }
 
   static CardioLevel _parseCardioLevel(String level) {
-   return CardioLevel.values.firstWhere(
+    return CardioLevel.values.firstWhere(
       (e) => e.name.toUpperCase() == level.toUpperCase(),
       orElse: () => CardioLevel.inicial,
     );

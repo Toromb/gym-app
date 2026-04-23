@@ -1,5 +1,5 @@
-
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/stats_provider.dart';
 
@@ -22,7 +22,7 @@ class _PlatformStatsScreenState extends State<PlatformStatsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ConstrainedAppBar(
         title: const Text('Platform Stats'),
       ),
       body: Consumer<StatsProvider>(

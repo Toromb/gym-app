@@ -26,14 +26,26 @@ class _DashboardPaymentButtonState extends State<DashboardPaymentButton> {
 
   @override
   Widget build(BuildContext context) {
-    final color = !widget.hasMembership ? Colors.blue : ((widget.isExpired || widget.isNearExpiration) ? Colors.orange : Colors.green);
-    final bgColor = !widget.hasMembership ? Colors.blue[50] : ((widget.isExpired || widget.isNearExpiration) ? Colors.orange[50] : Colors.green[50]);
-    final textColor = !widget.hasMembership ? Colors.blue[800] : ((widget.isExpired || widget.isNearExpiration) ? Colors.orange[800] : Colors.green[800]);
-    
-    final text = !widget.hasMembership 
+    final color = !widget.hasMembership
+        ? Colors.blue
+        : ((widget.isExpired || widget.isNearExpiration)
+            ? Colors.orange
+            : Colors.green);
+    final bgColor = !widget.hasMembership
+        ? Colors.blue[50]
+        : ((widget.isExpired || widget.isNearExpiration)
+            ? Colors.orange[50]
+            : Colors.green[50]);
+    final textColor = !widget.hasMembership
+        ? Colors.blue[800]
+        : ((widget.isExpired || widget.isNearExpiration)
+            ? Colors.orange[800]
+            : Colors.green[800]);
+
+    final text = !widget.hasMembership
         ? 'DATOS DE PAGO'
-        : (widget.isExpired 
-            ? 'VENCIDA' 
+        : (widget.isExpired
+            ? 'VENCIDA'
             : (widget.isNearExpiration ? 'CUOTA POR VENCER' : 'CUOTA PAGA'));
 
     return GestureDetector(
@@ -47,43 +59,34 @@ class _DashboardPaymentButtonState extends State<DashboardPaymentButton> {
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: _isPressed ? color : color.withOpacity(0.5) 
-          ),
-          boxShadow: _isPressed 
-            ? [] 
-            : [
-                BoxShadow(
-                  color: color.withOpacity(0.5), // Increased opacity from 0.2
-                  blurRadius: 6, // Increased blur
-                  offset: const Offset(0, 4), // Increased offset for more "height"
-                )
-              ],
+          border:
+              Border.all(color: _isPressed ? color : color.withOpacity(0.5)),
+          boxShadow: _isPressed
+              ? []
+              : [
+                  BoxShadow(
+                    color: color.withOpacity(0.5), // Increased opacity from 0.2
+                    blurRadius: 6, // Increased blur
+                    offset: const Offset(
+                        0, 4), // Increased offset for more "height"
+                  )
+                ],
         ),
-        transform: _isPressed ? Matrix4.translationValues(0, 1, 0) : Matrix4.identity(), 
+        transform: _isPressed
+            ? Matrix4.translationValues(0, 1, 0)
+            : Matrix4.identity(),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-             Icon(
-               Icons.access_time_filled, 
-               size: 14, 
-               color: color
-             ),
-             const SizedBox(width: 6),
-             Text(
-               text,
-               style: TextStyle(
-                 fontSize: 10, 
-                 fontWeight: FontWeight.bold,
-                 color: textColor
-               ),
-             ),
-             const SizedBox(width: 4),
-             Icon(
-               Icons.keyboard_arrow_down, 
-               size: 16, 
-               color: textColor
-             ),
+            Icon(Icons.access_time_filled, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              text,
+              style: TextStyle(
+                  fontSize: 10, fontWeight: FontWeight.bold, color: textColor),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.keyboard_arrow_down, size: 16, color: textColor),
           ],
         ),
       ),

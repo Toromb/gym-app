@@ -10,14 +10,14 @@ class AppleAuthService {
           AppleIDAuthorizationScopes.fullName,
         ],
       );
-      
+
       return credential;
     } catch (e) {
       debugPrint('Apple Sign In Error: $e');
       return null;
     }
   }
-  
+
   // Apple handles session state differently, usually we just sign in again or use the backend token validity.
   // There is no explicit "signOut" for Apple Sign In on the device like Google.
 }

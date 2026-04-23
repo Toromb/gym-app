@@ -11,10 +11,11 @@ class TrainingTimerCard extends StatefulWidget {
   State<TrainingTimerCard> createState() => _TrainingTimerCardState();
 }
 
-class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+class _TrainingTimerCardState extends State<TrainingTimerCard>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   late TabController _tabController;
   Timer? _uiTimer;
-  
+
   // --- Audio ---
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -30,7 +31,7 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
   int _timerRemainingMsWhenPaused = 0;
   int _currentTimerRemainingMs = 0;
   bool _hasFiredTimerDone = false;
-  
+
   // Minimal configurable interval (for ticking UI)
   final Duration _tickInterval = const Duration(milliseconds: 250);
 
@@ -39,10 +40,10 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 2, vsync: this);
-    
+
     // Configure audio safely
     _audioPlayer.setReleaseMode(ReleaseMode.stop);
-    
+
     // Start global UI tick that drives everything based on timestamps
     _uiTimer = Timer.periodic(_tickInterval, (_) => _onTick());
   }
@@ -73,13 +74,14 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
 
     // Handle Alarm Auto-Stop
     if (_alarmEndTs != null && now.isAfter(_alarmEndTs!)) {
-       _stopAlarm();
-       shouldUpdateState = true;
+      _stopAlarm();
+      shouldUpdateState = true;
     }
 
     // 1) Update Stopwatch
     if (_isStopwatchRunning && _stopwatchStartTs != null) {
-      final elapsed = now.difference(_stopwatchStartTs!).inMilliseconds + _stopwatchAccumulatedMs;
+      final elapsed = now.difference(_stopwatchStartTs!).inMilliseconds +
+          _stopwatchAccumulatedMs;
       if (elapsed != _currentStopwatchElapsedMs) {
         _currentStopwatchElapsedMs = elapsed;
         shouldUpdateState = true;
@@ -100,8 +102,8 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
         shouldUpdateState = true;
       } else {
         if (remaining != _currentTimerRemainingMs) {
-           _currentTimerRemainingMs = remaining;
-           shouldUpdateState = true;
+          _currentTimerRemainingMs = remaining;
+          shouldUpdateState = true;
         }
       }
     }
@@ -111,17 +113,18 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
       setState(() {});
     }
   }
-  
+
   void _stopAlarm() {
-     _alarmEndTs = null;
-     _audioPlayer.stop();
+    _alarmEndTs = null;
+    _audioPlayer.stop();
   }
 
   Future<void> _playBeepSound() async {
     try {
       _alarmEndTs = DateTime.now().add(const Duration(seconds: 5));
       await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-      await _audioPlayer.play(AssetSource('sounds/timer_done_half_silence.wav'));
+      await _audioPlayer
+          .play(AssetSource('sounds/timer_done_half_silence.wav'));
     } catch (e) {
       debugPrint("Error playing timer sound: $e");
     }
@@ -133,7 +136,8 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
     if (!_audioInitiated) {
       _audioInitiated = true;
       try {
-        await _audioPlayer.setSource(AssetSource('sounds/timer_done_half_silence.wav'));
+        await _audioPlayer
+            .setSource(AssetSource('sounds/timer_done_half_silence.wav'));
       } catch (e) {
         debugPrint("Error initializing audio context: $e");
       }
@@ -148,7 +152,8 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
       if (_isStopwatchRunning) {
         // Pausing
         _isStopwatchRunning = false;
-        _stopwatchAccumulatedMs += DateTime.now().difference(_stopwatchStartTs!).inMilliseconds;
+        _stopwatchAccumulatedMs +=
+            DateTime.now().difference(_stopwatchStartTs!).inMilliseconds;
         _currentStopwatchElapsedMs = _stopwatchAccumulatedMs;
       } else {
         // Starting
@@ -186,7 +191,7 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
       }
       // Reset trigger flag if we added time above 0
       if (_currentTimerRemainingMs > 0) {
-         _hasFiredTimerDone = false;
+        _hasFiredTimerDone = false;
       }
     });
   }
@@ -198,7 +203,8 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
       if (_isTimerRunning) {
         // Pausing
         _isTimerRunning = false;
-        _timerRemainingMsWhenPaused = _timerEndTs!.difference(DateTime.now()).inMilliseconds;
+        _timerRemainingMsWhenPaused =
+            _timerEndTs!.difference(DateTime.now()).inMilliseconds;
         if (_timerRemainingMsWhenPaused < 0) _timerRemainingMsWhenPaused = 0;
         _currentTimerRemainingMs = _timerRemainingMsWhenPaused;
       } else {
@@ -206,7 +212,8 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
         if (_currentTimerRemainingMs > 0) {
           _isTimerRunning = true;
           _hasFiredTimerDone = false;
-          _timerEndTs = DateTime.now().add(Duration(milliseconds: _timerRemainingMsWhenPaused));
+          _timerEndTs = DateTime.now()
+              .add(Duration(milliseconds: _timerRemainingMsWhenPaused));
         }
       }
     });
@@ -249,8 +256,10 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
             dividerColor: Colors.transparent,
             labelColor: Colors.greenAccent,
             unselectedLabelColor: Colors.grey,
-            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+            labelStyle:
+                const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            unselectedLabelStyle:
+                const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
             tabs: [
               Tab(text: loc.get('tabStopwatch')),
               Tab(text: loc.get('tabTimer')),
@@ -258,7 +267,8 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
           ),
           const Divider(height: 1, color: Colors.white10),
           SizedBox(
-            height: 160, // Fixed height for consistent card size (increased from 140 to fix overflow)
+            height:
+                160, // Fixed height for consistent card size (increased from 140 to fix overflow)
             child: TabBarView(
               controller: _tabController,
               children: [
@@ -274,7 +284,7 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
 
   Widget _buildStopwatchTab(AppLocalizations loc) {
     final timeStr = _formatMMSS(_currentStopwatchElapsedMs);
-    
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -292,22 +302,29 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-             IconButton(
+            IconButton(
               onPressed: _resetStopwatch,
               icon: const Icon(Icons.refresh),
-               color: Colors.grey,
-               tooltip: loc.get('btnReset'),
+              color: Colors.grey,
+              tooltip: loc.get('btnReset'),
             ),
             const SizedBox(width: 16),
             ElevatedButton.icon(
               onPressed: _toggleStopwatch,
               icon: Icon(_isStopwatchRunning ? Icons.pause : Icons.play_arrow),
-              label: Text(_isStopwatchRunning ? loc.get('btnPause') : loc.get('btnPlay')),
+              label: Text(_isStopwatchRunning
+                  ? loc.get('btnPause')
+                  : loc.get('btnPlay')),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _isStopwatchRunning ? Colors.redAccent : Colors.greenAccent.shade400,
-                foregroundColor: _isStopwatchRunning ? Colors.white : Colors.black87,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                backgroundColor: _isStopwatchRunning
+                    ? Colors.redAccent
+                    : Colors.greenAccent.shade400,
+                foregroundColor:
+                    _isStopwatchRunning ? Colors.white : Colors.black87,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -353,19 +370,25 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
             IconButton(
               onPressed: _resetTimer,
               icon: const Icon(Icons.refresh),
-               color: Colors.grey,
-               tooltip: loc.get('btnReset'),
+              color: Colors.grey,
+              tooltip: loc.get('btnReset'),
             ),
             const SizedBox(width: 16),
             ElevatedButton.icon(
               onPressed: _toggleTimer,
               icon: Icon(_isTimerRunning ? Icons.pause : Icons.play_arrow),
-              label: Text(_isTimerRunning ? loc.get('btnPause') : loc.get('btnPlay')),
+              label: Text(
+                  _isTimerRunning ? loc.get('btnPause') : loc.get('btnPlay')),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _isTimerRunning ? Colors.redAccent : Colors.greenAccent.shade400,
-                foregroundColor: _isTimerRunning ? Colors.white : Colors.black87,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                backgroundColor: _isTimerRunning
+                    ? Colors.redAccent
+                    : Colors.greenAccent.shade400,
+                foregroundColor:
+                    _isTimerRunning ? Colors.white : Colors.black87,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -386,7 +409,8 @@ class _TrainingTimerCardState extends State<TrainingTimerCard> with WidgetsBindi
         ),
         child: Text(
           label,
-          style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+              color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold),
         ),
       ),
     );

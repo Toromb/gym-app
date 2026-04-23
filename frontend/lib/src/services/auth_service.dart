@@ -15,10 +15,12 @@ class AuthService {
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('jwt', accessToken);
-      if (refreshToken != null) await prefs.setString('refresh_token', refreshToken);
+      if (refreshToken != null)
+        await prefs.setString('refresh_token', refreshToken);
     } else {
       await _storage.write(key: 'jwt', value: accessToken);
-      if (refreshToken != null) await _storage.write(key: 'refresh_token', value: refreshToken);
+      if (refreshToken != null)
+        await _storage.write(key: 'refresh_token', value: refreshToken);
     }
   }
 
@@ -35,30 +37,32 @@ class AuthService {
 
   Future<dynamic> login(String email, String password) async {
     try {
-      final response = await _api.post('/auth/login', {
-          'email': email, 
-          'password': password,
-          'platform': kIsWeb ? 'web' : 'mobile'
-      }, disableInterceptor: true);
+      final response = await _api.post(
+          '/auth/login',
+          {
+            'email': email,
+            'password': password,
+            'platform': kIsWeb ? 'web' : 'mobile'
+          },
+          disableInterceptor: true);
 
       // Response is parsed JSON (Map)
       if (response == null || response is! Map) {
-         return 'Empty or invalid response from server';
+        return 'Empty or invalid response from server';
       }
 
       final token = response['access_token'];
       final refreshToken = response['refresh_token'];
       if (token == null) {
-          return 'No access token in response';
+        return 'No access token in response';
       }
-      
+
       await _saveTokens(token, refreshToken);
       return response;
-
     } on UnauthorizedException {
       return 'invalidCredentials';
     } on ApiException catch (e) {
-       return e.message;
+      return e.message;
     } catch (e) {
       return 'Error: $e';
     }
@@ -66,34 +70,36 @@ class AuthService {
 
   Future<dynamic> loginWithGoogle(String idToken, [String? inviteToken]) async {
     try {
-      final response = await _api.post('/auth/google', {
-          'idToken': idToken, 
-          if (inviteToken != null) 'inviteToken': inviteToken,
-          'platform': kIsWeb ? 'web' : 'mobile'
-      }, disableInterceptor: true);
+      final response = await _api.post(
+          '/auth/google',
+          {
+            'idToken': idToken,
+            if (inviteToken != null) 'inviteToken': inviteToken,
+            'platform': kIsWeb ? 'web' : 'mobile'
+          },
+          disableInterceptor: true);
 
       if (response == null || response is! Map) {
-         return 'Invalid response from server';
+        return 'Invalid response from server';
       }
 
       final token = response['access_token'];
       final refreshToken = response['refresh_token'];
       if (token == null) {
-          return 'No access token in response';
+        return 'No access token in response';
       }
-      
+
       await _saveTokens(token, refreshToken);
       return response;
-    } on BadRequestException catch (e) { 
-        return e.message; // e.g. "El usuario no pertenece a ningún gimnasio..."
+    } on BadRequestException catch (e) {
+      return e.message; // e.g. "El usuario no pertenece a ningún gimnasio..."
     } on UnauthorizedException {
       return 'Session expired or invalid token';
     } on ApiException catch (e) {
-       return e.message;
+      return e.message;
     } catch (e) {
       return 'Error: $e';
     }
-
   }
 
   Future<dynamic> loginWithApple({
@@ -103,13 +109,16 @@ class AuthService {
     String? lastName,
   }) async {
     try {
-      final response = await _api.post('/auth/apple', {
-        'identityToken': identityToken,
-        if (inviteToken != null) 'inviteToken': inviteToken,
-        if (firstName != null) 'firstName': firstName,
-        if (lastName != null) 'lastName': lastName,
-        'platform': kIsWeb ? 'web' : 'mobile'
-      }, disableInterceptor: true);
+      final response = await _api.post(
+          '/auth/apple',
+          {
+            'identityToken': identityToken,
+            if (inviteToken != null) 'inviteToken': inviteToken,
+            if (firstName != null) 'firstName': firstName,
+            if (lastName != null) 'lastName': lastName,
+            'platform': kIsWeb ? 'web' : 'mobile'
+          },
+          disableInterceptor: true);
 
       if (response == null || response is! Map) {
         return 'Invalid response from server';
@@ -139,27 +148,28 @@ class AuthService {
     try {
       if (rToken != null) {
         // Optimistically tell the server to revoke it. Ignore errors.
-        await _api.post('/auth/logout', {'refreshToken': rToken}, disableInterceptor: true);
+        await _api.post('/auth/logout', {'refreshToken': rToken},
+            disableInterceptor: true);
       } else {
         await _api.post('/auth/logout', {}, disableInterceptor: true);
       }
     } catch (_) {}
-    
+
     await _deleteTokens();
   }
 
   Future<String?> getToken() async {
     if (kIsWeb) {
-       final prefs = await SharedPreferences.getInstance();
-       return prefs.getString('jwt');
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('jwt');
     }
     return await _storage.read(key: 'jwt');
   }
 
   Future<String?> getRefreshToken() async {
     if (kIsWeb) {
-       final prefs = await SharedPreferences.getInstance();
-       return prefs.getString('refresh_token');
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('refresh_token');
     }
     return await _storage.read(key: 'refresh_token');
   }
@@ -169,7 +179,8 @@ class AuthService {
     if (rToken == null) return false;
 
     try {
-      final response = await _api.post('/auth/refresh', {'refreshToken': rToken});
+      final response =
+          await _api.post('/auth/refresh', {'refreshToken': rToken});
       if (response != null && response['access_token'] != null) {
         await _saveTokens(response['access_token'], response['refresh_token']);
         return true;
@@ -181,6 +192,7 @@ class AuthService {
     await _deleteTokens();
     return false;
   }
+
   Future<String?> activateAccount(String token, String password) async {
     final url = '$baseUrl/auth/activate-account';
     try {
@@ -214,58 +226,60 @@ class AuthService {
   }
 
   Future<String?> generateActivationToken(String userId) async {
-     try {
-       final response = await _api.post('/auth/generate-activation-link', {'userId': userId});
-       if (response != null && response['token'] != null) {
-          return response['token'];
-       }
-       return null;
-     } catch (e) {
-       debugPrint('Error generating link: $e');
-       return null;
-     }
+    try {
+      final response =
+          await _api.post('/auth/generate-activation-link', {'userId': userId});
+      if (response != null && response['token'] != null) {
+        return response['token'];
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error generating link: $e');
+      return null;
+    }
   }
 
   Future<String?> generateResetToken(String userId) async {
-     try {
-       final response = await _api.post('/auth/generate-reset-link', {'userId': userId});
-       if (response != null && response['token'] != null) {
-          return response['token'];
-       }
-       return null;
-     } catch (e) {
-       debugPrint('Error generating reset link: $e');
-       return null;
-     }
+    try {
+      final response =
+          await _api.post('/auth/generate-reset-link', {'userId': userId});
+      if (response != null && response['token'] != null) {
+        return response['token'];
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error generating reset link: $e');
+      return null;
+    }
   }
 
   String getActivationUrl(String token) {
     String origin;
     if (kIsWeb) {
-       origin = Uri.base.origin;
+      origin = Uri.base.origin;
     } else {
-       // For Android/iOS app, we want to point to the Web App for activation
-       origin = 'https://tugymflow.com';
+      // For Android/iOS app, we want to point to the Web App for activation
+      origin = 'https://tugymflow.com';
     }
-    
+
     // Fallback/Localhost handling
     if (origin.isEmpty || origin == 'null') {
-        origin = kReleaseMode ? 'https://tugymflow.com' : 'http://localhost:3000';
+      origin = kReleaseMode ? 'https://tugymflow.com' : 'http://localhost:3000';
     }
-    
+
     return '$origin/activate-account?token=$token';
   }
 
   String getResetUrl(String token) {
     String origin;
     if (kIsWeb) {
-       origin = Uri.base.origin;
+      origin = Uri.base.origin;
     } else {
-       origin = 'https://tugymflow.com';
+      origin = 'https://tugymflow.com';
     }
 
     if (origin.isEmpty || origin == 'null') {
-         origin = kReleaseMode ? 'https://tugymflow.com' : 'http://localhost:3000';
+      origin = kReleaseMode ? 'https://tugymflow.com' : 'http://localhost:3000';
     }
     return '$origin/reset-password?token=$token';
   }
@@ -273,43 +287,43 @@ class AuthService {
   String getInviteUrl(String token) {
     String origin;
     if (kIsWeb) {
-       origin = Uri.base.origin;
+      origin = Uri.base.origin;
     } else {
-       origin = 'https://tugymflow.com';
+      origin = 'https://tugymflow.com';
     }
-    
+
     if (origin.isEmpty || origin == 'null') {
-         origin = kReleaseMode ? 'https://tugymflow.com' : 'http://localhost:3000';
+      origin = kReleaseMode ? 'https://tugymflow.com' : 'http://localhost:3000';
     }
     return '$origin/invite?token=$token';
   }
 
-  Future<String?> generateInviteLink(String gymId, {String role = 'ALUMNO'}) async {
-     try {
-       final response = await _api.post('/auth/generate-invite-link', {
-           'gymId': gymId, 
-           'role': role
-       });
-       if (response != null && response['token'] != null) {
-          return response['token'];
-       }
-       throw ApiException('Server error: Token no devuelto');
-     } catch (e) {
-       debugPrint('Exception in generateInviteLink: $e');
-       if (e is ApiException) rethrow;
-       throw ApiException(e.toString());
-     }
+  Future<String?> generateInviteLink(String gymId,
+      {String role = 'ALUMNO'}) async {
+    try {
+      final response = await _api
+          .post('/auth/generate-invite-link', {'gymId': gymId, 'role': role});
+      if (response != null && response['token'] != null) {
+        return response['token'];
+      }
+      throw ApiException('Server error: Token no devuelto');
+    } catch (e) {
+      debugPrint('Exception in generateInviteLink: $e');
+      if (e is ApiException) rethrow;
+      throw ApiException(e.toString());
+    }
   }
 
-  Future<void> changePassword(String currentPassword, String newPassword) async {
+  Future<void> changePassword(
+      String currentPassword, String newPassword) async {
     try {
-        await _api.post('/auth/change-password', {
-            'currentPassword': currentPassword,
-            'newPassword': newPassword,
-        });
+      await _api.post('/auth/change-password', {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      });
     } catch (e) {
-        if (e is ApiException) rethrow;
-        throw ApiException('Error changing password: $e');
+      if (e is ApiException) rethrow;
+      throw ApiException('Error changing password: $e');
     }
   }
 }

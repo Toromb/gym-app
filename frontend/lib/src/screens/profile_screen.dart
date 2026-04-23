@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../theme/background_styles.dart';
+import '../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
@@ -6,6 +8,7 @@ import '../constants/app_constants.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
 import '../widgets/payment_status_badge.dart';
+import '../widgets/background_page_wrapper.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -24,7 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _birthDateController;
   late TextEditingController _heightController;
-  
+
   // Student controllers
   late TextEditingController _currentWeightController;
   late TextEditingController _personalCommentController;
@@ -32,12 +35,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Professor controllers
   late TextEditingController _specialtyController;
   late TextEditingController _internalNotesController;
-  
+
   // Admin controllers
   late TextEditingController _adminNotesController;
-  
-  String? _selectedGender;
 
+  String? _selectedGender;
 
   @override
   void initState() {
@@ -60,19 +62,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _initControllers(User user) {
     _phoneController = TextEditingController(text: user.phone ?? '');
     _birthDateController = TextEditingController(text: user.birthDate ?? '');
-    _heightController = TextEditingController(text: user.height?.toString() ?? '');
-    
-    _currentWeightController = TextEditingController(text: user.currentWeight?.toString() ?? '');
-    _personalCommentController = TextEditingController(text: user.personalComment ?? '');
-    
+    _heightController =
+        TextEditingController(text: user.height?.toString() ?? '');
+
+    _currentWeightController =
+        TextEditingController(text: user.currentWeight?.toString() ?? '');
+    _personalCommentController =
+        TextEditingController(text: user.personalComment ?? '');
+
     _specialtyController = TextEditingController(text: user.specialty ?? '');
-    _internalNotesController = TextEditingController(text: user.internalNotes ?? '');
-    
-    
+    _internalNotesController =
+        TextEditingController(text: user.internalNotes ?? '');
+
     _adminNotesController = TextEditingController(text: user.adminNotes ?? '');
-    _selectedGender = user.gender; 
+    _selectedGender = user.gender;
   }
-  
+
   @override
   void dispose() {
     _phoneController.dispose();
@@ -91,11 +96,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final data = <String, dynamic>{
       'phone': _phoneController.text,
-      'birthDate': _birthDateController.text.isEmpty ? null : _birthDateController.text,
+      'birthDate':
+          _birthDateController.text.isEmpty ? null : _birthDateController.text,
       'height': double.tryParse(_heightController.text),
-      'gender': _selectedGender, 
+      'gender': _selectedGender,
     };
-    
+
     // Add role specific fields
     if (_user!.role == AppRoles.alumno) {
       data['currentWeight'] = double.tryParse(_currentWeightController.text);
@@ -109,94 +115,107 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final success = await _userService.updateProfile(data);
     if (!mounted) return;
-    
+
     if (success) {
       if (mounted) {
         // Sync with global auth state
         context.read<AuthProvider>().refreshUser();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Perfil actualizado')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Perfil actualizado')));
         setState(() => _isEditing = false);
         _loadProfile(); // Keep local load for safety, though provider has it now
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al actualizar perfil')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al actualizar perfil')));
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (_user == null) return const Scaffold(body: Center(child: Text('Error al cargar perfil')));
+    if (_isLoading)
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_user == null)
+      return const Scaffold(
+          body: Center(child: Text('Error al cargar perfil')));
 
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mi Perfil'),
-        actions: [
-          IconButton(
-            icon: Icon(_isEditing ? Icons.save : Icons.edit),
-            tooltip: _isEditing ? 'Guardar Cambios' : 'Editar Perfil',
-            onPressed: () {
-              if (_isEditing) {
-                _saveProfile();
-              } else {
-                setState(() => _isEditing = true);
-              }
-            },
-          )
-        ],
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeader(colorScheme),
-                const SizedBox(height: 24),
-                _buildSectionCard(
-                   title: 'Información Personal',
-                   icon: Icons.person_outline,
-                   child: _buildCommonSection(),
-                ),
-                const SizedBox(height: 16),
-                _buildSectionCard(
-                  title: 'Configuración',
-                  icon: Icons.settings_outlined,
-                  child: Consumer<ThemeProvider>(
-                    builder: (context, themeProvider, _) {
-                      return SwitchListTile(
-                        title: const Text('Modo Oscuro'),
-                        secondary: Icon(themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode),
-                        value: themeProvider.isDarkMode,
-                        onChanged: (val) => themeProvider.toggleTheme(val),
-                        contentPadding: EdgeInsets.zero,
-                      );
-                    },
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.85,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: ConstrainedAppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Text('Mi Perfil'),
+          actions: [
+            IconButton(
+              icon: Icon(_isEditing ? Icons.save : Icons.edit),
+              tooltip: _isEditing ? 'Guardar Cambios' : 'Editar Perfil',
+              onPressed: () {
+                if (_isEditing) {
+                  _saveProfile();
+                } else {
+                  setState(() => _isEditing = true);
+                }
+              },
+            )
+          ],
+        ),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildHeader(colorScheme),
+                  const SizedBox(height: 24),
+                  _buildSectionCard(
+                    title: 'Información Personal',
+                    icon: Icons.person_outline,
+                    child: _buildCommonSection(),
                   ),
-                ),
-                const SizedBox(height: 16),
-                if (_user!.role == AppRoles.alumno) _buildSectionCard(
-                   title: 'Información del Alumno',
-                   icon: Icons.school_outlined,
-                   child: _buildStudentSection()
-                ),
-                if (_user!.role == AppRoles.profe) _buildSectionCard(
-                   title: 'Información Profesional',
-                   icon: Icons.work_outline,
-                   child: _buildProfessorSection()
-                ),
-                if (_user!.role == AppRoles.admin) _buildSectionCard(
-                   title: 'Bloc de Notas',
-                   icon: Icons.edit_note,
-                   child: _buildAdminSection()
-                ),
-                const SizedBox(height: 100), // Bottom air for better scrolling
-              ],
+                  const SizedBox(height: 16),
+                  _buildSectionCard(
+                    title: 'Configuración',
+                    icon: Icons.settings_outlined,
+                    child: Consumer<ThemeProvider>(
+                      builder: (context, themeProvider, _) {
+                        return SwitchListTile(
+                          title: const Text('Modo Oscuro'),
+                          secondary: Icon(themeProvider.isDarkMode
+                              ? Icons.dark_mode
+                              : Icons.light_mode),
+                          value: themeProvider.isDarkMode,
+                          onChanged: (val) => themeProvider.toggleTheme(val),
+                          contentPadding: EdgeInsets.zero,
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_user!.role == AppRoles.alumno)
+                    _buildSectionCard(
+                        title: 'Información del Alumno',
+                        icon: Icons.school_outlined,
+                        child: _buildStudentSection()),
+                  if (_user!.role == AppRoles.profe)
+                    _buildSectionCard(
+                        title: 'Información Profesional',
+                        icon: Icons.work_outline,
+                        child: _buildProfessorSection()),
+                  if (_user!.role == AppRoles.admin)
+                    _buildSectionCard(
+                        title: 'Bloc de Notas',
+                        icon: Icons.edit_note,
+                        child: _buildAdminSection()),
+                  const SizedBox(
+                      height: 100), // Bottom air for better scrolling
+                ],
+              ),
             ),
           ),
         ),
@@ -215,19 +234,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
               backgroundColor: colorScheme.primary,
               child: Text(
                 _user!.name.isNotEmpty ? _user!.name[0].toUpperCase() : '?',
-                style: TextStyle(fontSize: 40, color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: 40,
+                    color: colorScheme.onPrimary,
+                    fontWeight: FontWeight.bold),
               ),
             ),
             if (_isEditing)
-               Container(
-                 padding: const EdgeInsets.all(4),
-                 decoration: BoxDecoration(color: colorScheme.secondary, shape: BoxShape.circle),
-                 child: Icon(Icons.edit, size: 16, color: colorScheme.onSecondary),
-               ),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                    color: colorScheme.secondary, shape: BoxShape.circle),
+                child:
+                    Icon(Icons.edit, size: 16, color: colorScheme.onSecondary),
+              ),
           ],
         ),
         const SizedBox(height: 16),
-        Text(_user!.name, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+        Text(_user!.name,
+            style: BackgroundStyles.fromTheme(
+              Theme.of(context).textTheme.headlineSmall,
+            ).copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -235,40 +262,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: colorScheme.tertiaryContainer,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Text(
-            _user!.role.toUpperCase(), 
-            style: TextStyle(color: colorScheme.onTertiaryContainer, fontWeight: FontWeight.bold, fontSize: 12)
-          ),
+          child: Text(_user!.role.toUpperCase(),
+              style: TextStyle(
+                  color: colorScheme.onTertiaryContainer,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12)),
         ),
       ],
     );
   }
 
-  Widget _buildSectionCard({required String title, required IconData icon, required Widget child}) {
-     return Card(
-       elevation: 0,
-       shape: RoundedRectangleBorder(
-         borderRadius: BorderRadius.circular(16),
-         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-       ),
-       child: Padding(
-         padding: const EdgeInsets.all(20),
-         child: Column(
-           crossAxisAlignment: CrossAxisAlignment.start,
-           children: [
-              Row(
-                children: [
-                   Icon(icon, color: Theme.of(context).colorScheme.primary),
-                   const SizedBox(width: 12),
-                   Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              child,
-           ],
-         ),
-       ),
-     );
+  Widget _buildSectionCard(
+      {required String title, required IconData icon, required Widget child}) {
+    return Card(
+      elevation: 0,
+            shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 12),
+                Text(title,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildCommonSection() {
@@ -276,89 +309,106 @@ class _ProfileScreenState extends State<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildTextFieldWithLabel(
-           label: 'Email',
-           controller: TextEditingController(text: _user!.email),
-           readOnly: true,
-           icon: Icons.email_outlined,
+          label: 'Email',
+          controller: TextEditingController(text: _user!.email),
+          readOnly: true,
+          icon: Icons.email_outlined,
         ),
-         const SizedBox(height: 16),
+        const SizedBox(height: 16),
         _buildTextFieldWithLabel(
-           label: 'Teléfono',
-           controller: _phoneController,
-           readOnly: !_isEditing,
-           icon: Icons.phone_outlined,
-           keyboardType: TextInputType.phone,
+          label: 'Teléfono',
+          controller: _phoneController,
+          readOnly: !_isEditing,
+          icon: Icons.phone_outlined,
+          keyboardType: TextInputType.phone,
         ),
         const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               child: _buildTextFieldWithLabel(
-                 label: 'Fecha Nacimiento',
-                 controller: _birthDateController,
-                 readOnly: true, // Always readOnly because we use onTap for picker
-                 enabled: _isEditing, // Only enabled for interaction when editing
-                 onTap: _isEditing ? () async {
-                    DateTime initialDate = DateTime(2000);
-                    if (_birthDateController.text.isNotEmpty) {
-                      try {
-                        initialDate = DateTime.parse(_birthDateController.text);
-                      } catch (_) {}
-                    }
-                    
-                    final DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: initialDate,
-                      firstDate: DateTime(1900),
-                      lastDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                         _birthDateController.text = picked.toIso8601String().split('T')[0];
-                      });
-                    }
-                 } : null,
+                label: 'Fecha Nacimiento',
+                controller: _birthDateController,
+                readOnly:
+                    true, // Always readOnly because we use onTap for picker
+                enabled:
+                    _isEditing, // Only enabled for interaction when editing
+                onTap: _isEditing
+                    ? () async {
+                        DateTime initialDate = DateTime(2000);
+                        if (_birthDateController.text.isNotEmpty) {
+                          try {
+                            initialDate =
+                                DateTime.parse(_birthDateController.text);
+                          } catch (_) {}
+                        }
+
+                        final DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: initialDate,
+                          firstDate: DateTime(1900),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _birthDateController.text =
+                                picked.toIso8601String().split('T')[0];
+                          });
+                        }
+                      }
+                    : null,
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: _isEditing 
-                ? DropdownButtonFormField<String>(
-                    initialValue: ['M', 'F', 'O'].contains(_selectedGender) ? _selectedGender : 'M',
-                    decoration: InputDecoration(
-                       labelText: 'Género',
-                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                       filled: true,
-                       fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                    ),
-                    items: const [
+              child: _isEditing
+                  ? DropdownButtonFormField<String>(
+                      initialValue: ['M', 'F', 'O'].contains(_selectedGender)
+                          ? _selectedGender
+                          : 'M',
+                      decoration: InputDecoration(
+                        labelText: 'Género',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        filled: true,
+                        fillColor: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest
+                            .withValues(alpha: 0.3),
+                      ),
+                      items: const [
                         DropdownMenuItem(value: 'M', child: Text('Masculino')),
                         DropdownMenuItem(value: 'F', child: Text('Femenino')),
                         DropdownMenuItem(value: 'O', child: Text('Otro')),
-                    ],
-                    onChanged: (val) {
-                         setState(() {
-                           _selectedGender = val;
-                         });
-                    },
-                  )
-                : _buildTextFieldWithLabel(
-                    label: 'Género',
-                    controller: TextEditingController(text: _user!.gender == 'M' ? 'Masculino' : _user!.gender == 'F' ? 'Femenino' : 'Otro'), 
-                    readOnly: true,
-                ),
+                      ],
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedGender = val;
+                        });
+                      },
+                    )
+                  : _buildTextFieldWithLabel(
+                      label: 'Género',
+                      controller: TextEditingController(
+                          text: _user!.gender == 'M'
+                              ? 'Masculino'
+                              : _user!.gender == 'F'
+                                  ? 'Femenino'
+                                  : 'Otro'),
+                      readOnly: true,
+                    ),
             ),
           ],
         ),
-         const SizedBox(height: 16),
-         if (_user!.role != 'admin')
-            _buildTextFieldWithLabel(
-                label: 'Altura (cm)',
-                controller: _heightController,
-                readOnly: !_isEditing,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                icon: Icons.height,
-            ),
+        const SizedBox(height: 16),
+        if (_user!.role != 'admin')
+          _buildTextFieldWithLabel(
+            label: 'Altura (cm)',
+            controller: _heightController,
+            readOnly: !_isEditing,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            icon: Icons.height,
+          ),
       ],
     );
   }
@@ -374,7 +424,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           icon: Icons.flag_outlined,
         ),
         const SizedBox(height: 16),
-         _buildTextFieldWithLabel(
+        _buildTextFieldWithLabel(
           label: 'Observaciones del Profesor',
           controller: TextEditingController(text: _user!.professorObservations),
           readOnly: true,
@@ -382,14 +432,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           icon: Icons.comment_outlined,
         ),
         const SizedBox(height: 24),
-        Text('Progreso Físico', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+        Text('Progreso Físico',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary)),
         const SizedBox(height: 12),
-         Row(
+        Row(
           children: [
             Expanded(
               child: _buildTextFieldWithLabel(
                 label: 'Peso Inicial (kg)',
-                controller: TextEditingController(text: _user!.initialWeight?.toString()),
+                controller: TextEditingController(
+                    text: _user!.initialWeight?.toString()),
                 readOnly: true,
               ),
             ),
@@ -399,17 +453,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 label: 'Peso Actual (kg)',
                 controller: _currentWeightController,
                 readOnly: !_isEditing,
-                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
               ),
             ),
           ],
         ),
-         if (_user!.weightUpdateDate != null)
-           Padding(
-             padding: const EdgeInsets.only(top: 8),
-             child: Text('Última actualización: ${_user!.weightUpdateDate}', style: Theme.of(context).textTheme.bodySmall),
-           ),
-        
+        if (_user!.weightUpdateDate != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text('Última actualización: ${_user!.weightUpdateDate}',
+                style: Theme.of(context).textTheme.bodySmall),
+          ),
         const SizedBox(height: 16),
         _buildTextFieldWithLabel(
           label: 'Comentario Personal',
@@ -418,32 +473,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
           maxLines: 2,
           icon: Icons.note_alt_outlined,
         ),
-        
-         const SizedBox(height: 24),
-        Text('Membresía', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+        const SizedBox(height: 24),
+        Text('Membresía',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary)),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            color: Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest
+                .withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            border:
+                Border.all(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           child: Row(
             children: [
-               Expanded(
-                 child: Column(
-                   crossAxisAlignment: CrossAxisAlignment.start,
-                   children: [
-                      PaymentStatusBadge(status: _user!.paymentStatus, isEditable: false),
-                      if (_user!.membershipExpirationDate != null)
-                         Padding(
-                           padding: const EdgeInsets.only(top: 8.0),
-                           child: Text('Vence el: ${_user!.membershipExpirationDate!}', style: const TextStyle(fontSize: 12)),
-                         ),
-                   ],
-                 ),
-               )
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    PaymentStatusBadge(
+                        status: _user!.paymentStatus, isEditable: false),
+                    if (_user!.membershipExpirationDate != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                            'Vence el: ${_user!.membershipExpirationDate!}',
+                            style: const TextStyle(fontSize: 12)),
+                      ),
+                  ],
+                ),
+              )
             ],
           ),
         )
@@ -470,7 +534,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           icon: Icons.lock_outline,
         ),
         const SizedBox(height: 24),
-        Text('Permisos (Informativo)', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+        Text('Permisos (Informativo)',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary)),
         const SizedBox(height: 8),
         _buildPermissionItem('Puede crear planes'),
         _buildPermissionItem('Puede asignar planes a alumnos'),
@@ -480,23 +547,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildPermissionItem(String text) {
-     return Padding(
-       padding: const EdgeInsets.symmetric(vertical: 4),
-       child: Row(
-         children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 16),
-            const SizedBox(width: 8),
-            Text(text, style: const TextStyle(fontSize: 13)),
-         ],
-       ),
-     );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle, color: Colors.green, size: 16),
+          const SizedBox(width: 8),
+          Text(text, style: const TextStyle(fontSize: 13)),
+        ],
+      ),
+    );
   }
 
   Widget _buildAdminSection() {
-     return Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-         _buildTextFieldWithLabel(
+        _buildTextFieldWithLabel(
           label: 'Mis Notas',
           controller: _adminNotesController,
           readOnly: !_isEditing,
@@ -504,17 +571,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           icon: Icons.security,
         ),
         const SizedBox(height: 24),
-        Text('Permisos de Sistema', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+        Text('Permisos de Sistema',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary)),
         const SizedBox(height: 8),
-         ListTile(
+        ListTile(
           contentPadding: EdgeInsets.zero,
           leading: Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8)),
             child: const Icon(Icons.security, color: Colors.blue),
           ),
-          title: const Text('Acceso Total al Sistema', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          subtitle: const Text('Gestionar usuarios, planes, gimnasio', style: TextStyle(fontSize: 12)),
+          title: const Text('Acceso Total al Sistema',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          subtitle: const Text('Gestionar usuarios, planes, gimnasio',
+              style: TextStyle(fontSize: 12)),
         ),
       ],
     );
@@ -533,7 +607,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return TextField(
       controller: controller,
       readOnly: readOnly,
-      enabled: enabled ?? !readOnly, // Use explicit enabled if provided, else derive from readOnly
+      enabled: enabled ??
+          !readOnly, // Use explicit enabled if provided, else derive from readOnly
       maxLines: maxLines,
       keyboardType: keyboardType,
       onTap: onTap,
@@ -542,11 +617,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         prefixIcon: icon != null ? Icon(icon, size: 20) : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
-        fillColor: readOnly ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Theme.of(context).colorScheme.surface,
+        fillColor: readOnly
+            ? Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest
+                .withValues(alpha: 0.3)
+            : Theme.of(context).colorScheme.surface,
       ),
     );
   }
-
-
-
 }

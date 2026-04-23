@@ -7,6 +7,7 @@ import '../../providers/stats_provider.dart'; // Import StatsProvider
 import '../../models/user_model.dart' as app_models;
 import '../../models/stats_model.dart'; // Import StatsModel
 import '../../localization/app_localizations.dart';
+import '../../utils/app_colors.dart';
 import '../../models/plan_model.dart';
 import '../../models/student_assignment_model.dart';
 import '../shared/day_detail_screen.dart';
@@ -25,6 +26,7 @@ import 'profile/profile_progress_screen.dart';
 import '../../widgets/dashboard_payment_button.dart';
 import '../../utils/constants.dart';
 import '../../widgets/dashboard_header.dart';
+import '../../widgets/background_page_wrapper.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -34,96 +36,102 @@ class StudentHomeScreen extends StatefulWidget {
 }
 
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-       // Refresh user to get latest Gym Logo
-       await context.read<AuthProvider>().refreshUser();
+      // Refresh user to get latest Gym Logo
+      await context.read<AuthProvider>().refreshUser();
 
-       if (!mounted) return;
+      if (!mounted) return;
 
-       // Load Dashboard Data
-       final planProvider = context.read<PlanProvider>();
-       planProvider.fetchMyHistory();
-       planProvider.computeWeeklyStats();
-       planProvider.computeMonthlyStats();
-       
-       context.read<GymScheduleProvider>().fetchSchedule();
-       
-       context.read<StatsProvider>().fetchProgress().catchError((e) {
-          debugPrint('StudentHomeScreen - fetchProgress FAILED: $e');
-       });
+      // Load Dashboard Data
+      final planProvider = context.read<PlanProvider>();
+      planProvider.refreshDashboard();
+
+      context.read<GymScheduleProvider>().fetchSchedule();
+
+      context.read<StatsProvider>().fetchProgress().catchError((e) {
+        debugPrint('StudentHomeScreen - fetchProgress FAILED: $e');
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // debugPrint('StudentHomeScreen build called');
     final app_models.User? user = context.watch<AuthProvider>().user;
 
-    return Scaffold(
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.75, // Extra dark for dashboard legibility
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Consumer<PlanProvider>(
+                builder: (context, planProvider, child) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        GymDashboardHeader(user: user),
 
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: Consumer<PlanProvider>(
-            builder: (context, planProvider, child) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                     GymDashboardHeader(user: user),
+                        const SizedBox(height: 24),
 
-                    const SizedBox(height: 24),
-
-                    // PROGRESS SUMMARY (Simple Text)
-                    if (planProvider.weeklyWorkoutCount > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: Text(
-                          'Has entrenado ${planProvider.weeklyWorkoutCount} ${planProvider.weeklyWorkoutCount == 1 ? "día" : "días"} esta semana. ¡Seguí así!',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.bold
+                        // PROGRESS SUMMARY (Simple Text)
+                        if (planProvider.weeklyWorkoutCount > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16.0),
+                            child: Text(
+                              'Has entrenado ${planProvider.weeklyWorkoutCount} ${planProvider.weeklyWorkoutCount == 1 ? "día" : "días"} esta semana. ¡Seguí así!',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      fontWeight: FontWeight.bold),
+                            ),
                           ),
-                        ),
-                      ),
 
-                    // --- NEXT WORKOUT SECTION ---
-                    _buildNextWorkoutCard(context, planProvider),
-                    const SizedBox(height: 24),
-                    // ----------------------------
+                        // --- NEXT WORKOUT SECTION ---
+                        _buildNextWorkoutCard(context, planProvider),
+                        const SizedBox(height: 24),
+                        // ----------------------------
 
-                    _buildDashboardCard(
-                      context,
-                      title: 'Mi rutina', // Renamed from "Planes"
-                      subtitle: planProvider.nextWorkout != null && planProvider.nextWorkout!['assignment'] != null
-                          ? 'Plan activo: ${(planProvider.nextWorkout!['assignment'] as StudentAssignment).plan.name}'
-                          : AppLocalizations.of(context)!.get('myPlansSub'),
-                      icon: Icons.fitness_center,
-                      onTap: () {
-                        Navigator.push(
+                        _buildDashboardCard(
                           context,
-                          MaterialPageRoute(builder: (context) => const StudentPlansListScreen()),
-                        ).then((_) {
-                           _refreshDashboardStats();
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // --- MI PROGRESO (Level Summary) ---
-                    Consumer<StatsProvider>(
-                      builder: (context, stats, child) {
-                        Widget? subtitleWidget;
-                        String? subtitleText = 'Evolución de peso, volumen y carga.';
+                          title: 'Mi rutina', // Renamed from "Planes"
+                          subtitle: planProvider.nextWorkout != null &&
+                                  planProvider.nextWorkout!['assignment'] !=
+                                      null
+                              ? 'Plan activo: ${(planProvider.nextWorkout!['assignment'] as StudentAssignment).plan.name}'
+                              : AppLocalizations.of(context)!.get('myPlansSub'),
+                          icon: Icons.fitness_center,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const StudentPlansListScreen()),
+                            ).then((_) {
+                              _refreshDashboardStats();
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
 
-                        final progress = stats.progress;
-                        if (progress != null) {
+                        // --- MI PROGRESO (Level Summary) ---
+                        Consumer<StatsProvider>(
+                            builder: (context, stats, child) {
+                          Widget? subtitleWidget;
+                          String? subtitleText =
+                              'Evolución de peso, volumen y carga.';
+
+                          final progress = stats.progress;
+                          if (progress != null) {
                             final level = progress.level;
                             final currentExp = level.exp;
                             // Manual Thresholds (Same as ProfileProgressScreen to avoid heavy logic import)
@@ -139,6 +147,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               if (exp < 50000) return 50000;
                               return 1000000;
                             }
+
                             int getPrev(int exp) {
                               if (exp < 100) return 0;
                               if (exp < 300) return 100;
@@ -151,12 +160,15 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               if (exp < 50000) return 30000;
                               return 50000;
                             }
-                            
+
                             final nextExp = getNext(currentExp);
                             final prevExp = getPrev(currentExp);
                             final range = nextExp - prevExp;
-                            final p = range > 0 ? ((currentExp - prevExp) / range).clamp(0.0, 1.0) : 1.0;
-                            
+                            final p = range > 0
+                                ? ((currentExp - prevExp) / range)
+                                    .clamp(0.0, 1.0)
+                                : 1.0;
+
                             // Difficulty (Optional text)
                             String diff = "Principiante";
                             if (level.current >= 10) diff = "Medio";
@@ -167,104 +179,123 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             subtitleWidget = Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                 Text('Nivel ${level.current} • $diff', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.primary)),
-                                 const SizedBox(height: 6),
-                                 ClipRRect(
-                                   borderRadius: BorderRadius.circular(4),
-                                   child: LinearProgressIndicator(
-                                     value: p,
-                                     minHeight: 6,
-                                     backgroundColor: Colors.grey[300],
-                                     valueColor: AlwaysStoppedAnimation(Theme.of(context).colorScheme.primary),
-                                   ),
-                                 ),
-                                 const SizedBox(height: 4),
-                                 Text('${currentExp} / $nextExp XP', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                                Text('Nivel ${level.current} • $diff',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary)),
+                                const SizedBox(height: 6),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: p,
+                                    minHeight: 6,
+                                    backgroundColor: Colors.grey[300],
+                                    valueColor: AlwaysStoppedAnimation(
+                                        Theme.of(context).colorScheme.primary),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text('${currentExp} / $nextExp XP',
+                                    style: TextStyle(
+                                        fontSize: 11, color: Colors.grey[600])),
                               ],
                             );
-                        }
+                          }
 
-                        return _buildDashboardCard(
+                          return _buildDashboardCard(
+                            context,
+                            title: 'Mi Progreso',
+                            subtitle: subtitleText,
+                            subtitleWidget: subtitleWidget,
+                            icon: Icons.show_chart,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ProfileProgressScreen()),
+                              ).then((_) {
+                                // Refresh functionality on return if needed
+                                context.read<StatsProvider>().fetchProgress();
+                              });
+                            },
+                          );
+                        }),
+
+                        const SizedBox(height: 16),
+                        _buildDashboardCard(
                           context,
-                          title: 'Mi Progreso',
-                          subtitle: subtitleText,
-                          subtitleWidget: subtitleWidget,
-                          icon: Icons.show_chart,
+                          title:
+                              AppLocalizations.of(context)!.get('gymSchedule'),
+                          subtitle: _getTodayScheduleText(context),
+                          icon: Icons.access_time,
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const ProfileProgressScreen()),
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const GymScheduleScreen()),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDashboardCard(
+                          context,
+                          title: 'Entrenamiento Libre',
+                          subtitle: 'Iniciá una sesión sin plan asignado.',
+                          icon: Icons.add_circle_outline_rounded,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const FreeTrainingSelectorScreen()),
                             ).then((_) {
-                               // Refresh functionality on return if needed
-                               context.read<StatsProvider>().fetchProgress();
+                              _refreshDashboardStats();
                             });
                           },
-                        );
-                      }
-                    ),
-                    
-                     const SizedBox(height: 16),
-                      _buildDashboardCard(
-                      context,
-                      title: AppLocalizations.of(context)!.get('gymSchedule'),
-                      subtitle: _getTodayScheduleText(context),
-                      icon: Icons.access_time,
-                      onTap: () {
-                        Navigator.push(
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDashboardCard(
                           context,
-                          MaterialPageRoute(builder: (context) => const GymScheduleScreen()),
-                        );
-                      },
+                          title:
+                              AppLocalizations.of(context)!.get('profileTitle'),
+                          subtitle:
+                              AppLocalizations.of(context)!.get('profileSub'),
+                          icon: Icons.person,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const ProfileScreen()),
+                            );
+                          },
+                        ),
+                        const SizedBox(
+                            height:
+                                100), // Added bottom spacing for "breathing room"
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    _buildDashboardCard(
-                      context,
-                      title: 'Entrenamiento Libre',
-                      subtitle: 'Iniciá una sesión sin plan asignado.',
-                      icon: Icons.add_circle_outline_rounded,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const FreeTrainingSelectorScreen()
-                          ),
-                        ).then((_) {
-                           _refreshDashboardStats();
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDashboardCard(
-                      context,
-                      title: AppLocalizations.of(context)!.get('profileTitle'),
-                      subtitle: AppLocalizations.of(context)!.get('profileSub'),
-                      icon: Icons.person,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 100), // Added bottom spacing for "breathing room"
-                  ],
-                ),
-              );
-            },
-          ),
+                  );
+                },
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget _buildGenericInfoCard(BuildContext context, String title,
+      String subtitle, IconData icon, Color color,
+      {VoidCallback? onTap}) {
+    // Use surface container low for "empty state" cards
+    final colorScheme = Theme.of(context).colorScheme;
 
-
-  Widget _buildGenericInfoCard(BuildContext context, String title, String subtitle, IconData icon, Color color, {VoidCallback? onTap}) {
-     // Use surface container low for "empty state" cards
-     final colorScheme = Theme.of(context).colorScheme;
-     
-     return Card(
+    return Card(
       color: colorScheme.surfaceContainerLow,
       child: InkWell(
         onTap: onTap,
@@ -278,13 +309,20 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(title,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+                    Text(subtitle,
+                        style: Theme.of(context).textTheme.bodyMedium),
                   ],
                 ),
               ),
-              if (onTap != null) Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.onSurfaceVariant),
+              if (onTap != null)
+                Icon(Icons.arrow_forward_ios,
+                    size: 16, color: colorScheme.onSurfaceVariant),
             ],
           ),
         ),
@@ -310,19 +348,25 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     // ... (Keep existing empty/finished checks if needed, simplistic view here assumes functionality is key)
 
     if (next == null) {
-       // ... (Keep existing Empty State logic)
-       if (provider.assignments.isEmpty) {
-        return _buildGenericInfoCard(context, 'Sin plan asignado', 'Consultá con tu profesor.', Icons.info_outline, Colors.grey);
-       }
-       return _buildGenericInfoCard(context, 'Seleccioná un plan', 'Tocá para elegir.', Icons.touch_app, Colors.blue, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const StudentPlansListScreen())).then((_) => context.read<PlanProvider>().fetchMyHistory());
-       });
+      // ... (Keep existing Empty State logic)
+      if (provider.assignments.isEmpty) {
+        return _buildGenericInfoCard(context, 'Sin plan asignado',
+            'Consultá con tu profesor.', Icons.info_outline, Colors.grey);
+      }
+      return _buildGenericInfoCard(context, 'Seleccioná un plan',
+          'Tocá para elegir.', Icons.touch_app, Colors.blue, onTap: () {
+        Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const StudentPlansListScreen()))
+            .then((_) => context.read<PlanProvider>().fetchMyAssignments());
+      });
     }
 
     if (next['finished'] == true) {
-       final assignment = next['assignment'] as StudentAssignment?;
-       
-       return Card(
+      final assignment = next['assignment'] as StudentAssignment?;
+
+      return Card(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -331,47 +375,95 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             children: [
               Row(
                 children: [
-                   Icon(Icons.emoji_events, color: Theme.of(context).colorScheme.primary, size: 40),
+                  Icon(Icons.emoji_events,
+                      color: Theme.of(context).colorScheme.primary, size: 40),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Text('¡Plan Completado!', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+                    child: Text('¡Plan Completado!',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary)),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              Text('Felicitaciones. Has completado todos los entrenamientos de este plan.', style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                  'Felicitaciones. Has completado todos los entrenamientos de este plan.',
+                  style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Reiniciar Plan'),
-                  onPressed: () {
-                     if (assignment == null) return;
-                     showDialog(
-                       context: context,
-                       builder: (dialogCtx) => AlertDialog(
-                         title: const Text('¿Reiniciar Plan?'),
-                         content: const Text('Esto archivará tu progreso actual y comenzará un nuevo ciclo desde el día 1.'),
-                         actions: [
-                           TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar')),
-                           FilledButton(
-                             onPressed: () async {
-                               Navigator.pop(dialogCtx); // Close dialog
-                               final success = await context.read<PlanProvider>().restartPlan(assignment.id);
-                               
-                               if (!mounted) return;
-                               if (success) {
-                                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Plan reiniciado exitosamente')));
-                               }
-                             }, 
-                             child: const Text('Reiniciar')
-                           ),
-                         ],
-                       ),
-                     );
-                  },
-                ),
+              Builder(
+                builder: (context) {
+                  final hasOtherPlans = provider.assignments.length > 1;
+
+                  void handleRestart() {
+                    if (assignment == null) return;
+                    showDialog(
+                      context: context,
+                      builder: (dialogCtx) => AlertDialog(
+                        title: const Text('¿Reiniciar Plan?'),
+                        content: const Text(
+                            'Esto archivará tu progreso actual y comenzará un nuevo ciclo desde el día 1.'),
+                        actions: [
+                          TextButton(
+                              onPressed: () => Navigator.pop(dialogCtx),
+                              child: const Text('Cancelar')),
+                          FilledButton(
+                              onPressed: () async {
+                                Navigator.pop(dialogCtx); // Close dialog
+                                final success = await context
+                                    .read<PlanProvider>()
+                                    .restartPlan(assignment.id);
+
+                                if (!context.mounted) return;
+                                if (success) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'Plan reiniciado exitosamente')));
+                                  _refreshDashboardStats();
+                                }
+                              },
+                              child: const Text('Reiniciar')),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: hasOtherPlans
+                              ? () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const StudentPlansListScreen()),
+                                  ).then((_) => _refreshDashboardStats());
+                                }
+                              : null,
+                          icon: const Icon(Icons.list),
+                          label: const Text('Seleccionar otro plan'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: hasOtherPlans
+                            ? TextButton.icon(
+                                onPressed: handleRestart,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Reiniciar Plan'),
+                              )
+                            : FilledButton.icon(
+                                onPressed: handleRestart,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Reiniciar Plan'),
+                              ),
+                      ),
+                    ],
+                  );
+                }
               ),
             ],
           ),
@@ -381,75 +473,81 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
     // Active Workout
     final week = next['week'] as PlanWeek;
-    final day = next['day'] as PlanDay; 
-    final assignment = next['assignment'] as StudentAssignment; 
+    final day = next['day'] as PlanDay;
+    final assignment = next['assignment'] as StudentAssignment;
     final planId = assignment.plan.id!;
 
     return InkWell(
       onTap: () async {
-          // SAME LOGIC
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
+        // SAME LOGIC
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
               builder: (context) => DayDetailScreen(
-                day: day, 
-                planId: planId, 
-                weekNumber: week.weekNumber
-              )
-            ),
-          );
-          if (mounted && result == true) _refreshDashboardStats();
+                  day: day, planId: planId, weekNumber: week.weekNumber)),
+        );
+        if (mounted && result == true) _refreshDashboardStats();
       },
       borderRadius: BorderRadius.circular(24),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF5B8C98), // Muted Teal/Blue
-              Color(0xFF3A6B78), // Darker Shade
-            ],
-          ),
-          boxShadow: [
-             BoxShadow(color: const Color(0xFF5B8C98).withOpacity(0.6), blurRadius: 16, offset: const Offset(0, 8))
-          ]
-        ),
+            borderRadius: BorderRadius.circular(24),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF5B8C98), // Muted Teal/Blue
+                Color(0xFF3A6B78), // Darker Shade
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                  color: const Color(0xFF5B8C98).withOpacity(0.6),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8))
+            ]),
         child: Padding(
           padding: const EdgeInsets.all(20.0), // Reduced from 24
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text('PRÓXIMO ENTRENAMIENTO', style: textTheme.labelSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                child: Text('PRÓXIMO ENTRENAMIENTO',
+                    style: textTheme.labelSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5)),
               ),
               const SizedBox(height: 16), // Reduced from 24
               Text(
                 (day.title ?? 'Día ${day.dayOfWeek}').replaceAll('Day', 'Día'),
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontStyle: FontStyle.italic,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 32 // Reduced from 36
-                ),
+                    color: Colors.white,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 32 // Reduced from 36
+                    ),
               ),
               const SizedBox(height: 4),
               Text(
-                'Inicio • Semana ${week.weekNumber}', 
-                style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14), // Reduced from 16
+                'Inicio • Semana ${week.weekNumber}',
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 14), // Reduced from 16
               ),
               const SizedBox(height: 24), // Reduced from 32
-              
+
               // Button Look-alike
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16), // Reduced vertical to 8
+                padding: const EdgeInsets.symmetric(
+                    vertical: 8, horizontal: 16), // Reduced vertical to 8
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -460,13 +558,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     Text(
                       'Comenzar entrenamiento',
                       style: TextStyle(
-                        color: const Color(0xFF2d5acc), // Blue Text
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16 // Restored to 16
-                      ),
+                          color: const Color(0xFF2d5acc), // Blue Text
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16 // Restored to 16
+                          ),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward_rounded, color: Color(0xFF2d5acc), size: 20)
+                    const Icon(Icons.arrow_forward_rounded,
+                        color: Color(0xFF2d5acc), size: 20)
                   ],
                 ),
               )
@@ -476,26 +575,32 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       ),
     );
   }
- 
+
   Widget _buildDashboardCard(BuildContext context,
-      {required String title, String? subtitle, Widget? subtitleWidget, required IconData icon, required VoidCallback onTap}) {
-    
+      {required String title,
+      String? subtitle,
+      Widget? subtitleWidget,
+      required IconData icon,
+      required VoidCallback onTap}) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
-         color: isDark ? colorScheme.surfaceContainer : Colors.white, // Dark mode aware
-         borderRadius: BorderRadius.circular(20),
-         border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade100),
-         boxShadow: [
-           BoxShadow(
-             color: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.1), 
-             blurRadius: 15, 
-             offset: const Offset(0, 5)
-           )
-         ]
-      ),
+          color: isDark
+              ? colorScheme.surfaceContainer
+              : AppColors.cardSurface, // Pastel teal-green in light mode
+          borderRadius: BorderRadius.circular(20),
+          border:
+              Border.all(color: isDark ? Colors.white10 : Colors.grey.shade100),
+          boxShadow: [
+            BoxShadow(
+                color: isDark
+                    ? Colors.black.withOpacity(0.3)
+                    : Colors.black.withOpacity(0.1),
+                blurRadius: 15,
+                offset: const Offset(0, 5))
+          ]),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -506,45 +611,46 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                 Row(
-                   children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE0E7FF), // Light Purple/Blue background
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(icon, size: 24, color: const Color(0xFF4338ca)), // Darker Purple/Blue Icon
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(
+                            0xFFE0E7FF), // Light Purple/Blue background
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          title, 
+                      child: Icon(icon,
+                          size: 24,
+                          color: const Color(
+                              0xFF4338ca)), // Darker Purple/Blue Icon
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(title,
                           style: TextStyle(
-                            fontWeight: FontWeight.bold, 
-                            fontSize: 16, 
-                            color: colorScheme.onSurface // Theme aware text
-                          )
-                        ),
-                      ),
-                      Icon(Icons.arrow_forward_ios_rounded, size: 18, color: isDark ? Colors.grey[600] : Colors.grey[300]),
-                   ],
-                 ),
-                 
-                 // Content below icon (for Progress Bar or Subtitle)
-                 if (subtitleWidget != null || subtitle != null) ...[
-                    const SizedBox(height: 12),
-                    if (subtitleWidget != null)
-                      subtitleWidget
-                    else 
-                      Text(
-                        subtitle!, 
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: colorScheme.onSurface // Theme aware text
+                              )),
+                    ),
+                    Icon(Icons.arrow_forward_ios_rounded,
+                        size: 18,
+                        color: isDark ? Colors.grey[600] : Colors.grey[300]),
+                  ],
+                ),
+
+                // Content below icon (for Progress Bar or Subtitle)
+                if (subtitleWidget != null || subtitle != null) ...[
+                  const SizedBox(height: 12),
+                  if (subtitleWidget != null)
+                    subtitleWidget
+                  else
+                    Text(subtitle!,
                         style: TextStyle(
-                          color: isDark ? Colors.grey[400] : Colors.grey[500], 
-                          fontSize: 14
-                        )
-                      ),
-                 ]
+                            color: isDark ? Colors.grey[400] : Colors.grey[500],
+                            fontSize: 14)),
+                ]
               ],
             ),
           ),
@@ -553,90 +659,114 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     );
   }
 
-
-
   Widget _infoRow(IconData icon, String text) {
-      return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-              children: [
-                  Icon(icon, size: 16, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
-              ],
-          ),
-      );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
+        ],
+      ),
+    );
   }
 
   String _getTodayScheduleText(BuildContext context) {
-      final schedules = context.watch<GymScheduleProvider>().schedules;
-      if (schedules.isEmpty) return AppLocalizations.of(context)!.get('gymScheduleSub');
+    final schedules = context.watch<GymScheduleProvider>().schedules;
+    if (schedules.isEmpty)
+      return AppLocalizations.of(context)!.get('gymScheduleSub');
 
-      final now = DateTime.now();
-      String dayKey = '';
-      switch (now.weekday) {
-          case 1: dayKey = 'MONDAY'; break;
-          case 2: dayKey = 'TUESDAY'; break;
-          case 3: dayKey = 'WEDNESDAY'; break;
-          case 4: dayKey = 'THURSDAY'; break;
-          case 5: dayKey = 'FRIDAY'; break;
-          case 6: dayKey = 'SATURDAY'; break;
-          case 7: dayKey = 'SUNDAY'; break;
-      }
+    final now = DateTime.now();
+    String dayKey = '';
+    switch (now.weekday) {
+      case 1:
+        dayKey = 'MONDAY';
+        break;
+      case 2:
+        dayKey = 'TUESDAY';
+        break;
+      case 3:
+        dayKey = 'WEDNESDAY';
+        break;
+      case 4:
+        dayKey = 'THURSDAY';
+        break;
+      case 5:
+        dayKey = 'FRIDAY';
+        break;
+      case 6:
+        dayKey = 'SATURDAY';
+        break;
+      case 7:
+        dayKey = 'SUNDAY';
+        break;
+    }
 
-      // Find schedule or return default closed
-      final todaySchedule = schedules.firstWhere(
-        (s) => s.dayOfWeek == dayKey, 
-        orElse: () => GymSchedule(id: 0, dayOfWeek: dayKey, isClosed: true)
-      );
-      
-      // Get localized day name
-      final loc = AppLocalizations.of(context)!;
-      String dayName = '';
-      switch (dayKey) {
-        case 'MONDAY': dayName = loc.get('day_monday'); break;
-        case 'TUESDAY': dayName = loc.get('day_tuesday'); break;
-        case 'WEDNESDAY': dayName = loc.get('day_wednesday'); break;
-        case 'THURSDAY': dayName = loc.get('day_thursday'); break;
-        case 'FRIDAY': dayName = loc.get('day_friday'); break;
-        case 'SATURDAY': dayName = loc.get('day_saturday'); break;
-        case 'SUNDAY': dayName = loc.get('day_sunday'); break;
-        default: dayName = dayKey;
-      }
+    // Find schedule or return default closed
+    final todaySchedule = schedules.firstWhere((s) => s.dayOfWeek == dayKey,
+        orElse: () => GymSchedule(id: 0, dayOfWeek: dayKey, isClosed: true));
 
-      if (todaySchedule.isClosed || todaySchedule.displayHours == 'Closed') {
-          return 'Hoy $dayName: CERRADO';
-      }
-      
-      return 'Hoy $dayName: ${todaySchedule.displayHours}';
+    // Get localized day name
+    final loc = AppLocalizations.of(context)!;
+    String dayName = '';
+    switch (dayKey) {
+      case 'MONDAY':
+        dayName = loc.get('day_monday');
+        break;
+      case 'TUESDAY':
+        dayName = loc.get('day_tuesday');
+        break;
+      case 'WEDNESDAY':
+        dayName = loc.get('day_wednesday');
+        break;
+      case 'THURSDAY':
+        dayName = loc.get('day_thursday');
+        break;
+      case 'FRIDAY':
+        dayName = loc.get('day_friday');
+        break;
+      case 'SATURDAY':
+        dayName = loc.get('day_saturday');
+        break;
+      case 'SUNDAY':
+        dayName = loc.get('day_sunday');
+        break;
+      default:
+        dayName = dayKey;
+    }
+
+    if (todaySchedule.isClosed || todaySchedule.displayHours == 'Closed') {
+      return 'Hoy $dayName: CERRADO';
+    }
+
+    return 'Hoy $dayName: ${todaySchedule.displayHours}';
   }
+
   Future<void> _refreshDashboardStats() async {
-      // 1. Flush Queue & Get Result
-      final newStatsMap = await context.read<PlanProvider>().waitForPendingUpdates();
-      
-      if (context.mounted) {
-          if (newStatsMap != null) {
-              final rawStats = newStatsMap;
-              final currentLevel = rawStats['currentLevel'] as int? ?? 1;
-              final currentExp = rawStats['totalExperience'] as int? ?? 0;
-              
-              final oldProgress = context.read<StatsProvider>().progress;
-              if (oldProgress != null) {
-                  final newProgress = oldProgress.copyWith(
-                      level: LevelStats(current: currentLevel, exp: currentExp)
-                  );
-                  context.read<StatsProvider>().setDirectProgress(newProgress);
-              } else {
-                  context.read<StatsProvider>().fetchProgress();
-              }
-          } else {
-              await context.read<StatsProvider>().fetchProgress();
-          }
+    // 1. Flush Queue & Get Result
+    final newStatsMap =
+        await context.read<PlanProvider>().waitForPendingUpdates();
 
-          context.read<PlanProvider>().fetchMyHistory();
-          context.read<PlanProvider>().computeWeeklyStats();
-          context.read<PlanProvider>().computeMonthlyStats();
+    if (context.mounted) {
+      if (newStatsMap != null) {
+        final rawStats = newStatsMap;
+        final currentLevel = rawStats['currentLevel'] as int? ?? 1;
+        final currentExp = rawStats['totalExperience'] as int? ?? 0;
+
+        final oldProgress = context.read<StatsProvider>().progress;
+        if (oldProgress != null) {
+          final newProgress = oldProgress.copyWith(
+              level: LevelStats(current: currentLevel, exp: currentExp));
+          context.read<StatsProvider>().setDirectProgress(newProgress);
+        } else {
+          context.read<StatsProvider>().fetchProgress();
+        }
+      } else {
+        await context.read<StatsProvider>().fetchProgress();
       }
-  }
 
+      context.read<PlanProvider>().refreshDashboard();
+    }
+  }
 }
