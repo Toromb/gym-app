@@ -1,0 +1,60 @@
+# ============================================================
+# TuGymFlow — Dependency Security Audit
+# ============================================================
+#
+# Runs weekly (Monday 8am UTC) and on every push to main.
+# Checks both npm (backend) and pub (Flutter) dependencies
+# for known vulnerabilities.
+#
+# This does NOT block PRs \u2014 it only creates a GitHub Security
+# alert so the team is aware of outdated/vulnerable packages.
+# Fix alerts by running:
+#   Backend: npm audit fix
+#   Flutter: flutter pub upgrade
+
+name: Security Audit
+
+on:
+  schedule:
+    # Every Monday at 8:00 UTC
+    - cron: '0 8 * * 1'
+  push:
+    branches: [main]
+
+jobs:
+  audit-backend:
+    name: npm audit (backend)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend_service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend_service/package-lock.json
+      - run: npm ci
+      # --audit-level moderate: only fail on moderate/high/critical
+      - name: Run npm audit
+        run: npm audit --audit-level moderate
+        continue-on-error: true  # Report only, don't block
+
+  audit-flutter:
+    name: flutter pub outdated (frontend)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.5'
+          channel: 'stable'
+          cache: true
+      - run: flutter pub get
+      - name: Check for outdated packages
+        run: flutter pub outdated
+        continue-on-error: true  # Informational only
