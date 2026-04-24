@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/exercise_api_service.dart';
 import '../../models/plan_model.dart';
+import '../../utils/constants.dart';
+import '../../widgets/background_page_wrapper.dart';
 import 'create_exercise_screen.dart';
 import 'exercise_detail_screen.dart';
 
@@ -72,331 +76,354 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: ConstrainedAppBar(title: const Text('Biblioteca de Ejercicios')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Column(
-            children: [
-              _buildSearchAndFilter(), // Combined
-              Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _getFilteredExercises().isEmpty
-                        ? const Center(
-                            child: Text('No hay ejercicios registrados.'))
-                        : ListView.builder(
-                            padding: const EdgeInsets.only(bottom: 100),
-                            itemCount: _getFilteredExercises().length,
-                            itemBuilder: (context, index) {
-                              final ex = _getFilteredExercises()[index];
-                              final colorScheme = Theme.of(context).colorScheme;
+    final bgUrl =
+        context.watch<AuthProvider>().currentGymBackgroundImage != null
+            ? resolveImageUrl(
+                context.watch<AuthProvider>().currentGymBackgroundImage!)
+            : null;
 
-                              return Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor:
-                                            colorScheme.primaryContainer,
-                                        radius: 20,
-                                        child: Text(
-                                            ex.name.isNotEmpty
-                                                ? ex.name[0].toUpperCase()
-                                                : '?',
-                                            style: TextStyle(
-                                                color: colorScheme
-                                                    .onPrimaryContainer,
-                                                fontWeight: FontWeight.bold)),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize
-                                              .min, // Fix vertical expansion
-                                          children: [
-                                            Text(ex.name,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleSmall
-                                                    ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                            const SizedBox(height: 4),
-                                            // Muscle Tags
-                                            if (ex.muscles.isNotEmpty)
-                                              Wrap(
-                                                spacing: 4,
-                                                runSpacing: 4,
-                                                children: ex.muscles.map((m) {
-                                                  final isPrimary =
-                                                      m.role == 'PRIMARY';
-                                                  return Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 6,
-                                                        vertical: 2),
-                                                    decoration: BoxDecoration(
-                                                      color: isPrimary
-                                                          ? colorScheme.primary
-                                                              .withValues(
-                                                                  alpha: 0.1)
-                                                          : colorScheme
-                                                              .surfaceContainerHighest,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              4),
-                                                    ),
-                                                    child: Text(
-                                                      m.muscle.name,
-                                                      style: TextStyle(
-                                                          fontSize: 10,
-                                                          fontWeight: isPrimary
-                                                              ? FontWeight.bold
-                                                              : FontWeight
-                                                                  .normal,
-                                                          color: isPrimary
-                                                              ? colorScheme
-                                                                  .primary
-                                                              : colorScheme
-                                                                  .onSurfaceVariant),
-                                                    ),
-                                                  );
-                                                }).toList(),
-                                              )
-                                            else
-                                              Text(
-                                                'Sin músculos definidos',
-                                                style: TextStyle(
-                                                    fontSize: 11,
-                                                    fontStyle: FontStyle.italic,
-                                                    color: colorScheme
-                                                        .onSurfaceVariant),
-                                              ),
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.88,
+      backgroundNetworkUrl: bgUrl,
+      child: Scaffold(
+        appBar:
+            ConstrainedAppBar(title: const Text('Biblioteca de Ejercicios')),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: Column(
+              children: [
+                _buildSearchAndFilter(), // Combined
+                Expanded(
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _getFilteredExercises().isEmpty
+                          ? const Center(
+                              child: Text('No hay ejercicios registrados.'))
+                          : ListView.builder(
+                              padding: const EdgeInsets.only(bottom: 100),
+                              itemCount: _getFilteredExercises().length,
+                              itemBuilder: (context, index) {
+                                final ex = _getFilteredExercises()[index];
+                                final colorScheme =
+                                    Theme.of(context).colorScheme;
 
-                                            const SizedBox(height: 4),
-                                            // Equipment Tags
-                                            if (ex.equipments.isNotEmpty)
-                                              Wrap(
-                                                spacing: 4,
-                                                runSpacing: 4,
-                                                children:
-                                                    ex.equipments.map((eq) {
-                                                  return Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 6,
-                                                        vertical: 2),
-                                                    decoration: BoxDecoration(
-                                                      color: colorScheme
-                                                          .tertiary
-                                                          .withValues(
-                                                              alpha: 0.1),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              4),
-                                                      border: Border.all(
-                                                          color: colorScheme
-                                                              .tertiary
-                                                              .withValues(
-                                                                  alpha: 0.3),
-                                                          width: 0.5),
-                                                    ),
-                                                    child: Text(
-                                                      eq.name,
-                                                      style: TextStyle(
-                                                          fontSize: 10,
-                                                          color: colorScheme
-                                                              .tertiary),
-                                                    ),
-                                                  );
-                                                }).toList(),
-                                              ),
-                                          ],
+                                return Card(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor:
+                                              colorScheme.primaryContainer,
+                                          radius: 20,
+                                          child: Text(
+                                              ex.name.isNotEmpty
+                                                  ? ex.name[0].toUpperCase()
+                                                  : '?',
+                                              style: TextStyle(
+                                                  color: colorScheme
+                                                      .onPrimaryContainer,
+                                                  fontWeight: FontWeight.bold)),
                                         ),
-                                      ),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                            iconSize: 20,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                            tooltip: (ex.videoUrl != null &&
-                                                    ex.videoUrl!.isNotEmpty)
-                                                ? 'Ver Video'
-                                                : 'Sin Video',
-                                            icon: Icon(Icons.play_arrow,
-                                                color: (ex.videoUrl != null &&
-                                                        ex.videoUrl!.isNotEmpty)
-                                                    ? Colors.red
-                                                    : Colors.grey),
-                                            onPressed: (ex.videoUrl != null &&
-                                                    ex.videoUrl!.isNotEmpty)
-                                                ? () async {
-                                                    final uri =
-                                                        Uri.parse(ex.videoUrl!);
-                                                    if (await canLaunchUrl(
-                                                        uri)) {
-                                                      await launchUrl(uri,
-                                                          mode: LaunchMode
-                                                              .externalApplication);
-                                                    } else {
-                                                      if (context.mounted) {
-                                                        ScaffoldMessenger.of(
-                                                                context)
-                                                            .showSnackBar(SnackBar(
-                                                                content: Text(
-                                                                    'No se pudo abrir el enlace: ${ex.videoUrl}')));
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize
+                                                .min, // Fix vertical expansion
+                                            children: [
+                                              Text(ex.name,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleSmall
+                                                      ?.copyWith(
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                              const SizedBox(height: 4),
+                                              // Muscle Tags
+                                              if (ex.muscles.isNotEmpty)
+                                                Wrap(
+                                                  spacing: 4,
+                                                  runSpacing: 4,
+                                                  children: ex.muscles.map((m) {
+                                                    final isPrimary =
+                                                        m.role == 'PRIMARY';
+                                                    return Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 2),
+                                                      decoration: BoxDecoration(
+                                                        color: isPrimary
+                                                            ? colorScheme
+                                                                .primary
+                                                                .withValues(
+                                                                    alpha: 0.1)
+                                                            : colorScheme
+                                                                .surfaceContainerHighest,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(4),
+                                                      ),
+                                                      child: Text(
+                                                        m.muscle.name,
+                                                        style: TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                isPrimary
+                                                                    ? FontWeight
+                                                                        .bold
+                                                                    : FontWeight
+                                                                        .normal,
+                                                            color: isPrimary
+                                                                ? colorScheme
+                                                                    .primary
+                                                                : colorScheme
+                                                                    .onSurfaceVariant),
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                )
+                                              else
+                                                Text(
+                                                  'Sin músculos definidos',
+                                                  style: TextStyle(
+                                                      fontSize: 11,
+                                                      fontStyle:
+                                                          FontStyle.italic,
+                                                      color: colorScheme
+                                                          .onSurfaceVariant),
+                                                ),
+
+                                              const SizedBox(height: 4),
+                                              // Equipment Tags
+                                              if (ex.equipments.isNotEmpty)
+                                                Wrap(
+                                                  spacing: 4,
+                                                  runSpacing: 4,
+                                                  children:
+                                                      ex.equipments.map((eq) {
+                                                    return Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 2),
+                                                      decoration: BoxDecoration(
+                                                        color: colorScheme
+                                                            .tertiary
+                                                            .withValues(
+                                                                alpha: 0.1),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(4),
+                                                        border: Border.all(
+                                                            color: colorScheme
+                                                                .tertiary
+                                                                .withValues(
+                                                                    alpha: 0.3),
+                                                            width: 0.5),
+                                                      ),
+                                                      child: Text(
+                                                        eq.name,
+                                                        style: TextStyle(
+                                                            fontSize: 10,
+                                                            color: colorScheme
+                                                                .tertiary),
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              iconSize: 20,
+                                              padding: EdgeInsets.zero,
+                                              constraints:
+                                                  const BoxConstraints(),
+                                              tooltip: (ex.videoUrl != null &&
+                                                      ex.videoUrl!.isNotEmpty)
+                                                  ? 'Ver Video'
+                                                  : 'Sin Video',
+                                              icon: Icon(Icons.play_arrow,
+                                                  color: (ex.videoUrl != null &&
+                                                          ex.videoUrl!
+                                                              .isNotEmpty)
+                                                      ? Colors.red
+                                                      : Colors.grey),
+                                              onPressed: (ex.videoUrl != null &&
+                                                      ex.videoUrl!.isNotEmpty)
+                                                  ? () async {
+                                                      final uri = Uri.parse(
+                                                          ex.videoUrl!);
+                                                      if (await canLaunchUrl(
+                                                          uri)) {
+                                                        await launchUrl(uri,
+                                                            mode: LaunchMode
+                                                                .externalApplication);
+                                                      } else {
+                                                        if (context.mounted) {
+                                                          ScaffoldMessenger.of(
+                                                                  context)
+                                                              .showSnackBar(SnackBar(
+                                                                  content: Text(
+                                                                      'No se pudo abrir el enlace: ${ex.videoUrl}')));
+                                                        }
                                                       }
                                                     }
-                                                  }
-                                                : null,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          IconButton(
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                            iconSize: 20,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                            tooltip: 'Ver Detalles',
-                                            icon: const Icon(
-                                                Icons.remove_red_eye),
-                                            onPressed: () async {
-                                              final result =
-                                                  await Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ExerciseDetailScreen(
-                                                            exercise: ex)),
-                                              );
-                                              if (result == true) {
-                                                _itemsChanged(); // Refresh
-                                              }
-                                            },
-                                          ),
-                                          const SizedBox(width: 8),
-                                          IconButton(
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                            iconSize: 20,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                            tooltip: 'Editar',
-                                            icon: const Icon(Icons.edit),
-                                            onPressed: () async {
-                                              final result =
-                                                  await Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        CreateExerciseScreen(
-                                                            exercise: ex)),
-                                              );
-                                              if (result == true) {
-                                                _loadData(); // Updated call
-                                              }
-                                            },
-                                          ),
-                                          const SizedBox(width: 8),
-                                          IconButton(
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                            iconSize: 20,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                            tooltip: 'Eliminar',
-                                            icon: Icon(Icons.delete_outline,
-                                                color: colorScheme.error),
-                                            onPressed: () async {
-                                              final confirm =
-                                                  await showDialog<bool>(
-                                                context: context,
-                                                builder: (context) =>
-                                                    AlertDialog(
-                                                  title: const Text(
-                                                      'Confirmar eliminación'),
-                                                  content: Text(
-                                                      '¿Estás seguro de que deseas eliminar "${ex.name}"?'),
-                                                  actions: [
-                                                    TextButton(
-                                                        onPressed: () =>
-                                                            Navigator.pop(
-                                                                context, false),
-                                                        child: const Text(
-                                                            'Cancelar')),
-                                                    TextButton(
-                                                        onPressed: () =>
-                                                            Navigator.pop(
-                                                                context, true),
-                                                        child: const Text(
-                                                            'Eliminar',
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .red))),
-                                                  ],
-                                                ),
-                                              );
-
-                                              if (confirm == true) {
-                                                try {
-                                                  await _exerciseService
-                                                      .deleteExercise(ex.id);
+                                                  : null,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              iconSize: 20,
+                                              padding: EdgeInsets.zero,
+                                              constraints:
+                                                  const BoxConstraints(),
+                                              tooltip: 'Ver Detalles',
+                                              icon: const Icon(
+                                                  Icons.remove_red_eye),
+                                              onPressed: () async {
+                                                final result =
+                                                    await Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ExerciseDetailScreen(
+                                                              exercise: ex)),
+                                                );
+                                                if (result == true) {
+                                                  _itemsChanged(); // Refresh
+                                                }
+                                              },
+                                            ),
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              iconSize: 20,
+                                              padding: EdgeInsets.zero,
+                                              constraints:
+                                                  const BoxConstraints(),
+                                              tooltip: 'Editar',
+                                              icon: const Icon(Icons.edit),
+                                              onPressed: () async {
+                                                final result =
+                                                    await Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          CreateExerciseScreen(
+                                                              exercise: ex)),
+                                                );
+                                                if (result == true) {
                                                   _loadData(); // Updated call
-                                                  if (context.mounted) {
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .showSnackBar(
-                                                            const SnackBar(
-                                                                content: Text(
-                                                                    'Ejercicio eliminado')));
-                                                  }
-                                                } catch (e) {
-                                                  if (context.mounted) {
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .showSnackBar(SnackBar(
-                                                            content: Text(
-                                                                'Error: $e')));
+                                                }
+                                              },
+                                            ),
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              iconSize: 20,
+                                              padding: EdgeInsets.zero,
+                                              constraints:
+                                                  const BoxConstraints(),
+                                              tooltip: 'Eliminar',
+                                              icon: Icon(Icons.delete_outline,
+                                                  color: colorScheme.error),
+                                              onPressed: () async {
+                                                final confirm =
+                                                    await showDialog<bool>(
+                                                  context: context,
+                                                  builder: (context) =>
+                                                      AlertDialog(
+                                                    title: const Text(
+                                                        'Confirmar eliminación'),
+                                                    content: Text(
+                                                        '¿Estás seguro de que deseas eliminar "${ex.name}"?'),
+                                                    actions: [
+                                                      TextButton(
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                  context,
+                                                                  false),
+                                                          child: const Text(
+                                                              'Cancelar')),
+                                                      TextButton(
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                  context,
+                                                                  true),
+                                                          child: const Text(
+                                                              'Eliminar',
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .red))),
+                                                    ],
+                                                  ),
+                                                );
+
+                                                if (confirm == true) {
+                                                  try {
+                                                    await _exerciseService
+                                                        .deleteExercise(ex.id);
+                                                    _loadData(); // Updated call
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                              const SnackBar(
+                                                                  content: Text(
+                                                                      'Ejercicio eliminado')));
+                                                    }
+                                                  } catch (e) {
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(SnackBar(
+                                                              content: Text(
+                                                                  'Error: $e')));
+                                                    }
                                                   }
                                                 }
-                                              }
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                          ),
-              ),
-            ],
+                                );
+                              },
+                            ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const CreateExerciseScreen()),
-          );
-          if (result == true) {
-            _loadData(); // Updated call
-          }
-        },
-        child: const Icon(Icons.add),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const CreateExerciseScreen()),
+            );
+            if (result == true) {
+              _loadData(); // Updated call
+            }
+          },
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
