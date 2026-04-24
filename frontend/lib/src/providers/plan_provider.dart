@@ -231,8 +231,11 @@ class PlanProvider with ChangeNotifier {
           matchesIntent = true;
         }
       } else {
-        // Expecting a specific Plan Session
-        // cachedSession should have matching planID
+        // Expecting a specific Plan Session.
+        // `planId` here is the *effective* plan ID from the assignment \u2014 which
+        // is an AssignedPlan UUID since Phase 1 (not the master Plan UUID).
+        // `cachedSession.planId` is resolved the same way in TrainingSession.fromJson,
+        // so this comparison is correct for both legacy and snapshot-based sessions.
         if (cachedSession.planId == planId) {
           matchesIntent = true;
         }

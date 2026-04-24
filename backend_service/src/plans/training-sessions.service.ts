@@ -67,7 +67,17 @@ export class TrainingSessionsService {
 
         const dayKey = `W${weekNumber}-D${dayOrder}`;
 
-        // Determine if it's new AssignedPlan or legacy Plan
+        // -------------------------------------------------------------------
+        // DUAL-PLAN RESOLUTION
+        // -------------------------------------------------------------------
+        // The `planId` received here is the *effective* plan ID from the frontend,
+        // which may be either:
+        //   a) An AssignedPlan UUID  → used by all sessions created after Phase 1
+        //   b) A master Plan UUID    → legacy sessions only (pre-Phase 1 data)
+        //
+        // We always try AssignedPlan first. If not found, we fall back to the
+        // master Plan table. This ensures backward compatibility without any
+        // migration of existing data.
         const assignedPlan = await this.sessionRepo.manager.findOne(AssignedPlan, {
           where: { id: planId },
           relations: [
@@ -123,7 +133,6 @@ export class TrainingSessionsService {
         }
 
         // Create NEW Plan Session
-
         const week = activePlanStructure!.weeks?.find((w: any) => w.weekNumber === weekNumber);
         if (!week) throw new NotFoundException(`Week ${weekNumber} not found`);
 
@@ -132,6 +141,8 @@ export class TrainingSessionsService {
 
         const newSessionData: any = {
           student: { id: userId },
+          // Only one of plan/assignedPlan is set \u2014 the other stays null.
+          // This matches how fromJson on the frontend resolves the planId.
           plan: legacyPlan ? { id: planId } : null,
           assignedPlan: assignedPlan ? { id: planId } : null,
           date: finalDate,
