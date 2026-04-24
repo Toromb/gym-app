@@ -143,6 +143,53 @@ export class GymsController {
     return { logoUrl };
   }
 
+  @Post(':id/background')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          const uploadPath = './uploads/backgrounds';
+          if (!existsSync(uploadPath)) {
+            mkdirSync(uploadPath, { recursive: true });
+          }
+          cb(null, uploadPath);
+        },
+        filename: (req, file, cb) => {
+          const randomName = Array(32)
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join('');
+          cb(null, `${randomName}${extname(file.originalname)}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+          return cb(
+            new BadRequestException('Only image files are allowed!'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB — background images may be larger
+      },
+    }),
+  )
+  async uploadBackground(
+    @Param('id') id: string,
+    @UploadedFile() file: any,
+    @Request() req: any,
+  ) {
+    this.validateAdminAccess(req.user, id);
+    if (!file)
+      throw new BadRequestException('File is not an image or was rejected');
+
+    const backgroundImageUrl = `/uploads/backgrounds/${file.filename}`;
+    await this.gymsService.update(id, { backgroundImageUrl } as any);
+    return { backgroundImageUrl };
+  }
+
   @Post(':id/debug-init')
   async debugInit(@Param('id') id: string) {
     return this.gymsService.debugGenerateExercises(id);

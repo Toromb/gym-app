@@ -143,18 +143,37 @@ class AuthService {
     }
   }
 
-  Future<void> logout() async {
+  /// Elimina tokens del storage local de inmediato.
+  /// Llamar antes de cualquier operación de red en el logout voluntario.
+  Future<void> deleteLocalTokens() async {
+    await _deleteTokens();
+  }
+
+  /// Notifica al servidor que revoque el refresh token (best-effort).
+  /// No espera respuesta; si falla, no importa.
+  Future<void> revokeServerToken() async {
     final rToken = await getRefreshToken();
     try {
       if (rToken != null) {
-        // Optimistically tell the server to revoke it. Ignore errors.
         await _api.post('/auth/logout', {'refreshToken': rToken},
             disableInterceptor: true);
       } else {
         await _api.post('/auth/logout', {}, disableInterceptor: true);
       }
     } catch (_) {}
+  }
 
+  /// Compatibilidad hacia atrás: borra tokens y notifica al servidor.
+  Future<void> logout() async {
+    final rToken = await getRefreshToken();
+    try {
+      if (rToken != null) {
+        await _api.post('/auth/logout', {'refreshToken': rToken},
+            disableInterceptor: true);
+      } else {
+        await _api.post('/auth/logout', {}, disableInterceptor: true);
+      }
+    } catch (_) {}
     await _deleteTokens();
   }
 

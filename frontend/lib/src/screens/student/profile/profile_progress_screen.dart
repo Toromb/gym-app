@@ -137,41 +137,57 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
       overlayOpacity: 0.85,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: const Text('Mi Progreso'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _loadData,
-            ),
-          ],
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _safelyBuild(() => _buildOnboardingSection(user)),
-                  const SizedBox(height: 24),
-                  _safelyBuild(() => const CalendarScreen(
-                      isEmbedded: true)), // Embedded Calendar
-                  const SizedBox(height: 24),
-                  _safelyBuild(
-                      () => _buildLevelCard(progress.level)), // New Level Card
-                  const SizedBox(height: 24),
-                  _safelyBuild(
-                      () => _buildMuscleFlowCard()), // New Muscle Flow Link
-                  const SizedBox(height: 24),
-                  _safelyBuild(() => _buildStatusCards(progress)),
-                  const SizedBox(height: 24),
-                  _safelyBuild(() => _buildVolumeChart(progress.volume)),
-                  // Muscle Load removed for V1
-                ],
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 900),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header manual dentro del límite de 900px
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () => Navigator.of(context).pop(),
+                          tooltip: 'Volver',
+                        ),
+                        const Expanded(
+                          child: Text(
+                            'Mi Progreso',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.refresh),
+                          onPressed: _loadData,
+                          tooltip: 'Actualizar',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _safelyBuild(() => _buildOnboardingSection(user)),
+                    const SizedBox(height: 24),
+                    _safelyBuild(() => const CalendarScreen(
+                        isEmbedded: true)), // Embedded Calendar
+                    const SizedBox(height: 24),
+                    _safelyBuild(
+                        () => _buildLevelCard(progress.level)), // New Level Card
+                    const SizedBox(height: 24),
+                    _safelyBuild(
+                        () => _buildMuscleFlowCard()), // New Muscle Flow Link
+                    const SizedBox(height: 24),
+                    _safelyBuild(() => _buildStatusCards(progress)),
+                    const SizedBox(height: 24),
+                    _safelyBuild(() => _buildVolumeChart(progress.volume)),
+                    // Muscle Load removed for V1
+                  ],
+                ),
               ),
             ),
           ),

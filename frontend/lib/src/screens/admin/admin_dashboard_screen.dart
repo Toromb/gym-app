@@ -11,7 +11,11 @@ import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
 import 'manage_equipments_screen.dart';
 import 'free_training/manage_free_trainings_screen.dart';
-import '../../widgets/dashboard_header.dart'; // Add import
+import '../../widgets/dashboard_header.dart';
+import 'collection_dashboard_screen.dart';
+import '../../widgets/background_page_wrapper.dart';
+import '../../utils/app_colors.dart';
+import '../../utils/constants.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -32,10 +36,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
-    final colorScheme = Theme.of(context).colorScheme;
+    final String? bgUrl = user?.gym?.backgroundImageUrl != null
+        ? resolveImageUrl(user!.gym!.backgroundImageUrl!)
+        : null;
 
-    return Scaffold(
-      body: SafeArea(
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.72,
+      backgroundNetworkUrl: bgUrl,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 900),
@@ -63,6 +73,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 16),
 
+                  // ── COBRANZA (nuevo en Fase 4) ──
+                  _buildDashboardCard(
+                    context,
+                    title: 'Cobranza',
+                    subtitle: 'Estado de cuotas y pagos',
+                    icon: Icons.receipt_long,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                const CollectionDashboardScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
                   _buildDashboardCard(
                     context,
                     title: 'Biblioteca de Planes',
@@ -73,21 +100,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => const PlansListScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDashboardCard(
-                    context,
-                    title: 'Entrenamientos Libres',
-                    subtitle: 'Gestionar rutinas públicas',
-                    icon: Icons.repeat,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                const ManageFreeTrainingsScreen()),
                       );
                     },
                   ),
@@ -123,6 +135,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 16),
                   _buildDashboardCard(
                     context,
+                    title: 'Entrenamientos Libres',
+                    subtitle: 'Gestionar rutinas públicas',
+                    icon: Icons.repeat,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                const ManageFreeTrainingsScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDashboardCard(
+                    context,
                     title: 'Horarios del Gimnasio',
                     subtitle: _getTodayScheduleText(context),
                     icon: Icons.access_time,
@@ -134,6 +161,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       );
                     },
                   ),
+
                   const SizedBox(height: 16),
                   _buildDashboardCard(
                     context,
@@ -167,6 +195,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ),
           ),
+        ),
         ),
       ),
     );
@@ -252,47 +281,75 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       required IconData icon,
       required VoidCallback onTap}) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.08)
+            : AppColors.cardSurface.withOpacity(0.92),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+            color: isDark ? Colors.white12 : Colors.white.withOpacity(0.6)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 12,
+              offset: const Offset(0, 4))
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0E7FF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon,
+                      size: 28, color: const Color(0xFF4338ca)),
                 ),
-                child:
-                    Icon(icon, size: 32, color: colorScheme.onPrimaryContainer),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold)),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 4),
-                      Text(subtitle,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: colorScheme.onSurfaceVariant)),
-                    ]
-                  ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? Colors.white
+                              : colorScheme.onSurface,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: isDark
+                                ? Colors.white70
+                                : colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ]
+                    ],
+                  ),
                 ),
-              ),
-              Icon(Icons.arrow_forward_ios,
-                  size: 16, color: colorScheme.outline),
-            ],
+                Icon(Icons.arrow_forward_ios_rounded,
+                    size: 16,
+                    color: isDark ? Colors.grey[500] : Colors.grey[400]),
+              ],
+            ),
           ),
         ),
       ),

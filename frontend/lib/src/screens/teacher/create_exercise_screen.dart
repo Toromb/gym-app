@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import '../../models/plan_model.dart'; // Exercise model
 import '../../services/exercise_api_service.dart';
@@ -508,13 +508,16 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
           title: Text(widget.exercise == null
               ? 'Crear Ejercicio'
               : 'Editar Ejercicio')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               Text('Información Básica',
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
@@ -844,10 +847,12 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                           : 'Actualizar Ejercicio'),
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }

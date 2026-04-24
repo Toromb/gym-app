@@ -233,4 +233,42 @@ class GymsProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<String?> uploadBackgroundImage(String gymId, XFile file) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final token = await _getToken();
+      if (token == null) throw Exception('No authentication token found');
+
+      var request = http.MultipartRequest(
+          'POST', Uri.parse('$_baseUrl/gyms/$gymId/background'));
+      request.headers['Authorization'] = 'Bearer $token';
+
+      final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
+      final mediaType = MediaType.parse(mimeType);
+
+      if (kIsWeb) {
+        request.files.add(http.MultipartFile.fromBytes(
+            'file', await file.readAsBytes(),
+            filename: file.name, contentType: mediaType));
+      } else {
+        request.files.add(await http.MultipartFile.fromPath('file', file.path,
+            contentType: mediaType));
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        return data['backgroundImageUrl'] as String?;
+      } else {
+        throw Exception('Failed to upload background: ${response.body}');
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }
