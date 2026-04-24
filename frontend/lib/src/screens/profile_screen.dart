@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../constants/app_constants.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
+import '../utils/constants.dart';
 import '../widgets/payment_status_badge.dart';
 import '../widgets/background_page_wrapper.dart';
 
@@ -140,9 +141,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           body: Center(child: Text('Error al cargar perfil')));
 
     final colorScheme = Theme.of(context).colorScheme;
+    final authProvider = context.watch<AuthProvider>();
+    final bgUrl = authProvider.currentGymBackgroundImage != null
+        ? resolveImageUrl(authProvider.currentGymBackgroundImage!)
+        : null;
 
     return BackgroundPageWrapper(
       overlayOpacity: 0.85,
+      backgroundNetworkUrl: bgUrl,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: ConstrainedAppBar(

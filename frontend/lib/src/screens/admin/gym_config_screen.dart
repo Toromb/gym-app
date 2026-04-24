@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/gyms_provider.dart';
 import '../../models/gym_model.dart';
 import '../../utils/constants.dart';
+import '../../widgets/background_page_wrapper.dart';
 
 class GymConfigScreen extends StatefulWidget {
   const GymConfigScreen({super.key});
@@ -213,194 +214,208 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
       logoDisplayUrl = resolveImageUrl(_currentGym!.logoUrl!);
     }
 
-    return Scaffold(
-      appBar: ConstrainedAppBar(title: const Text('Configuración del Gym')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text('Identidad Visual',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
+    final bgUrl =
+        context.watch<AuthProvider>().currentGymBackgroundImage != null
+            ? resolveImageUrl(
+                context.watch<AuthProvider>().currentGymBackgroundImage!)
+            : null;
 
-                  // ── Logo + Imagen de Fondo (lado a lado) ──────────
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Logo
-                      Expanded(
-                        child: Column(
-                          children: [
-                            if (logoDisplayUrl != null)
-                              Image.network(logoDisplayUrl,
-                                  height: 80,
-                                  errorBuilder: (c, e, s) =>
-                                      const Icon(Icons.broken_image, size: 40)),
-                            const SizedBox(height: 8),
-                            ElevatedButton.icon(
-                              onPressed: _pickAndUploadLogo,
-                              icon: const Icon(Icons.upload, size: 18),
-                              label: const Text('Logo del Gym'),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text('JPG, PNG · Máx 5MB',
-                                style:
-                                    TextStyle(fontSize: 11, color: Colors.grey),
-                                textAlign: TextAlign.center),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // Imagen de Fondo
-                      Expanded(
-                        child: Column(
-                          children: [
-                            if (_currentGym?.backgroundImageUrl != null)
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  resolveImageUrl(
-                                      _currentGym!.backgroundImageUrl!),
-                                  height: 80,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (c, e, s) =>
-                                      const Icon(Icons.broken_image, size: 40),
-                                ),
-                              )
-                            else
-                              Container(
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade200,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Center(
-                                    child: Icon(Icons.wallpaper,
-                                        size: 36, color: Colors.grey)),
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.88,
+      backgroundNetworkUrl: bgUrl,
+      child: Scaffold(
+        appBar: ConstrainedAppBar(title: const Text('Configuración del Gym')),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text('Identidad Visual',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+
+                    // ── Logo + Imagen de Fondo (lado a lado) ──────────
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Logo
+                        Expanded(
+                          child: Column(
+                            children: [
+                              if (logoDisplayUrl != null)
+                                Image.network(logoDisplayUrl,
+                                    height: 80,
+                                    errorBuilder: (c, e, s) => const Icon(
+                                        Icons.broken_image,
+                                        size: 40)),
+                              const SizedBox(height: 8),
+                              ElevatedButton.icon(
+                                onPressed: _pickAndUploadLogo,
+                                icon: const Icon(Icons.upload, size: 18),
+                                label: const Text('Logo del Gym'),
                               ),
-                            const SizedBox(height: 8),
-                            ElevatedButton.icon(
-                              onPressed: _pickAndUploadBackground,
-                              icon: const Icon(Icons.image_outlined, size: 18),
-                              label: const Text('Imagen de Fondo'),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text('JPG, PNG · Máx 10MB',
-                                style:
-                                    TextStyle(fontSize: 11, color: Colors.grey),
-                                textAlign: TextAlign.center),
-                          ],
+                              const SizedBox(height: 4),
+                              const Text('JPG, PNG · Máx 5MB',
+                                  style: TextStyle(
+                                      fontSize: 11, color: Colors.grey),
+                                  textAlign: TextAlign.center),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
+                        const SizedBox(width: 16),
+                        // Imagen de Fondo
+                        Expanded(
+                          child: Column(
+                            children: [
+                              if (_currentGym?.backgroundImageUrl != null)
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    resolveImageUrl(
+                                        _currentGym!.backgroundImageUrl!),
+                                    height: 80,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (c, e, s) => const Icon(
+                                        Icons.broken_image,
+                                        size: 40),
+                                  ),
+                                )
+                              else
+                                Container(
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade200,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Center(
+                                      child: Icon(Icons.wallpaper,
+                                          size: 36, color: Colors.grey)),
+                                ),
+                              const SizedBox(height: 8),
+                              ElevatedButton.icon(
+                                onPressed: _pickAndUploadBackground,
+                                icon:
+                                    const Icon(Icons.image_outlined, size: 18),
+                                label: const Text('Imagen de Fondo'),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text('JPG, PNG · Máx 10MB',
+                                  style: TextStyle(
+                                      fontSize: 11, color: Colors.grey),
+                                  textAlign: TextAlign.center),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
 
-                  const SizedBox(height: 20),
-                  const Text('Información Institucional',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
+                    const SizedBox(height: 20),
+                    const Text('Información Institucional',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
 
-                  TextFormField(
-                    controller: _businessNameController,
-                    decoration:
-                        const InputDecoration(labelText: 'Nombre del Gimnasio'),
-                    validator: (value) => value!.isEmpty ? 'Requerido' : null,
-                  ),
-                  TextFormField(
-                    controller: _addressController,
-                    decoration: const InputDecoration(labelText: 'Dirección'),
-                    validator: (value) => value!.isEmpty ? 'Requerido' : null,
-                  ),
-                  TextFormField(
-                    controller: _phoneController,
-                    decoration:
-                        const InputDecoration(labelText: 'Teléfono / WhatsApp'),
-                  ),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration:
-                        const InputDecoration(labelText: 'Email de Contacto'),
-                  ),
-                  // Opening Hours Removed as requested
+                    TextFormField(
+                      controller: _businessNameController,
+                      decoration: const InputDecoration(
+                          labelText: 'Nombre del Gimnasio'),
+                      validator: (value) => value!.isEmpty ? 'Requerido' : null,
+                    ),
+                    TextFormField(
+                      controller: _addressController,
+                      decoration: const InputDecoration(labelText: 'Dirección'),
+                      validator: (value) => value!.isEmpty ? 'Requerido' : null,
+                    ),
+                    TextFormField(
+                      controller: _phoneController,
+                      decoration: const InputDecoration(
+                          labelText: 'Teléfono / WhatsApp'),
+                    ),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration:
+                          const InputDecoration(labelText: 'Email de Contacto'),
+                    ),
+                    // Opening Hours Removed as requested
 
-                  const SizedBox(height: 20),
-                  const Text('Mensajes',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _welcomeMessageController,
-                    decoration: const InputDecoration(
+                    const SizedBox(height: 20),
+                    const Text('Mensajes',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _welcomeMessageController,
+                      decoration: const InputDecoration(
+                          labelText:
+                              'Mensaje informativo (Pagina principal de Alumnos)'),
+                      maxLines: 2,
+                    ),
+
+                    const SizedBox(height: 20),
+                    const Text('Datos de Pago',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _paymentAliasController,
+                      decoration:
+                          const InputDecoration(labelText: 'Alias (Opcional)'),
+                    ),
+                    TextFormField(
+                      controller: _paymentCbuController,
+                      decoration: const InputDecoration(
+                          labelText: 'CBU / CVU (Opcional)'),
+                    ),
+                    TextFormField(
+                      controller: _paymentBankNameController,
+                      decoration: const InputDecoration(
+                          labelText: 'Nombre del Banco (Opcional)'),
+                    ),
+                    TextFormField(
+                      controller: _paymentAccountNameController,
+                      decoration: const InputDecoration(
+                          labelText: 'Titular de la Cuenta (Opcional)'),
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _paymentNotesController,
+                      decoration: const InputDecoration(
                         labelText:
-                            'Mensaje informativo (Pagina principal de Alumnos)'),
-                    maxLines: 2,
-                  ),
-
-                  const SizedBox(height: 20),
-                  const Text('Datos de Pago',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _paymentAliasController,
-                    decoration:
-                        const InputDecoration(labelText: 'Alias (Opcional)'),
-                  ),
-                  TextFormField(
-                    controller: _paymentCbuController,
-                    decoration: const InputDecoration(
-                        labelText: 'CBU / CVU (Opcional)'),
-                  ),
-                  TextFormField(
-                    controller: _paymentBankNameController,
-                    decoration: const InputDecoration(
-                        labelText: 'Nombre del Banco (Opcional)'),
-                  ),
-                  TextFormField(
-                    controller: _paymentAccountNameController,
-                    decoration: const InputDecoration(
-                        labelText: 'Titular de la Cuenta (Opcional)'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _paymentNotesController,
-                    decoration: const InputDecoration(
-                      labelText:
-                          'Notas / Avisos (Ej: Enviar comprobante al WhatsApp...)',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
-                  ),
-
-                  const SizedBox(height: 30),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: _saveForm,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 32),
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor:
-                            Theme.of(context).primaryColor.computeLuminance() >
-                                    0.5
-                                ? Colors.black
-                                : Colors.white,
+                            'Notas / Avisos (Ej: Enviar comprobante al WhatsApp...)',
+                        border: OutlineInputBorder(),
                       ),
-                      child: const Text('Guardar cambios',
-                          style: TextStyle(fontSize: 16)),
+                      maxLines: 3,
                     ),
-                  ),
-                ],
+
+                    const SizedBox(height: 30),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: _saveForm,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 16, horizontal: 32),
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Theme.of(context)
+                                      .primaryColor
+                                      .computeLuminance() >
+                                  0.5
+                              ? Colors.black
+                              : Colors.white,
+                        ),
+                        child: const Text('Guardar cambios',
+                            style: TextStyle(fontSize: 16)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

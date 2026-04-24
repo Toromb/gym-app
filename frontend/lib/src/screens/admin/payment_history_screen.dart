@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/payment_record_model.dart';
 import '../../services/payment_service.dart';
+import '../../providers/auth_provider.dart';
+import '../../utils/constants.dart';
 import '../../widgets/constrained_app_bar.dart';
+import '../../widgets/background_page_wrapper.dart';
 
 class PaymentHistoryScreen extends StatefulWidget {
   final String userId;
@@ -42,124 +46,134 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final authProvider = context.watch<AuthProvider>();
+    final bgUrl = authProvider.currentGymBackgroundImage != null
+        ? resolveImageUrl(authProvider.currentGymBackgroundImage!)
+        : null;
 
-    return Scaffold(
-      appBar: ConstrainedAppBar(
-        title: Text(
-          'Pagos – ${widget.userName}',
-          overflow: TextOverflow.ellipsis,
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Actualizar',
-            onPressed: _refresh,
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.88,
+      backgroundNetworkUrl: bgUrl,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: ConstrainedAppBar(
+          title: Text(
+            'Pagos – ${widget.userName}',
+            overflow: TextOverflow.ellipsis,
           ),
-        ],
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 700),
-          child: RefreshIndicator(
-            onRefresh: () async {
-              final f = _load();
-              setState(() => _historyFuture = f);
-              await f;
-            },
-            child: FutureBuilder<List<PaymentRecord>>(
-              future: _historyFuture,
-              builder: (context, snapshot) {
-                // ── Cargando ──
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                // ── Error ──
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.cloud_off,
-                              size: 48,
-                              color: colorScheme.error.withValues(alpha: 0.5)),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Error al cargar el historial',
-                            style: textTheme.bodyLarge
-                                ?.copyWith(color: colorScheme.error),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            snapshot.error.toString(),
-                            style: textTheme.bodySmall
-                                ?.copyWith(color: colorScheme.onSurfaceVariant),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          FilledButton.tonal(
-                            onPressed: _refresh,
-                            child: const Text('Reintentar'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                final records = snapshot.data ?? [];
-
-                return ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    // ── Cabecera del alumno ───────────────────────
-                    _buildHeader(context, records),
-                    const SizedBox(height: 24),
-
-                    // ── Historial ─────────────────────────────────
-                    Text(
-                      'HISTORIAL DE PAGOS',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                        color: colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    if (records.isEmpty)
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(48),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.receipt_long_outlined,
-                                size: 48,
-                                color: colorScheme.onSurfaceVariant
-                                    .withValues(alpha: 0.4),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Sin pagos registrados',
-                                style: textTheme.bodyLarge?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else
-                      ...records.map((r) => _buildRecordCard(context, r)),
-
-                    const SizedBox(height: 32),
-                  ],
-                );
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Actualizar',
+              onPressed: _refresh,
+            ),
+          ],
+        ),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 700),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                final f = _load();
+                setState(() => _historyFuture = f);
+                await f;
               },
+              child: FutureBuilder<List<PaymentRecord>>(
+                future: _historyFuture,
+                builder: (context, snapshot) {
+                  // ── Cargando ──
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  // ── Error ──
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.cloud_off,
+                                size: 48,
+                                color:
+                                    colorScheme.error.withValues(alpha: 0.5)),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Error al cargar el historial',
+                              style: textTheme.bodyLarge
+                                  ?.copyWith(color: colorScheme.error),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              snapshot.error.toString(),
+                              style: textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            FilledButton.tonal(
+                              onPressed: _refresh,
+                              child: const Text('Reintentar'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  final records = snapshot.data ?? [];
+
+                  return ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      // ── Cabecera del alumno ───────────────────────
+                      _buildHeader(context, records),
+                      const SizedBox(height: 24),
+
+                      // ── Historial ─────────────────────────────────
+                      Text(
+                        'HISTORIAL DE PAGOS',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      if (records.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(48),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.receipt_long_outlined,
+                                  size: 48,
+                                  color: colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.4),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Sin pagos registrados',
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        ...records.map((r) => _buildRecordCard(context, r)),
+
+                      const SizedBox(height: 32),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),

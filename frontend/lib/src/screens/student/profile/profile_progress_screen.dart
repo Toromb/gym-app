@@ -15,6 +15,7 @@ import '../calendar_screen.dart';
 import 'package:intl/intl.dart';
 import '../muscle_flow_screen.dart';
 import '../../../widgets/background_page_wrapper.dart';
+import '../../../utils/constants.dart';
 import '../../../utils/app_logger.dart';
 
 class ProfileProgressScreen extends StatefulWidget {
@@ -133,8 +134,13 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
       );
     }
 
+    final bgUrl = authProvider.currentGymBackgroundImage != null
+        ? resolveImageUrl(authProvider.currentGymBackgroundImage!)
+        : null;
+
     return BackgroundPageWrapper(
       overlayOpacity: 0.85,
+      backgroundNetworkUrl: bgUrl,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
