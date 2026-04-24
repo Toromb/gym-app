@@ -30,11 +30,33 @@ import 'dart:async';
 import 'src/services/api_client.dart';
 import 'src/services/auth_service.dart';
 
+// ─── Firebase Crashlytics ────────────────────────────────────────────────────
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+// ────────────────────────────────────────────────────────────────────────────
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setPathUrlStrategy();
+
+  // ─── Firebase Crashlytics initialization ──────────────────────────────────
+  // Must run before any other async code so errors during startup are captured.
+  await Firebase.initializeApp();
+
+  // Captures all Flutter framework errors (widget build failures, navigation
+  // errors, etc.) and reports them to Crashlytics as non-fatal events.
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+  // Captures errors that happen outside the Flutter framework — for example,
+  // unhandled async Future errors or native platform errors.
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true; // returning true prevents the default crash behavior
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
   await Hive.initFlutter();
   await LocalStorageService().init();
   SyncService().init();
