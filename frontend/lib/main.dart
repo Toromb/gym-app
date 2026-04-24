@@ -30,6 +30,10 @@ import 'src/services/api_client.dart';
 import 'src/services/auth_service.dart';
 
 // ─── Firebase Crashlytics ────────────────────────────────────────────────────
+// Crashlytics is only supported on iOS and Android.
+// On web, Firebase requires explicit FirebaseOptions which are not configured
+// for this project — skip initialization to allow web testing.
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 // ────────────────────────────────────────────────────────────────────────────
@@ -41,19 +45,21 @@ void main() async {
   setPathUrlStrategy();
 
   // ─── Firebase Crashlytics initialization ──────────────────────────────────
-  // Must run before any other async code so errors during startup are captured.
-  await Firebase.initializeApp();
+  // Crashlytics is only supported on iOS and Android (not web).
+  // Skip Firebase init entirely on web to avoid missing-options crash.
+  if (!kIsWeb) {
+    await Firebase.initializeApp();
 
-  // Captures all Flutter framework errors (widget build failures, navigation
-  // errors, etc.) and reports them to Crashlytics as non-fatal events.
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    // Captures all Flutter framework errors and reports them to Crashlytics.
+    FlutterError.onError =
+        FirebaseCrashlytics.instance.recordFlutterFatalError;
 
-  // Captures errors that happen outside the Flutter framework — for example,
-  // unhandled async Future errors or native platform errors.
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true; // returning true prevents the default crash behavior
-  };
+    // Captures errors outside the Flutter framework (unhandled async errors).
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+  }
   // ─────────────────────────────────────────────────────────────────────────
 
   await Hive.initFlutter();
