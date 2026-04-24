@@ -1,15 +1,30 @@
 import 'plan_model.dart';
 import 'free_training_model.dart';
 
+/// Represents an active or completed training session.
+///
+/// ## Plan ID resolution (assignedPlan vs plan)
+/// The backend supports two plan systems:
+///  - NEW (Phase 1+): Sessions link to an [AssignedPlan] — a frozen snapshot of
+///    the plan template at assignment time. This ensures plan edits by the teacher
+///    never affect a session already in progress.
+///  - LEGACY: Sessions link directly to the master [Plan] entity (pre-Phase1 data).
+///
+/// The frontend always uses [planId] as the effective plan identifier regardless
+/// of which backend system generated it. See [TrainingSession.fromJson] for the
+/// resolution priority.
 class TrainingSession {
   final String id;
   final String date;
-  final String? planId; // Nullable for free sessions
-  final FreeTraining? freeTrainingDefinition; // Nullable for plan sessions
+
+  /// Effective plan ID — may be an [AssignedPlan.id] (new) or a [Plan.id] (legacy).
+  /// Use this value when calling [PlanService.startSession] or comparing with
+  /// cached sessions in [PlanProvider].
+  final String? planId;
+  final FreeTraining? freeTrainingDefinition;
   final String source; // 'PLAN', 'FREE', 'CLASS'
   final String status; // 'IN_PROGRESS', 'COMPLETED', 'ABANDONED'
   final List<SessionExercise> exercises;
-  // Legacy fields adapting to new model
   final String? dayKey;
 
   TrainingSession({
@@ -27,9 +42,20 @@ class TrainingSession {
     return TrainingSession(
       id: json['id'],
       date: json['date'],
-      planId: json['plan'] != null
-          ? (json['plan'] is String ? json['plan'] : json['plan']['id'])
-          : null,
+      // Priority: assignedPlan (new snapshot system) → plan (legacy fallback) → null.
+      //
+      // The backend returns sessions with EITHER:
+      //   { assignedPlan: { id: '...' }, plan: null }  ← new sessions (Phase 1+)
+      //   { assignedPlan: null, plan: { id: '...' } }  ← legacy sessions
+      //   { plan: 'uuid-string' }                       ← from local cache (toJson output)
+      //
+      // The last case exists because toJson() persists planId as a raw string under
+      // the 'plan' key. fromJson handles all three cases transparently.
+      planId: (json['assignedPlan'] != null && json['assignedPlan'] is Map)
+          ? json['assignedPlan']['id']
+          : json['plan'] != null
+              ? (json['plan'] is String ? json['plan'] : json['plan']['id'])
+              : null,
       freeTrainingDefinition: json['freeTrainingDefinition'] != null
           ? FreeTraining.fromJson(json['freeTrainingDefinition'])
           : null,
@@ -61,6 +87,9 @@ class TrainingSession {
     return {
       'id': id,
       'date': date,
+      // We intentionally store planId under the key 'plan' (as a plain string).
+      // fromJson handles this via the `json['plan'] is String` branch, so the
+      // cache round-trip is lossless without needing a separate 'assignedPlanId' field.
       'plan': planId,
       'freeTrainingDefinition': freeTrainingDefinition !=
           null, // We generally don't serialize full object recursively for cache if we can avoid it, but here we need it for validation.

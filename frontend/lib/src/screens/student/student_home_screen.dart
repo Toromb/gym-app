@@ -60,9 +60,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final app_models.User? user = context.watch<AuthProvider>().user;
+    final String? bgUrl = user?.gym?.backgroundImageUrl != null
+        ? resolveImageUrl(user!.gym!.backgroundImageUrl!)
+        : null;
 
     return BackgroundPageWrapper(
       overlayOpacity: 0.75, // Extra dark for dashboard legibility
+      backgroundNetworkUrl: bgUrl,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(

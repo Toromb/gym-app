@@ -1,21 +1,70 @@
-import { Controller, Patch, Param, Body, UseGuards } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { PaymentStatus } from '../users/entities/user.entity';
+import { PaymentsService } from './payments.service';
+import { RegisterPaymentDto } from './dto/register-payment.dto';
+import { UserRole } from '../users/entities/user.entity';
 
 @Controller('payments')
 @UseGuards(AuthGuard('jwt'))
 export class PaymentsController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Patch(':userId')
-  async updateStatus(
+  /**
+   * POST /payments/user/:userId
+   * Registers one or more monthly payments for a user.
+   * Only ADMIN and SUPER_ADMIN can call this endpoint.
+   */
+  @Post('user/:userId')
+  async registerPayment(
     @Param('userId') userId: string,
-    @Body('status') status: PaymentStatus,
+    @Body() dto: RegisterPaymentDto,
+    @Request() req: any,
   ) {
-    // In a real app, we would update this via UsersService method that updates specific fields
-    // For MVP, assuming we can add a method to UsersService or use update
-    // return this.usersService.updatePaymentStatus(userId, status);
-    return { message: 'Payment status updated (mock)' };
+    const requestor = req.user;
+
+    if (
+      requestor.role !== UserRole.ADMIN &&
+      requestor.role !== UserRole.SUPER_ADMIN
+    ) {
+      throw new ForbiddenException('Only Admins can register payments');
+    }
+
+    return this.paymentsService.registerPayment(userId, dto, requestor);
+  }
+
+  /**
+   * GET /payments/user/:userId
+   * Returns the payment history for a user.
+   * Accessible by ADMIN, SUPER_ADMIN, or the user themselves.
+   */
+  @Get('user/:userId')
+  async getPaymentHistory(
+    @Param('userId') userId: string,
+    @Request() req: any,
+  ) {
+    const requestor = req.user;
+
+    const isAdmin =
+      requestor.role === UserRole.ADMIN ||
+      requestor.role === UserRole.SUPER_ADMIN;
+    const isSelf = requestor.id === userId;
+
+    if (!isAdmin && !isSelf) {
+      throw new ForbiddenException(
+        'You can only view your own payment history',
+      );
+    }
+
+    return this.paymentsService.getPaymentHistory(userId);
   }
 }

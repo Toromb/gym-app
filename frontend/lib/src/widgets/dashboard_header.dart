@@ -139,11 +139,14 @@ class GymDashboardHeader extends StatelessWidget {
                     child: IconButton(
                       icon: Icon(Icons.logout,
                           color: isDark ? Colors.white : Colors.black87),
-                      onPressed: () {
-                        context.read<AuthProvider>().logout();
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                            '/login', (route) => false);
+                      onPressed: () async {
+                        await context.read<AuthProvider>().logout();
+                        if (context.mounted) {
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/login', (route) => false);
+                        }
                       },
+
                       tooltip: 'Cerrar Sesión',
                     ),
                   );

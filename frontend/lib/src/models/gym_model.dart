@@ -9,6 +9,7 @@ class Gym {
 
   // Customization
   final String? logoUrl;
+  final String? backgroundImageUrl;
   final String? primaryColor;
   final String? secondaryColor;
   final String? welcomeMessage;
@@ -30,6 +31,7 @@ class Gym {
     required this.status,
     required this.maxProfiles,
     this.logoUrl,
+    this.backgroundImageUrl,
     this.primaryColor,
     this.secondaryColor,
     this.welcomeMessage,
@@ -51,6 +53,7 @@ class Gym {
       status: json['status'] ?? 'active',
       maxProfiles: json['maxProfiles'] ?? 0,
       logoUrl: json['logoUrl'],
+      backgroundImageUrl: json['backgroundImageUrl'],
       primaryColor: json['primaryColor'],
       secondaryColor: json['secondaryColor'],
       welcomeMessage: json['welcomeMessage'],
@@ -73,6 +76,7 @@ class Gym {
       'status': status,
       'maxProfiles': maxProfiles,
       'logoUrl': logoUrl,
+      'backgroundImageUrl': backgroundImageUrl,
       'primaryColor': primaryColor,
       'secondaryColor': secondaryColor,
       'welcomeMessage': welcomeMessage,
@@ -94,6 +98,7 @@ class Gym {
     String? status,
     int? maxProfiles,
     String? logoUrl,
+    String? backgroundImageUrl,
     String? primaryColor,
     String? secondaryColor,
     String? welcomeMessage,
@@ -113,6 +118,7 @@ class Gym {
       status: status ?? this.status,
       maxProfiles: maxProfiles ?? this.maxProfiles,
       logoUrl: logoUrl ?? this.logoUrl,
+      backgroundImageUrl: backgroundImageUrl ?? this.backgroundImageUrl,
       primaryColor: primaryColor ?? this.primaryColor,
       secondaryColor: secondaryColor ?? this.secondaryColor,
       welcomeMessage: welcomeMessage ?? this.welcomeMessage,

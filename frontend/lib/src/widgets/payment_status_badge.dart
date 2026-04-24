@@ -3,19 +3,30 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/gyms_provider.dart';
+import '../services/payment_service.dart';
 
 class PaymentStatusBadge extends StatefulWidget {
   final String? status; // 'paid', 'pending', 'overdue'
+
+  /// Legacy callback — called with no args (kept for compat, prefer [onRegisterPayment])
   final VoidCallback? onMarkAsPaid;
+
+  /// New callback — called with payment details from the bottom sheet
+  final void Function(double? amount, String? method, String? notes, int months)?
+      onRegisterPayment;
+
   final bool isEditable;
   final String? expirationDate;
+  final String? userId; // Required when using onRegisterPayment
 
   const PaymentStatusBadge({
     super.key,
     required this.status,
     this.onMarkAsPaid,
+    this.onRegisterPayment,
     this.isEditable = false,
     this.expirationDate,
+    this.userId,
   });
 
   @override
@@ -231,6 +242,245 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
         });
   }
 
+  // ---------------------------------------------------------------------------
+  // Register Payment Bottom Sheet
+  // ---------------------------------------------------------------------------
+
+  Future<void> _showRegisterPaymentSheet() async {
+    if (!mounted) return;
+
+    double? amount;
+    String? selectedMethod;
+    String notesText = '';
+    int months = 1;
+    bool isSubmitting = false;
+
+    final TextEditingController amountController = TextEditingController();
+    final TextEditingController notesController = TextEditingController();
+
+    const methods = ['Efectivo', 'Transferencia', 'Otro'];
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+                top: 24,
+                left: 24,
+                right: 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[400],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Registrar Pago',
+                    style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Todos los campos son opcionales excepto los meses.',
+                    style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Meses a regularizar
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Meses a regularizar',
+                          style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle_outline),
+                        onPressed: months <= 1
+                            ? null
+                            : () => setSheetState(() => months--),
+                      ),
+                      SizedBox(
+                        width: 32,
+                        child: Text(
+                          '$months',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle_outline),
+                        onPressed: months >= 12
+                            ? null
+                            : () => setSheetState(() => months++),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Monto
+                  TextField(
+                    controller: amountController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Monto (opcional)',
+                      hintText: 'Ej: 15000',
+                      prefixIcon: Icon(Icons.attach_money),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (v) {
+                      amount = double.tryParse(v.replaceAll(',', '.'));
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Método
+                  DropdownButtonFormField<String>(
+                    value: selectedMethod,
+                    decoration: const InputDecoration(
+                      labelText: 'Método de pago (opcional)',
+                      prefixIcon: Icon(Icons.payment),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      const DropdownMenuItem<String>(
+                        value: null,
+                        child: Text('Sin especificar'),
+                      ),
+                      ...methods.map(
+                        (m) => DropdownMenuItem(value: m, child: Text(m)),
+                      ),
+                    ],
+                    onChanged: (v) => setSheetState(() => selectedMethod = v),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Nota
+                  TextField(
+                    controller: notesController,
+                    maxLength: 200,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Nota (opcional)',
+                      hintText: 'Ej: Pago de abril en efectivo',
+                      prefixIcon: Icon(Icons.note_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (v) => notesText = v,
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Botones
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Cancelar'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: StatefulBuilder(
+                          builder: (_, setBtnState) => FilledButton.icon(
+                            icon: isSubmitting
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white),
+                                  )
+                                : const Icon(Icons.check),
+                            label: const Text('Confirmar'),
+                            onPressed: isSubmitting
+                                ? null
+                                : () async {
+                                    setSheetState(() => isSubmitting = true);
+
+                                    bool success = false;
+                                    final effectiveNotes =
+                                        notesText.isEmpty ? null : notesText;
+                                    final effectiveMethod =
+                                        selectedMethod?.toLowerCase();
+
+                                    if (widget.onRegisterPayment != null) {
+                                      // New callback: caller handles the API
+                                      widget.onRegisterPayment!(
+                                        amount,
+                                        effectiveMethod,
+                                        effectiveNotes,
+                                        months,
+                                      );
+                                      success = true;
+                                    } else if (widget.userId != null) {
+                                      // Direct API call
+                                      success = await PaymentService()
+                                          .registerPayment(
+                                        widget.userId!,
+                                        amount: amount,
+                                        method: effectiveMethod,
+                                        notes: effectiveNotes,
+                                        periodMonths: months,
+                                      );
+                                    } else if (widget.onMarkAsPaid != null) {
+                                      // Legacy path
+                                      widget.onMarkAsPaid!();
+                                      success = true;
+                                    }
+
+                                    if (ctx.mounted) Navigator.pop(ctx);
+
+                                    if (mounted && success) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(const SnackBar(
+                                        content: Text('Pago registrado ✅'),
+                                        backgroundColor: Colors.green,
+                                      ));
+                                    }
+                                  },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Color color;
@@ -300,7 +550,7 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
       ],
     );
 
-    if (widget.isEditable && widget.onMarkAsPaid != null && s != 'paid') {
+    if (widget.isEditable && (widget.onMarkAsPaid != null || widget.onRegisterPayment != null || widget.userId != null)) {
       return PopupMenuButton<String>(
         child: badge,
         itemBuilder: (context) => [
@@ -310,13 +560,13 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
               children: [
                 Icon(Icons.payment, color: Colors.green),
                 SizedBox(width: 8),
-                Text('Mark as Paid (Abonado)'),
+                Text('Registrar Pago'),
               ],
             ),
           ),
         ],
         onSelected: (v) {
-          if (v == 'pay') widget.onMarkAsPaid!();
+          if (v == 'pay') _showRegisterPaymentSheet();
         },
       );
     }

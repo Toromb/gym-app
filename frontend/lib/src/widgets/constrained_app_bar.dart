@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/background_styles.dart';
 
 /// Drop-in replacement for [AppBar] that constrains its content
 /// (back button, title, and actions) to [maxWidth] pixels.
@@ -47,13 +48,31 @@ class ConstrainedAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => Size.fromHeight(
-      kToolbarHeight + (bottom?.preferredSize.height ?? 0));
+  Size get preferredSize =>
+      Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
+
+  /// Sombra aplicada por defecto al título y al botón de retroceso
+  /// para garantizar legibilidad sobre cualquier fondo (imagen, color, gradiente).
+  static const _shadowedTitleStyle = TextStyle(
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    shadows: BackgroundStyles.shadow,
+  );
+
+  static const _shadowedIconTheme = IconThemeData(
+    color: Colors.white,
+    shadows: BackgroundStyles.shadow,
+  );
 
   @override
   Widget build(BuildContext context) {
     final bool canPop = automaticallyImplyLeading &&
         (ModalRoute.of(context)?.canPop ?? false);
+
+    // Merge caller overrides on top of the shadowed defaults
+    final effectiveTitleStyle = titleTextStyle ?? _shadowedTitleStyle;
+    final effectiveIconTheme = iconTheme ?? _shadowedIconTheme;
 
     return AppBar(
       // Disable the default leading so we handle layout ourselves
@@ -62,8 +81,8 @@ class ConstrainedAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: backgroundColor,
       elevation: elevation,
       scrolledUnderElevation: scrolledUnderElevation ?? 0,
-      iconTheme: iconTheme,
-      titleTextStyle: titleTextStyle,
+      iconTheme: effectiveIconTheme,
+      titleTextStyle: effectiveTitleStyle,
       bottom: bottom,
       // titleSpacing: 0 lets the title widget fill the full width so we can
       // apply our own padding inside the constrained row.
@@ -73,21 +92,29 @@ class ConstrainedAppBar extends StatelessWidget implements PreferredSizeWidget {
           constraints: BoxConstraints(maxWidth: maxWidth),
           child: Row(
             children: [
-              // Back button or custom leading
+              // Back button or custom leading — always white+shadow
               if (leading != null)
                 leading!
               else if (canPop)
-                BackButton(
-                    onPressed: () => Navigator.maybePop(context),
-                    color: Colors.white),
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.maybePop(context),
+                  style: ButtonStyle(
+                    iconColor: WidgetStateProperty.all(Colors.white),
+                    iconSize: WidgetStateProperty.all(24),
+                  ),
+                ),
 
-              // Title — expands to fill available space
+              // Title — expands to fill available space, inherits shadow style
               if (title != null)
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(
                         left: (canPop || leading != null) ? 4.0 : 16.0),
-                    child: title!,
+                    child: DefaultTextStyle.merge(
+                      style: effectiveTitleStyle,
+                      child: title!,
+                    ),
                   ),
                 ),
 

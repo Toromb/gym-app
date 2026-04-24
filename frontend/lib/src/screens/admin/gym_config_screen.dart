@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
@@ -122,13 +122,11 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
             .uploadLogo(_currentGym!.id, image);
 
         if (newUrl != null) {
-          // Manually update local state to ensure save uses new URL
           setState(() {
             if (_currentGym != null) {
               _currentGym = _currentGym!.copyWith(logoUrl: newUrl);
             }
           });
-          // Also reload from backend to be safe
           _loadGym();
           ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Logo actualizado correctamente')));
@@ -136,6 +134,34 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
       } catch (e) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Error al subir logo: $e')));
+      }
+    }
+  }
+
+  Future<void> _pickAndUploadBackground() async {
+    if (_currentGym == null) return;
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      try {
+        final newUrl = await Provider.of<GymsProvider>(context, listen: false)
+            .uploadBackgroundImage(_currentGym!.id, image);
+
+        if (newUrl != null) {
+          setState(() {
+            if (_currentGym != null) {
+              _currentGym = _currentGym!.copyWith(backgroundImageUrl: newUrl);
+            }
+          });
+          _loadGym();
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Imagen de fondo actualizada correctamente')));
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al subir imagen de fondo: $e')));
       }
     }
   }
@@ -208,26 +234,78 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
 
-                  // Logo Section
-                  Center(
-                    child: Column(
-                      children: [
-                        if (logoDisplayUrl != null)
-                          Image.network(logoDisplayUrl,
-                              height: 100,
-                              errorBuilder: (c, e, s) =>
-                                  const Icon(Icons.broken_image, size: 50)),
-                        const SizedBox(height: 8),
-                        ElevatedButton.icon(
-                          onPressed: _pickAndUploadLogo,
-                          icon: const Icon(Icons.upload),
-                          label: const Text('Subir Logo del Gym'),
+                  // ── Logo + Imagen de Fondo (lado a lado) ──────────
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Logo
+                      Expanded(
+                        child: Column(
+                          children: [
+                            if (logoDisplayUrl != null)
+                              Image.network(logoDisplayUrl,
+                                  height: 80,
+                                  errorBuilder: (c, e, s) =>
+                                      const Icon(Icons.broken_image, size: 40)),
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: _pickAndUploadLogo,
+                              icon: const Icon(Icons.upload, size: 18),
+                              label: const Text('Logo del Gym'),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text('JPG, PNG · Máx 5MB',
+                                style:
+                                    TextStyle(fontSize: 11, color: Colors.grey),
+                                textAlign: TextAlign.center),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        const Text('Formatos: JPG, PNG. Máx: 5MB',
-                            style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Imagen de Fondo
+                      Expanded(
+                        child: Column(
+                          children: [
+                            if (_currentGym?.backgroundImageUrl != null)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  resolveImageUrl(
+                                      _currentGym!.backgroundImageUrl!),
+                                  height: 80,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (c, e, s) => const Icon(
+                                      Icons.broken_image,
+                                      size: 40),
+                                ),
+                              )
+                            else
+                              Container(
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Center(
+                                    child: Icon(Icons.wallpaper,
+                                        size: 36, color: Colors.grey)),
+                              ),
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: _pickAndUploadBackground,
+                              icon: const Icon(Icons.image_outlined, size: 18),
+                              label: const Text('Imagen de Fondo'),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text('JPG, PNG · Máx 10MB',
+                                style:
+                                    TextStyle(fontSize: 11, color: Colors.grey),
+                                textAlign: TextAlign.center),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
 

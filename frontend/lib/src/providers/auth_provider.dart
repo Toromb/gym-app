@@ -15,6 +15,8 @@ class AuthProvider with ChangeNotifier {
   AuthStatus get status => _status;
 
   bool _isAuthenticated = false;
+  bool _isLoggingOut = false; // evita que el interceptor 401 dispare "sesión expirada" durante un logout voluntario
+  bool get isLoggingOut => _isLoggingOut;
   String? _token;
   User? _user;
   final AuthService _authService = AuthService();
@@ -145,12 +147,24 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await _authService.logout();
-    await _googleAuthService.signOut(); // Ensure Google session is also cleared
+    // 1. Borrar token del storage de inmediato
+    //    Esto hace que cualquier request en vuelo que aún no terminó
+    //    no tenga token y falle silenciosamente, sin activar el interceptor.
+    _isLoggingOut = true;
     _isAuthenticated = false;
     _token = null;
     _user = null;
-    notifyListeners();
+    await _authService.deleteLocalTokens(); // limpia storage antes del network call
+    notifyListeners(); // UI redirige a login de inmediato
+
+    // 2. Notificar al backend en background (best-effort, ignoramos errores)
+    _authService.revokeServerToken().catchError((_) {});
+
+    try {
+      await _googleAuthService.signOut();
+    } catch (_) {}
+
+    _isLoggingOut = false;
   }
 
   Future<void> changePassword(
