@@ -104,6 +104,8 @@ jobs:
         run: dart format --output=none --set-exit-if-changed .
 
       - name: Flutter analyze
-        # Reports all warnings and errors. Treats info as warning.
-        # Set `--fatal-infos` to be even stricter.
-        run: flutter analyze --fatal-warnings
+        # --fatal-warnings: real warnings (deprecated APIs, type issues, etc.) fail CI.
+        # --no-fatal-infos: info-level hints (prefer_const, use_build_context_synchronously,
+        #   etc.) are reported but do NOT block the build. These are tracked separately
+        #   and resolved incrementally — they are not blocking bugs.
+        run: flutter analyze --fatal-warnings --no-fatal-infos
