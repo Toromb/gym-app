@@ -571,14 +571,46 @@ export class PlansService {
     const plan = await this.findOne(id);
     if (!plan) throw new NotFoundException('Plan not found');
 
-    // Permission: Admin, Super Admin or Plan Owner
-    if (
-      user.role !== 'admin' &&
-      user.role !== 'super_admin' &&
-      plan.teacher?.id !== user.id
-    ) {
+    // ─── Permission Check ─────────────────────────────────────────────────────
+    // Admins and Super Admins can delete ANY plan in their gym.
+    // Professors can only delete plans they created themselves.
+    const isAdminOrSuperAdmin =
+      user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN;
+    const isPlanOwner = plan.teacher?.id === user.id;
+
+    if (!isAdminOrSuperAdmin && !isPlanOwner) {
       throw new ForbiddenException('You can only delete your own plans');
     }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // ─── Active Assignment Guard ──────────────────────────────────────────────
+    // BUSINESS RULE: A plan with ACTIVE student assignments cannot be deleted
+    // by a PROFESSOR. This prevents accidental data loss for students mid-training.
+    //
+    // ADMINS, however, CAN force-delete a plan even with active assignments.
+    // This is a deliberate design decision: the admin is responsible for the gym
+    // and must be able to remove plans for operational reasons (e.g. outdated
+    // content, wrong assignment, etc.).
+    //
+    // WHAT HAPPENS ON DELETE (via TypeORM cascade — see entity definitions):
+    //   - AssignedPlan (student_plans): CASCADE DELETE
+    //       → All student assignments for this plan are removed.
+    //       → Student loses their current progress (progress JSON is gone).
+    //       → If active, the plan disappears from the student's "Mi Rutina" screen.
+    //
+    //   - TrainingSession: CASCADE on plan_id column
+    //       → Sessions tied to this plan are also deleted.
+    //       → Student loses session-level history linked to this plan.
+    //
+    //   - CompletedPlan: NOT cascaded from Plan
+    //       → Historical completed plans are preserved. The plan template is gone
+    //          but the completion record (with its sessions snapshot) remains.
+    //          The UI shows completed history by CompletedPlan, not by Plan,
+    //          so history survives the deletion.
+    //
+    // SUMMARY: Deleting a plan is DESTRUCTIVE for active/pending assignments.
+    // It is SAFE for historical data (completed plans are not affected).
+    // ─────────────────────────────────────────────────────────────────────────
 
     const activeAssignments = await this.studentPlanRepository.find({
       where: { plan: { id: id }, isActive: true },
@@ -586,26 +618,40 @@ export class PlansService {
     });
 
     if (activeAssignments.length > 0) {
-      // LOG for debugging
-      this.logger.warn(`Attempted to delete Plan ${id} but found ${activeAssignments.length} active assignments.`);
-      activeAssignments.forEach(a => {
-        this.logger.warn(`- Assignment ID: ${a.id}, Student: ${a.student?.firstName} ${a.student?.lastName} (${a.student?.id})`);
+      this.logger.warn(
+        `Plan ${id} ("${plan.name}") has ${activeAssignments.length} active assignment(s).`,
+      );
+      activeAssignments.forEach((a) => {
+        this.logger.warn(
+          `  → Assignment ${a.id} | Student: ${a.student?.firstName} ${a.student?.lastName} (${a.student?.id})`,
+        );
       });
 
-      const studentNames = activeAssignments
-        .map((a) => `${a.student.firstName} ${a.student.lastName} (ID: ${a.student.id})`)
-        .join(', ');
-      const { ConflictException } = require('@nestjs/common');
-      throw new ConflictException(
-        `No se puede eliminar: El plan está activo para: ${studentNames}`,
+      if (!isAdminOrSuperAdmin) {
+        // Professors cannot delete a plan with active students.
+        const studentNames = activeAssignments
+          .map(
+            (a) =>
+              `${a.student.firstName} ${a.student.lastName}`,
+          )
+          .join(', ');
+        throw new ConflictException(
+          `No se puede eliminar: el plan está activo para ${studentNames}. Desasignalo primero.`,
+        );
+      }
+
+      // Admin force-delete: log a clear warning before proceeding.
+      this.logger.warn(
+        `Admin ${user.id} is force-deleting Plan ${id} with ${activeAssignments.length} active assignment(s). ` +
+          `Affected students will lose their current progress.`,
       );
     }
 
     try {
       await this.plansRepository.remove(plan);
+      this.logger.log(`Plan ${id} ("${plan.name}") deleted by user ${user.id} (${user.role}).`);
     } catch (error) {
       this.logger.error(`Failed to delete Plan ${id}`, error.stack);
-      // Re-throw or handle specific TypeORM errors if needed
       throw error;
     }
   }
