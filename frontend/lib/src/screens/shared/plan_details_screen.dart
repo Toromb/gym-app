@@ -1,7 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../../models/plan_model.dart';
 import '../../models/student_assignment_model.dart';
 import '../../providers/plan_provider.dart';
@@ -42,70 +41,6 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
     super.initState();
     _plan = widget.plan;
     _currentAssignment = widget.assignment;
-  }
-
-  Future<void> _handleProgressUpdate(String type, String id, bool completed,
-      {String? date}) async {
-    if (_currentAssignment == null) return;
-
-    // Optimistic Update
-    setState(() {
-      Map<String, dynamic> newProgress = Map.from(_currentAssignment!.progress);
-
-      if (type == 'exercise') {
-        Map<String, dynamic> exercises =
-            Map.from(newProgress['exercises'] ?? {});
-        if (completed) {
-          exercises[id] = true;
-        } else {
-          exercises.remove(id);
-        }
-        newProgress['exercises'] = exercises;
-      } else if (type == 'day') {
-        Map<String, dynamic> days = Map.from(newProgress['days'] ?? {});
-        if (completed) {
-          days[id] = {'completed': true, 'date': date};
-        } else {
-          days.remove(id);
-        }
-        newProgress['days'] = days;
-      }
-
-      _currentAssignment =
-          _currentAssignment!.copyWithProgress(newProgress: newProgress);
-    });
-
-    final success = await context.read<PlanProvider>().updateProgress(
-        _currentAssignment!.id, type, id, completed,
-        date: date);
-
-    if (!success) {
-      if (mounted) {
-        // Revert (could just reload from server or use simple toggle back logic)
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-                AppLocalizations.of(context)!.get('errorUpdateProgress'))));
-        // Ideally revert state here, but for MVP keep it simple
-      }
-    }
-  }
-
-  void _onDayCheckboxChanged(bool? value, String dayId) async {
-    if (value == true) {
-      final DateTime? picked = await showDatePicker(
-        context: context,
-        initialDate: DateTime.now(),
-        firstDate: DateTime(2020),
-        lastDate: DateTime(2030),
-        helpText: AppLocalizations.of(context)!.get('selectDate'),
-      );
-      if (picked != null) {
-        _handleProgressUpdate('day', dayId, true,
-            date: DateFormat('yyyy-MM-dd').format(picked));
-      }
-    } else {
-      _handleProgressUpdate('day', dayId, false);
-    }
   }
 
   @override
@@ -457,7 +392,7 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
                 Navigator.of(context).popUntil((route) => route.isFirst);
               } else if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(AppLocalizations.of(context)!.get('errorGeneral') ?? 'Error')),
+                  SnackBar(content: Text(AppLocalizations.of(context)!.get('errorGeneral'))),
                 );
               }
             },

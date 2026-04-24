@@ -1,7 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../../models/plan_model.dart';
 import '../../providers/plan_provider.dart';
@@ -118,7 +117,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     // Fix: Enforce TODAY for ALL sessions (Free & Plan)
     picked = DateTime.now();
 
-    if (picked != null && mounted) {
+    if (mounted) {
       final dateStr = DateFormat('yyyy-MM-dd').format(picked);
       try {
         // If we are in standard mode, we have _currentSession in provider
@@ -289,7 +288,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                           border: Border.all(color: Colors.purple.shade200),
                         ),
                         child: Text(
-                          widget.day!.trainingIntent!.label,
+                          widget.day!.trainingIntent.label,
                           style: TextStyle(
                               color: Colors.purple.shade900,
                               fontSize: 12,
@@ -395,30 +394,4 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     );
   }
 
-  Widget _buildMetric(
-      BuildContext context, IconData icon, String value, String label) {
-    return Column(
-      children: [
-        Icon(icon, color: Colors.grey[600], size: 20),
-        const SizedBox(height: 4),
-        Text(value,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-      ],
-    );
-  }
-
-  Future<void> _launchVideo(BuildContext context, String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(AppLocalizations.of(context)!.get('errorVideo'))),
-        );
-      }
-    }
-  }
 }

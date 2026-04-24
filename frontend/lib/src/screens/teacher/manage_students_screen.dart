@@ -1,12 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../models/user_model.dart';
-import 'assign_plan_modal.dart';
-import 'student_plans_screen.dart';
-import '../shared/user_detail_screen.dart';
-import '../student/muscle_flow_screen.dart';
 import '../../widgets/student_card_item.dart';
 
 class ManageStudentsScreen extends StatefulWidget {

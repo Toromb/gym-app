@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../widgets/constrained_app_bar.dart';
 import '../../../models/free_training_model.dart';
 import '../../../models/plan_model.dart';
@@ -105,21 +105,21 @@ class _FreeTrainingEditorScreenState extends State<FreeTrainingEditorScreen> {
 
     if (!mounted) return;
 
-    // Controllers
+    // Controllers — 'selected' is guaranteed non-null here (null check at line 101)
     final setsController = TextEditingController(
         text: existing?.sets.toString() ??
-            selected?.defaultSets?.toString() ??
+            selected.defaultSets?.toString() ??
             '3');
     final repsController = TextEditingController(
-        text: existing?.reps ?? selected?.reps ?? '12'); // Default reps
+        text: existing?.reps ?? selected.reps ?? '12');
     final loadController = TextEditingController(
-        text: existing?.suggestedLoad ?? selected?.load ?? '');
+        text: existing?.suggestedLoad ?? selected.load ?? '');
     final restController =
-        TextEditingController(text: existing?.rest ?? selected?.rest ?? '60s');
+        TextEditingController(text: existing?.rest ?? selected.rest ?? '60s');
     final notesController =
-        TextEditingController(text: existing?.notes ?? selected?.notes ?? '');
+        TextEditingController(text: existing?.notes ?? selected.notes ?? '');
     final videoUrlController = TextEditingController(
-        text: existing?.videoUrl ?? selected?.videoUrl ?? '');
+        text: existing?.videoUrl ?? selected.videoUrl ?? '');
 
     await showDialog(
         context: context,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../models/free_training_model.dart'; // Keep model just in case? Or remove if unused. kept for types.
-// import '../../../services/free_training_service.dart'; // Consumed by Selector internally now.
+// FreeTraining types accessed transitively through selector and editor screens
 import '../../student/free_training/free_training_selector_screen.dart';
 import 'free_training_editor_screen.dart';
 

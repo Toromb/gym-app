@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
-
 import '../../providers/auth_provider.dart';
 import '../../providers/gyms_provider.dart';
-import '../../providers/gyms_provider.dart';
 import '../../models/gym_model.dart';
-import '../../utils/constants.dart'; // Import constants
+import '../../utils/constants.dart';
 
 class GymConfigScreen extends StatefulWidget {
   const GymConfigScreen({super.key});

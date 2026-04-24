@@ -4,17 +4,15 @@ import 'package:provider/provider.dart';
 import '../../../providers/stats_provider.dart';
 import '../../../providers/user_provider.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../services/user_service.dart'; // Import UserService
+import '../../../services/user_service.dart';
 import '../../../models/user_model.dart';
 import '../../../models/stats_model.dart';
-import '../../../models/onboarding_model.dart'; // Import OnboardingModel
-import '../../../services/onboarding_service.dart'; // Import Service
-import '../../../services/api_client.dart'; // Import Client
-import '../../../theme/app_theme.dart';
+import '../../../services/onboarding_service.dart';
+import '../../../services/api_client.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:collection/collection.dart'; // Import for firstWhereOrNull
-import '../calendar_screen.dart'; // Import CalendarScreen for embedding
-import 'package:intl/intl.dart'; // For date formatting
+import 'package:collection/collection.dart';
+import '../calendar_screen.dart';
+import 'package:intl/intl.dart';
 import '../muscle_flow_screen.dart';
 import '../../../widgets/background_page_wrapper.dart';
 
@@ -82,7 +80,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
         final service = OnboardingService(ApiClient());
         final profile = await service.getUserOnboarding(targetUser.id);
         print('ProfileProgress: Onboarding result: ${profile?.goal}');
-        if (profile != null && profile.goal != null) {
+        if (profile != null) {
           if (mounted) {
             setState(() {
               _fallbackGoal = profile.goal;
@@ -395,22 +393,6 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
               ),
             ],
           )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-      String title, String value, String subtitle, IconData icon, Color color) {
-    return _buildUnifiedCard(
-      title: title,
-      icon: icon,
-      color: color,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildDataLine(value, subtitle, isPrimary: true),
         ],
       ),
     );

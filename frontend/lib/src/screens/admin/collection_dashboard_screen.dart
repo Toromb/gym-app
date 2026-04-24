@@ -4,7 +4,6 @@ import '../../models/user_model.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/constrained_app_bar.dart';
 import '../../widgets/payment_status_badge.dart';
-import '../shared/user_detail_screen.dart';
 import 'payment_history_screen.dart';
 import 'edit_user_screen.dart';
 

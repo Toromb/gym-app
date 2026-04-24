@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
-import '../../providers/theme_provider.dart';
-import '../../providers/stats_provider.dart'; // Import StatsProvider
+import '../../providers/stats_provider.dart';
 import '../../models/user_model.dart' as app_models;
-import '../../models/stats_model.dart'; // Import StatsModel
+import '../../models/stats_model.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../models/plan_model.dart';
@@ -13,17 +12,11 @@ import '../../models/student_assignment_model.dart';
 import '../shared/day_detail_screen.dart';
 import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
-// import 'student_plan_screen.dart'; // No longer direct nav
 import 'student_plans_list_screen.dart';
-import '../../widgets/payment_status_badge.dart';
-import 'calendar_screen.dart';
 import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
-import 'package:intl/intl.dart';
-
 import 'free_training/free_training_selector_screen.dart';
 import 'profile/profile_progress_screen.dart';
-import '../../widgets/dashboard_payment_button.dart';
 import '../../utils/constants.dart';
 import '../../widgets/dashboard_header.dart';
 import '../../widgets/background_page_wrapper.dart';
@@ -663,18 +656,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     );
   }
 
-  Widget _infoRow(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.grey),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
-        ],
-      ),
-    );
-  }
 
   String _getTodayScheduleText(BuildContext context) {
     final schedules = context.watch<GymScheduleProvider>().schedules;

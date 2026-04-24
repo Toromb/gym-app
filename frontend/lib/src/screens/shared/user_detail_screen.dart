@@ -454,19 +454,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   // --- Helpers ---
 
-  String _translatePaymentStatus(String? status) {
-    switch (status) {
-      case 'paid':
-        return 'AL DÍA';
-      case 'pending':
-        return 'POR VENCER';
-      case 'overdue':
-        return 'VENCIDA';
-      default:
-        return 'PENDIENTE';
-    }
-  }
-
   String _translateGoal(String goal) {
     switch (goal) {
       case 'musculation':
@@ -500,21 +487,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         return 'Actual';
       default:
         return exp;
-    }
-  }
-
-  String _translateActivity(String act) {
-    switch (act) {
-      case 'sedentary':
-        return 'Sedentario';
-      case 'light':
-        return 'Leve';
-      case 'moderate':
-        return 'Moderada';
-      case 'high':
-        return 'Alta';
-      default:
-        return act;
     }
   }
 
