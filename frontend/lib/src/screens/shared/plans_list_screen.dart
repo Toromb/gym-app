@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../localization/app_localizations.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
 import '../../models/plan_model.dart';
+import '../../utils/constants.dart';
 import 'package:intl/intl.dart';
 import '../teacher/create_plan_screen.dart';
 import 'plan_details_screen.dart';
+import '../../widgets/background_page_wrapper.dart';
 
 class PlansListScreen extends StatefulWidget {
   const PlansListScreen({super.key});
@@ -28,86 +31,96 @@ class _PlansListScreenState extends State<PlansListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: ConstrainedAppBar(
-          title: Text(AppLocalizations.of(context)!.get('plansLibrary'))),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Consumer<PlanProvider>(
-            builder: (context, planProvider, _) {
-              if (planProvider.isLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+    final bgUrl =
+        context.watch<AuthProvider>().currentGymBackgroundImage != null
+            ? resolveImageUrl(
+                context.watch<AuthProvider>().currentGymBackgroundImage!)
+            : null;
 
-              if (planProvider.plans.isEmpty) {
-                return Center(
-                    child: Text(
-                        AppLocalizations.of(context)!.get('noPlansFound')));
-              }
-
-              // Group plans by creator
-              final Map<String, List<Plan>> groupedPlans = {};
-
-              for (var plan in planProvider.plans) {
-                // Search Filter
-                if (_searchQuery.isNotEmpty &&
-                    !plan.name
-                        .toLowerCase()
-                        .contains(_searchQuery.toLowerCase())) {
-                  continue;
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.88,
+      backgroundNetworkUrl: bgUrl,
+      child: Scaffold(
+        appBar: ConstrainedAppBar(
+            title: Text(AppLocalizations.of(context)!.get('plansLibrary'))),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: Consumer<PlanProvider>(
+              builder: (context, planProvider, _) {
+                if (planProvider.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
                 }
 
-                final creatorName = plan.teacher != null
-                    ? '${plan.teacher!.firstName} ${plan.teacher!.lastName}'
-                    : AppLocalizations.of(context)!.get('withoutAuthor');
-
-                if (!groupedPlans.containsKey(creatorName)) {
-                  groupedPlans[creatorName] = [];
+                if (planProvider.plans.isEmpty) {
+                  return Center(
+                      child: Text(
+                          AppLocalizations.of(context)!.get('noPlansFound')));
                 }
-                groupedPlans[creatorName]!.add(plan);
-              }
 
-              final sortedKeys = groupedPlans.keys.toList()..sort();
+                // Group plans by creator
+                final Map<String, List<Plan>> groupedPlans = {};
 
-              return ListView.builder(
-                padding: const EdgeInsets.only(bottom: 100),
-                itemBuilder: (context, index) {
-                  // Header index
-                  if (index == 0) {
-                    return _buildSearch();
+                for (var plan in planProvider.plans) {
+                  // Search Filter
+                  if (_searchQuery.isNotEmpty &&
+                      !plan.name
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase())) {
+                    continue;
                   }
-                  final creatorName =
-                      sortedKeys[index - 1]; // Offset by 1 for search
-                  final plans = groupedPlans[creatorName]!;
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionHeader(context, creatorName, plans.length),
-                      ...plans
-                          .map((plan) => _buildPlanCard(context, plan))
-                          .toList(),
-                    ],
-                  );
-                },
-                itemCount: sortedKeys.length + 1, // +1 for Search
-              );
-            },
+                  final creatorName = plan.teacher != null
+                      ? '${plan.teacher!.firstName} ${plan.teacher!.lastName}'
+                      : AppLocalizations.of(context)!.get('withoutAuthor');
+
+                  if (!groupedPlans.containsKey(creatorName)) {
+                    groupedPlans[creatorName] = [];
+                  }
+                  groupedPlans[creatorName]!.add(plan);
+                }
+
+                final sortedKeys = groupedPlans.keys.toList()..sort();
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 100),
+                  itemBuilder: (context, index) {
+                    // Header index
+                    if (index == 0) {
+                      return _buildSearch();
+                    }
+                    final creatorName =
+                        sortedKeys[index - 1]; // Offset by 1 for search
+                    final plans = groupedPlans[creatorName]!;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader(context, creatorName, plans.length),
+                        ...plans
+                            .map((plan) => _buildPlanCard(context, plan))
+                            .toList(),
+                      ],
+                    );
+                  },
+                  itemCount: sortedKeys.length + 1, // +1 for Search
+                );
+              },
+            ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreatePlanScreen()),
-          );
-          if (result == true && context.mounted) {
-            context.read<PlanProvider>().fetchPlans();
-          }
-        },
-        child: const Icon(Icons.add),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CreatePlanScreen()),
+            );
+            if (result == true && context.mounted) {
+              context.read<PlanProvider>().fetchPlans();
+            }
+          },
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../models/user_model.dart';
 import '../../constants/app_constants.dart';
 import '../../services/onboarding_service.dart';
@@ -8,12 +9,14 @@ import '../../services/api_client.dart';
 import '../../models/onboarding_model.dart';
 import '../../providers/stats_provider.dart';
 import '../../models/stats_model.dart';
+import '../../utils/constants.dart';
 import '../student/muscle_flow/muscle_flow_summary.dart';
 import '../student/muscle_flow/muscle_flow_body.dart';
 import '../student/muscle_flow/muscle_flow_list.dart';
 import '../../widgets/payment_status_badge.dart';
 import '../../services/stats_service.dart';
 import '../admin/payment_history_screen.dart';
+import '../../widgets/background_page_wrapper.dart';
 
 class UserDetailScreen extends StatefulWidget {
   final User user;
@@ -61,321 +64,335 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      appBar: ConstrainedAppBar(title: const Text('Detalle de Alumno')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: ListView(
-            padding: const EdgeInsets.all(20.0),
-            children: [
-              // --- HEADER ---
-              // Nombre completo, Badge, Rol
-              Center(
-                child: Column(
-                  children: [
-                    Text(
-                      '${widget.user.firstName} ${widget.user.lastName}',
-                      style: textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Badge
-                        PaymentStatusBadge(
-                          status: widget.user.paymentStatus,
-                          isEditable: false,
-                        ),
-                        const SizedBox(width: 12),
-                        // Rol Code
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(8),
+    final bgUrl =
+        context.watch<AuthProvider>().currentGymBackgroundImage != null
+            ? resolveImageUrl(
+                context.watch<AuthProvider>().currentGymBackgroundImage!)
+            : null;
+
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.88,
+      backgroundNetworkUrl: bgUrl,
+      child: Scaffold(
+        appBar: ConstrainedAppBar(title: const Text('Detalle de Alumno')),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: ListView(
+              padding: const EdgeInsets.all(20.0),
+              children: [
+                // --- HEADER ---
+                // Nombre completo, Badge, Rol
+                Center(
+                  child: Column(
+                    children: [
+                      Text(
+                        '${widget.user.firstName} ${widget.user.lastName}',
+                        style: textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Badge
+                          PaymentStatusBadge(
+                            status: widget.user.paymentStatus,
+                            isEditable: false,
                           ),
-                          child: Text(
-                            widget.user.role.toUpperCase(),
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurfaceVariant),
+                          const SizedBox(width: 12),
+                          // Rol Code
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              widget.user.role.toUpperCase(),
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurfaceVariant),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // --- TARJETA 1: Información Personal ---
+                _buildCard(
+                  context,
+                  title: 'Información Personal',
+                  child: Wrap(
+                    spacing: 24,
+                    runSpacing: 16,
+                    children: [
+                      _buildInfoItem(context, 'Email', widget.user.email,
+                          width: 250),
+                      _buildInfoItem(
+                          context, 'Teléfono', widget.user.phone ?? 'N/A'),
+                      _buildInfoItem(
+                          context, 'Género', widget.user.gender ?? 'N/A'),
+                      _buildInfoItem(context, 'Fecha Nac.',
+                          widget.user.birthDate ?? 'N/A'),
+                      _buildInfoItem(context, 'Edad',
+                          widget.user.age?.toString() ?? 'N/A'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // --- TARJETA 2: Membresía ---
+                if (widget.user.role == AppRoles.alumno)
+                  _buildCard(
+                    context,
+                    title: 'Membresía',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Column(
+                              children: [
+                                const Text('Estado',
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.grey)),
+                                const SizedBox(height: 4),
+                                PaymentStatusBadge(
+                                  status: widget.user.paymentStatus,
+                                  isEditable: false,
+                                  expirationDate: null,
+                                ),
+                              ],
+                            ),
+                            _buildInfoItem(
+                                context,
+                                'Alta',
+                                widget.user.membershipStartDate
+                                        ?.split('T')[0] ??
+                                    'N/A',
+                                centered: true),
+                            _buildInfoItem(
+                                context,
+                                'Vencimiento',
+                                widget.user.membershipExpirationDate
+                                        ?.split('T')[0] ??
+                                    'Sin pago',
+                                centered: true),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Divider(height: 1),
+                        const SizedBox(height: 4),
+                        // Botón historial de pagos
+                        TextButton.icon(
+                          icon: const Icon(Icons.history, size: 16),
+                          label: const Text('Ver historial de pagos',
+                              style: TextStyle(fontSize: 13)),
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PaymentHistoryScreen(
+                                userId: widget.user.id,
+                                userName:
+                                    '${widget.user.firstName} ${widget.user.lastName}',
+                                membershipStartDate:
+                                    widget.user.membershipStartDate,
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
+                  ),
+                if (widget.user.role == AppRoles.alumno)
+                  const SizedBox(height: 16),
 
-              // --- TARJETA 1: Información Personal ---
-              _buildCard(
-                context,
-                title: 'Información Personal',
-                child: Wrap(
-                  spacing: 24,
-                  runSpacing: 16,
-                  children: [
-                    _buildInfoItem(context, 'Email', widget.user.email,
-                        width: 250),
-                    _buildInfoItem(
-                        context, 'Teléfono', widget.user.phone ?? 'N/A'),
-                    _buildInfoItem(
-                        context, 'Género', widget.user.gender ?? 'N/A'),
-                    _buildInfoItem(
-                        context, 'Fecha Nac.', widget.user.birthDate ?? 'N/A'),
-                    _buildInfoItem(
-                        context, 'Edad', widget.user.age?.toString() ?? 'N/A'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // --- TARJETA 2: Membresía ---
-              if (widget.user.role == AppRoles.alumno)
-                _buildCard(
-                  context,
-                  title: 'Membresía',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Column(
-                            children: [
-                              const Text('Estado',
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.grey)),
-                              const SizedBox(height: 4),
-                              PaymentStatusBadge(
-                                status: widget.user.paymentStatus,
-                                isEditable: false,
-                                expirationDate: null,
-                              ),
-                            ],
-                          ),
-                          _buildInfoItem(
-                              context,
-                              'Alta',
-                              widget.user.membershipStartDate?.split('T')[0] ??
-                                  'N/A',
-                              centered: true),
-                          _buildInfoItem(
-                              context,
-                              'Vencimiento',
-                              widget.user.membershipExpirationDate
-                                      ?.split('T')[0] ??
-                                  'Sin pago',
-                              centered: true),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Divider(height: 1),
-                      const SizedBox(height: 4),
-                      // Botón historial de pagos
-                      TextButton.icon(
-                        icon: const Icon(Icons.history, size: 16),
-                        label: const Text('Ver historial de pagos',
-                            style: TextStyle(fontSize: 13)),
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PaymentHistoryScreen(
-                              userId: widget.user.id,
-                              userName:
-                                  '${widget.user.firstName} ${widget.user.lastName}',
-                              membershipStartDate:
-                                  widget.user.membershipStartDate,
+                // --- TARJETA 3: Perfil Físico ---
+                if (widget.user.role == AppRoles.alumno)
+                  _buildCard(
+                    context,
+                    title: 'Perfil Físico',
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        // Peso Actual Destacado
+                        Column(
+                          children: [
+                            Text('Peso Actual',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: colorScheme.onSurfaceVariant)),
+                            Text(
+                              widget.user.currentWeight != null
+                                  ? '${widget.user.currentWeight} kg'
+                                  : 'N/A',
+                              style: textTheme.headlineSmall?.copyWith(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold),
                             ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              if (widget.user.role == AppRoles.alumno)
-                const SizedBox(height: 16),
-
-              // --- TARJETA 3: Perfil Físico ---
-              if (widget.user.role == AppRoles.alumno)
-                _buildCard(
-                  context,
-                  title: 'Perfil Físico',
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      // Peso Actual Destacado
-                      Column(
-                        children: [
-                          Text('Peso Actual',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: colorScheme.onSurfaceVariant)),
-                          Text(
-                            widget.user.currentWeight != null
-                                ? '${widget.user.currentWeight} kg'
-                                : 'N/A',
-                            style: textTheme.headlineSmall?.copyWith(
-                                color: colorScheme.primary,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      _buildInfoItem(
-                          context,
-                          'Peso Inicial',
-                          widget.user.initialWeight != null
-                              ? '${widget.user.initialWeight} kg'
-                              : 'N/A',
-                          centered: true),
-                      _buildInfoItem(
-                          context,
-                          'Altura',
-                          widget.user.height != null
-                              ? '${widget.user.height} cm'
-                              : 'N/A',
-                          centered: true),
-                    ],
-                  ),
-                ),
-              if (widget.user.role == AppRoles.alumno)
-                const SizedBox(height: 16),
-
-              // --- TARJETA 4: Onboarding ---
-              if (widget.user.role == AppRoles.alumno)
-                _buildCard(
-                  context,
-                  title: 'Perfil de Entrenamiento',
-                  child: FutureBuilder<List<dynamic>>(
-                    future: Future.wait([
-                      OnboardingService(ApiClient())
-                          .getUserOnboarding(widget.user.id),
-                      StatsService().getStudentProgress(widget.user.id),
-                    ]),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      final profile = snapshot.data?[0] as OnboardingProfile?;
-                      final progress = snapshot.data?[1] as UserProgress?;
-
-                      // Fallback Strategy
-                      // If OnboardingProfile is null, we try to use data from User entity
-                      String? backupGoal = widget.user.trainingGoal;
-
-                      if (profile == null &&
-                          backupGoal == null &&
-                          progress == null) {
-                        return const Text('Sin datos disponibles.',
-                            style: TextStyle(fontStyle: FontStyle.italic));
-                      }
-
-                      // Prepare data variables
-                      String goal =
-                          profile?.goal ?? backupGoal ?? 'No definido';
-                      String? goalReason = profile?.goalDetails;
-                      String experience = profile != null
-                          ? _translateExperience(profile.experience)
-                          : 'No definido';
-                      // String level = profile != null ? _translateActivity(profile.activityLevel) : 'No definido'; // OLD
-                      String level = progress != null
-                          ? 'Nivel ${progress.level.current}'
-                          : 'N/A'; // NEW
-
-                      String frequency =
-                          _translateFrequency(profile?.desiredFrequency) ??
-                              'No definido';
-                      String injuries = profile?.injuries.isNotEmpty == true
-                          ? profile!.injuries.join(', ')
-                          : 'Ninguna';
-                      String? injuryDetails = profile?.injuryDetails;
-
-                      // Render
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildSubSectionTitle(context, 'OBJETIVO'),
-                          Row(
-                            children: [
-                              Expanded(
-                                  child: _buildInfoItem(
-                                      context,
-                                      'Objetivo Principal',
-                                      _translateGoal(goal))),
-                            ],
-                          ),
-                          if (goalReason != null) ...[
-                            const SizedBox(height: 8),
-                            _buildInfoItem(context, 'Detalle', goalReason),
                           ],
-                          const SizedBox(height: 16),
-                          const Divider(),
-                          const SizedBox(height: 16),
-                          _buildSubSectionTitle(context, 'PERFIL'),
-                          Wrap(
-                            spacing: 24,
-                            runSpacing: 16,
-                            children: [
-                              _buildInfoItem(context, 'Nivel', level),
-                              _buildInfoItem(
-                                  context, 'Experiencia', experience),
-                              _buildInfoItem(context, 'Frecuencia', frequency),
-                              _buildInfoItem(context, 'Lesiones', injuries),
-                            ],
-                          ),
-                          if (injuryDetails != null) ...[
-                            const SizedBox(height: 8),
-                            _buildInfoItem(
-                                context, 'Detalles Lesión', injuryDetails),
-                          ]
-                        ],
-                      );
-                    },
+                        ),
+                        _buildInfoItem(
+                            context,
+                            'Peso Inicial',
+                            widget.user.initialWeight != null
+                                ? '${widget.user.initialWeight} kg'
+                                : 'N/A',
+                            centered: true),
+                        _buildInfoItem(
+                            context,
+                            'Altura',
+                            widget.user.height != null
+                                ? '${widget.user.height} cm'
+                                : 'N/A',
+                            centered: true),
+                      ],
+                    ),
                   ),
-                ),
-              if (widget.user.role == AppRoles.alumno)
-                const SizedBox(height: 16),
+                if (widget.user.role == AppRoles.alumno)
+                  const SizedBox(height: 16),
 
-              // --- TARJETA 5: Estado Muscular ---
-              if (widget.user.role == AppRoles.alumno)
-                _buildCard(context,
-                    title: 'Estado Muscular',
-                    child: _loadingMuscles
-                        ? const Center(
-                            child: Padding(
-                                padding: EdgeInsets.all(24),
-                                child: CircularProgressIndicator()))
-                        : Column(
-                            children: [
-                              MuscleFlowSummary(loads: _muscleLoads),
-                              const SizedBox(height: 24),
-                              ConstrainedBox(
-                                constraints:
-                                    const BoxConstraints(maxHeight: 400),
-                                child: MuscleFlowBody(loads: _muscleLoads),
-                              ),
-                              const SizedBox(height: 16),
-                              ExpansionTile(
-                                title: const Text('Ver detalle numérico',
-                                    style: TextStyle(fontSize: 14)),
-                                children: [
-                                  MuscleFlowList(
-                                      loads: _muscleLoads,
-                                      isEmpty: _muscleLoads.isEmpty),
-                                ],
-                              )
+                // --- TARJETA 4: Onboarding ---
+                if (widget.user.role == AppRoles.alumno)
+                  _buildCard(
+                    context,
+                    title: 'Perfil de Entrenamiento',
+                    child: FutureBuilder<List<dynamic>>(
+                      future: Future.wait([
+                        OnboardingService(ApiClient())
+                            .getUserOnboarding(widget.user.id),
+                        StatsService().getStudentProgress(widget.user.id),
+                      ]),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+
+                        final profile = snapshot.data?[0] as OnboardingProfile?;
+                        final progress = snapshot.data?[1] as UserProgress?;
+
+                        // Fallback Strategy
+                        // If OnboardingProfile is null, we try to use data from User entity
+                        String? backupGoal = widget.user.trainingGoal;
+
+                        if (profile == null &&
+                            backupGoal == null &&
+                            progress == null) {
+                          return const Text('Sin datos disponibles.',
+                              style: TextStyle(fontStyle: FontStyle.italic));
+                        }
+
+                        // Prepare data variables
+                        String goal =
+                            profile?.goal ?? backupGoal ?? 'No definido';
+                        String? goalReason = profile?.goalDetails;
+                        String experience = profile != null
+                            ? _translateExperience(profile.experience)
+                            : 'No definido';
+                        // String level = profile != null ? _translateActivity(profile.activityLevel) : 'No definido'; // OLD
+                        String level = progress != null
+                            ? 'Nivel ${progress.level.current}'
+                            : 'N/A'; // NEW
+
+                        String frequency =
+                            _translateFrequency(profile?.desiredFrequency) ??
+                                'No definido';
+                        String injuries = profile?.injuries.isNotEmpty == true
+                            ? profile!.injuries.join(', ')
+                            : 'Ninguna';
+                        String? injuryDetails = profile?.injuryDetails;
+
+                        // Render
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSubSectionTitle(context, 'OBJETIVO'),
+                            Row(
+                              children: [
+                                Expanded(
+                                    child: _buildInfoItem(
+                                        context,
+                                        'Objetivo Principal',
+                                        _translateGoal(goal))),
+                              ],
+                            ),
+                            if (goalReason != null) ...[
+                              const SizedBox(height: 8),
+                              _buildInfoItem(context, 'Detalle', goalReason),
                             ],
-                          )),
+                            const SizedBox(height: 16),
+                            const Divider(),
+                            const SizedBox(height: 16),
+                            _buildSubSectionTitle(context, 'PERFIL'),
+                            Wrap(
+                              spacing: 24,
+                              runSpacing: 16,
+                              children: [
+                                _buildInfoItem(context, 'Nivel', level),
+                                _buildInfoItem(
+                                    context, 'Experiencia', experience),
+                                _buildInfoItem(
+                                    context, 'Frecuencia', frequency),
+                                _buildInfoItem(context, 'Lesiones', injuries),
+                              ],
+                            ),
+                            if (injuryDetails != null) ...[
+                              const SizedBox(height: 8),
+                              _buildInfoItem(
+                                  context, 'Detalles Lesión', injuryDetails),
+                            ]
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                if (widget.user.role == AppRoles.alumno)
+                  const SizedBox(height: 16),
 
-              const SizedBox(height: 32),
-            ],
+                // --- TARJETA 5: Estado Muscular ---
+                if (widget.user.role == AppRoles.alumno)
+                  _buildCard(context,
+                      title: 'Estado Muscular',
+                      child: _loadingMuscles
+                          ? const Center(
+                              child: Padding(
+                                  padding: EdgeInsets.all(24),
+                                  child: CircularProgressIndicator()))
+                          : Column(
+                              children: [
+                                MuscleFlowSummary(loads: _muscleLoads),
+                                const SizedBox(height: 24),
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxHeight: 400),
+                                  child: MuscleFlowBody(loads: _muscleLoads),
+                                ),
+                                const SizedBox(height: 16),
+                                ExpansionTile(
+                                  title: const Text('Ver detalle numérico',
+                                      style: TextStyle(fontSize: 14)),
+                                  children: [
+                                    MuscleFlowList(
+                                        loads: _muscleLoads,
+                                        isEmpty: _muscleLoads.isEmpty),
+                                  ],
+                                )
+                              ],
+                            )),
+
+                const SizedBox(height: 32),
+              ],
+            ),
           ),
         ),
       ),
