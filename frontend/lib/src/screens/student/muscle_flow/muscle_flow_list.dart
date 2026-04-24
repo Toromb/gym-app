@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../models/stats_model.dart';
 import 'muscle_flow_utils.dart';
 
@@ -49,13 +49,13 @@ class MuscleFlowList extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.2),
+                        color: color.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: color, width: 1),
                       ),
                       child: Text(status,
                           style: TextStyle(
-                              color: color.withOpacity(1), // Opaque text
+                              color: color.withValues(alpha: 1), // Opaque text
                               fontSize: 12,
                               fontWeight: FontWeight.bold)),
                     ),

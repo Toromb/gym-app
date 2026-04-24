@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:gym_app/src/services/auth_service.dart';
 // import 'package:gym_app/src/widgets/responsive_layout.dart'; // Removed missing file
 // import 'package:go_router/go_router.dart'; // Removed
@@ -108,14 +108,14 @@ class _ActivateAccountScreenState extends State<ActivateAccountScreen> {
                     if (_errorMessage != null)
                       Container(
                         padding: const EdgeInsets.all(8),
-                        color: Colors.red.withOpacity(0.1),
+                        color: Colors.red.withValues(alpha: 0.1),
                         child: Text(_errorMessage!,
                             style: const TextStyle(color: Colors.red)),
                       ),
                     if (_successMessage != null)
                       Container(
                         padding: const EdgeInsets.all(8),
-                        color: Colors.green.withOpacity(0.1),
+                        color: Colors.green.withValues(alpha: 0.1),
                         child: Text(_successMessage!,
                             style: const TextStyle(color: Colors.green)),
                       ),

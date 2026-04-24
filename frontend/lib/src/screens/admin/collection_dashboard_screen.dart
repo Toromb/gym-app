@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/user_model.dart';
 import '../../providers/user_provider.dart';
@@ -287,7 +287,7 @@ class _CollectionDashboardScreenState
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
           decoration: BoxDecoration(
             color: isSelected
-                ? color.withOpacity(0.15)
+                ? color.withValues(alpha: 0.15)
                 : Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
@@ -349,7 +349,7 @@ class _CollectionDashboardScreenState
     return ChoiceChip(
       label: Text('$label ($count)'),
       selected: isSelected,
-      selectedColor: color.withOpacity(0.2),
+      selectedColor: color.withValues(alpha: 0.2),
       side: BorderSide(color: isSelected ? color : Colors.transparent),
       labelStyle: TextStyle(
         color: isSelected ? color : null,

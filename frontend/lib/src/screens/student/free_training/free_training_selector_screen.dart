@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../models/free_training_model.dart';
 import '../../../services/free_training_service.dart';
 import '../../shared/day_detail_screen.dart';
@@ -533,7 +533,7 @@ class _FreeTrainingSelectorScreenState
               padding: const EdgeInsets.only(bottom: 16),
               child: Card(
                 elevation: 0,
-                color: theme.colorScheme.surface.withOpacity(0.9),
+                color: theme.colorScheme.surface.withValues(alpha: 0.9),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16)),
                 child: InkWell(
@@ -683,21 +683,21 @@ class _FreeTrainingSelectorScreenState
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           color:
-              isSelected ? color : theme.colorScheme.surface.withOpacity(0.9),
+              isSelected ? color : theme.colorScheme.surface.withValues(alpha: 0.9),
           border: Border.all(
               color: isSelected
                   ? Colors.transparent
-                  : theme.dividerColor.withOpacity(0.1),
+                  : theme.dividerColor.withValues(alpha: 0.1),
               width: 2),
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                  color: color.withOpacity(0.4),
+                  color: color.withValues(alpha: 0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 4))
             else
               BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 4,
                   offset: const Offset(0, 2))
           ]),
@@ -714,8 +714,8 @@ class _FreeTrainingSelectorScreenState
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                       color: isSelected
-                          ? Colors.white.withOpacity(0.2)
-                          : color.withOpacity(0.1),
+                          ? Colors.white.withValues(alpha: 0.2)
+                          : color.withValues(alpha: 0.1),
                       shape: BoxShape.circle),
                   child: Icon(icon,
                       color: isSelected ? Colors.white : color, size: 28),
@@ -736,7 +736,7 @@ class _FreeTrainingSelectorScreenState
                         Text(subtitle,
                             style: theme.textTheme.bodySmall?.copyWith(
                                 color: isSelected
-                                    ? Colors.white.withOpacity(0.8)
+                                    ? Colors.white.withValues(alpha: 0.8)
                                     : theme.textTheme.bodySmall?.color)),
                       ],
                     ],

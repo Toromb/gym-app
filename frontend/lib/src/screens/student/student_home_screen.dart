@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
@@ -500,7 +500,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             ),
             boxShadow: [
               BoxShadow(
-                  color: const Color(0xFF5B8C98).withOpacity(0.6),
+                  color: const Color(0xFF5B8C98).withValues(alpha: 0.6),
                   blurRadius: 16,
                   offset: const Offset(0, 8))
             ]),
@@ -513,7 +513,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text('PRÓXIMO ENTRENAMIENTO',
@@ -536,7 +536,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               Text(
                 'Inicio • Semana ${week.weekNumber}',
                 style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14), // Reduced from 16
               ),
               const SizedBox(height: 24), // Reduced from 32
@@ -593,8 +593,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           boxShadow: [
             BoxShadow(
                 color: isDark
-                    ? Colors.black.withOpacity(0.3)
-                    : Colors.black.withOpacity(0.1),
+                    ? Colors.black.withValues(alpha: 0.3)
+                    : Colors.black.withValues(alpha: 0.1),
                 blurRadius: 15,
                 offset: const Offset(0, 5))
           ]),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../models/payment_record_model.dart';
 import '../../services/payment_service.dart';
 import '../../widgets/constrained_app_bar.dart';
@@ -85,7 +85,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                         children: [
                           Icon(Icons.cloud_off,
                               size: 48,
-                              color: colorScheme.error.withOpacity(0.5)),
+                              color: colorScheme.error.withValues(alpha: 0.5)),
                           const SizedBox(height: 16),
                           Text(
                             'Error al cargar el historial',
@@ -141,7 +141,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                 Icons.receipt_long_outlined,
                                 size: 48,
                                 color: colorScheme.onSurfaceVariant
-                                    .withOpacity(0.4),
+                                    .withValues(alpha: 0.4),
                               ),
                               const SizedBox(height: 16),
                               Text(
