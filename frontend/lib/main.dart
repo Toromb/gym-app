@@ -46,23 +46,34 @@ void main() async {
     return await AuthService().refreshToken();
   };
 
+  // Flag para evitar múltiples snackbars en paralelo
+  bool _sessionTerminationHandled = false;
+
   ApiClient.onSessionTerminated = () {
-    // Force an immediate UI redirect to Login when session dies
     final context = navigatorKey.currentContext;
-    if (context != null) {
-      Provider.of<AuthProvider>(context, listen: false).logout().then((_) {
-        navigatorKey.currentState
-            ?.pushNamedAndRemoveUntil('/login', (route) => false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tu sesión ha expirado por seguridad.')),
-        );
-      });
-    } else {
-      AuthService().logout().then((_) {
-        navigatorKey.currentState
-            ?.pushNamedAndRemoveUntil('/login', (route) => false);
-      });
-    }
+    if (context == null) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    // Si el usuario ya no está autenticado (logout voluntario o ya procesado),
+    // no mostrar el mensaje de "sesión expirada".
+    if (!authProvider.isAuthenticated) return;
+
+    // Evitar múltiples snackbars/redirects simultáneos
+    if (_sessionTerminationHandled) return;
+    _sessionTerminationHandled = true;
+
+    authProvider.logout().then((_) {
+      _sessionTerminationHandled = false;
+      navigatorKey.currentState
+          ?.pushNamedAndRemoveUntil('/login', (route) => false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tu sesión ha expirado por seguridad.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    });
   };
 
   runApp(

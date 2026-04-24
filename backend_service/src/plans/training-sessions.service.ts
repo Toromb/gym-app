@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThanOrEqual, IsNull } from 'typeorm';
@@ -26,6 +27,8 @@ import { AssignedPlan } from './entities/assigned-plan.entity';
 
 @Injectable()
 export class TrainingSessionsService {
+  private readonly logger = new Logger(TrainingSessionsService.name);
+
   constructor(
     @InjectRepository(TrainingSession)
     private sessionRepo: Repository<TrainingSession>,
@@ -64,7 +67,17 @@ export class TrainingSessionsService {
 
         const dayKey = `W${weekNumber}-D${dayOrder}`;
 
-        // Determine if it's new AssignedPlan or legacy Plan
+        // -------------------------------------------------------------------
+        // DUAL-PLAN RESOLUTION
+        // -------------------------------------------------------------------
+        // The `planId` received here is the *effective* plan ID from the frontend,
+        // which may be either:
+        //   a) An AssignedPlan UUID  → used by all sessions created after Phase 1
+        //   b) A master Plan UUID    → legacy sessions only (pre-Phase 1 data)
+        //
+        // We always try AssignedPlan first. If not found, we fall back to the
+        // master Plan table. This ensures backward compatibility without any
+        // migration of existing data.
         const assignedPlan = await this.sessionRepo.manager.findOne(AssignedPlan, {
           where: { id: planId },
           relations: [
@@ -120,7 +133,6 @@ export class TrainingSessionsService {
         }
 
         // Create NEW Plan Session
-
         const week = activePlanStructure!.weeks?.find((w: any) => w.weekNumber === weekNumber);
         if (!week) throw new NotFoundException(`Week ${weekNumber} not found`);
 
@@ -129,6 +141,8 @@ export class TrainingSessionsService {
 
         const newSessionData: any = {
           student: { id: userId },
+          // Only one of plan/assignedPlan is set \u2014 the other stays null.
+          // This matches how fromJson on the frontend resolves the planId.
           plan: legacyPlan ? { id: planId } : null,
           assignedPlan: assignedPlan ? { id: planId } : null,
           date: finalDate,
@@ -253,7 +267,7 @@ export class TrainingSessionsService {
       }
 
     } catch (e) {
-      console.error('Error starting session:', e);
+      this.logger.error('Error starting session', (e as Error)?.stack);
       throw e;
     }
   }
@@ -377,17 +391,12 @@ export class TrainingSessionsService {
   }
 
   private async _trySyncLoad(sessionId: string) {
-    console.log(`[DEBUG] _trySyncLoad for Session ${sessionId}`);
     const fullSession = await this.sessionRepo.findOne({
       where: { id: sessionId },
       relations: ['exercises', 'exercises.exercise', 'student'],
     });
     if (fullSession) {
-      console.log(`[DEBUG] fullSession found with ${fullSession.exercises?.length} exercises. Calling muscleLoadService.syncExecutionLoad`);
-      // Cast to any if muscleLoadService expects PlanExecution but structure is compatible
       await this.muscleLoadService.syncExecutionLoad(fullSession as any);
-    } else {
-      console.log(`[DEBUG] fullSession NOT FOUND for ${sessionId}`);
     }
   }
 
@@ -444,7 +453,6 @@ export class TrainingSessionsService {
     const saved = await this.sessionRepo.save(session);
 
     // Sync Muscle Load
-    console.log(`[DEBUG] Session ${sessionId} saved as COMPLETED. Calling _trySyncLoad...`);
     await this._trySyncLoad(saved.id);
 
     // LEGACY SYNC (Deprecated)

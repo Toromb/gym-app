@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
@@ -7,15 +7,12 @@ import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
 import '../../services/auth_service.dart';
 import 'package:flutter/services.dart';
-import '../../models/plan_model.dart';
 import '../../models/user_model.dart'; // Import User model for type checking
 import 'add_user_screen.dart';
 import 'edit_user_screen.dart';
 import '../teacher/student_plans_screen.dart';
-import '../../widgets/payment_status_badge.dart';
 import '../shared/user_detail_screen.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import '../../services/api_client.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   const ManageUsersScreen({super.key});
@@ -26,7 +23,7 @@ class ManageUsersScreen extends StatefulWidget {
 
 class _ManageUsersScreenState extends State<ManageUsersScreen> {
   String _searchQuery = '';
-  String _filterStatus = 'all'; // 'all', 'paid', 'pending', 'overdue'
+  String _filterRole = 'all'; // 'all', 'alumno', 'profe'
 
   @override
   void initState() {
@@ -103,20 +100,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
                 if (!matchesSearch) return false;
 
-                if (_filterStatus == 'all') return true;
-
-                final status = u.paymentStatus?.toLowerCase() ?? 'pending';
-                return status == _filterStatus;
+                if (_filterRole == 'all') return true;
+                return u.role == _filterRole;
               }).toList();
 
               if (isAdmin) {
-                final admins =
-                    filteredUsers.where((u) => u.role == 'admin').toList();
-                final profes =
-                    filteredUsers.where((u) => u.role == 'profe').toList();
-                final alumnos =
-                    filteredUsers.where((u) => u.role == 'alumno').toList();
-
                 return RefreshIndicator(
                   onRefresh: () async {
                     await context
@@ -124,26 +112,25 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                         .fetchUsers(forceRefresh: true);
                   },
                   child: SingleChildScrollView(
-                    physics:
-                        const AlwaysScrollableScrollPhysics(), // Important for RefreshIndicator to work when list is small
+                    physics: const AlwaysScrollableScrollPhysics(),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSearchAndFilter(),
-                        _buildSectionHeader(context, 'Admins', admins.length),
+                        // Conteo de resultados
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          child: Text(
+                            '${filteredUsers.length} usuario${filteredUsers.length != 1 ? 's' : ''}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
                         ..._buildUserListWidgets(
-                            context, admins, isAdmin, false),
-
-                        _buildSectionHeader(
-                            context, 'Profesores', profes.length),
-                        ..._buildUserListWidgets(
-                            context, profes, isAdmin, false),
-
-                        _buildSectionHeader(context, 'Alumnos', alumnos.length),
-                        ..._buildUserListWidgets(
-                            context, alumnos, isAdmin, false),
-
-                        const SizedBox(height: 80), // Space for FAB
+                            context, filteredUsers, isAdmin, false),
+                        const SizedBox(height: 80),
                       ],
                     ),
                   ),
@@ -204,9 +191,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Buscador
           TextField(
             decoration: InputDecoration(
               hintText: 'Buscar por nombre o email...',
@@ -220,39 +209,40 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
               fillColor:
                   colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             ),
-            onChanged: (val) {
-              setState(() {
-                _searchQuery = val;
-              });
-            },
+            onChanged: (val) => setState(() => _searchQuery = val),
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: _filterStatus,
-            decoration: InputDecoration(
-              labelText: 'Estado de Cuota',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-              filled: true,
-              fillColor:
-                  colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+
+          // Filtro de tipo de usuario
+          Text(
+            'TIPO DE USUARIO',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.1,
+              color: colorScheme.primary,
             ),
-            items: const [
-              DropdownMenuItem(value: 'all', child: Text('Todos')),
-              DropdownMenuItem(value: 'paid', child: Text('Cuota Paga')),
-              DropdownMenuItem(
-                  value: 'pending', child: Text('Cuota Por Vencer')),
-              DropdownMenuItem(value: 'overdue', child: Text('Cuota Vencida')),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              FilterChip(
+                label: const Text('Todos'),
+                selected: _filterRole == 'all',
+                onSelected: (_) => setState(() => _filterRole = 'all'),
+              ),
+              FilterChip(
+                label: const Text('Alumnos'),
+                selected: _filterRole == 'alumno',
+                onSelected: (_) => setState(() => _filterRole = 'alumno'),
+              ),
+              FilterChip(
+                label: const Text('Profesores'),
+                selected: _filterRole == 'profe',
+                onSelected: (_) => setState(() => _filterRole = 'profe'),
+              ),
             ],
-            onChanged: (val) {
-              if (val != null) {
-                setState(() {
-                  _filterStatus = val;
-                });
-              }
-            },
           ),
         ],
       ),
@@ -387,62 +377,27 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                                   ?.copyWith(
                                       color: colorScheme.onSurfaceVariant),
                             ),
+                            if (user.professorName != null)
+                              Row(children: [
+                                Icon(Icons.person_outline,
+                                    size: 12,
+                                    color: colorScheme.onSurfaceVariant),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Profe: ${user.professorName}',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: colorScheme.onSurfaceVariant),
+                                ),
+                              ]),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  if (isAdmin &&
-                      (user.role == 'alumno' || user.role == 'profe'))
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(top: 8),
-                      alignment: Alignment.centerRight,
-                      child: PaymentStatusBadge(
-                        status: user.paymentStatus,
-                        isEditable: true,
-                        onMarkAsPaid: () async {
-                          final success = await context
-                              .read<UserProvider>()
-                              .markUserAsPaid(user.id);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(success
-                                  ? 'Pago actualizado'
-                                  : 'Error al actualizar'),
-                              backgroundColor:
-                                  success ? Colors.green : Colors.red,
-                            ));
-                          }
-                        },
-                      ),
-                    ),
                 ],
               ),
-              if (user.professorName != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color:
-                        colorScheme.secondaryContainer.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.person_outline,
-                          size: 16, color: colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 8),
-                      Text('Profe: ${user.professorName}',
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurface)),
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
               const Divider(),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,

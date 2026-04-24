@@ -3,36 +3,51 @@ import 'package:flutter/material.dart';
 /// Envoltorio reutilizable para proveer un fondo consistente (imagen + overlay)
 /// a las pantallas de la aplicación.
 ///
+/// Prioridad de imagen:
+/// 1. [backgroundNetworkUrl] — URL remota (imagen del gym desde el servidor)
+/// 2. [backgroundAssetPath]  — asset local (fallback manual)
+/// 3. 'assets/images/login_bg.jpg' — fallback por defecto
+///
 /// [child] debe ser típicamente un `Scaffold` con `backgroundColor: Colors.transparent`.
 class BackgroundPageWrapper extends StatelessWidget {
   final Widget child;
   final String? backgroundAssetPath;
+  final String? backgroundNetworkUrl;
   final double overlayOpacity;
 
   const BackgroundPageWrapper({
     super.key,
     required this.child,
     this.backgroundAssetPath,
+    this.backgroundNetworkUrl,
     this.overlayOpacity = 0.5,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Si backgroundAssetPath es nulo, usamos el por defecto global.
-    // Futuro: Aquí se puede inyectar un proveedor (ej: GymConfigProvider)
-    // para obtener la URL del gimnasio y usar FadeInImage o CachedNetworkImage.
-    final String assetPath =
-        backgroundAssetPath ?? 'assets/images/login_bg.jpg';
+    final Widget bgImage;
+
+    if (backgroundNetworkUrl != null && backgroundNetworkUrl!.isNotEmpty) {
+      bgImage = Image.network(
+        backgroundNetworkUrl!,
+        fit: BoxFit.cover,
+        // Fallback a asset local si la URL de red falla
+        errorBuilder: (context, error, stackTrace) => Image.asset(
+          backgroundAssetPath ?? 'assets/images/login_bg.jpg',
+          fit: BoxFit.cover,
+        ),
+      );
+    } else {
+      bgImage = Image.asset(
+        backgroundAssetPath ?? 'assets/images/login_bg.jpg',
+        fit: BoxFit.cover,
+      );
+    }
 
     return Stack(
       children: [
         // 1. Imagen de fondo
-        Positioned.fill(
-          child: Image.asset(
-            assetPath,
-            fit: BoxFit.cover,
-          ),
-        ),
+        Positioned.fill(child: bgImage),
 
         // 2. Overlay degradado para garantizar legibilidad en zonas críticas.
         // Más oscuro arriba (donde viven los headers/títulos flotantes),

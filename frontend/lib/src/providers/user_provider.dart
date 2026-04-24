@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
+import '../services/payment_service.dart';
 
 class UserProvider with ChangeNotifier {
   final UserService _userService = UserService();
@@ -174,11 +175,39 @@ class UserProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      print('Error marking as paid: $e');
+      debugPrint('Error marking as paid: $e');
       return false;
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  /// Registers a payment via the new PaymentsService (supports multi-month, amount, method, notes).
+  /// Refreshes the user list after a successful registration.
+  Future<bool> registerPayment(
+    String userId, {
+    double? amount,
+    String? method,
+    String? notes,
+    int periodMonths = 1,
+  }) async {
+    try {
+      final success = await PaymentService().registerPayment(
+        userId,
+        amount: amount,
+        method: method,
+        notes: notes,
+        periodMonths: periodMonths,
+      );
+      if (success) {
+        // Refresh to pick up the new expirationDate and calculated status
+        await fetchUsers(forceRefresh: true);
+      }
+      return success;
+    } catch (e) {
+      debugPrint('Error registering payment: $e');
+      return false;
     }
   }
 

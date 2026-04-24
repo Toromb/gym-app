@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
@@ -22,13 +22,11 @@ class _EditUserScreenState extends State<EditUserScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _birthDateController;
   late TextEditingController _notesController;
-  late TextEditingController _lastPaymentDateController;
   late TextEditingController
-      _membershipDateController; // Added membership start date controller
+      _membershipDateController; // Membership start date (anchor)
 
   late String _selectedRole;
   late String _selectedGender;
-  late String _paymentStatus;
   bool _paysMembership = true;
 
   String? _selectedProfessorId;
@@ -47,10 +45,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _birthDateController =
         TextEditingController(text: widget.user.birthDate ?? '');
     _notesController = TextEditingController(text: widget.user.notes ?? '');
-    _lastPaymentDateController =
-        TextEditingController(text: widget.user.lastPaymentDate ?? '');
-
-    // Handle Membership Start Date
+    // Membership Start Date
     _membershipDateController = TextEditingController(
         text: widget.user.membershipStartDate?.split('T')[0] ?? '');
 
@@ -66,12 +61,8 @@ class _EditUserScreenState extends State<EditUserScreen> {
       _selectedGender = 'M';
     }
 
-    // Validate Payment Status
-    const validPaymentStatuses = ['pending', 'paid', 'overdue'];
-    _paymentStatus = widget.user.paymentStatus ?? 'pending';
-    if (!validPaymentStatuses.contains(_paymentStatus)) {
-      _paymentStatus = 'pending';
-    }
+    // Note: paymentStatus is NOT manually editable.
+    // It is calculated from membershipExpirationDate on the backend.
 
     _paysMembership = widget.user.paysMembership ?? true;
 
@@ -109,7 +100,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _phoneController.dispose();
     _birthDateController.dispose();
     _notesController.dispose();
-    _lastPaymentDateController.dispose();
+    _membershipDateController.dispose();
     super.dispose();
   }
 
@@ -117,13 +108,16 @@ class _EditUserScreenState extends State<EditUserScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: ConstrainedAppBar(title: const Text('Editar Usuario')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
                 // Role is usually not editable easily due to permission complexity, but let's allow it for Admin.
                 // If Profe, they arguably shouldn't change role of student to Admin.
                 // For MVP simplicity, we keep it disabled or read-only if desired, or allow if we trust backend validation.
@@ -283,52 +277,40 @@ class _EditUserScreenState extends State<EditUserScreen> {
                       setState(() => _selectedGender = value!),
                 ),
                 if (_paysMembership) ...[
-                  DropdownButtonFormField<String>(
-                    initialValue:
-                        ['pending', 'paid', 'overdue'].contains(_paymentStatus)
-                            ? _paymentStatus
-                            : 'pending',
-                    decoration:
-                        const InputDecoration(labelText: 'Estado de Pago'),
-                    items: const [
-                      DropdownMenuItem(
-                          value: 'pending', child: Text('Pendiente')),
-                      DropdownMenuItem(value: 'paid', child: Text('Pagado')),
-                      DropdownMenuItem(
-                          value: 'overdue', child: Text('Vencido')),
-                    ],
-                    onChanged: (value) =>
-                        setState(() => _paymentStatus = value!),
-                  ),
-                  TextFormField(
-                    controller: _lastPaymentDateController,
-                    decoration: const InputDecoration(
-                      labelText: 'Última Fecha de Pago (YYYY-MM-DD)',
-                      hintText: '2024-01-01',
+                  // Estado de cuota: solo lectura — calculado automáticamente
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
                     ),
-                    onTap: () async {
-                      FocusScope.of(context).requestFocus(FocusNode());
-                      DateTime initialDate = DateTime.now();
-                      if (_lastPaymentDateController.text.isNotEmpty) {
-                        try {
-                          initialDate =
-                              DateTime.parse(_lastPaymentDateController.text);
-                        } catch (_) {}
-                      }
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: initialDate,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          _lastPaymentDateController.text =
-                              "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-                        });
-                      }
-                    },
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'El estado de cuota se calcula automáticamente. '
+                            'Para registrar un pago, usá el botón "Marcar como pagado" '
+                            'en la lista de usuarios.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(height: 8),
                 ],
                 TextFormField(
                   controller: _notesController,
@@ -353,12 +335,6 @@ class _EditUserScreenState extends State<EditUserScreen> {
                                   : _birthDateController.text,
                               'gender': _selectedGender,
                               'notes': _notesController.text,
-                              'paymentStatus': _paymentStatus,
-                              'paymentStatus': _paymentStatus,
-                              'lastPaymentDate':
-                                  _lastPaymentDateController.text.isEmpty
-                                      ? null
-                                      : _lastPaymentDateController.text,
                               'membershipStartDate':
                                   _membershipDateController.text.isNotEmpty
                                       ? _membershipDateController.text
@@ -404,6 +380,8 @@ class _EditUserScreenState extends State<EditUserScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

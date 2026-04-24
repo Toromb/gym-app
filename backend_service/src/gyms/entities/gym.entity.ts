@@ -64,6 +64,9 @@ export class Gym {
   logoUrl: string;
 
   @Column({ nullable: true })
+  backgroundImageUrl: string;
+
+  @Column({ nullable: true })
   primaryColor: string;
 
   @Column({ nullable: true })

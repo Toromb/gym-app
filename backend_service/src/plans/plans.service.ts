@@ -129,6 +129,22 @@ export class PlansService {
 
 
 
+  // ---------------------------------------------------------------------------
+  // PLAN ASSIGNMENT — Snapshot System (Phase 1+)
+  // ---------------------------------------------------------------------------
+  //
+  // DESIGN INTENT: When a teacher assigns a plan to a student we must NOT store
+  // a simple foreign-key reference to the master Plan. If we did, any future edit
+  // to the template would silently change what the student sees mid-routine.
+  //
+  // Instead, assignPlan() deep-clones the entire plan tree into an *AssignedPlan*
+  // (+ AssignedPlanWeek / AssignedPlanDay / AssignedPlanExercise). The student
+  // works exclusively against this frozen snapshot. The master Plan template can
+  // be freely edited without affecting active students.
+  //
+  // Re-assignment (same plan, same student): replaces the snapshot reference so
+  // the student gets the *current* version of the exercises, but does NOT reset
+  // their in-progress tracking or startDate unless they had no active plan at all.
   async assignPlan(planId: string, studentId: string, assigner: User): Promise<StudentPlan> {
     const plan = await this.findOne(planId);
     if (!plan) throw new NotFoundException('Plan not found');
@@ -149,7 +165,9 @@ export class PlansService {
     const student = await this.plansRepository.manager.findOne(User, { where: { id: studentId }, relations: ['professor', 'gym'] });
     if (!student) throw new NotFoundException('Student not found');
 
-    // Generate the new snapshot of the plan
+    // --- Deep-clone the plan tree into an AssignedPlan snapshot ---
+    // Each field is copied by value so the snapshot is fully decoupled from the
+    // master Plan. originalPlanId is kept for audit/history purposes only.
     const assignedPlan = new AssignedPlan();
     assignedPlan.originalPlanId = plan.id;
     assignedPlan.originalPlanName = plan.name;

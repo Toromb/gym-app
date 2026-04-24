@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../models/user_model.dart';
@@ -13,6 +13,7 @@ import '../student/muscle_flow/muscle_flow_body.dart';
 import '../student/muscle_flow/muscle_flow_list.dart';
 import '../../widgets/payment_status_badge.dart';
 import '../../services/stats_service.dart';
+import '../admin/payment_history_screen.dart';
 
 class UserDetailScreen extends StatefulWidget {
   final User user;
@@ -140,28 +141,59 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 _buildCard(
                   context,
                   title: 'Membresía',
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          const Text('Estado',
-                              style:
-                                  TextStyle(fontSize: 12, color: Colors.grey)),
-                          const SizedBox(height: 4),
-                          PaymentStatusBadge(
-                            status: widget.user.paymentStatus,
-                            isEditable: false,
-                            expirationDate: null, // Or pass if available
+                          Column(
+                            children: [
+                              const Text('Estado',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey)),
+                              const SizedBox(height: 4),
+                              PaymentStatusBadge(
+                                status: widget.user.paymentStatus,
+                                isEditable: false,
+                                expirationDate: null,
+                              ),
+                            ],
                           ),
+                          _buildInfoItem(context, 'Alta',
+                              widget.user.membershipStartDate?.split('T')[0] ??
+                                  'N/A',
+                              centered: true),
+                          _buildInfoItem(
+                              context,
+                              'Vencimiento',
+                              widget.user.membershipExpirationDate
+                                      ?.split('T')[0] ??
+                                  'Sin pago',
+                              centered: true),
                         ],
                       ),
-                      _buildInfoItem(context, 'Inicio',
-                          widget.user.membershipStartDate ?? 'N/A',
-                          centered: true),
-                      _buildInfoItem(context, 'Último Pago',
-                          widget.user.lastPaymentDate ?? 'N/A',
-                          centered: true),
+                      const SizedBox(height: 12),
+                      const Divider(height: 1),
+                      const SizedBox(height: 4),
+                      // Botón historial de pagos
+                      TextButton.icon(
+                        icon: const Icon(Icons.history, size: 16),
+                        label: const Text('Ver historial de pagos',
+                            style: TextStyle(fontSize: 13)),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PaymentHistoryScreen(
+                              userId: widget.user.id,
+                              userName:
+                                  '${widget.user.firstName} ${widget.user.lastName}',
+                              membershipStartDate:
+                                  widget.user.membershipStartDate,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
