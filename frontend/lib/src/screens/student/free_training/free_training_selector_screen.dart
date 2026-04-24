@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../models/free_training_model.dart';
 import '../../../services/free_training_service.dart';
 import '../../shared/day_detail_screen.dart';
@@ -682,8 +682,9 @@ class _FreeTrainingSelectorScreenState
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color:
-              isSelected ? color : theme.colorScheme.surface.withValues(alpha: 0.9),
+          color: isSelected
+              ? color
+              : theme.colorScheme.surface.withValues(alpha: 0.9),
           border: Border.all(
               color: isSelected
                   ? Colors.transparent

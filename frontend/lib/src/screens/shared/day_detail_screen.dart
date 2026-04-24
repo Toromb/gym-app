@@ -61,7 +61,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           widget.studentId != null &&
           widget.planId != null &&
           widget.day != null) {
-      setState(() => _isLoadingReadOnly = true);
+        setState(() => _isLoadingReadOnly = true);
         context
             .read<PlanProvider>()
             .fetchStudentSession(
@@ -152,7 +152,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           } else if (msg.contains('BadRequestException:')) {
             msg = msg.replaceAll('BadRequestException:', '').trim();
           } else if (msg.startsWith('Exception')) {
-             msg = AppLocalizations.of(context)!.get('errorFinish');
+            msg = AppLocalizations.of(context)!.get('errorFinish');
           }
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -176,7 +176,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     List<SessionExercise> exercisesToRender = [];
     String status = 'READ_ONLY';
 
-
     if (widget.readOnly) {
       if (_readOnlySession != null) {
         exercisesToRender = _readOnlySession!.exercises;
@@ -195,7 +194,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               body: Center(child: CircularProgressIndicator()));
         }
         return Scaffold(
-          appBar: ConstrainedAppBar(title: Text(widget.day?.title ?? 'Entrenamiento')),
+          appBar: ConstrainedAppBar(
+              title: Text(widget.day?.title ?? 'Entrenamiento')),
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -393,5 +393,4 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               widget.freeTrainingId != null), // Only allowed in Free Session
     );
   }
-
 }

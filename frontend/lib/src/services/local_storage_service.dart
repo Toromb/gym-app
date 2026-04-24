@@ -43,7 +43,8 @@ class LocalStorageService {
   Future<void> addToQueue(Map<String, dynamic> request) async {
     // request: { 'id': uuid, 'method': 'POST', 'url': '...', 'body': {...}, 'timestamp': ... }
     await _queueBox?.add(jsonEncode(request));
-    AppLogger.d('📦 Added to Sync Queue: ${request["method"]} ${request["url"]}');
+    AppLogger.d(
+        '📦 Added to Sync Queue: ${request["method"]} ${request["url"]}');
   }
 
   List<Map<String, dynamic>> getQueue() {

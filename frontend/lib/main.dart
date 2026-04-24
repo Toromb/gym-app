@@ -51,8 +51,7 @@ void main() async {
     await Firebase.initializeApp();
 
     // Captures all Flutter framework errors and reports them to Crashlytics.
-    FlutterError.onError =
-        FirebaseCrashlytics.instance.recordFlutterFatalError;
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 
     // Captures errors outside the Flutter framework (unhandled async errors).
     PlatformDispatcher.instance.onError = (error, stack) {

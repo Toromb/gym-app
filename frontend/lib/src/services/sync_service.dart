@@ -132,7 +132,8 @@ class SyncService {
           if (e.toString().contains('400') ||
               e.toString().contains('403') ||
               e.toString().contains('404')) {
-            AppLogger.w('⚠️ Client Error ($e). Discarding item to unblock queue.');
+            AppLogger.w(
+                '⚠️ Client Error ($e). Discarding item to unblock queue.');
             success = true; // Treated as "handled" (discarded)
           } else {
             // Server/Network error -> Retry later

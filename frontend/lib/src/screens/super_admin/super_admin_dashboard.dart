@@ -37,7 +37,6 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                     .pushNamedAndRemoveUntil('/login', (route) => false);
               }
             },
-
           ),
         ],
       ),

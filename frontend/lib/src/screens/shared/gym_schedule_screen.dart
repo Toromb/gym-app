@@ -130,7 +130,7 @@ class _GymScheduleScreenState extends State<GymScheduleScreen> {
 
         return Card(
           elevation: 0,
-                    margin: const EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -186,7 +186,7 @@ class _GymScheduleScreenState extends State<GymScheduleScreen> {
         final schedule = _editedSchedules[index];
         return Card(
           elevation: 0,
-                    child: Padding(
+          child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [

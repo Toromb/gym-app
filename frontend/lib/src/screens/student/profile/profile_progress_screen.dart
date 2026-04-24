@@ -51,7 +51,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
     if (widget.userId == null) {
       // Force refresh current user info to get latest fields (like trainingGoal)
       // AuthProvider might be stale if it only loaded on login.
-      AppLogger.d('ProfileProgress: Improving data freshness for current user...');
+      AppLogger.d(
+          'ProfileProgress: Improving data freshness for current user...');
       try {
         final freshUser = await userService.getProfile();
         if (freshUser != null) {
@@ -75,7 +76,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
 
     if (targetUser != null &&
         (targetUser.trainingGoal == null || targetUser.trainingGoal!.isEmpty)) {
-      AppLogger.d('ProfileProgress: User goal IS STILL missing after refresh. Fetching onboarding...');
+      AppLogger.d(
+          'ProfileProgress: User goal IS STILL missing after refresh. Fetching onboarding...');
       try {
         final service = OnboardingService(ApiClient());
         final profile = await service.getUserOnboarding(targetUser.id);
@@ -91,7 +93,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
         AppLogger.e('ProfileProgress: Error fetching fallback goal', error: e);
       }
     } else {
-      AppLogger.d('ProfileProgress: User goal IS present: ${targetUser?.trainingGoal}');
+      AppLogger.d(
+          'ProfileProgress: User goal IS present: ${targetUser?.trainingGoal}');
     }
   }
 
@@ -173,8 +176,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                     _safelyBuild(() => const CalendarScreen(
                         isEmbedded: true)), // Embedded Calendar
                     const SizedBox(height: 24),
-                    _safelyBuild(
-                        () => _buildLevelCard(progress.level)), // New Level Card
+                    _safelyBuild(() =>
+                        _buildLevelCard(progress.level)), // New Level Card
                     const SizedBox(height: 24),
                     _safelyBuild(
                         () => _buildMuscleFlowCard()), // New Muscle Flow Link
@@ -715,7 +718,8 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).primaryColor.withValues(alpha: 0.4),
+                      color:
+                          Theme.of(context).primaryColor.withValues(alpha: 0.4),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     )

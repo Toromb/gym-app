@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
@@ -58,7 +58,7 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
       final history = await context
           .read<PlanProvider>()
           .fetchStudentHistory(widget.student.id);
-      
+
       if (mounted) {
         setState(() {
           _assignments = assignments;
@@ -111,7 +111,8 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
 
   Widget _buildAssignmentsList(List<dynamic> assignments) {
     if (assignments.isEmpty) {
-      return const Center(child: Text('No hay planes asignados ni pendientes.'));
+      return const Center(
+          child: Text('No hay planes asignados ni pendientes.'));
     }
 
     return ListView.builder(
@@ -150,7 +151,8 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
                               plan: fullPlan,
                               readOnly: true,
                               canEdit: false,
-                              assignment: StudentAssignment.fromJson(assignment),
+                              assignment:
+                                  StudentAssignment.fromJson(assignment),
                               studentId: widget.student.id,
                             ),
                           ),
@@ -158,8 +160,10 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
                       }
                     } catch (e) {
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                            content: Text('Error cargando detalles del plan')));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content:
+                                    Text('Error cargando detalles del plan')));
                       }
                     }
                   },
@@ -227,7 +231,8 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
               children: [
                 Text(
                   'Sesión ${session.date} (${session.status})',
-                  style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 ...session.exercises.map((ex) {
@@ -236,7 +241,8 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('• ', style: TextStyle(color: AppColors.accent)),
+                        const Text('• ',
+                            style: TextStyle(color: AppColors.accent)),
                         Expanded(
                           child: Text(
                             '${ex.exerciseNameSnapshot}: ${_buildMetricsString(ex)}',
@@ -258,8 +264,10 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
   String _buildMetricsString(SessionExercise ex) {
     String metricType = ex.exercise?.metricType ?? 'REPS';
     if (ex.exercise == null) {
-      if (ex.targetTimeSnapshot != null || ex.timeSpent != null) metricType = 'TIME';
-      if (ex.targetDistanceSnapshot != null || ex.distanceCovered != null) metricType = 'DISTANCE';
+      if (ex.targetTimeSnapshot != null || ex.timeSpent != null)
+        metricType = 'TIME';
+      if (ex.targetDistanceSnapshot != null || ex.distanceCovered != null)
+        metricType = 'DISTANCE';
     }
 
     bool isBodyWeight = ex.equipmentsSnapshot.any((e) => e.isBodyWeight) ||
@@ -275,7 +283,9 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
       final timeStr = '${ex.timeSpent ?? '-'} seg';
       if (isBodyWeight) {
         return '$setsStr • $timeStr • Peso corporal';
-      } else if (ex.weightUsed != null && ex.weightUsed!.isNotEmpty && ex.weightUsed != '0') {
+      } else if (ex.weightUsed != null &&
+          ex.weightUsed!.isNotEmpty &&
+          ex.weightUsed != '0') {
         return '$setsStr • $timeStr • ${ex.weightUsed} kg';
       }
       return '$setsStr • $timeStr'; // No weight info
@@ -318,18 +328,19 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
               if (success) {
                 _fetchAssignments(); // Refresh
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Ciclo cancelado correctamente')));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Ciclo cancelado correctamente')));
                 }
               } else {
                 setState(() => _isLoading = false);
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Error al cancelar el ciclo')));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Error al cancelar el ciclo')));
                 }
               }
             },
-            child: const Text('Sí, Cancelar', style: TextStyle(color: Colors.red)),
+            child:
+                const Text('Sí, Cancelar', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

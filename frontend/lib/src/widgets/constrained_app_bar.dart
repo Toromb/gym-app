@@ -67,8 +67,8 @@ class ConstrainedAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool canPop = automaticallyImplyLeading &&
-        (ModalRoute.of(context)?.canPop ?? false);
+    final bool canPop =
+        automaticallyImplyLeading && (ModalRoute.of(context)?.canPop ?? false);
 
     // Merge caller overrides on top of the shadowed defaults
     final effectiveTitleStyle = titleTextStyle ?? _shadowedTitleStyle;

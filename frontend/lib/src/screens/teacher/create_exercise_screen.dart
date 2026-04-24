@@ -518,341 +518,347 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-              Text('Información Básica',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nombre *'),
-                validator: (v) => v!.isEmpty ? 'Requerido' : null,
-              ),
-              const SizedBox(height: 20),
+                  Text('Información Básica',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Nombre *'),
+                    validator: (v) => v!.isEmpty ? 'Requerido' : null,
+                  ),
+                  const SizedBox(height: 20),
 
-              // --- MUSCLE MAPPING SECTION ---
-              Text('Mapeo Muscular',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 10),
+                  // --- MUSCLE MAPPING SECTION ---
+                  Text('Mapeo Muscular',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 10),
 
-              // Primary Muscle (Required)
-              Card(
-                margin: EdgeInsets.zero,
-                child: ListTile(
-                  title: const Text('Músculo Primario *'),
-                  subtitle: Text(_primaryMuscle?.name ?? 'Seleccionar...'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => _showMuscleSelector(isPrimary: true),
-                ),
-              ),
-              if (_primaryMuscle == null)
-                const Padding(
-                  padding: EdgeInsets.only(left: 12, top: 4),
-                  child: Text('Requerido',
-                      style: TextStyle(color: Colors.red, fontSize: 12)),
-                ),
-
-              const SizedBox(height: 10),
-
-              // Secondary Muscles (Optional)
-              Card(
-                margin: EdgeInsets.zero,
-                child: ListTile(
-                  title: const Text('Músculos Secundarios (Opcional)'),
-                  subtitle: Text(_secondaryMuscles.isEmpty
-                      ? 'Ninguno'
-                      : _secondaryMuscles.map((m) => m.name).join(', ')),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => _showMuscleSelector(isPrimary: false),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // --- END MUSCLE MAPPING ---
-
-              // --- EQUIPMENT SECTION ---
-              Text('Equipamiento',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 10),
-              if (_isLoadingEquipments)
-                const LinearProgressIndicator()
-              else
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 4.0,
-                  children: _allEquipments.map((eq) {
-                    final isSelected =
-                        _selectedEquipments.any((s) => s.id == eq.id);
-                    return FilterChip(
-                      label: Text(eq.name),
-                      selected: isSelected,
-                      onSelected: (bool selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedEquipments.add(eq);
-                          } else {
-                            _selectedEquipments
-                                .removeWhere((s) => s.id == eq.id);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
-              const SizedBox(height: 20),
-              // --- END EQUIPMENT SECTION ---
-
-              TextFormField(
-                controller: _typeController,
-                decoration: const InputDecoration(
-                    labelText: 'Tipo',
-                    hintText: 'Ej: Fuerza, Hipertrofia, Cardio'),
-              ),
-              const SizedBox(height: 20),
-
-              // --- METRIC TYPE SELECTOR ---
-              DropdownButtonFormField<String>(
-                value: _metricType,
-                decoration: const InputDecoration(labelText: 'Tipo de Métrica'),
-                items: const [
-                  DropdownMenuItem(value: 'REPS', child: Text('Repeticiones')),
-                  DropdownMenuItem(value: 'TIME', child: Text('Tiempo')),
-                  DropdownMenuItem(value: 'DISTANCE', child: Text('Distancia')),
-                ],
-                onChanged: (val) {
-                  if (val != null) setState(() => _metricType = val);
-                },
-              ),
-              const SizedBox(height: 20),
-
-              Text('Parámetros por Defecto (Opcional)',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const Text(
-                  'Estos valores se precargarán al agregar el ejercicio a un plan.',
-                  style: TextStyle(color: Colors.grey, fontSize: 12)),
-              const SizedBox(height: 10),
-
-              if (_metricType == 'REPS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                        child: TextFormField(
-                            controller: _setsController,
-                            decoration:
-                                const InputDecoration(labelText: 'Series'),
-                            keyboardType: TextInputType.number)),
-                    const SizedBox(width: 10),
-                    Expanded(
-                        child: TextFormField(
-                            controller: _repsController,
-                            decoration:
-                                const InputDecoration(labelText: 'Reps'))),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                        child: TextFormField(
-                            controller: _loadController,
-                            decoration:
-                                const InputDecoration(labelText: 'Peso/Int'))),
-                    const SizedBox(width: 10),
-                    Expanded(
-                        child: TextFormField(
-                            controller: _restController,
-                            decoration:
-                                const InputDecoration(labelText: 'Descanso'))),
-                  ],
-                ),
-              ] else if (_metricType == 'TIME') ...[
-                Row(
-                  children: [
-                    Expanded(
-                        child: TextFormField(
-                            controller: _setsController,
-                            decoration:
-                                const InputDecoration(labelText: 'Series'),
-                            keyboardType: TextInputType.number)),
-                    const SizedBox(width: 10),
-                    Expanded(
-                        child: TextFormField(
-                            controller: _defaultTimeController,
-                            decoration: const InputDecoration(
-                                labelText: 'Tiempo (seg)'),
-                            keyboardType: TextInputType.number)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                    controller: _restController,
-                    decoration: const InputDecoration(labelText: 'Descanso')),
-              ] else if (_metricType == 'DISTANCE') ...[
-                Row(
-                  children: [
-                    Expanded(
-                        child: TextFormField(
-                            controller: _setsController,
-                            decoration:
-                                const InputDecoration(labelText: 'Series'),
-                            keyboardType: TextInputType.number)),
-                    const SizedBox(width: 10),
-                    Expanded(
-                        child: TextFormField(
-                            controller: _defaultDistanceController,
-                            decoration: const InputDecoration(
-                                labelText: 'Distancia (m)'),
-                            keyboardType: TextInputType.number)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                    controller: _restController,
-                    decoration: const InputDecoration(labelText: 'Descanso')),
-              ],
-
-              const SizedBox(height: 20),
-
-              Text('Configuración para sugerencias automáticas',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const Text(
-                'Estos valores se utilizan para sugerir peso, series y repeticiones cuando el alumno cambia de ejercicio. Son orientativos y editables.',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-              const SizedBox(height: 10),
-
-              // Common Fields
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _loadFactorController,
-                      decoration: const InputDecoration(
-                          labelText: 'Factor Carga (Ej: 1.0)'),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                  // Primary Muscle (Required)
+                  Card(
+                    margin: EdgeInsets.zero,
+                    child: ListTile(
+                      title: const Text('Músculo Primario *'),
+                      subtitle: Text(_primaryMuscle?.name ?? 'Seleccionar...'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () => _showMuscleSelector(isPrimary: true),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _defaultSetsController,
-                      decoration:
-                          const InputDecoration(labelText: 'Series Default'),
-                      keyboardType: TextInputType.number,
+                  if (_primaryMuscle == null)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 12, top: 4),
+                      child: Text('Requerido',
+                          style: TextStyle(color: Colors.red, fontSize: 12)),
+                    ),
+
+                  const SizedBox(height: 10),
+
+                  // Secondary Muscles (Optional)
+                  Card(
+                    margin: EdgeInsets.zero,
+                    child: ListTile(
+                      title: const Text('Músculos Secundarios (Opcional)'),
+                      subtitle: Text(_secondaryMuscles.isEmpty
+                          ? 'Ninguno'
+                          : _secondaryMuscles.map((m) => m.name).join(', ')),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () => _showMuscleSelector(isPrimary: false),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 10),
 
-              // Metric Specific Logic Config
-              if (_metricType == 'REPS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _minRepsController,
-                        decoration:
-                            const InputDecoration(labelText: 'Min Reps'),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _maxRepsController,
-                        decoration:
-                            const InputDecoration(labelText: 'Max Reps'),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                  ],
-                ),
-              ] else if (_metricType == 'TIME') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _minTimeController,
-                        decoration: const InputDecoration(
-                            labelText: 'Min Tiempo (seg)'),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _maxTimeController,
-                        decoration: const InputDecoration(
-                            labelText: 'Max Tiempo (seg)'),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                  ],
-                ),
-              ] else if (_metricType == 'DISTANCE') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _minDistanceController,
-                        decoration: const InputDecoration(
-                            labelText: 'Min Distancia (m)'),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _maxDistanceController,
-                        decoration: const InputDecoration(
-                            labelText: 'Max Distancia (m)'),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  const SizedBox(height: 20),
 
-              const SizedBox(height: 20),
-              Text('Multimedia y Notas',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _videoUrlController,
-                decoration: const InputDecoration(
-                    labelText: 'URL de Video (YouTube)',
-                    prefixIcon: Icon(Icons.video_library)),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _notesController,
-                decoration:
-                    const InputDecoration(labelText: 'Notas / Instrucciones'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed:
-                      _isLoading || _isLoadingMuscles || _isLoadingEquipments
+                  // --- END MUSCLE MAPPING ---
+
+                  // --- EQUIPMENT SECTION ---
+                  Text('Equipamiento',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 10),
+                  if (_isLoadingEquipments)
+                    const LinearProgressIndicator()
+                  else
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 4.0,
+                      children: _allEquipments.map((eq) {
+                        final isSelected =
+                            _selectedEquipments.any((s) => s.id == eq.id);
+                        return FilterChip(
+                          label: Text(eq.name),
+                          selected: isSelected,
+                          onSelected: (bool selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedEquipments.add(eq);
+                              } else {
+                                _selectedEquipments
+                                    .removeWhere((s) => s.id == eq.id);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  const SizedBox(height: 20),
+                  // --- END EQUIPMENT SECTION ---
+
+                  TextFormField(
+                    controller: _typeController,
+                    decoration: const InputDecoration(
+                        labelText: 'Tipo',
+                        hintText: 'Ej: Fuerza, Hipertrofia, Cardio'),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // --- METRIC TYPE SELECTOR ---
+                  DropdownButtonFormField<String>(
+                    value: _metricType,
+                    decoration:
+                        const InputDecoration(labelText: 'Tipo de Métrica'),
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'REPS', child: Text('Repeticiones')),
+                      DropdownMenuItem(value: 'TIME', child: Text('Tiempo')),
+                      DropdownMenuItem(
+                          value: 'DISTANCE', child: Text('Distancia')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setState(() => _metricType = val);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  Text('Parámetros por Defecto (Opcional)',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const Text(
+                      'Estos valores se precargarán al agregar el ejercicio a un plan.',
+                      style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  const SizedBox(height: 10),
+
+                  if (_metricType == 'REPS') ...[
+                    Row(
+                      children: [
+                        Expanded(
+                            child: TextFormField(
+                                controller: _setsController,
+                                decoration:
+                                    const InputDecoration(labelText: 'Series'),
+                                keyboardType: TextInputType.number)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                            child: TextFormField(
+                                controller: _repsController,
+                                decoration:
+                                    const InputDecoration(labelText: 'Reps'))),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: TextFormField(
+                                controller: _loadController,
+                                decoration: const InputDecoration(
+                                    labelText: 'Peso/Int'))),
+                        const SizedBox(width: 10),
+                        Expanded(
+                            child: TextFormField(
+                                controller: _restController,
+                                decoration: const InputDecoration(
+                                    labelText: 'Descanso'))),
+                      ],
+                    ),
+                  ] else if (_metricType == 'TIME') ...[
+                    Row(
+                      children: [
+                        Expanded(
+                            child: TextFormField(
+                                controller: _setsController,
+                                decoration:
+                                    const InputDecoration(labelText: 'Series'),
+                                keyboardType: TextInputType.number)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                            child: TextFormField(
+                                controller: _defaultTimeController,
+                                decoration: const InputDecoration(
+                                    labelText: 'Tiempo (seg)'),
+                                keyboardType: TextInputType.number)),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                        controller: _restController,
+                        decoration:
+                            const InputDecoration(labelText: 'Descanso')),
+                  ] else if (_metricType == 'DISTANCE') ...[
+                    Row(
+                      children: [
+                        Expanded(
+                            child: TextFormField(
+                                controller: _setsController,
+                                decoration:
+                                    const InputDecoration(labelText: 'Series'),
+                                keyboardType: TextInputType.number)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                            child: TextFormField(
+                                controller: _defaultDistanceController,
+                                decoration: const InputDecoration(
+                                    labelText: 'Distancia (m)'),
+                                keyboardType: TextInputType.number)),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                        controller: _restController,
+                        decoration:
+                            const InputDecoration(labelText: 'Descanso')),
+                  ],
+
+                  const SizedBox(height: 20),
+
+                  Text('Configuración para sugerencias automáticas',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const Text(
+                    'Estos valores se utilizan para sugerir peso, series y repeticiones cuando el alumno cambia de ejercicio. Son orientativos y editables.',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Common Fields
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _loadFactorController,
+                          decoration: const InputDecoration(
+                              labelText: 'Factor Carga (Ej: 1.0)'),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _defaultSetsController,
+                          decoration: const InputDecoration(
+                              labelText: 'Series Default'),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Metric Specific Logic Config
+                  if (_metricType == 'REPS') ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _minRepsController,
+                            decoration:
+                                const InputDecoration(labelText: 'Min Reps'),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _maxRepsController,
+                            decoration:
+                                const InputDecoration(labelText: 'Max Reps'),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (_metricType == 'TIME') ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _minTimeController,
+                            decoration: const InputDecoration(
+                                labelText: 'Min Tiempo (seg)'),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _maxTimeController,
+                            decoration: const InputDecoration(
+                                labelText: 'Max Tiempo (seg)'),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (_metricType == 'DISTANCE') ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _minDistanceController,
+                            decoration: const InputDecoration(
+                                labelText: 'Min Distancia (m)'),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _maxDistanceController,
+                            decoration: const InputDecoration(
+                                labelText: 'Max Distancia (m)'),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
+                  const SizedBox(height: 20),
+                  Text('Multimedia y Notas',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _videoUrlController,
+                    decoration: const InputDecoration(
+                        labelText: 'URL de Video (YouTube)',
+                        prefixIcon: Icon(Icons.video_library)),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _notesController,
+                    decoration: const InputDecoration(
+                        labelText: 'Notas / Instrucciones'),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ||
+                              _isLoadingMuscles ||
+                              _isLoadingEquipments
                           ? null
                           : _saveExercise,
-                  child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : Text(widget.exercise == null
-                          ? 'Guardar Ejercicio'
-                          : 'Actualizar Ejercicio'),
-                ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator()
+                          : Text(widget.exercise == null
+                              ? 'Guardar Ejercicio'
+                              : 'Actualizar Ejercicio'),
+                    ),
+                  ),
+                ],
               ),
-              ],
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 }

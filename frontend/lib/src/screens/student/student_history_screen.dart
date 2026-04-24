@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
@@ -27,7 +27,8 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
 
   Future<void> _loadHistory() async {
     try {
-      final history = await context.read<PlanProvider>().fetchCompletedHistory();
+      final history =
+          await context.read<PlanProvider>().fetchCompletedHistory();
       if (mounted) {
         setState(() {
           _history = history;
@@ -127,7 +128,8 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
               children: [
                 Text(
                   'Sesión ${session.date} (${session.status})',
-                  style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 ...session.exercises.map((ex) {
@@ -136,7 +138,8 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('• ', style: TextStyle(color: AppColors.accent)),
+                        const Text('• ',
+                            style: TextStyle(color: AppColors.accent)),
                         Expanded(
                           child: Text(
                             '${ex.exerciseNameSnapshot}: ${_buildMetricsString(ex)}',
@@ -154,12 +157,15 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
       ),
     );
   }
+
   String _buildMetricsString(SessionExercise ex) {
     // 1. Determine Metric Type
     String metricType = ex.exercise?.metricType ?? 'REPS';
     if (ex.exercise == null) {
-      if (ex.targetTimeSnapshot != null || ex.timeSpent != null) metricType = 'TIME';
-      if (ex.targetDistanceSnapshot != null || ex.distanceCovered != null) metricType = 'DISTANCE';
+      if (ex.targetTimeSnapshot != null || ex.timeSpent != null)
+        metricType = 'TIME';
+      if (ex.targetDistanceSnapshot != null || ex.distanceCovered != null)
+        metricType = 'DISTANCE';
     }
 
     // 2. Determinate if Body Weight
@@ -176,7 +182,9 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
       final timeStr = '${ex.timeSpent ?? '-'} seg';
       if (isBodyWeight) {
         return '$setsStr • $timeStr • Peso corporal';
-      } else if (ex.weightUsed != null && ex.weightUsed!.isNotEmpty && ex.weightUsed != '0') {
+      } else if (ex.weightUsed != null &&
+          ex.weightUsed!.isNotEmpty &&
+          ex.weightUsed != '0') {
         return '$setsStr • $timeStr • ${ex.weightUsed} kg';
       }
       return '$setsStr • $timeStr'; // No weight info

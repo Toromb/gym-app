@@ -72,7 +72,9 @@ class ApiClient {
         try {
           final dyn = jsonDecode(response.body);
           if (dyn['message'] != null) {
-            errorMsg = dyn['message'] is List ? dyn['message'].join(', ') : dyn['message'].toString();
+            errorMsg = dyn['message'] is List
+                ? dyn['message'].join(', ')
+                : dyn['message'].toString();
           } else {
             errorMsg = response.body;
           }
@@ -99,12 +101,12 @@ class ApiClient {
 
   Future<dynamic> _requestWithRetry(String endpoint, String method,
       {dynamic body, bool disableInterceptor = false}) async {
-    
     // Bypass GET cache explicitly
     String finalEndpoint = endpoint;
     if (method == 'GET') {
       final connector = endpoint.contains('?') ? '&' : '?';
-      finalEndpoint = '$endpoint${connector}_t=${DateTime.now().millisecondsSinceEpoch}';
+      finalEndpoint =
+          '$endpoint${connector}_t=${DateTime.now().millisecondsSinceEpoch}';
     }
 
     final url = Uri.parse('$baseUrl$finalEndpoint');

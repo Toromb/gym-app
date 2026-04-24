@@ -19,8 +19,8 @@ class AppLogger {
     // En debug mostramos todo con colores y stack trace.
     level: kDebugMode ? Level.debug : Level.warning,
     printer: PrettyPrinter(
-      methodCount: 1,        // Líneas de stack trace a mostrar
-      errorMethodCount: 5,   // Líneas de stack en errores
+      methodCount: 1, // Líneas de stack trace a mostrar
+      errorMethodCount: 5, // Líneas de stack en errores
       lineLength: 80,
       colors: true,
       printEmojis: true,

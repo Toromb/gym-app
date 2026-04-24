@@ -152,9 +152,8 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
             }
           });
           _loadGym();
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content: Text('Imagen de fondo actualizada correctamente')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Imagen de fondo actualizada correctamente')));
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -272,9 +271,8 @@ class _GymConfigScreenState extends State<GymConfigScreen> {
                                   height: 80,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (c, e, s) => const Icon(
-                                      Icons.broken_image,
-                                      size: 40),
+                                  errorBuilder: (c, e, s) =>
+                                      const Icon(Icons.broken_image, size: 40),
                                 ),
                               )
                             else

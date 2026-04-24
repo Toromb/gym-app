@@ -276,7 +276,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       {required String title, required IconData icon, required Widget child}) {
     return Card(
       elevation: 0,
-            shape: RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),

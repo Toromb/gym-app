@@ -160,7 +160,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                               ),
                             ],
                           ),
-                          _buildInfoItem(context, 'Alta',
+                          _buildInfoItem(
+                              context,
+                              'Alta',
                               widget.user.membershipStartDate?.split('T')[0] ??
                                   'N/A',
                               centered: true),

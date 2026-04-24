@@ -61,7 +61,8 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
               icon: const Icon(Icons.history, color: AppColors.accent),
               label: const Text(
                 'Ver Historial',
-                style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: AppColors.accent, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: 8),
@@ -95,7 +96,7 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
 
                           return Card(
                             elevation: 0,
-                                                        margin: const EdgeInsets.only(bottom: 16),
+                            margin: const EdgeInsets.only(bottom: 16),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () {
@@ -133,24 +134,32 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
                                               horizontal: 12, vertical: 6),
                                           decoration: BoxDecoration(
                                             color: isActive
-                                                ? AppColors.success.withValues(alpha: 0.1)
-                                                : Colors.amber.withValues(alpha: 0.1),
+                                                ? AppColors.success
+                                                    .withValues(alpha: 0.1)
+                                                : Colors.amber
+                                                    .withValues(alpha: 0.1),
                                             borderRadius:
                                                 BorderRadius.circular(20),
                                             border: Border.all(
                                                 color: isActive
-                                                    ? AppColors.success.withValues(alpha: 0.2)
-                                                    : Colors.amber.withValues(alpha: 0.2)),
+                                                    ? AppColors.success
+                                                        .withValues(alpha: 0.2)
+                                                    : Colors.amber.withValues(
+                                                        alpha: 0.2)),
                                           ),
                                           child: Text(
                                               isActive
-                                                  ? AppLocalizations.of(context)!.get('statusActive')
+                                                  ? AppLocalizations.of(
+                                                          context)!
+                                                      .get('statusActive')
                                                   : 'Pendiente',
-                                              style: textTheme.labelSmall
+                                              style: textTheme
+                                                  .labelSmall
                                                   ?.copyWith(
                                                       color: isActive
                                                           ? AppColors.success
-                                                          : Colors.amber.shade800,
+                                                          : Colors
+                                                              .amber.shade800,
                                                       fontWeight:
                                                           FontWeight.bold)),
                                         ),

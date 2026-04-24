@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -368,7 +368,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       color: Colors.red.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
-                                          color: Colors.red.withValues(alpha: 0.5)),
+                                          color: Colors.red
+                                              .withValues(alpha: 0.5)),
                                     ),
                                     child: Row(
                                       children: [
@@ -529,7 +530,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     children: [
                                       Text(
                                         '¿No tienes una cuenta? ',
-                                        style: TextStyle(color: Colors.grey[600]),
+                                        style:
+                                            TextStyle(color: Colors.grey[600]),
                                       ),
                                       Text(
                                         "Habla con tu gimnasio",
@@ -552,7 +554,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ? const Color(0xFF2A2A2A)
                                         : Colors.grey[100],
                                     border: Border.all(
-                                        color: Colors.grey.withValues(alpha: 0.3)),
+                                        color:
+                                            Colors.grey.withValues(alpha: 0.3)),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Column(

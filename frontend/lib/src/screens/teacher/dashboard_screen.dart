@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../localization/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -58,14 +58,16 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
                     _buildDashboardCard(
                       context,
-                      title: AppLocalizations.of(context)!.get('manageStudents'),
+                      title:
+                          AppLocalizations.of(context)!.get('manageStudents'),
                       subtitle: 'Ver progresos y asignar planes',
                       icon: Icons.people,
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const ManageStudentsScreen()),
+                              builder: (context) =>
+                                  const ManageStudentsScreen()),
                         );
                       },
                     ),
@@ -93,7 +95,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const ExercisesListScreen()),
+                              builder: (context) =>
+                                  const ExercisesListScreen()),
                         );
                       },
                     ),
@@ -237,7 +240,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             : AppColors.cardSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: isDark ? Colors.white12 : Colors.white.withValues(alpha: 0.6)),
+            color:
+                isDark ? Colors.white12 : Colors.white.withValues(alpha: 0.6)),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withValues(alpha: 0.15),
@@ -260,8 +264,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     color: const Color(0xFFE0E7FF),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon,
-                      size: 28, color: const Color(0xFF4338ca)),
+                  child: Icon(icon, size: 28, color: const Color(0xFF4338ca)),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

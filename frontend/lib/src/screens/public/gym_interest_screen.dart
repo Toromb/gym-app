@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart'; // For kIsWeb
@@ -154,7 +154,8 @@ class _GymInterestScreenState extends State<GymInterestScreen> {
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+                      border:
+                          Border.all(color: Colors.red.withValues(alpha: 0.5)),
                     ),
                     child: Row(
                       children: [

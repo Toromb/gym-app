@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'manage_users_screen.dart';
@@ -46,156 +46,157 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Section
-                  GymDashboardHeader(user: user, showPaymentStatus: false),
-                  const SizedBox(height: 32),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Section
+                    GymDashboardHeader(user: user, showPaymentStatus: false),
+                    const SizedBox(height: 32),
 
-                  _buildDashboardCard(
-                    context,
-                    title: 'Gestionar Usuarios',
-                    subtitle: 'Altas, bajas y modificaciones',
-                    icon: Icons.people,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const ManageUsersScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                    _buildDashboardCard(
+                      context,
+                      title: 'Gestionar Usuarios',
+                      subtitle: 'Altas, bajas y modificaciones',
+                      icon: Icons.people,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const ManageUsersScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
 
-                  // ── COBRANZA (nuevo en Fase 4) ──
-                  _buildDashboardCard(
-                    context,
-                    title: 'Cobranza',
-                    subtitle: 'Estado de cuotas y pagos',
-                    icon: Icons.receipt_long,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                const CollectionDashboardScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                    // ── COBRANZA (nuevo en Fase 4) ──
+                    _buildDashboardCard(
+                      context,
+                      title: 'Cobranza',
+                      subtitle: 'Estado de cuotas y pagos',
+                      icon: Icons.receipt_long,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const CollectionDashboardScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
 
-                  _buildDashboardCard(
-                    context,
-                    title: 'Biblioteca de Planes',
-                    subtitle: 'Crear y editar planes base',
-                    icon: Icons.library_books,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const PlansListScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDashboardCard(
-                    context,
-                    title: 'Biblioteca de Ejercicios',
-                    subtitle: 'Gestionar ejercicios disponibles',
-                    icon: Icons.fitness_center,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const ExercisesListScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDashboardCard(
-                    context,
-                    title: 'Gestionar Equipamiento',
-                    subtitle: 'Equipos, máquinas y accesorios',
-                    icon: Icons.category,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                const ManageEquipmentsScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDashboardCard(
-                    context,
-                    title: 'Entrenamientos Libres',
-                    subtitle: 'Gestionar rutinas públicas',
-                    icon: Icons.repeat,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                const ManageFreeTrainingsScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDashboardCard(
-                    context,
-                    title: 'Horarios del Gimnasio',
-                    subtitle: _getTodayScheduleText(context),
-                    icon: Icons.access_time,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const GymScheduleScreen()),
-                      );
-                    },
-                  ),
+                    _buildDashboardCard(
+                      context,
+                      title: 'Biblioteca de Planes',
+                      subtitle: 'Crear y editar planes base',
+                      icon: Icons.library_books,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const PlansListScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDashboardCard(
+                      context,
+                      title: 'Biblioteca de Ejercicios',
+                      subtitle: 'Gestionar ejercicios disponibles',
+                      icon: Icons.fitness_center,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const ExercisesListScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDashboardCard(
+                      context,
+                      title: 'Gestionar Equipamiento',
+                      subtitle: 'Equipos, máquinas y accesorios',
+                      icon: Icons.category,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const ManageEquipmentsScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDashboardCard(
+                      context,
+                      title: 'Entrenamientos Libres',
+                      subtitle: 'Gestionar rutinas públicas',
+                      icon: Icons.repeat,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const ManageFreeTrainingsScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDashboardCard(
+                      context,
+                      title: 'Horarios del Gimnasio',
+                      subtitle: _getTodayScheduleText(context),
+                      icon: Icons.access_time,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const GymScheduleScreen()),
+                        );
+                      },
+                    ),
 
-                  const SizedBox(height: 16),
-                  _buildDashboardCard(
-                    context,
-                    title: 'Configuración del Gym',
-                    subtitle: 'Logo, nombre y mensajes',
-                    icon: Icons.settings,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const GymConfigScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDashboardCard(
-                    context,
-                    title: 'Mi Perfil',
-                    subtitle: 'Tus datos personales',
-                    icon: Icons.person,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const ProfileScreen()),
-                      );
-                    },
-                  ),
-                  // Add more admin features here
-                ],
+                    const SizedBox(height: 16),
+                    _buildDashboardCard(
+                      context,
+                      title: 'Configuración del Gym',
+                      subtitle: 'Logo, nombre y mensajes',
+                      icon: Icons.settings,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const GymConfigScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDashboardCard(
+                      context,
+                      title: 'Mi Perfil',
+                      subtitle: 'Tus datos personales',
+                      icon: Icons.person,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const ProfileScreen()),
+                        );
+                      },
+                    ),
+                    // Add more admin features here
+                  ],
+                ),
               ),
             ),
           ),
-        ),
         ),
       ),
     );
@@ -291,7 +292,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             : AppColors.cardSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: isDark ? Colors.white12 : Colors.white.withValues(alpha: 0.6)),
+            color:
+                isDark ? Colors.white12 : Colors.white.withValues(alpha: 0.6)),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withValues(alpha: 0.15),
@@ -314,8 +316,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     color: const Color(0xFFE0E7FF),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon,
-                      size: 28, color: const Color(0xFF4338ca)),
+                  child: Icon(icon, size: 28, color: const Color(0xFF4338ca)),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -326,9 +327,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         title,
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? Colors.white
-                              : colorScheme.onSurface,
+                          color: isDark ? Colors.white : colorScheme.onSurface,
                         ),
                       ),
                       if (subtitle != null) ...[

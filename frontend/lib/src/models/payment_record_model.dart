@@ -23,8 +23,7 @@ class PaymentRecord {
     String? adminName;
     if (json['registeredBy'] != null) {
       final rb = json['registeredBy'] as Map<String, dynamic>;
-      adminName =
-          '${rb['firstName'] ?? ''} ${rb['lastName'] ?? ''}'.trim();
+      adminName = '${rb['firstName'] ?? ''} ${rb['lastName'] ?? ''}'.trim();
     }
 
     return PaymentRecord(
@@ -32,7 +31,6 @@ class PaymentRecord {
       amount: json['amount'] != null
           ? double.parse(json['amount'].toString())
           : null,
-
       method: json['method'] as String?,
       notes: json['notes'] as String?,
       periodFrom: json['periodFrom'] as String,
@@ -53,8 +51,18 @@ class PaymentRecord {
     try {
       final d = DateTime.parse(iso);
       const months = [
-        'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-        'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+        'Ene',
+        'Feb',
+        'Mar',
+        'Abr',
+        'May',
+        'Jun',
+        'Jul',
+        'Ago',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dic',
       ];
       return '${d.day} ${months[d.month - 1]} ${d.year}';
     } catch (_) {

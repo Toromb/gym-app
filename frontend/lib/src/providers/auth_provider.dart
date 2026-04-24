@@ -15,7 +15,8 @@ class AuthProvider with ChangeNotifier {
   AuthStatus get status => _status;
 
   bool _isAuthenticated = false;
-  bool _isLoggingOut = false; // evita que el interceptor 401 dispare "sesión expirada" durante un logout voluntario
+  bool _isLoggingOut =
+      false; // evita que el interceptor 401 dispare "sesión expirada" durante un logout voluntario
   bool get isLoggingOut => _isLoggingOut;
   String? _token;
   User? _user;
@@ -154,7 +155,8 @@ class AuthProvider with ChangeNotifier {
     _isAuthenticated = false;
     _token = null;
     _user = null;
-    await _authService.deleteLocalTokens(); // limpia storage antes del network call
+    await _authService
+        .deleteLocalTokens(); // limpia storage antes del network call
     notifyListeners(); // UI redirige a login de inmediato
 
     // 2. Notificar al backend en background (best-effort, ignoramos errores)

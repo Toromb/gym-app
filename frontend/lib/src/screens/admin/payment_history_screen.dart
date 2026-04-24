@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../models/payment_record_model.dart';
 import '../../services/payment_service.dart';
 import '../../widgets/constrained_app_bar.dart';
@@ -34,7 +34,6 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   void _refresh() => setState(() {
         _historyFuture = _load();
       });
-
 
   // ─────────────────────────────────────────────────────────────────
   // Build
@@ -95,8 +94,8 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                           const SizedBox(height: 8),
                           Text(
                             snapshot.error.toString(),
-                            style: textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant),
+                            style: textTheme.bodySmall
+                                ?.copyWith(color: colorScheme.onSurfaceVariant),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 16),
@@ -198,8 +197,8 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           children: [
             Text(
               widget.userName,
-              style: textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style:
+                  textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             _summaryRow(
@@ -237,8 +236,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         const SizedBox(width: 8),
         Text(
           '$label: ',
-          style: TextStyle(
-              fontSize: 13, color: colorScheme.onSurfaceVariant),
+          style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
         ),
         Expanded(
           child: Text(
@@ -313,8 +311,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             const SizedBox(height: 10),
 
             // Período
-            _infoRow(context, Icons.date_range, 'Período',
-                record.periodLabel),
+            _infoRow(context, Icons.date_range, 'Período', record.periodLabel),
 
             // Monto
             if (record.amount != null)
@@ -323,8 +320,8 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
 
             // Método
             if (record.method != null)
-              _infoRow(context, methodIcon, 'Método',
-                  _capitalize(record.method!)),
+              _infoRow(
+                  context, methodIcon, 'Método', _capitalize(record.method!)),
 
             // Admin
             if (record.registeredByName != null)
@@ -375,8 +372,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           Expanded(
             child: Text(
               value,
-              style:
-                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -401,8 +397,18 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
 
   static String _monthName(int month) {
     const months = [
-      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
     ];
     return months[month - 1];
   }

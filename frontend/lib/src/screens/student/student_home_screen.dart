@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
@@ -388,80 +388,80 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   'Felicitaciones. Has completado todos los entrenamientos de este plan.',
                   style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 16),
-              Builder(
-                builder: (context) {
-                  final hasOtherPlans = provider.assignments.length > 1;
+              Builder(builder: (context) {
+                final hasOtherPlans = provider.assignments.length > 1;
 
-                  void handleRestart() {
-                    if (assignment == null) return;
-                    showDialog(
-                      context: context,
-                      builder: (dialogCtx) => AlertDialog(
-                        title: const Text('¿Reiniciar Plan?'),
-                        content: const Text(
-                            'Esto archivará tu progreso actual y comenzará un nuevo ciclo desde el día 1.'),
-                        actions: [
-                          TextButton(
-                              onPressed: () => Navigator.pop(dialogCtx),
-                              child: const Text('Cancelar')),
-                          FilledButton(
-                              onPressed: () async {
-                                Navigator.pop(dialogCtx); // Close dialog
-                                final success = await context
-                                    .read<PlanProvider>()
-                                    .restartPlan(assignment.id);
+                void handleRestart() {
+                  if (assignment == null) return;
+                  showDialog(
+                    context: context,
+                    builder: (dialogCtx) => AlertDialog(
+                      title: const Text('¿Reiniciar Plan?'),
+                      content: const Text(
+                          'Esto archivará tu progreso actual y comenzará un nuevo ciclo desde el día 1.'),
+                      actions: [
+                        TextButton(
+                            onPressed: () => Navigator.pop(dialogCtx),
+                            child: const Text('Cancelar')),
+                        FilledButton(
+                            onPressed: () async {
+                              Navigator.pop(dialogCtx); // Close dialog
+                              final success = await context
+                                  .read<PlanProvider>()
+                                  .restartPlan(assignment.id);
 
-                                if (!context.mounted) return;
-                                if (success) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content: Text(
-                                              'Plan reiniciado exitosamente')));
-                                  _refreshDashboardStats();
-                                }
-                              },
-                              child: const Text('Reiniciar')),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return Column(
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: hasOtherPlans
-                              ? () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const StudentPlansListScreen()),
-                                  ).then((_) => _refreshDashboardStats());
-                                }
-                              : null,
-                          icon: const Icon(Icons.list),
-                          label: const Text('Seleccionar otro plan'),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: hasOtherPlans
-                            ? TextButton.icon(
-                                onPressed: handleRestart,
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Reiniciar Plan'),
-                              )
-                            : FilledButton.icon(
-                                onPressed: handleRestart,
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Reiniciar Plan'),
-                              ),
-                      ),
-                    ],
+                              if (!context.mounted) return;
+                              if (success) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Plan reiniciado exitosamente')));
+                                _refreshDashboardStats();
+                              }
+                            },
+                            child: const Text('Reiniciar')),
+                      ],
+                    ),
                   );
                 }
-              ),
+
+                return Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: hasOtherPlans
+                            ? () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const StudentPlansListScreen()),
+                                ).then((_) => _refreshDashboardStats());
+                              }
+                            : null,
+                        icon: const Icon(Icons.list),
+                        label: const Text('Seleccionar otro plan'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: hasOtherPlans
+                          ? TextButton.icon(
+                              onPressed: handleRestart,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Reiniciar Plan'),
+                            )
+                          : FilledButton.icon(
+                              onPressed: handleRestart,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Reiniciar Plan'),
+                            ),
+                    ),
+                  ],
+                );
+              }),
             ],
           ),
         ),
@@ -655,7 +655,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       ),
     );
   }
-
 
   String _getTodayScheduleText(BuildContext context) {
     final schedules = context.watch<GymScheduleProvider>().schedules;

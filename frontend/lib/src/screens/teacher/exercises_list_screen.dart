@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/exercise_api_service.dart';
@@ -144,7 +144,8 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
                                                     decoration: BoxDecoration(
                                                       color: isPrimary
                                                           ? colorScheme.primary
-                                                              .withValues(alpha: 0.1)
+                                                              .withValues(
+                                                                  alpha: 0.1)
                                                           : colorScheme
                                                               .surfaceContainerHighest,
                                                       borderRadius:
@@ -194,14 +195,16 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
                                                     decoration: BoxDecoration(
                                                       color: colorScheme
                                                           .tertiary
-                                                          .withValues(alpha: 0.1),
+                                                          .withValues(
+                                                              alpha: 0.1),
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               4),
                                                       border: Border.all(
                                                           color: colorScheme
                                                               .tertiary
-                                                              .withValues(alpha: 0.3),
+                                                              .withValues(
+                                                                  alpha: 0.3),
                                                           width: 0.5),
                                                     ),
                                                     child: Text(
@@ -426,8 +429,8 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                   filled: true,
-                  fillColor:
-                      colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  fillColor: colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.5),
                 ),
                 onChanged: (val) {
                   setState(() {
@@ -440,7 +443,8 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    color: colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                         color: colorScheme.outline.withValues(alpha: 0.5))),
@@ -482,7 +486,8 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
               // Equipment Filter (Expansion)
               Card(
                 elevation: 0,
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                color:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 child: ExpansionTile(

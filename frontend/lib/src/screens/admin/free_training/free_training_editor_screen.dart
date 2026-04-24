@@ -110,8 +110,8 @@ class _FreeTrainingEditorScreenState extends State<FreeTrainingEditorScreen> {
         text: existing?.sets.toString() ??
             selected.defaultSets?.toString() ??
             '3');
-    final repsController = TextEditingController(
-        text: existing?.reps ?? selected.reps ?? '12');
+    final repsController =
+        TextEditingController(text: existing?.reps ?? selected.reps ?? '12');
     final loadController = TextEditingController(
         text: existing?.suggestedLoad ?? selected.load ?? '');
     final restController =

@@ -62,8 +62,9 @@ class PlanProvider with ChangeNotifier {
     final next = assignment.nextWorkout;
 
     if (next != null) {
-      if (next['empty'] == true) return null; // Treat plan with 0 days as essentially empty.
-      
+      if (next['empty'] == true)
+        return null; // Treat plan with 0 days as essentially empty.
+
       // Inject assignment for UI usage (StudentHomeScreen)
       return {...next, 'assignment': assignment};
     }
@@ -133,9 +134,9 @@ class PlanProvider with ChangeNotifier {
     }
   }
 
-
   // Changed to return typed list
-  Future<List<StudentAssignment>> fetchMyAssignments({bool notify = true}) async {
+  Future<List<StudentAssignment>> fetchMyAssignments(
+      {bool notify = true}) async {
     _isLoading = true;
     if (notify) notifyListeners();
     try {

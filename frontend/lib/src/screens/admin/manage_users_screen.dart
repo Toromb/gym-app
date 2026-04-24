@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
@@ -124,7 +124,9 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                             '${filteredUsers.length} usuario${filteredUsers.length != 1 ? 's' : ''}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                           ),
                         ),

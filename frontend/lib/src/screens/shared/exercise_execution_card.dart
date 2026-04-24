@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../models/execution_model.dart';
 import 'package:provider/provider.dart';
@@ -101,7 +101,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
     _weightFocusNode.addListener(() => flushOnFocusLoss(_weightFocusNode));
     _timeFocusNode.addListener(() => flushOnFocusLoss(_timeFocusNode));
     _distanceFocusNode.addListener(() => flushOnFocusLoss(_distanceFocusNode));
-    _addedWeightFocusNode.addListener(() => flushOnFocusLoss(_addedWeightFocusNode));
+    _addedWeightFocusNode
+        .addListener(() => flushOnFocusLoss(_addedWeightFocusNode));
 
     // Initialize specific controllers
     _repsController = TextEditingController(
@@ -160,7 +161,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
       final newDistance = widget.execution.distanceCovered?.toString() ??
           widget.execution.targetDistanceSnapshot?.toString() ??
           '';
-      if (_distanceController.text != newDistance && !_distanceFocusNode.hasFocus) {
+      if (_distanceController.text != newDistance &&
+          !_distanceFocusNode.hasFocus) {
         _distanceController.text = newDistance;
       }
 
@@ -169,7 +171,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
       }
 
       final newAddedWeight = widget.execution.addedWeight?.toString() ?? '';
-      if (_addedWeightController.text != newAddedWeight && !_addedWeightFocusNode.hasFocus) {
+      if (_addedWeightController.text != newAddedWeight &&
+          !_addedWeightFocusNode.hasFocus) {
         _addedWeightController.text = newAddedWeight;
       }
 
@@ -542,11 +545,12 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: Colors.blueAccent.withValues(alpha: 0.1),
+                                  color:
+                                      Colors.blueAccent.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
-                                      color:
-                                          Colors.blueAccent.withValues(alpha: 0.3)),
+                                      color: Colors.blueAccent
+                                          .withValues(alpha: 0.3)),
                                 ),
                                 child: Text(
                                   eq.name,
@@ -579,7 +583,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                     controller: _setsController,
                     focusNode: _setsFocusNode,
                     label: AppLocalizations.of(context)!.get('sets'),
-                    hint: _fallbackHint(widget.execution.targetSetsSnapshot?.toString()),
+                    hint: _fallbackHint(
+                        widget.execution.targetSetsSnapshot?.toString()),
                     icon: Icons.repeat,
                   ),
                 ),
@@ -643,7 +648,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                         controller: _weightController,
                         focusNode: _weightFocusNode,
                         label: AppLocalizations.of(context)!.get('load'),
-                        hint: _fallbackHint(widget.execution.targetWeightSnapshot),
+                        hint: _fallbackHint(
+                            widget.execution.targetWeightSnapshot),
                         icon: Icons.fitness_center,
                       ),
                     ),
@@ -656,7 +662,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                       controller: _timeController,
                       focusNode: _timeFocusNode,
                       label: 'Tiempo (seg)', // Localize later
-                      hint: _fallbackHint(widget.execution.targetTimeSnapshot?.toString()),
+                      hint: _fallbackHint(
+                          widget.execution.targetTimeSnapshot?.toString()),
                       icon: Icons.timer,
                     ),
                   ),
@@ -668,7 +675,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                       controller: _distanceController,
                       focusNode: _distanceFocusNode,
                       label: 'Distancia (m)', // Localize later
-                      hint: _fallbackHint(widget.execution.targetDistanceSnapshot?.toString()),
+                      hint: _fallbackHint(
+                          widget.execution.targetDistanceSnapshot?.toString()),
                       icon: Icons.directions_run,
                     ),
                   ),

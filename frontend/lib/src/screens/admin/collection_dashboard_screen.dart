@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/user_model.dart';
 import '../../providers/user_provider.dart';
@@ -15,8 +15,7 @@ class CollectionDashboardScreen extends StatefulWidget {
       _CollectionDashboardScreenState();
 }
 
-class _CollectionDashboardScreenState
-    extends State<CollectionDashboardScreen> {
+class _CollectionDashboardScreenState extends State<CollectionDashboardScreen> {
   // Estado: 'all', 'overdue', 'pending', 'paid'
   String _statusFilter = 'all';
   // Rol:    'all', 'alumno', 'profe'
@@ -72,21 +71,30 @@ class _CollectionDashboardScreenState
           // ── Aplicar filtro de rol ──────────────────────────────
           // Los que pagan membresía (alumnos normalmente, pero pueden
           // existir profes con membresía también).
-          final allByRole = provider.students.where((u) {
-            if (_roleFilter == 'alumno') return u.role == UserRoles.alumno;
-            if (_roleFilter == 'profe') return u.role == UserRoles.profe;
-            return u.role == UserRoles.alumno || u.role == UserRoles.profe;
-          }).where((u) => u.paysMembership ?? true).where((u) {
-            if (_searchQuery.isEmpty) return true;
-            final q = _searchQuery.toLowerCase();
-            return ('${u.firstName} ${u.lastName}').toLowerCase().contains(q) ||
-                u.email.toLowerCase().contains(q);
-          }).toList();
+          final allByRole = provider.students
+              .where((u) {
+                if (_roleFilter == 'alumno') return u.role == UserRoles.alumno;
+                if (_roleFilter == 'profe') return u.role == UserRoles.profe;
+                return u.role == UserRoles.alumno || u.role == UserRoles.profe;
+              })
+              .where((u) => u.paysMembership ?? true)
+              .where((u) {
+                if (_searchQuery.isEmpty) return true;
+                final q = _searchQuery.toLowerCase();
+                return ('${u.firstName} ${u.lastName}')
+                        .toLowerCase()
+                        .contains(q) ||
+                    u.email.toLowerCase().contains(q);
+              })
+              .toList();
 
           // ── Contadores por estado (siempre sobre el rol filtrado) ──
-          final paid = allByRole.where((u) => u.paymentStatus == 'paid').toList();
-          final pending = allByRole.where((u) => u.paymentStatus == 'pending').toList();
-          final overdue = allByRole.where((u) => u.paymentStatus == 'overdue').toList();
+          final paid =
+              allByRole.where((u) => u.paymentStatus == 'paid').toList();
+          final pending =
+              allByRole.where((u) => u.paymentStatus == 'pending').toList();
+          final overdue =
+              allByRole.where((u) => u.paymentStatus == 'overdue').toList();
 
           // ── Aplicar filtro de estado ───────────────────────────
           List<User> filtered;
@@ -196,7 +204,8 @@ class _CollectionDashboardScreenState
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _roleChip(context, 'Todos', 'all', Icons.people_outline),
+                        _roleChip(
+                            context, 'Todos', 'all', Icons.people_outline),
                         const SizedBox(width: 8),
                         _roleChip(context, 'Alumnos', UserRoles.alumno,
                             Icons.school_outlined),
@@ -329,7 +338,8 @@ class _CollectionDashboardScreenState
     return FilterChip(
       avatar: Icon(icon,
           size: 16,
-          color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant),
+          color:
+              isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant),
       label: Text(label),
       selected: isSelected,
       selectedColor: colorScheme.primaryContainer,
@@ -440,8 +450,7 @@ class _CollectionDashboardScreenState
                       Text(
                         'Inicio: ${_fmtDate(user.membershipStartDate)}',
                         style: TextStyle(
-                            fontSize: 11,
-                            color: colorScheme.onSurfaceVariant),
+                            fontSize: 11, color: colorScheme.onSurfaceVariant),
                       ),
                       const SizedBox(width: 12),
                       Icon(Icons.event_outlined,
@@ -450,8 +459,7 @@ class _CollectionDashboardScreenState
                       Text(
                         'Vence: ${_fmtDate(user.membershipExpirationDate)}',
                         style: TextStyle(
-                            fontSize: 11,
-                            color: colorScheme.onSurfaceVariant),
+                            fontSize: 11, color: colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -485,8 +493,7 @@ class _CollectionDashboardScreenState
                           content: Text(success
                               ? '✅ Pago registrado correctamente'
                               : '❌ Error al registrar el pago'),
-                          backgroundColor:
-                              success ? Colors.green : Colors.red,
+                          backgroundColor: success ? Colors.green : Colors.red,
                           duration: const Duration(seconds: 2),
                         ),
                       );
@@ -529,16 +536,14 @@ class _CollectionDashboardScreenState
                       child: IconButton(
                         padding: EdgeInsets.zero,
                         iconSize: 18,
-                        icon: Icon(Icons.history,
-                            color: colorScheme.primary),
+                        icon: Icon(Icons.history, color: colorScheme.primary),
                         tooltip: 'Historial de pagos',
                         onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => PaymentHistoryScreen(
                               userId: user.id,
-                              userName:
-                                  '${user.firstName} ${user.lastName}',
+                              userName: '${user.firstName} ${user.lastName}',
                               membershipStartDate: user.membershipStartDate,
                             ),
                           ),

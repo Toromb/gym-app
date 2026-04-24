@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 /// Envoltorio reutilizable para proveer un fondo consistente (imagen + overlay)
 /// a las pantallas de la aplicación.
@@ -60,11 +60,11 @@ class BackgroundPageWrapper extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 stops: const [0.0, 0.35, 1.0],
                 colors: [
-                  Colors.black
-                      .withValues(alpha: (overlayOpacity + 0.15).clamp(0.0, 1.0)),
+                  Colors.black.withValues(
+                      alpha: (overlayOpacity + 0.15).clamp(0.0, 1.0)),
                   Colors.black.withValues(alpha: overlayOpacity),
-                  Colors.black
-                      .withValues(alpha: (overlayOpacity + 0.05).clamp(0.0, 1.0)),
+                  Colors.black.withValues(
+                      alpha: (overlayOpacity + 0.05).clamp(0.0, 1.0)),
                 ],
               ),
             ),

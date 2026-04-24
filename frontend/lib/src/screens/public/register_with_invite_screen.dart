@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -288,8 +288,9 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color:
-                              Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                          color: Theme.of(context)
+                              .primaryColor
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                               color: Theme.of(context)
@@ -342,8 +343,8 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
                           decoration: BoxDecoration(
                             color: Colors.red.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
-                            border:
-                                Border.all(color: Colors.red.withValues(alpha: 0.5)),
+                            border: Border.all(
+                                color: Colors.red.withValues(alpha: 0.5)),
                           ),
                           child: Row(
                             children: [

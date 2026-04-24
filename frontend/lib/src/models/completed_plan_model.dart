@@ -34,7 +34,7 @@ class CompletedPlan {
           [],
     );
   }
-  
+
   String get formattedStartDate {
     if (startedAt.isEmpty) return 'Desconocida';
     try {
@@ -54,13 +54,17 @@ class CompletedPlan {
       return completedAt;
     }
   }
-  
+
   String get translatedReason {
-    switch(completedReason) {
-      case 'CANCELLED': return 'Cancelado';
-      case 'RESTARTED': return 'Reiniciado';
-      case 'COMPLETED': return 'Completado';
-      default: return completedReason;
+    switch (completedReason) {
+      case 'CANCELLED':
+        return 'Cancelado';
+      case 'RESTARTED':
+        return 'Reiniciado';
+      case 'COMPLETED':
+        return 'Completado';
+      default:
+        return completedReason;
     }
   }
 }

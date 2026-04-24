@@ -4,7 +4,8 @@ import 'package:gym_app/src/widgets/student_card_item.dart';
 import 'package:gym_app/src/models/user_model.dart';
 
 void main() {
-  testWidgets('StudentCardItem displays student info and buttons', (WidgetTester tester) async {
+  testWidgets('StudentCardItem displays student info and buttons',
+      (WidgetTester tester) async {
     // 1. Arrange
     final student = User(
       id: '123',

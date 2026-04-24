@@ -258,7 +258,10 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
               Navigator.of(context).popUntil((route) => route.isFirst);
           } else if (!widget.readOnly && mounted) {
             // Refresh
-            context.read<PlanProvider>().fetchMyAssignments().then((assignments) {
+            context
+                .read<PlanProvider>()
+                .fetchMyAssignments()
+                .then((assignments) {
               if (mounted) {
                 try {
                   StudentAssignment updated;
@@ -378,26 +381,35 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
           child: ElevatedButton.icon(
             onPressed: () async {
               final provider = context.read<PlanProvider>();
-              final isFullyCompleted = _currentAssignment!.plan.weeks.isNotEmpty && _currentAssignment!.nextWorkout == null;
-              
+              final isFullyCompleted =
+                  _currentAssignment!.plan.weeks.isNotEmpty &&
+                      _currentAssignment!.nextWorkout == null;
+
               bool success;
               if (isFullyCompleted) {
                 // If the plan is 100% completed, "activating" it should start a new cycle.
                 success = await provider.restartPlan(_currentAssignment!.id);
               } else {
-                success = await provider.activateAssignment(_currentAssignment!.id);
+                success =
+                    await provider.activateAssignment(_currentAssignment!.id);
               }
 
               if (success && mounted) {
                 Navigator.of(context).popUntil((route) => route.isFirst);
               } else if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(AppLocalizations.of(context)!.get('errorGeneral'))),
+                  SnackBar(
+                      content: Text(
+                          AppLocalizations.of(context)!.get('errorGeneral'))),
                 );
               }
             },
             icon: context.watch<PlanProvider>().isLoading
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2))
                 : const Icon(Icons.play_arrow, size: 28),
             label: Text(
               'Elegir y comenzar este plan',

@@ -12,7 +12,8 @@ class PaymentStatusBadge extends StatefulWidget {
   final VoidCallback? onMarkAsPaid;
 
   /// New callback — called with payment details from the bottom sheet
-  final void Function(double? amount, String? method, String? notes, int months)?
+  final void Function(
+          double? amount, String? method, String? notes, int months)?
       onRegisterPayment;
 
   final bool isEditable;
@@ -415,8 +416,7 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
                                     width: 16,
                                     height: 16,
                                     child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white),
+                                        strokeWidth: 2, color: Colors.white),
                                   )
                                 : const Icon(Icons.check),
                             label: const Text('Confirmar'),
@@ -550,7 +550,10 @@ class _PaymentStatusBadgeState extends State<PaymentStatusBadge> {
       ],
     );
 
-    if (widget.isEditable && (widget.onMarkAsPaid != null || widget.onRegisterPayment != null || widget.userId != null)) {
+    if (widget.isEditable &&
+        (widget.onMarkAsPaid != null ||
+            widget.onRegisterPayment != null ||
+            widget.userId != null)) {
       return PopupMenuButton<String>(
         child: badge,
         itemBuilder: (context) => [
