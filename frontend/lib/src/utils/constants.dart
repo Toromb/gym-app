@@ -8,13 +8,11 @@ String get baseUrl {
   }
 
   if (kIsWeb) {
-    if (kDebugMode) {
-      return 'http://localhost:3001';
-    }
-    // Use the current window origin to ensure absolute URL
-    // This avoids issues with relative URIs in some HTTP clients
-    final String origin = Uri.base.origin;
-    return '$origin/api';
+    // En debug web usamos el backend local para probar cambios antes de subir a producción.
+    // Usuarios de prueba locales (contraseña: Test1234!):
+    //   admin@gym.com / profe@gym.com / alumno@gym.com / superadmin@gym.com
+    // Para apuntar a producción, cambiar por: 'https://tugymflow.com/api'
+    return kDebugMode ? 'http://localhost:3001' : 'https://tugymflow.com/api';
   }
   // Allow injection via --dart-define=API_URL=...
   const apiUrl = String.fromEnvironment('API_URL');

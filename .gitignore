@@ -55,3 +55,9 @@ backend_service/**/*.log
 
 # Temporary python scripts
 frontend/*.py
+
+# Local dev tooling (Chrome profile for --disable-web-security)
+.chrome-dev-profile/
+
+# Local DB scripts (not for version control)
+reset_passwords.sql
