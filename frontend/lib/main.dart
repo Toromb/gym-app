@@ -31,13 +31,8 @@ import 'src/services/api_client.dart';
 import 'src/services/auth_service.dart';
 
 // ─── Firebase Crashlytics ────────────────────────────────────────────────────
-// TODO(setup): Uncomment these 2 imports after running `flutter pub get`
-//              with the firebase packages added to pubspec.yaml, AND after
-//              placing GoogleService-Info.plist (iOS) and google-services.json
-//              (Android) in their respective directories.
-//
-// import 'package:firebase_core/firebase_core.dart';
-// import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 // ────────────────────────────────────────────────────────────────────────────
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -47,20 +42,19 @@ void main() async {
   setPathUrlStrategy();
 
   // ─── Firebase Crashlytics initialization ──────────────────────────────────
-  // TODO(setup): Uncomment the block below once the Firebase config files are
-  //              in place (GoogleService-Info.plist + google-services.json).
-  //
-  // await Firebase.initializeApp();
-  //
-  // Captures all Flutter framework errors (widget build failures, etc.)
-  // and sends them to Firebase Crashlytics as non-fatal events.
-  // FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-  //
-  // Captures errors outside the Flutter framework (async Dart errors, etc.).
-  // PlatformDispatcher.instance.onError = (error, stack) {
-  //   FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-  //   return true;
-  // };
+  // Must run before any other async code so errors during startup are captured.
+  await Firebase.initializeApp();
+
+  // Captures all Flutter framework errors (widget build failures, navigation
+  // errors, etc.) and reports them to Crashlytics as non-fatal events.
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+  // Captures errors that happen outside the Flutter framework — for example,
+  // unhandled async Future errors or native platform errors.
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true; // returning true prevents the default crash behavior
+  };
   // ─────────────────────────────────────────────────────────────────────────
 
   await Hive.initFlutter();

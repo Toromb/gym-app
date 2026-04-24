@@ -42,14 +42,11 @@ dependencies:
   audioplayers: ^6.6.0
 
   # ─── Firebase Crashlytics ────────────────────────────────────────────────────
-  # TODO(setup): Uncomment these 2 packages once you have placed:
-  #   - ios/Runner/GoogleService-Info.plist   (download from Firebase console)
-  #   - android/app/google-services.json      (download from Firebase console)
-  # Then run: flutter pub get
-  # And follow the native setup steps below in the README or ask the AI.
-  #
-  # firebase_core: ^3.13.1
-  # firebase_crashlytics: ^4.3.1
+  # Config files required (place BEFORE running flutter pub get):
+  #   - ios/Runner/GoogleService-Info.plist
+  #   - android/app/google-services.json
+  firebase_core: ^3.13.1
+  firebase_crashlytics: ^4.3.1
   # ────────────────────────────────────────────────────────────────────────────
 
 dev_dependencies:
