@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../localization/app_localizations.dart';
@@ -246,49 +246,64 @@ class _PlansListScreenState extends State<PlansListScreen> {
   void _confirmDeletePlan(BuildContext context, Plan plan) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.get('deletePlanTitle')),
-        content: Text(AppLocalizations.of(context)!.get('deletePlanConfirm')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.get('cancel')),
+      builder: (context) {
+        bool isDeleting = false;
+        return StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: Text(AppLocalizations.of(context)!.get('deletePlanTitle')),
+            content:
+                Text(AppLocalizations.of(context)!.get('deletePlanConfirm')),
+            actions: [
+              TextButton(
+                onPressed: isDeleting ? null : () => Navigator.pop(context),
+                child: Text(AppLocalizations.of(context)!.get('cancel')),
+              ),
+              TextButton(
+                onPressed: isDeleting
+                    ? null
+                    : () async {
+                        setState(() => isDeleting = true);
+                        final error = await context
+                            .read<PlanProvider>()
+                            .deletePlan(plan.id!);
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                        if (error == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(AppLocalizations.of(context)!
+                                    .get('deletePlanSuccess'))),
+                          );
+                        } else {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text(
+                                  AppLocalizations.of(context)!.get('error')),
+                              content: Text(error),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      },
+                child: isDeleting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(AppLocalizations.of(context)!.get('delete'),
+                        style: const TextStyle(color: Colors.red)),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final error =
-                  await context.read<PlanProvider>().deletePlan(plan.id!);
-              if (mounted) {
-                if (error == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(AppLocalizations.of(context)!
-                            .get('deletePlanSuccess'))),
-                  );
-                } else {
-                  // Show error dialog for conflicts (assigned plans)
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text(AppLocalizations.of(context)!.get('error')),
-                      content: Text(error),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-              }
-            },
-            child: Text(AppLocalizations.of(context)!.get('delete'),
-                style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

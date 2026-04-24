@@ -686,7 +686,9 @@ class PlanProvider with ChangeNotifier {
     try {
       final error = await _planService.deletePlan(id);
       if (error == null) {
-        await fetchPlans(); // Refresh list on success
+        await fetchPlans(
+            forceRefresh:
+                true); // Force refresh — plan was deleted, cache is stale
         return null;
       }
       return error;
