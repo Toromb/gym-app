@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
         onPressed: _isLoading ? null : _performGoogleLogin,
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
-          side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+          side: BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -164,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
             onPressed: _isLoading ? null : _performGoogleLogin,
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+              side: BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
@@ -188,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
             onPressed: _isLoading ? null : _performAppleLogin,
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+              side: BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
@@ -259,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Tu Gym Flow',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             letterSpacing: 1.5,
                           ),
                         ),
@@ -350,7 +350,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     side: BorderSide(
                                       color: isDark
                                           ? Colors.white54
-                                          : Colors.grey.withOpacity(0.5),
+                                          : Colors.grey.withValues(alpha: 0.5),
                                     ),
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
@@ -365,10 +365,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                     padding: const EdgeInsets.all(12),
                                     margin: const EdgeInsets.only(bottom: 24),
                                     decoration: BoxDecoration(
-                                      color: Colors.red.withOpacity(0.1),
+                                      color: Colors.red.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
-                                          color: Colors.red.withOpacity(0.5)),
+                                          color: Colors.red.withValues(alpha: 0.5)),
                                     ),
                                     child: Row(
                                       children: [
@@ -552,7 +552,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ? const Color(0xFF2A2A2A)
                                         : Colors.grey[100],
                                     border: Border.all(
-                                        color: Colors.grey.withOpacity(0.3)),
+                                        color: Colors.grey.withValues(alpha: 0.3)),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Column(

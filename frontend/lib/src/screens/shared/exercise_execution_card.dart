@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../models/execution_model.dart';
 import 'package:provider/provider.dart';
@@ -479,12 +479,12 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                                     horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: isPrimary
-                                      ? color.withOpacity(0.15)
-                                      : Colors.grey.withOpacity(0.1),
+                                      ? color.withValues(alpha: 0.15)
+                                      : Colors.grey.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4),
                                   border: isPrimary
                                       ? Border.all(
-                                          color: color.withOpacity(0.5),
+                                          color: color.withValues(alpha: 0.5),
                                           width: 0.5)
                                       : null,
                                 ),
@@ -542,11 +542,11 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: Colors.blueAccent.withOpacity(0.1),
+                                  color: Colors.blueAccent.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
                                       color:
-                                          Colors.blueAccent.withOpacity(0.3)),
+                                          Colors.blueAccent.withValues(alpha: 0.3)),
                                 ),
                                 child: Text(
                                   eq.name,

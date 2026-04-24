@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -187,7 +187,7 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
         onPressed: _isLoading ? null : _performGoogleLogin,
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
-          side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+          side: BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -214,7 +214,7 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
             onPressed: _isLoading ? null : _performGoogleLogin,
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+              side: BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
@@ -238,7 +238,7 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
             onPressed: _isLoading ? null : _performAppleLogin,
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+              side: BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
@@ -289,12 +289,12 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           color:
-                              Theme.of(context).primaryColor.withOpacity(0.1),
+                              Theme.of(context).primaryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                               color: Theme.of(context)
                                   .primaryColor
-                                  .withOpacity(0.3)),
+                                  .withValues(alpha: 0.3)),
                         ),
                         child: Column(
                           children: [
@@ -340,10 +340,10 @@ class _RegisterWithInviteScreenState extends State<RegisterWithInviteScreen> {
                           padding: const EdgeInsets.all(12),
                           margin: const EdgeInsets.only(bottom: 24),
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
+                            color: Colors.red.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border:
-                                Border.all(color: Colors.red.withOpacity(0.5)),
+                                Border.all(color: Colors.red.withValues(alpha: 0.5)),
                           ),
                           child: Row(
                             children: [

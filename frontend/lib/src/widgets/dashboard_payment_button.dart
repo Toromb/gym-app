@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 
 class DashboardPaymentButton extends StatefulWidget {
@@ -60,12 +60,12 @@ class _DashboardPaymentButtonState extends State<DashboardPaymentButton> {
           color: bgColor,
           borderRadius: BorderRadius.circular(20),
           border:
-              Border.all(color: _isPressed ? color : color.withOpacity(0.5)),
+              Border.all(color: _isPressed ? color : color.withValues(alpha: 0.5)),
           boxShadow: _isPressed
               ? []
               : [
                   BoxShadow(
-                    color: color.withOpacity(0.5), // Increased opacity from 0.2
+                    color: color.withValues(alpha: 0.5), // Increased opacity from 0.2
                     blurRadius: 6, // Increased blur
                     offset: const Offset(
                         0, 4), // Increased offset for more "height"

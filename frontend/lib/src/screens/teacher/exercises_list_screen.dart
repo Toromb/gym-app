@@ -144,7 +144,7 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
                                                     decoration: BoxDecoration(
                                                       color: isPrimary
                                                           ? colorScheme.primary
-                                                              .withOpacity(0.1)
+                                                              .withValues(alpha: 0.1)
                                                           : colorScheme
                                                               .surfaceContainerHighest,
                                                       borderRadius:
@@ -194,14 +194,14 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
                                                     decoration: BoxDecoration(
                                                       color: colorScheme
                                                           .tertiary
-                                                          .withOpacity(0.1),
+                                                          .withValues(alpha: 0.1),
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               4),
                                                       border: Border.all(
                                                           color: colorScheme
                                                               .tertiary
-                                                              .withOpacity(0.3),
+                                                              .withValues(alpha: 0.3),
                                                           width: 0.5),
                                                     ),
                                                     child: Text(
@@ -427,7 +427,7 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                   filled: true,
                   fillColor:
-                      colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 ),
                 onChanged: (val) {
                   setState(() {
@@ -440,10 +440,10 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: colorScheme.outline.withOpacity(0.5))),
+                        color: colorScheme.outline.withValues(alpha: 0.5))),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String?>(
                     value: _selectedMuscleId,
@@ -482,7 +482,7 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
               // Equipment Filter (Expansion)
               Card(
                 elevation: 0,
-                color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 child: ExpansionTile(

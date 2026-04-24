@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../models/plan_model.dart';
 import '../../utils/swap_exercise_logic.dart';
 
@@ -80,7 +80,7 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                    color: Colors.amber.withOpacity(0.2),
+                    color: Colors.amber.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.amber)),
                 child: Row(children: [
@@ -97,9 +97,9 @@ class _SwapConfirmationDialogState extends State<SwapConfirmationDialog> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
               ),
               child: const Text(
                 'Estos valores son una estimación inicial basada en el ejercicio anterior. Podés modificarlos antes de continuar.',

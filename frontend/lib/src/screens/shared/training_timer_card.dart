@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import '../../localization/app_localizations.dart';
@@ -245,7 +245,7 @@ class _TrainingTimerCardState extends State<TrainingTimerCard>
       decoration: BoxDecoration(
         color: const Color(0xFF1E2128), // Dark UI matching standard cards
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
@@ -403,7 +403,7 @@ class _TrainingTimerCardState extends State<TrainingTimerCard>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(

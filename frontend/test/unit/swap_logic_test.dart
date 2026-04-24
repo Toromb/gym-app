@@ -1,8 +1,8 @@
 
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/src/utils/swap_exercise_logic.dart';
-import '../../lib/src/models/plan_model.dart';
-import '../../lib/src/models/execution_model.dart';
+import 'package:gym_app/src/utils/swap_exercise_logic.dart';
+import 'package:gym_app/src/models/plan_model.dart';
+import 'package:gym_app/src/models/execution_model.dart';
 
 void main() {
   group('SwapExerciseLogic Intelligent Reps', () {

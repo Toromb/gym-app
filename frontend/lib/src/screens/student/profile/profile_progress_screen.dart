@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/stats_provider.dart';
@@ -414,12 +414,12 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -548,7 +548,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                                   color: Theme.of(context)
                                       .colorScheme
                                       .onInverseSurface
-                                      .withOpacity(0.8),
+                                      .withValues(alpha: 0.8),
                                   fontSize: 12,
                                   fontWeight: FontWeight.normal),
                             ),
@@ -623,7 +623,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                     horizontalInterval: maxVal / 5, // ~5 grid lines
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
-                        color: Colors.grey.withOpacity(0.1),
+                        color: Colors.grey.withValues(alpha: 0.1),
                         strokeWidth: 1,
                       );
                     },
@@ -641,7 +641,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                               Theme.of(context)
                                   .colorScheme
                                   .primary
-                                  .withOpacity(0.6),
+                                  .withValues(alpha: 0.6),
                             ],
                             begin: Alignment.bottomCenter,
                             end: Alignment.topCenter,
@@ -652,7 +652,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
                             toY: maxVal * 1.2,
-                            color: Colors.grey.withOpacity(0.05),
+                            color: Colors.grey.withValues(alpha: 0.05),
                           ),
                         )
                       ],
@@ -716,7 +716,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).primaryColor.withOpacity(0.4),
+                      color: Theme.of(context).primaryColor.withValues(alpha: 0.4),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     )
@@ -826,7 +826,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.redAccent.withOpacity(0.1),
+                  color: Colors.redAccent.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.accessibility_new,

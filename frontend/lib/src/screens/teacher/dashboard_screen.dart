@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../localization/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -233,14 +233,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     return Container(
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withOpacity(0.08)
-            : AppColors.cardSurface.withOpacity(0.92),
+            ? Colors.white.withValues(alpha: 0.08)
+            : AppColors.cardSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: isDark ? Colors.white12 : Colors.white.withOpacity(0.6)),
+            color: isDark ? Colors.white12 : Colors.white.withValues(alpha: 0.6)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 12,
               offset: const Offset(0, 4))
         ],

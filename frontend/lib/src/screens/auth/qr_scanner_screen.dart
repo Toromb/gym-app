@@ -221,7 +221,7 @@ class QrScannerOverlayShape extends ShapeBorder {
         cutOutSize < width ? cutOutSize : width - borderOffset;
 
     final backgroundPaint = Paint()
-      ..color = Colors.black.withOpacity(overlayColorAlpha)
+      ..color = Colors.black.withValues(alpha: overlayColorAlpha)
       ..style = PaintingStyle.fill;
 
     final borderPaint = Paint()

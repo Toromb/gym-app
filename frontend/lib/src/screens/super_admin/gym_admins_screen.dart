@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
@@ -106,8 +106,8 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: (admin.isActive == true)
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.orange.withOpacity(0.1),
+                                  ? Colors.green.withValues(alpha: 0.1)
+                                  : Colors.orange.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
                                   color: (admin.isActive == true)
