@@ -473,10 +473,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                         icon: const Icon(Icons.vpn_key),
                         tooltip: 'Opciones de Cuenta',
                         onSelected: (value) async {
-                          final authService =
-                              AuthService(); // Instantiate locally
+                          final authService = AuthService();
                           String? token;
-                          String path = '';
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(

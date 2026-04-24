@@ -7,7 +7,6 @@ import '../shared/plans_list_screen.dart';
 import 'exercises_list_screen.dart';
 import '../shared/gym_schedule_screen.dart';
 import '../profile_screen.dart';
-import '../../widgets/payment_status_badge.dart';
 import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
 import '../student/free_training/free_training_selector_screen.dart';
@@ -297,20 +296,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-
-  Widget _infoRow(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.grey),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
-        ],
       ),
     );
   }

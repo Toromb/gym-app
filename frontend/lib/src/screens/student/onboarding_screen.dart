@@ -5,7 +5,6 @@ import '../../providers/auth_provider.dart';
 import '../../services/api_client.dart';
 import '../../services/onboarding_service.dart';
 import '../../models/onboarding_model.dart';
-import '../../utils/app_colors.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -16,7 +15,6 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
-  final _formKey = GlobalKey<FormState>();
 
   int _currentPage = 0;
   bool _isLoading = false;

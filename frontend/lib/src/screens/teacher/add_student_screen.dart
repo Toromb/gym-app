@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
@@ -16,7 +16,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _ageController = TextEditingController();
   final _genderController = TextEditingController();
   final _weightController = TextEditingController();
   final _notesController = TextEditingController();

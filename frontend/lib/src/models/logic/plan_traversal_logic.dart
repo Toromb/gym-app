@@ -1,29 +1,34 @@
 import '../student_assignment_model.dart';
-import '../../models/plan_model.dart'; // Ensure Plan models are imported
+// plan_model.dart types are transitively available via StudentAssignment
 
 extension PlanTraversalLogic on StudentAssignment {
-  /// Determines the next workout details (weekNumber, dayOrder, dayId)
+  /// Determines the next workout details (week, day, dayId, title)
   /// by traversing the plan structure and checking against progress.
+  ///
+  /// Returns:
+  ///  - A map with 'week', 'day', 'dayId', 'title' if an incomplete day exists.
+  ///  - A map with 'empty': true if the plan has no weeks/days.
+  ///  - null if all days are completed (plan finished).
   Map<String, dynamic>? get nextWorkout {
-    if (plan == null) return { 'empty': true, 'error': 'Plan definition missing' };
-
-    final weeks = plan!.weeks ?? [];
-    if (weeks.isEmpty) return { 'empty': true };
+    // `plan` and `plan.weeks` are both non-nullable fields (required in model).
+    final weeks = plan.weeks;
+    if (weeks.isEmpty) return {'empty': true};
 
     // Defend against null progress structure
     final daysProgress = (progress['days'] as Map<String, dynamic>?) ?? {};
 
     int totalDays = 0;
 
-    for (var week in weeks) {
-      final days = week.days ?? [];
+    for (final week in weeks) {
+      // `week.days` is List<PlanDay> — non-nullable, no ?? needed
+      final days = List.of(week.days); // copy to sort without mutating model
       totalDays += days.length;
       // Ensure sorted by day order to recommend correct sequence
-      days.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
+      days.sort((a, b) => (a.order).compareTo(b.order));
 
-      for (var day in days) {
+      for (final day in days) {
         final dayId = day.id;
-        // Check completion
+        // Check completion status from local progress map
         final isCompleted = daysProgress[dayId]?['completed'] == true;
 
         if (!isCompleted) {
@@ -38,11 +43,11 @@ extension PlanTraversalLogic on StudentAssignment {
     }
 
     if (totalDays == 0) {
-      // If the plan has 0 days, it is empty, NOT completed.
-      return { 'empty': true }; // Use a custom tag so provider can handle it
+      // The plan exists but has 0 days — treat as empty, not completed.
+      return {'empty': true};
     }
 
-    // If all actual days were completed, return null to indicate 'Plan Completed'.
+    // All days completed → signal 'Plan Finished' to the caller.
     return null;
   }
 }

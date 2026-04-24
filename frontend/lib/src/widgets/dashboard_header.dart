@@ -5,7 +5,6 @@ import '../providers/theme_provider.dart';
 import '../models/user_model.dart' as app_models;
 import 'package:intl/intl.dart';
 import 'dashboard_payment_button.dart';
-import 'payment_status_badge.dart'; // Ensure this is imported if used inside DashboardPaymentButton or elsewhere
 import '../theme/background_styles.dart';
 
 class GymDashboardHeader extends StatelessWidget {
@@ -72,7 +71,7 @@ class GymDashboardHeader extends StatelessWidget {
                   radius: 28,
                   backgroundColor: Colors.grey[200],
                   backgroundImage: hasProfilePic
-                      ? NetworkImage(profilePic!.startsWith('http')
+                      ? NetworkImage(profilePic.startsWith('http')
                           ? profilePic
                           : 'http://localhost:3001$profilePic')
                       : null,

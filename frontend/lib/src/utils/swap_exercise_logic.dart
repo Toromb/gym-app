@@ -154,7 +154,6 @@ class SwapExerciseLogic {
         targetMax = 20;
         break;
       case TrainingIntent.GENERAL:
-      default:
         targetMin = 10;
         targetMax = 12; // Fallback only if no other info
         break;

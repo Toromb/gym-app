@@ -1,12 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/gyms_provider.dart';
-import '../../models/user_model.dart';
-import '../../models/gym_model.dart';
 import '../../services/auth_service.dart';
 import '../../screens/admin/add_user_screen.dart';
 
@@ -154,7 +152,6 @@ class _GymAdminsScreenState extends State<GymAdminsScreen> {
                             onSelected: (value) async {
                               final authService = AuthService();
                               String? token;
-                              String path = '';
 
                               if (value == 'activation') {
                                 token = await authService

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../models/free_training_model.dart';
 import '../../../services/free_training_service.dart';
 import '../../shared/day_detail_screen.dart';
-import '../../../models/plan_model.dart'; // For DayDetailScreen if needed
 import '../../../widgets/background_page_wrapper.dart';
 import '../../../theme/background_styles.dart';
 
@@ -352,7 +351,6 @@ class _FreeTrainingSelectorScreenState
         ...TrainingLevel.values.map((level) {
           Color color;
           IconData icon;
-          String sub;
 
           switch (level) {
             case TrainingLevel.inicial:

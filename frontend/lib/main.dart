@@ -22,11 +22,10 @@ import 'src/screens/public/terms_screen.dart';
 
 import 'package:hive_flutter/hive_flutter.dart';
 import 'src/services/local_storage_service.dart';
-import 'src/services/local_storage_service.dart';
 import 'src/services/sync_service.dart';
 import 'package:url_strategy/url_strategy.dart';
 
-import 'dart:async';
+import 'dart:ui'; // Required for PlatformDispatcher
 import 'src/services/api_client.dart';
 import 'src/services/auth_service.dart';
 
@@ -69,7 +68,8 @@ void main() async {
   };
 
   // Flag para evitar múltiples snackbars en paralelo
-  bool _sessionTerminationHandled = false;
+  // Note: local variables must not use underscore prefix per Dart lint rules
+  bool sessionTerminationHandled = false;
 
   ApiClient.onSessionTerminated = () {
     final context = navigatorKey.currentContext;
@@ -82,11 +82,11 @@ void main() async {
     if (!authProvider.isAuthenticated) return;
 
     // Evitar múltiples snackbars/redirects simultáneos
-    if (_sessionTerminationHandled) return;
-    _sessionTerminationHandled = true;
+    if (sessionTerminationHandled) return;
+    sessionTerminationHandled = true;
 
     authProvider.logout().then((_) {
-      _sessionTerminationHandled = false;
+      sessionTerminationHandled = false;
       navigatorKey.currentState
           ?.pushNamedAndRemoveUntil('/login', (route) => false);
       ScaffoldMessenger.of(context).showSnackBar(

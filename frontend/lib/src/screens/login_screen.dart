@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../localization/app_localizations.dart';
-
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/user_provider.dart';
-import '../providers/user_provider.dart';
 import '../screens/home_screen.dart';
-import '../screens/public/register_with_invite_screen.dart';
 import '../screens/public/gym_interest_screen.dart';
 import 'auth/qr_scanner_screen.dart';
 import '../widgets/background_page_wrapper.dart';

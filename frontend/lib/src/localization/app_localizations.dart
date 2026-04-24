@@ -113,8 +113,7 @@ class AppLocalizations {
       'closePM': 'Cierra PM',
       'notes': 'Notas',
       'scheduleUpdated': '¡Horario actualizado!',
-      'save': 'Guardar',
-      'trainingSession': 'Sesión de Entrenamiento',
+      // 'save', 'trainingSession' defined earlier — keeping in the auth section above
       'completed': 'Completado',
       'inProgress': 'En Progreso',
       'day_monday': 'Lunes',
@@ -138,12 +137,8 @@ class AppLocalizations {
       'timerSub10s': '-10s',
 
       // --- Exercises ---
-      'sets': 'Series',
-      'reps': 'Reps',
-      'load': 'Carga',
+      // Note: 'sets', 'reps', 'load', 'notes' defined above in the Plans section
       'watchVideo': 'Ver Video',
-      'addExercise': 'Agregar Ejercicios',
-      'notes': 'Notas',
 
       // --- Admin / Management ---
       'manageUsers': 'Gestionar Usuarios',
