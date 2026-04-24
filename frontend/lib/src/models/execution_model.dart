@@ -27,9 +27,14 @@ class TrainingSession {
     return TrainingSession(
       id: json['id'],
       date: json['date'],
-      planId: json['plan'] != null
-          ? (json['plan'] is String ? json['plan'] : json['plan']['id'])
-          : null,
+      // Priority: assignedPlan (new snapshot system) → plan (legacy fallback) → null
+      // toJson() stores planId as 'plan': planId (string), so cache round-trips
+      // are read by the json['plan'] is String branch below.
+      planId: (json['assignedPlan'] != null && json['assignedPlan'] is Map)
+          ? json['assignedPlan']['id']
+          : json['plan'] != null
+              ? (json['plan'] is String ? json['plan'] : json['plan']['id'])
+              : null,
       freeTrainingDefinition: json['freeTrainingDefinition'] != null
           ? FreeTraining.fromJson(json['freeTrainingDefinition'])
           : null,

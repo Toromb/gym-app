@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThanOrEqual, IsNull } from 'typeorm';
@@ -26,6 +27,8 @@ import { AssignedPlan } from './entities/assigned-plan.entity';
 
 @Injectable()
 export class TrainingSessionsService {
+  private readonly logger = new Logger(TrainingSessionsService.name);
+
   constructor(
     @InjectRepository(TrainingSession)
     private sessionRepo: Repository<TrainingSession>,
@@ -253,7 +256,7 @@ export class TrainingSessionsService {
       }
 
     } catch (e) {
-      console.error('Error starting session:', e);
+      this.logger.error('Error starting session', (e as Error)?.stack);
       throw e;
     }
   }
@@ -377,17 +380,12 @@ export class TrainingSessionsService {
   }
 
   private async _trySyncLoad(sessionId: string) {
-    console.log(`[DEBUG] _trySyncLoad for Session ${sessionId}`);
     const fullSession = await this.sessionRepo.findOne({
       where: { id: sessionId },
       relations: ['exercises', 'exercises.exercise', 'student'],
     });
     if (fullSession) {
-      console.log(`[DEBUG] fullSession found with ${fullSession.exercises?.length} exercises. Calling muscleLoadService.syncExecutionLoad`);
-      // Cast to any if muscleLoadService expects PlanExecution but structure is compatible
       await this.muscleLoadService.syncExecutionLoad(fullSession as any);
-    } else {
-      console.log(`[DEBUG] fullSession NOT FOUND for ${sessionId}`);
     }
   }
 
@@ -444,7 +442,6 @@ export class TrainingSessionsService {
     const saved = await this.sessionRepo.save(session);
 
     // Sync Muscle Load
-    console.log(`[DEBUG] Session ${sessionId} saved as COMPLETED. Calling _trySyncLoad...`);
     await this._trySyncLoad(saved.id);
 
     // LEGACY SYNC (Deprecated)
