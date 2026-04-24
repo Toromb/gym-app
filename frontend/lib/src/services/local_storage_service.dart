@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:flutter/foundation.dart';
+import '../utils/app_logger.dart';
 
 class LocalStorageService {
   static const String _sessionBoxName = 'session_cache';
@@ -17,15 +17,14 @@ class LocalStorageService {
   Future<void> init() async {
     _sessionBox = await Hive.openBox(_sessionBoxName);
     _queueBox = await Hive.openBox(_queueBoxName);
-    if (kDebugMode)
-      print('📦 Hive Boxes Opened: $_sessionBoxName, $_queueBoxName');
+    AppLogger.d('📦 Hive Boxes Opened: $_sessionBoxName, $_queueBoxName');
   }
 
   // --- Session Cache ---
 
   Future<void> saveSession(Map<String, dynamic> sessionJson) async {
     await _sessionBox?.put('active_session', jsonEncode(sessionJson));
-    if (kDebugMode) print('📦 Session Cached');
+    AppLogger.d('📦 Session Cached');
   }
 
   Map<String, dynamic>? getSession() {
@@ -36,7 +35,7 @@ class LocalStorageService {
 
   Future<void> clearSession() async {
     await _sessionBox?.delete('active_session');
-    if (kDebugMode) print('📦 Session Cache Cleared');
+    AppLogger.d('📦 Session Cache Cleared');
   }
 
   // --- Sync Queue ---
@@ -44,8 +43,7 @@ class LocalStorageService {
   Future<void> addToQueue(Map<String, dynamic> request) async {
     // request: { 'id': uuid, 'method': 'POST', 'url': '...', 'body': {...}, 'timestamp': ... }
     await _queueBox?.add(jsonEncode(request));
-    if (kDebugMode)
-      print('📦 Added to Sync Queue: ${request['method']} ${request['url']}');
+    AppLogger.d('📦 Added to Sync Queue: ${request["method"]} ${request["url"]}');
   }
 
   List<Map<String, dynamic>> getQueue() {
@@ -57,7 +55,7 @@ class LocalStorageService {
 
   Future<void> removeFromQueue(int index) async {
     await _queueBox?.deleteAt(index);
-    if (kDebugMode) print('📦 Removed from Queue at index $index');
+    AppLogger.d('📦 Removed from Queue at index $index');
   }
 
   Future<void> clearQueue() async {
