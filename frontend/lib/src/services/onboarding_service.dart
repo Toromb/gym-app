@@ -1,5 +1,6 @@
 import '../services/api_client.dart';
 import '../models/onboarding_model.dart';
+import '../utils/app_logger.dart';
 
 class OnboardingService {
   final ApiClient _client;
@@ -15,7 +16,7 @@ class OnboardingService {
       }
       return false;
     } catch (e) {
-      print('Error checking onboarding status: $e');
+      AppLogger.e('Error checking onboarding status', error: e);
       return false;
     }
   }
@@ -38,7 +39,7 @@ class OnboardingService {
       }
       return null;
     } catch (e) {
-      print('Error fetching user onboarding: $e');
+      AppLogger.e('Error fetching user onboarding', error: e);
       return null;
     }
   }

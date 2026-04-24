@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/stats_provider.dart';
@@ -15,6 +15,7 @@ import '../calendar_screen.dart';
 import 'package:intl/intl.dart';
 import '../muscle_flow_screen.dart';
 import '../../../widgets/background_page_wrapper.dart';
+import '../../../utils/app_logger.dart';
 
 class ProfileProgressScreen extends StatefulWidget {
   final String? userId; // Optional: If null, shows current user's progress
@@ -50,7 +51,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
     if (widget.userId == null) {
       // Force refresh current user info to get latest fields (like trainingGoal)
       // AuthProvider might be stale if it only loaded on login.
-      print('ProfileProgress: Improving data freshness for current user...');
+      AppLogger.d('ProfileProgress: Improving data freshness for current user...');
       try {
         final freshUser = await userService.getProfile();
         if (freshUser != null) {
@@ -64,7 +65,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
           targetUser = authProvider.user; // Fallback
         }
       } catch (e) {
-        print('ProfileProgress: Error refreshing profile: $e');
+        AppLogger.e('ProfileProgress: Error refreshing profile', error: e);
         targetUser = authProvider.user;
       }
     } else {
@@ -74,12 +75,11 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
 
     if (targetUser != null &&
         (targetUser.trainingGoal == null || targetUser.trainingGoal!.isEmpty)) {
-      print(
-          'ProfileProgress: User goal IS STILL missing after refresh. Fetching onboarding...');
+      AppLogger.d('ProfileProgress: User goal IS STILL missing after refresh. Fetching onboarding...');
       try {
         final service = OnboardingService(ApiClient());
         final profile = await service.getUserOnboarding(targetUser.id);
-        print('ProfileProgress: Onboarding result: ${profile?.goal}');
+        AppLogger.d('ProfileProgress: Onboarding result: ${profile?.goal}');
         if (profile != null) {
           if (mounted) {
             setState(() {
@@ -88,11 +88,10 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
           }
         }
       } catch (e) {
-        print('ProfileProgress: Error fetching fallback goal: $e');
+        AppLogger.e('ProfileProgress: Error fetching fallback goal', error: e);
       }
     } else {
-      print(
-          'ProfileProgress: User goal IS present: ${targetUser?.trainingGoal}');
+      AppLogger.d('ProfileProgress: User goal IS present: ${targetUser?.trainingGoal}');
     }
   }
 

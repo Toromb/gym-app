@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../models/user_model.dart';
 import '../../services/user_service.dart';
+import '../../utils/app_logger.dart';
 
 class EditUserScreen extends StatefulWidget {
   final User user;
@@ -52,7 +53,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _selectedRole = widget.user.role;
     _selectedProfessorId = widget.user.professorId;
 
-    print("DEBUG: EditUserScreen role='$_selectedRole'");
+    AppLogger.d("EditUserScreen role='$_selectedRole'");
 
     // Validate Gender
     const validGenders = ['M', 'F', 'O'];
@@ -68,10 +69,10 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
     // Case-insensitive check just to be safe
     if (_selectedRole.toLowerCase() == UserRoles.alumno.toLowerCase()) {
-      print("DEBUG: Fetching professors for student");
+      AppLogger.d('Fetching professors for student');
       _fetchProfessors();
     } else {
-      print("DEBUG: Role $_selectedRole is not student");
+      AppLogger.d('Role $_selectedRole is not student');
     }
   }
 
@@ -88,7 +89,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
       }
     } catch (e) {
       if (mounted) setState(() => _isLoadingProfessors = false);
-      print("Error fetching professors: $e");
+      AppLogger.e('Error fetching professors', error: e);
     }
   }
 

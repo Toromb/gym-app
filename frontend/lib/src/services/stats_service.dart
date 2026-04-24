@@ -1,5 +1,6 @@
 import '../models/stats_model.dart';
 import 'api_client.dart';
+import '../utils/app_logger.dart';
 
 class StatsService {
   final ApiClient _api = ApiClient();
@@ -24,14 +25,13 @@ class StatsService {
 
   Future<UserProgress> getProgress() async {
     final response = await _api.get('/stats/progress');
-    print(
-        'DEBUG: getProgress response: $response'); // Use print for now to ensure visibility in standard output
+    AppLogger.d('getProgress response: $response');
     return UserProgress.fromJson(response ?? {});
   }
 
   Future<UserProgress> getStudentProgress(String userId) async {
     final response = await _api.get('/stats/progress/$userId');
-    print('DEBUG: getStudentProgress response: $response');
+    AppLogger.d('getStudentProgress response: $response');
     return UserProgress.fromJson(response ?? {});
   }
 }

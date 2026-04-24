@@ -4,6 +4,7 @@ import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:flutter/foundation.dart';
 import 'local_storage_service.dart';
 import 'api_client.dart';
+import '../utils/app_logger.dart';
 
 class SyncService {
   static final SyncService _instance = SyncService._internal();
@@ -22,7 +23,7 @@ class SyncService {
         .listen((List<ConnectivityResult> results) {
       // connectivity_plus returns a list now in newer versions
       if (results.any((r) => r != ConnectivityResult.none)) {
-        if (kDebugMode) print('📶 Network Connected. Triggering Sync...');
+        AppLogger.d('📶 Network Connected. Triggering Sync...');
         triggerSync();
       }
     });
@@ -57,24 +58,23 @@ class SyncService {
       try {
         hasInternet = await InternetConnectionChecker.instance.hasConnection;
       } catch (e) {
-        if (kDebugMode) print('⚠️ Error checking internet: $e');
+        AppLogger.w('⚠️ Error checking internet', error: e);
       }
     }
 
     if (!hasInternet) {
-      if (kDebugMode) print('⚠️ Network connected but no Internet access.');
+      AppLogger.d('⚠️ Network connected but no Internet access.');
       return results;
     }
 
     try {
       final queue = _storage.getQueue();
       if (queue.isEmpty) {
-        if (kDebugMode) print('✅ Sync Queue is empty.');
+        AppLogger.d('✅ Sync Queue is empty.');
         return results;
       }
 
-      if (kDebugMode)
-        print('🔄 Processing Sync Queue (${queue.length} items)...');
+      AppLogger.d('🔄 Processing Sync Queue (${queue.length} items)...');
 
       // Process items one by one (FIFO)
       // Note: We read the *current* queue status. If new items are added while syncing, they are appended.
@@ -95,7 +95,7 @@ class SyncService {
         dynamic response;
 
         try {
-          if (kDebugMode) print('📤 Sending: $method $endpoint');
+          AppLogger.d('📤 Sending: $method $endpoint');
 
           switch (method.toUpperCase()) {
             case 'POST':
@@ -111,7 +111,7 @@ class SyncService {
               response = await _api.delete(endpoint);
               break;
             default:
-              if (kDebugMode) print('❌ Unknown method $method. Discarding.');
+              AppLogger.w('❌ Unknown method $method. Discarding.');
               success = true; // Auto-discard bad items
               break;
           }
@@ -122,7 +122,7 @@ class SyncService {
                 {'method': method, 'endpoint': endpoint, 'response': response});
           }
         } catch (e) {
-          if (kDebugMode) print('❌ Sync Error for $endpoint: $e');
+          AppLogger.e('❌ Sync Error for $endpoint', error: e);
           // If 5xx or Network -> Stop sync, keep item.
           // If 4xx -> Discard item?
           // For now, simpler: Stop sync on any error to prevent data loss or disorder.
@@ -132,8 +132,7 @@ class SyncService {
           if (e.toString().contains('400') ||
               e.toString().contains('403') ||
               e.toString().contains('404')) {
-            if (kDebugMode)
-              print('⚠️ Client Error ($e). Discarding item to unblock queue.');
+            AppLogger.w('⚠️ Client Error ($e). Discarding item to unblock queue.');
             success = true; // Treated as "handled" (discarded)
           } else {
             // Server/Network error -> Retry later
@@ -152,10 +151,9 @@ class SyncService {
         }
       }
 
-      if (kDebugMode)
-        print('✅ Sync Finished. Processed $processedCount items.');
+      AppLogger.d('✅ Sync Finished. Processed $processedCount items.');
     } catch (e) {
-      if (kDebugMode) print('❌ Critical Sync Error: $e');
+      AppLogger.e('❌ Critical Sync Error', error: e);
     }
 
     return results;

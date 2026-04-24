@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
 import '../services/payment_service.dart';
+import '../utils/app_logger.dart';
 
 class UserProvider with ChangeNotifier {
   final UserService _userService = UserService();
@@ -31,7 +32,7 @@ class UserProvider with ChangeNotifier {
       _isUsersLoaded = true;
       _lastFetchArgs = currentArgs;
     } catch (e) {
-      print('Error fetching users: $e');
+      AppLogger.e('Error fetching users', error: e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -84,7 +85,7 @@ class UserProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      print('Error adding user: $e');
+      AppLogger.e('Error adding user', error: e);
       return false;
     } finally {
       _isLoading = false;
@@ -132,7 +133,7 @@ class UserProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      print('Error updating user: $e');
+      AppLogger.e('Error updating user', error: e);
       return false;
     } finally {
       _isLoading = false;
@@ -152,7 +153,7 @@ class UserProvider with ChangeNotifier {
       }
       return error; // Failure message
     } catch (e) {
-      print('Error deleting user: $e');
+      AppLogger.e('Error deleting user', error: e);
       return 'Error de conexión o excepción: $e';
     } finally {
       _isLoading = false;
@@ -175,7 +176,7 @@ class UserProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      debugPrint('Error marking as paid: $e');
+      AppLogger.e('Error marking as paid', error: e);
       return false;
     } finally {
       _isLoading = false;
@@ -206,7 +207,7 @@ class UserProvider with ChangeNotifier {
       }
       return success;
     } catch (e) {
-      debugPrint('Error registering payment: $e');
+      AppLogger.e('Error registering payment', error: e);
       return false;
     }
   }
