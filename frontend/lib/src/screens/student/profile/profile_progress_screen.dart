@@ -156,7 +156,16 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                  color: Colors.black54,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 2))
+                            ],
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                           tooltip: 'Volver',
                         ),
@@ -166,11 +175,27 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                    color: Colors.black54,
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2))
+                              ],
                             ),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.refresh),
+                          icon: const Icon(
+                            Icons.refresh,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                  color: Colors.black54,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 2))
+                            ],
+                          ),
                           onPressed: _loadData,
                           tooltip: 'Actualizar',
                         ),
