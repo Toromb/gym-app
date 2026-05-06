@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -19,14 +18,13 @@ export class PaymentsService {
   ) {}
 
   /**
-   * Registers N monthly payment records for a user.
+   * Registra N meses de pago para un usuario.
    *
-   * Business rules:
-   * - Creates N separate PaymentRecord rows (one per month)
-   * - membershipExpirationDate advances N anchor-aligned months
-   * - Anchor day is preserved from membershipStartDate
-   * - If the current expirationDate is in the future, we extend FROM it
-   * - If expired or never set, we start FROM today
+   * Reglas de negocio:
+   * - Los períodos siempre van del 1ro al 1ro del siguiente mes.
+   * - Si el alumno tiene expiración futura → el nuevo período arranca desde ese 1ro.
+   * - Si está vencido o nunca pagó → arranca desde el 1ro del mes actual.
+   * - Se crean N PaymentRecord encadenados (periodTo[i] = periodFrom[i+1]).
    */
   async registerPayment(
     userId: string,
@@ -44,14 +42,6 @@ export class PaymentsService {
 
     const periodMonths = dto.periodMonths ?? 1;
 
-    // Determine the billing anchor day from membershipStartDate
-    const anchorDay = user.membershipStartDate
-      ? new Date(user.membershipStartDate).getDate()
-      : new Date().getDate();
-
-    // Determine the starting point for period calculation:
-    //   - If expirationDate exists and is in the future → extend from there
-    //   - Otherwise (expired or never paid) → start from today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -60,35 +50,28 @@ export class PaymentsService {
     if (user.membershipExpirationDate) {
       const expDate = new Date(user.membershipExpirationDate);
       expDate.setHours(0, 0, 0, 0);
-      periodStart = expDate > today ? expDate : today;
+      // Si la expiración es futura, extendemos desde ese 1ro de mes.
+      // Si está vencida, arrancamos desde el 1ro del mes actual.
+      periodStart = expDate > today
+        ? expDate
+        : new Date(today.getFullYear(), today.getMonth(), 1);
     } else {
-      periodStart = today;
+      // Primera vez que paga: el período arranca el 1ro del mes actual
+      periodStart = new Date(today.getFullYear(), today.getMonth(), 1);
     }
 
-    // Helper: advance a date by N months, clamping the day to the anchor
-    const advanceMonth = (from: Date, months: number): Date => {
-      const result = new Date(from);
-      result.setMonth(result.getMonth() + months);
-      // Clamp day to anchor (handles month-end overflow: e.g. Jan 31 + 1 month → Feb 28)
-      const lastDayOfMonth = new Date(
-        result.getFullYear(),
-        result.getMonth() + 1,
-        0,
-      ).getDate();
-      result.setDate(Math.min(anchorDay, lastDayOfMonth));
-      return result;
-    };
+    // Cada período va del 1ro al 1ro del mes siguiente (siempre día 1)
+    const advanceMonth = (from: Date, months: number): Date =>
+      new Date(from.getFullYear(), from.getMonth() + months, 1);
 
-    // Helper: format Date to 'YYYY-MM-DD'
     const toDateString = (d: Date): string => d.toISOString().split('T')[0];
 
-    // Build N records
+    // Construye N registros encadenados
     const records: PaymentRecord[] = [];
     let currentFrom = periodStart;
 
     for (let i = 1; i <= periodMonths; i++) {
       const periodTo = advanceMonth(periodStart, i);
-      periodTo.setHours(0, 0, 0, 0);
 
       const record = this.paymentRecordRepository.create({
         user,
@@ -106,13 +89,12 @@ export class PaymentsService {
 
     await this.paymentRecordRepository.save(records);
 
-    // Update the user's expirationDate and lastPaymentDate
+    // Actualiza la fecha de expiración y el último pago del usuario
     const lastPeriodTo = records[records.length - 1].periodTo;
     user.membershipExpirationDate = new Date(lastPeriodTo) as any;
     user.lastPaymentDate = toDateString(today);
     await this.usersRepository.save(user);
 
-    // Return records with registeredBy populated (for the response)
     return this.paymentRecordRepository.find({
       where: { user: { id: userId } },
       relations: ['registeredBy'],
@@ -122,7 +104,7 @@ export class PaymentsService {
   }
 
   /**
-   * Returns all payment records for a user, newest first.
+   * Retorna el historial de pagos de un usuario, del más reciente al más antiguo.
    */
   async getPaymentHistory(userId: string): Promise<PaymentRecord[]> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });

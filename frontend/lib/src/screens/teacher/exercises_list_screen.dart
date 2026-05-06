@@ -86,6 +86,7 @@ class _ExercisesListScreenState extends State<ExercisesListScreen> {
       overlayOpacity: 0.88,
       backgroundNetworkUrl: bgUrl,
       child: Scaffold(
+        backgroundColor: Colors.transparent,
         appBar:
             ConstrainedAppBar(title: const Text('Biblioteca de Ejercicios')),
         body: Center(

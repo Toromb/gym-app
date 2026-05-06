@@ -29,6 +29,7 @@ android/app/build/
 .env.*
 !.env.example
 !.env.prod.example
+!.env.test.example
 *.local
 
 # Artifacts/Temporary

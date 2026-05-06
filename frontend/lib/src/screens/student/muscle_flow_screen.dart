@@ -51,20 +51,13 @@ class _MuscleFlowScreenState extends State<MuscleFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    // Main Scaffold handling
-    // If embedded (Professor view), we might not want another Scaffold, but keeping for AppBar consistency if pushed.
-    final bgUrl =
-        context.watch<AuthProvider>().currentGymBackgroundImage != null
-            ? resolveImageUrl(
-                context.watch<AuthProvider>().currentGymBackgroundImage!)
-            : null;
+    final rawBg = context.watch<AuthProvider>().currentGymBackgroundImage;
+    final bgUrl = rawBg != null ? resolveImageUrl(rawBg) : null;
+    // ignore: avoid_print
+    print('[MuscleFlow] rawBg=$rawBg  bgUrl=$bgUrl');
 
     return BackgroundPageWrapper(
-      overlayOpacity: 0.88,
+      overlayOpacity: 0.55,
       backgroundNetworkUrl: bgUrl,
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -72,83 +65,93 @@ class _MuscleFlowScreenState extends State<MuscleFlowScreen> {
           backgroundColor: Colors.transparent,
           title: const Text('Estado Muscular'),
         ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 900),
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start, // Align header left
-                  children: [
-                    // 1. Header (Subtitle only, title is in AppBar)
-                    if (widget.studentId == null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                        child: Text(
-                          'Basado en tus entrenamientos recientes',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+        body: _isLoading
+            ? const SafeArea(
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : SafeArea(
+                child: SingleChildScrollView(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 900),
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start, // Align header left
+                        children: [
+                          // 1. Header (Subtitle only, title is in AppBar)
+                          if (widget.studentId == null)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                              child: Text(
+                                'Basado en tus entrenamientos recientes',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                              ),
+                            ),
+
+                          const SizedBox(height: 8),
+
+                          // 2. Summary (Priority)
+                          MuscleFlowSummary(loads: _loads),
+
+                          const SizedBox(height: 24),
+
+                          // 3. Body (Visual Accompaniment)
+                          MuscleFlowBody(loads: _loads),
+
+                          const SizedBox(height: 24),
+                          const Divider(),
+
+                          // 4. Collapsible List
+                          Theme(
+                            data: Theme.of(context).copyWith(
+                                dividerColor: Colors
+                                    .transparent), // Hide internal divider
+                            child: ExpansionTile(
+                              title: const Text(
+                                'Ver detalle por músculo',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              children: [
+                                MuscleFlowList(
+                                    loads: _loads, isEmpty: _loads.isEmpty),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // 5. Footer
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 24),
+                            child: Text(
+                              'Usá esta información como referencia. Ante molestias o dolor, consultá con tu profesor.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
                                     color: Theme.of(context)
                                         .colorScheme
                                         .onSurfaceVariant,
+                                    fontStyle: FontStyle.italic,
                                   ),
-                        ),
-                      ),
-
-                    const SizedBox(height: 8),
-
-                    // 2. Summary (Priority)
-                    MuscleFlowSummary(loads: _loads),
-
-                    const SizedBox(height: 24),
-
-                    // 3. Body (Visual Accompaniment)
-                    MuscleFlowBody(loads: _loads),
-
-                    const SizedBox(height: 24),
-                    const Divider(),
-
-                    // 4. Collapsible List
-                    Theme(
-                      data: Theme.of(context).copyWith(
-                          dividerColor:
-                              Colors.transparent), // Hide internal divider
-                      child: ExpansionTile(
-                        title: const Text(
-                          'Ver detalle por músculo',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        children: [
-                          MuscleFlowList(
-                              loads: _loads, isEmpty: _loads.isEmpty),
+                            ),
+                          ),
                         ],
                       ),
                     ),
-
-                    const SizedBox(height: 24),
-
-                    // 5. Footer
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 24),
-                      child: Text(
-                        'Usá esta información como referencia. Ante molestias o dolor, consultá con tu profesor.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                              fontStyle: FontStyle.italic,
-                            ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
       ),
     );
   }

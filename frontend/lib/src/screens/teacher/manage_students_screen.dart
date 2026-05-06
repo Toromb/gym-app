@@ -40,6 +40,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
       overlayOpacity: 0.88,
       backgroundNetworkUrl: bgUrl,
       child: Scaffold(
+        backgroundColor: Colors.transparent,
         appBar: ConstrainedAppBar(title: const Text('Gestionar Alumnos')),
         // FAB removed to restrict student creation for Professors.
         body: Consumer<UserProvider>(

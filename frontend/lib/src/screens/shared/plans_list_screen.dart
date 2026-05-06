@@ -41,6 +41,7 @@ class _PlansListScreenState extends State<PlansListScreen> {
       overlayOpacity: 0.88,
       backgroundNetworkUrl: bgUrl,
       child: Scaffold(
+        backgroundColor: Colors.transparent,
         appBar: ConstrainedAppBar(
             title: Text(AppLocalizations.of(context)!.get('plansLibrary'))),
         body: Center(
