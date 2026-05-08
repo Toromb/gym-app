@@ -98,7 +98,7 @@ export class UsersService {
 
     const users = await this.usersRepository.find({
       where,
-      relations: ['studentPlans', 'professor', 'gym'],
+      relations: ['professor', 'gym'],
     });
 
     // Inject computed status
