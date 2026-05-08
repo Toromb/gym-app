@@ -7,8 +7,7 @@ import 'package:intl/intl.dart';
 import 'dashboard_payment_button.dart';
 import '../theme/background_styles.dart';
 import '../utils/constants.dart';
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'package:url_launcher/url_launcher.dart';
 
 class GymDashboardHeader extends StatelessWidget {
   final app_models.User? user;
@@ -311,7 +310,12 @@ class GymDashboardHeader extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: InkWell(
-        onTap: () => html.window.open(url, '_blank'),
+        onTap: () async {
+          final uri = Uri.parse(url);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        },
         borderRadius: BorderRadius.circular(20),
         child: Container(
           padding: const EdgeInsets.all(8),
