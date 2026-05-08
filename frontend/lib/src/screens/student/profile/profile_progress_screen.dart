@@ -442,7 +442,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.light
-            ? AppColors.cardSurface
+            ? Theme.of(context).cardTheme.color
             : Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [

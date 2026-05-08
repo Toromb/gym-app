@@ -22,6 +22,11 @@ class Gym {
   final String? paymentBankName;
   final String? paymentNotes;
 
+  // Social Media
+  final String? whatsapp;
+  final String? instagram;
+  final String? facebook;
+
   Gym({
     required this.id,
     required this.businessName,
@@ -41,6 +46,9 @@ class Gym {
     this.paymentAccountName,
     this.paymentBankName,
     this.paymentNotes,
+    this.whatsapp,
+    this.instagram,
+    this.facebook,
   });
 
   factory Gym.fromJson(Map<String, dynamic> json) {
@@ -63,6 +71,9 @@ class Gym {
       paymentAccountName: json['paymentAccountName'],
       paymentBankName: json['paymentBankName'],
       paymentNotes: json['paymentNotes'],
+      whatsapp: json['whatsapp'],
+      instagram: json['instagram'],
+      facebook: json['facebook'],
     );
   }
 
@@ -86,6 +97,9 @@ class Gym {
       'paymentAccountName': paymentAccountName,
       'paymentBankName': paymentBankName,
       'paymentNotes': paymentNotes,
+      'whatsapp': whatsapp,
+      'instagram': instagram,
+      'facebook': facebook,
     };
   }
 
@@ -108,6 +122,9 @@ class Gym {
     String? paymentAccountName,
     String? paymentBankName,
     String? paymentNotes,
+    String? whatsapp,
+    String? instagram,
+    String? facebook,
   }) {
     return Gym(
       id: id ?? this.id,
@@ -128,6 +145,9 @@ class Gym {
       paymentAccountName: paymentAccountName ?? this.paymentAccountName,
       paymentBankName: paymentBankName ?? this.paymentBankName,
       paymentNotes: paymentNotes ?? this.paymentNotes,
+      whatsapp: whatsapp ?? this.whatsapp,
+      instagram: instagram ?? this.instagram,
+      facebook: facebook ?? this.facebook,
     );
   }
 }

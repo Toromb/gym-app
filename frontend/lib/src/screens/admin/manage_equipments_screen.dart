@@ -1,7 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/constrained_app_bar.dart';
+import '../../widgets/background_page_wrapper.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/api_client.dart';
 import '../../models/plan_model.dart';
+import '../../utils/constants.dart';
 
 class ManageEquipmentsScreen extends StatefulWidget {
   const ManageEquipmentsScreen({super.key});
@@ -86,71 +90,78 @@ class _ManageEquipmentsScreenState extends State<ManageEquipmentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: ConstrainedAppBar(
-          title: const Text('Gestionar Equipamiento'),
-          leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.pop(context))),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-                  ? Center(child: Text('Error: $_error'))
-                  : ListView.separated(
-                      itemCount: _equipments.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final eq = _equipments[index];
-                        return ListTile(
-                          leading: Icon(eq.isBodyWeight
-                              ? Icons.person
-                              : Icons.fitness_center),
-                          title: Text(eq.name),
-                          subtitle: eq.isBodyWeight
-                              ? const Text('Sistema (Automático)')
-                              : null,
-                          trailing: eq.isEditable
-                              ? IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: Colors.red),
-                                  onPressed: () => _deleteEquipment(eq),
-                                )
-                              : const Icon(Icons.lock, color: Colors.grey),
-                        );
-                      },
-                    ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-              context: context,
-              builder: (ctx) {
-                final ctrl = TextEditingController();
-                return AlertDialog(
-                  title: const Text('Nuevo Equipamiento'),
-                  content: TextField(
-                    controller: ctrl,
-                    decoration: const InputDecoration(labelText: 'Nombre'),
-                    textCapitalization: TextCapitalization.sentences,
-                  ),
-                  actions: [
-                    TextButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Cancelar')),
-                    ElevatedButton(
-                        onPressed: () {
-                          if (ctrl.text.isNotEmpty) _addEquipment(ctrl.text);
+    final bgRaw = context.watch<AuthProvider>().currentGymBackgroundImage;
+    final bgUrl = bgRaw != null ? resolveImageUrl(bgRaw) : null;
+
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.88,
+      backgroundNetworkUrl: bgUrl,
+      child: Scaffold(
+        appBar: ConstrainedAppBar(
+            title: const Text('Gestionar Equipamiento'),
+            leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context))),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(child: Text('Error: $_error'))
+                    : ListView.separated(
+                        itemCount: _equipments.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final eq = _equipments[index];
+                          return ListTile(
+                            leading: Icon(eq.isBodyWeight
+                                ? Icons.person
+                                : Icons.fitness_center),
+                            title: Text(eq.name),
+                            subtitle: eq.isBodyWeight
+                                ? const Text('Sistema (Automático)')
+                                : null,
+                            trailing: eq.isEditable
+                                ? IconButton(
+                                    icon: const Icon(Icons.delete,
+                                        color: Colors.red),
+                                    onPressed: () => _deleteEquipment(eq),
+                                  )
+                                : const Icon(Icons.lock, color: Colors.grey),
+                          );
                         },
-                        child: const Text('Crear')),
-                  ],
-                );
-              });
-        },
-        child: const Icon(Icons.add),
+                      ),
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            showDialog(
+                context: context,
+                builder: (ctx) {
+                  final ctrl = TextEditingController();
+                  return AlertDialog(
+                    title: const Text('Nuevo Equipamiento'),
+                    content: TextField(
+                      controller: ctrl,
+                      decoration: const InputDecoration(labelText: 'Nombre'),
+                      textCapitalization: TextCapitalization.sentences,
+                    ),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Cancelar')),
+                      ElevatedButton(
+                          onPressed: () {
+                            if (ctrl.text.isNotEmpty) _addEquipment(ctrl.text);
+                          },
+                          child: const Text('Crear')),
+                    ],
+                  );
+                });
+          },
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

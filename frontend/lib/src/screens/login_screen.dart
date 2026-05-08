@@ -237,13 +237,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Hero(
-                          tag: 'logo',
-                          child: Image.asset(
-                            'assets/images/tugymflow_logo.png',
-                            height: 80,
-                          ),
-                        ),
+                        // Logo responsivo: grande en PC, chico en mobile
+                        Builder(builder: (context) {
+                          final isDesktop =
+                              MediaQuery.of(context).size.width >= 768;
+                          return Hero(
+                            tag: 'logo',
+                            child: Image.asset(
+                              'assets/images/tugymflow_logo.png',
+                              height: isDesktop ? 140 : 80,
+                            ),
+                          );
+                        }),
                         const SizedBox(height: 16),
                         const Text(
                           'Bienvenido',
@@ -256,7 +261,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Tu Gym Flow',
+                          'TuGymFlow',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white.withValues(alpha: 0.8),
@@ -530,14 +535,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                     children: [
                                       Text(
                                         '¿No tienes una cuenta? ',
-                                        style:
-                                            TextStyle(color: Colors.grey[600]),
+                                        style: TextStyle(
+                                            color: isDark
+                                                ? Colors.grey[400]
+                                                : Colors.grey[600]),
                                       ),
                                       Text(
                                         "Habla con tu gimnasio",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          color: Theme.of(context).primaryColor,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
                                         ),
                                       ),
                                     ],
