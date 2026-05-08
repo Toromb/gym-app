@@ -1,6 +1,6 @@
 # 🏋️ TuGymFlow — AI Context Document
 
-> **Versión:** 2026-05-06 | **Proyecto:** TuGymFlow (Gym App)  
+> **Versión:** 2026-05-08 | **Proyecto:** TuGymFlow (Gym App)  
 > **Propósito:** Contexto completo para desarrollo colaborativo con IA (Claude / Gemini).  
 > Usar este archivo al inicio de cada sesión para que el AI entienda el proyecto desde cero.
 
@@ -464,7 +464,11 @@ Backend corre en puerto `3001` en desarrollo local, `3000` en producción (el ng
 - Integrar **Sentry** (backend) + **Firebase Crashlytics** (Flutter)
 
 ### 🟡 Prioridad Media
-- **CI/CD:** Migrar deploy scripts (PowerShell) a GitHub Actions
+- **CI ✅ COMPLETO:** GitHub Actions (`.github/workflows/ci.yml`) corriendo en `main`:
+  - Backend: TypeScript type-check + ESLint
+  - Flutter: `flutter analyze --fatal-warnings --no-fatal-infos` + `dart format`
+  - Resultado: **verde en cada push a main**
+- **CD 🟡 Pendiente:** Automatizar deploy al VPS (actualmente manual via SSH + `docker compose -f docker-compose.prod.yml up -d --build`)
 
 ### 🟢 Baja Prioridad
 - Git hooks (Husky + lint-staged) para linting obligatorio
@@ -583,4 +587,4 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 ---
 
-*Generado por Antigravity AI. Última actualización: 2026-05-06. Actualizar ante cambios estructurales significativos.*
+*Generado por Antigravity AI. Última actualización: 2026-05-08. Actualizar ante cambios estructurales significativos.*
