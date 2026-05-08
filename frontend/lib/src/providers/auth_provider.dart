@@ -3,6 +3,7 @@ import '../models/user_model.dart';
 import '../models/gym_model.dart';
 import '../services/auth_service.dart';
 import '../services/onboarding_service.dart';
+import '../constants/app_constants.dart';
 import '../services/user_service.dart';
 import '../services/api_client.dart';
 import '../services/google_auth_service.dart';
@@ -186,7 +187,7 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> checkOnboardingStatus() async {
     if (_user == null) return;
-    if (_user!.role == 'alumno') {
+    if (_user!.role == AppRoles.alumno) {
       _isOnboarded = await _onboardingService.getMyStatus();
       notifyListeners();
     } else {

@@ -189,9 +189,4 @@ export class GymsController {
     await this.gymsService.update(id, { backgroundImageUrl } as any);
     return { backgroundImageUrl };
   }
-
-  @Post(':id/debug-init')
-  async debugInit(@Param('id') id: string) {
-    return this.gymsService.debugGenerateExercises(id);
-  }
 }

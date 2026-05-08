@@ -107,10 +107,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_user!.role == AppRoles.alumno) {
       data['currentWeight'] = double.tryParse(_currentWeightController.text);
       data['personalComment'] = _personalCommentController.text;
-    } else if (_user!.role == 'profe') {
+    } else if (_user!.role == AppRoles.profe) {
       data['specialty'] = _specialtyController.text;
       data['internalNotes'] = _internalNotesController.text;
-    } else if (_user!.role == 'admin') {
+    } else if (_user!.role == AppRoles.admin) {
       data['adminNotes'] = _adminNotesController.text;
     }
 
@@ -407,7 +407,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        if (_user!.role != 'admin')
+        if (_user!.role != AppRoles.admin)
           _buildTextFieldWithLabel(
             label: 'Altura (cm)',
             controller: _heightController,

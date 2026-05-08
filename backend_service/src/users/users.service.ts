@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from './entities/user.entity';
@@ -70,9 +70,7 @@ export class UsersService {
     }
 
     const savedUser = await this.usersRepository.save(user);
-    const status = this.calculatePaymentStatus(savedUser);
-    savedUser.paymentStatus = status as any;
-    return savedUser;
+    return savedUser; // @AfterLoad ya calculó paymentStatus
   }
 
   async findAllStudents(
@@ -101,12 +99,8 @@ export class UsersService {
       relations: ['professor', 'gym'],
     });
 
-    // Inject computed status
-    return users.map((u) => {
-      // Calculate status for everyone, handling exemption inside the method
-      u.paymentStatus = this.calculatePaymentStatus(u) as any;
-      return u;
-    });
+    // @AfterLoad en User.entity calcula paymentStatus automáticamente
+    return users;
   }
 
   async findOneByProviderUserId(providerUserId: string): Promise<User | null> {
@@ -124,11 +118,7 @@ export class UsersService {
       .where('user.email = :email', { email })
       .getOne();
 
-    if (user) {
-      const status = this.calculatePaymentStatus(user);
-      user.paymentStatus = status as any;
-    }
-
+    // @AfterLoad ya ejecut� computePaymentStatus al cargar el usuario
     return user;
   }
 
@@ -138,11 +128,7 @@ export class UsersService {
       relations: ['gym', 'professor'], // Load helpful relations
     });
 
-    if (user) {
-      const status = this.calculatePaymentStatus(user);
-      user.paymentStatus = status as any;
-    }
-
+    // @AfterLoad ya ejecut� computePaymentStatus al cargar el usuario
     return user;
   }
 
@@ -190,7 +176,6 @@ export class UsersService {
       this.logger.error(`Failed to delete User ${id}`, error.stack);
       if (error.code === '23503') { // ForeignKeyViolation
         this.logger.error(`Foreign Key Violation details: ${error.detail}`);
-        const { ConflictException } = require('@nestjs/common');
         throw new ConflictException(`No se puede eliminar el usuario porque tiene registros relacionados (Planes, Ejercicios, etc). Detalle: ${error.detail}`);
       }
       throw error;
@@ -238,40 +223,6 @@ export class UsersService {
   // Helper: calcula el estado de pago del alumno en tiempo real.
   //
   // Regla de negocio:
-  //   - Los períodos de membresía van siempre del 1ro al 1ro del siguiente mes.
-  //   - Hay 10 días de gracia: del 1 al 10 de cada mes el estado es "pending"
-  //     (el alumno aún puede pagar sin consecuencias).
-  //   - Después del día 10 sin pagar → "overdue".
-  calculatePaymentStatus(user: User): 'paid' | 'overdue' | 'pending' {
-    // 1. Usuarios exentos (paysMembership = false) siempre muestran "paid"
-    if (user.paysMembership === false) {
-      return 'paid';
-    }
-
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-
-    // 2. Si tiene una fecha de expiración válida en el futuro → "paid"
-    if (user.membershipExpirationDate) {
-      const exp = new Date(user.membershipExpirationDate);
-      exp.setHours(0, 0, 0, 0);
-      if (exp >= now) {
-        return 'paid';
-      }
-    }
-
-    // 3. Membresía vencida o nunca pagada.
-    //    Aplicar la regla de los 10 días de gracia del 1 al 10 de cada mes.
-    //    Si hoy es día 1..10 → "pending" (en período de gracia).
-    //    Si hoy es día 11 en adelante → "overdue".
-    const dayOfMonth = now.getDate();
-
-    if (dayOfMonth <= 10) {
-      return 'pending'; // Dentro del período de gracia
-    }
-
-    return 'overdue'; // Vencido y sin pagar tras el día 10
-  }
 
   async findOneByActivationTokenHash(hash: string): Promise<User | null> {
     return this.usersRepository.findOne({

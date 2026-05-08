@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/constants.dart';
 import '../models/gym_model.dart';
+import '../services/api_client.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 
@@ -13,14 +14,17 @@ class GymsProvider with ChangeNotifier {
   List<Gym> _gyms = [];
   bool _isLoading = false;
   String? _error;
+
+  // Solo necesario para uploads multipart (ApiClient no abstrae multipart aún)
   final _storage = const FlutterSecureStorage();
 
   List<Gym> get gyms => _gyms;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  String get _baseUrl => baseUrl;
+  final _api = ApiClient();
 
+  // Token para uploads multipart (única razón para acceder al storage directamente)
   Future<String?> _getToken() async {
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
@@ -35,24 +39,9 @@ class GymsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken();
-      if (token == null) throw Exception('No authentication token found');
-
-      final response = await http.get(
-        Uri.parse('$_baseUrl/gyms'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        _gyms = data.map((json) => Gym.fromJson(json)).toList();
-      } else {
-        _error =
-            'Failed to load gyms: ${response.statusCode} - ${response.body}';
-      }
+      final data = await _api.get('/gyms');
+      _gyms =
+          (data as List<dynamic>).map((json) => Gym.fromJson(json)).toList();
     } catch (e) {
       _error = 'Error fetching gyms: $e';
     } finally {
@@ -65,22 +54,8 @@ class GymsProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final token = await _getToken();
-      if (token == null) throw Exception('No authentication token found');
-
-      final response = await http.get(
-        Uri.parse('$_baseUrl/gyms/$id'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        return Gym.fromJson(json.decode(response.body));
-      } else {
-        throw Exception('Failed to load gym: ${response.body}');
-      }
+      final data = await _api.get('/gyms/$id');
+      return Gym.fromJson(data);
     } catch (e) {
       _error = 'Error fetching gym: $e';
       return null;
@@ -94,28 +69,16 @@ class GymsProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final token = await _getToken();
-      if (token == null) throw Exception('No authentication token found');
-
-      final response = await http.post(Uri.parse('$_baseUrl/gyms'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json'
-          },
-          body: json.encode({
-            'businessName': gym.businessName,
-            'address': gym.address,
-            'email': gym.email,
-            'maxProfiles': gym.maxProfiles,
-            'status': gym.status,
-          }));
-      if (response.statusCode == 201) {
-        final newGym = Gym.fromJson(json.decode(response.body));
-        _gyms.add(newGym);
-        notifyListeners();
-      } else {
-        throw Exception('Failed to create gym: ${response.body}');
-      }
+      final data = await _api.post('/gyms', {
+        'businessName': gym.businessName,
+        'address': gym.address,
+        'email': gym.email,
+        'maxProfiles': gym.maxProfiles,
+        'status': gym.status,
+      });
+      final newGym = Gym.fromJson(data);
+      _gyms.add(newGym);
+      notifyListeners();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -126,46 +89,34 @@ class GymsProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final token = await _getToken();
-      if (token == null) throw Exception('No authentication token found');
-
-      final response = await http.patch(Uri.parse('$_baseUrl/gyms/$id'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json'
-          },
-          body: json.encode({
-            'businessName': gym.businessName,
-            'address': gym.address,
-            'phone': gym.phone,
-            'email': gym.email,
-            'maxProfiles': gym.maxProfiles,
-            'status': gym.status,
-            'primaryColor': gym.primaryColor,
-            'secondaryColor': gym.secondaryColor,
-            'welcomeMessage': gym.welcomeMessage,
-            'openingHours': gym.openingHours,
-            'logoUrl': gym.logoUrl,
-            'paymentAlias': gym.paymentAlias,
-            'paymentCbu': gym.paymentCbu,
-            'paymentAccountName': gym.paymentAccountName,
-            'paymentBankName': gym.paymentBankName,
-            'paymentNotes': gym.paymentNotes,
-            'whatsapp': gym.whatsapp,
-            'instagram': gym.instagram,
-            'facebook': gym.facebook,
-          }));
-      if (response.statusCode == 200) {
-        final updatedGym = Gym.fromJson(json.decode(response.body));
-        final index = _gyms.indexWhere((g) => g.id == id);
-        if (index != -1) {
-          _gyms[index] = updatedGym;
-          notifyListeners();
-        }
-        return updatedGym;
-      } else {
-        throw Exception('Failed to update gym: ${response.body}');
+      final data = await _api.patch('/gyms/$id', {
+        'businessName': gym.businessName,
+        'address': gym.address,
+        'phone': gym.phone,
+        'email': gym.email,
+        'maxProfiles': gym.maxProfiles,
+        'status': gym.status,
+        'primaryColor': gym.primaryColor,
+        'secondaryColor': gym.secondaryColor,
+        'welcomeMessage': gym.welcomeMessage,
+        'openingHours': gym.openingHours,
+        'logoUrl': gym.logoUrl,
+        'paymentAlias': gym.paymentAlias,
+        'paymentCbu': gym.paymentCbu,
+        'paymentAccountName': gym.paymentAccountName,
+        'paymentBankName': gym.paymentBankName,
+        'paymentNotes': gym.paymentNotes,
+        'whatsapp': gym.whatsapp,
+        'instagram': gym.instagram,
+        'facebook': gym.facebook,
+      });
+      final updatedGym = Gym.fromJson(data);
+      final index = _gyms.indexWhere((g) => g.id == id);
+      if (index != -1) {
+        _gyms[index] = updatedGym;
+        notifyListeners();
       }
+      return updatedGym;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -176,27 +127,18 @@ class GymsProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final token = await _getToken();
-      if (token == null) throw Exception('No authentication token found');
-
-      final response = await http.delete(
-        Uri.parse('$_baseUrl/gyms/$id'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json'
-        },
-      );
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        _gyms.removeWhere((g) => g.id == id);
-        notifyListeners();
-      } else {
-        throw Exception('Failed to delete gym: ${response.body}');
-      }
+      await _api.delete('/gyms/$id');
+      _gyms.removeWhere((g) => g.id == id);
+      notifyListeners();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
+
+  // ─── Uploads multipart ──────────────────────────────────────────────────────
+  // ApiClient no abstrae multipart, así que los uploads usan http directo.
+  // El token se obtiene del mismo storage que ApiClient.
 
   Future<String?> uploadLogo(String gymId, XFile file) async {
     _isLoading = true;
@@ -205,8 +147,8 @@ class GymsProvider with ChangeNotifier {
       final token = await _getToken();
       if (token == null) throw Exception('No authentication token found');
 
-      var request = http.MultipartRequest(
-          'POST', Uri.parse('$_baseUrl/gyms/$gymId/logo'));
+      var request =
+          http.MultipartRequest('POST', Uri.parse('$baseUrl/gyms/$gymId/logo'));
       request.headers['Authorization'] = 'Bearer $token';
 
       final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
@@ -226,7 +168,6 @@ class GymsProvider with ChangeNotifier {
 
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
-        // await fetchGyms(); // Only for SuperAdmin
         return data['logoUrl'];
       } else {
         throw Exception('Failed to upload logo: ${response.body}');
@@ -245,7 +186,7 @@ class GymsProvider with ChangeNotifier {
       if (token == null) throw Exception('No authentication token found');
 
       var request = http.MultipartRequest(
-          'POST', Uri.parse('$_baseUrl/gyms/$gymId/background'));
+          'POST', Uri.parse('$baseUrl/gyms/$gymId/background'));
       request.headers['Authorization'] = 'Bearer $token';
 
       final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';

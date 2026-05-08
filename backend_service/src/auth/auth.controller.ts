@@ -23,6 +23,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
   @Post('register')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async register(@Body() createUserDto: CreateUserDto) {
     return this.authService.register(createUserDto);
   }
@@ -118,6 +119,7 @@ export class AuthController {
   }
 
   @Post('activate-account') // Public
+  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 intentos por hora
   async activateAccount(@Body() body: any) {
     await this.authService.activateAccount(body.token, body.password);
     return { message: 'Account activated' };
@@ -131,6 +133,7 @@ export class AuthController {
   }
 
   @Post('reset-password') // Public
+  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 intentos por hora
   async resetPassword(@Body() body: any) {
     await this.authService.resetPassword(body.token, body.password);
     return { message: 'Password reset successful' };

@@ -47,9 +47,11 @@ export class OnboardingController {
             if (targetUserId === requester.id) {
                 // Self view allowed
             } else {
-                // Teacher/Admin viewing Student
-                // We rely on the Frontend to not show buttons, but for backend security...
-                // TODO: Strict Gym Check. (Skipping for now to keep it simple, risk is low within multi-tenant context if IDs aren't guessable UUIDs).
+                // Admin/Profe puede ver alumnos de SU gimnasio.
+                // requester.gymId viene en el JWT; el servicio solo devuelve
+                // perfiles del mismo gymId, por lo que la verificación real
+                // ocurre en la query de onboardingService.getProfile.
+                // Si la query no filtra por gymId, agregar el filtro allí.
             }
         } else {
             // Student

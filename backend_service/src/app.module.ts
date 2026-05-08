@@ -48,9 +48,10 @@ import { GymLeadsModule } from './gym-leads/gym-leads.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize:
-          process.env.NODE_ENV !== 'production' ||
-          configService.get('DB_SYNCHRONIZE') === 'true',
+        // En producción usar: npm run migration:run
+        // NUNCA habilitar DB_SYNCHRONIZE=true en prod (puede destruir datos).
+        synchronize: process.env.NODE_ENV !== 'production',
+
         retryAttempts: 10,
         retryDelay: 3000,
       }),

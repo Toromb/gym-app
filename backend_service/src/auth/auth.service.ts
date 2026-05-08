@@ -205,8 +205,8 @@ export class AuthService {
 
     // Verify Apple Token
     try {
-      if (identityToken === 'TEST_TOKEN_APPLE') {
-        this.logger.warn('USING DEV BYPASS FOR APPLE LOGIN');
+      if (process.env.NODE_ENV !== 'production' && identityToken === 'TEST_TOKEN_APPLE') {
+        this.logger.warn('USING DEV BYPASS FOR APPLE LOGIN — SOLO EN ENTORNOS NO PRODUCTIVOS');
         email = 'test.apple@example.com';
         providerUserId = 'apple_test_user_id';
       } else {
@@ -425,8 +425,8 @@ export class AuthService {
     const user = await this.usersService.findOne(userId);
     if (!user) throw new Error('User not found');
 
-    const token = await this.generateRandomToken();
-    const hash = await this.hashToken(token);
+    const token = this.generateRandomToken();
+    const hash = this.hashToken(token);
     const expires = new Date();
     expires.setHours(expires.getHours() + 24);
 
@@ -437,7 +437,7 @@ export class AuthService {
 
   async activateAccount(token: string, password: string): Promise<void> {
     this.logger.log(`Attempting to activate account with token: ${token}`);
-    const hash = await this.hashToken(token);
+    const hash = this.hashToken(token);
     const user = await this.usersService.findOneByActivationTokenHash(hash);
 
     if (!user) {
@@ -474,8 +474,8 @@ export class AuthService {
     const user = await this.usersService.findOne(userId);
     if (!user) throw new Error('User not found');
 
-    const token = await this.generateRandomToken();
-    const hash = await this.hashToken(token);
+    const token = this.generateRandomToken();
+    const hash = this.hashToken(token);
     const expires = new Date();
     expires.setMinutes(expires.getMinutes() + 30);
 
@@ -484,7 +484,7 @@ export class AuthService {
   }
 
   async resetPassword(token: string, password: string): Promise<void> {
-    const hash = await this.hashToken(token);
+    const hash = this.hashToken(token);
     const user = await this.usersService.findOneByResetTokenHash(hash);
 
     if (!user) {
@@ -607,25 +607,11 @@ export class AuthService {
     this.logger.log(`Password changed for user ${user.email}`);
   }
 
-  async logout(userId: string): Promise<void> {
-    const user = await this.usersService.findOne(userId);
-    if (user) {
-      await this.usersService.updateTokens(userId, {
-        tokenVersion: (user.tokenVersion || 0) + 1
-      });
-      this.logger.log(`User ${user.email} logged out (Token invalidated)`);
-    }
+  private generateRandomToken(): string {
+    return crypto.randomBytes(32).toString('hex');
   }
 
-  private async generateRandomToken(): Promise<string> {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { randomBytes } = require('crypto');
-    return randomBytes(32).toString('hex');
-  }
-
-  private async hashToken(token: string): Promise<string> {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { createHash } = require('crypto');
-    return createHash('sha256').update(token).digest('hex');
+  private hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
   }
 }

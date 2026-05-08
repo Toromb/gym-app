@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../constants/app_constants.dart';
 import 'teacher/dashboard_screen.dart';
 import 'student/student_home_screen.dart';
 import 'super_admin/super_admin_dashboard.dart';
@@ -14,11 +15,11 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
-        if (auth.role == 'super_admin') {
+        if (auth.role == AppRoles.superAdmin) {
           return const SuperAdminDashboardScreen();
-        } else if (auth.role == 'admin') {
+        } else if (auth.role == AppRoles.admin) {
           return const AdminDashboardScreen();
-        } else if (auth.role == 'profe') {
+        } else if (auth.role == AppRoles.profe) {
           return const TeacherDashboardScreen();
         } else {
           // Default to student, but check onboarding

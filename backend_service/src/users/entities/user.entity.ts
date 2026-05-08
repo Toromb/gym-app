@@ -7,6 +7,7 @@ import {
   OneToMany,
   ManyToOne,
   OneToOne,
+  AfterLoad,
 } from 'typeorm';
 import { StudentPlan } from '../../plans/entities/student-plan.entity';
 import { CompletedPlan } from '../../plans/entities/completed-plan.entity';
@@ -178,4 +179,36 @@ export class User {
 
   @OneToMany(() => RefreshToken, (token) => token.user)
   refreshTokens: RefreshToken[];
+
+  /**
+   * Calcula paymentStatus en runtime después de cada carga desde la DB.
+   * Sobreescribe el valor persistido para garantizar consistencia.
+   * El guard evita resultados incorrectos cuando TypeORM carga selects parciales.
+   */
+  @AfterLoad()
+  computePaymentStatus(): void {
+    // Guard: select parcial sin campos de membresía — no calcular
+    if (this.membershipExpirationDate === undefined) return;
+
+    if (this.paysMembership === false) {
+      this.paymentStatus = PaymentStatus.PAID;
+      return;
+    }
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    if (this.membershipExpirationDate) {
+      const exp = new Date(this.membershipExpirationDate);
+      exp.setHours(0, 0, 0, 0);
+      if (exp >= now) {
+        this.paymentStatus = PaymentStatus.PAID;
+        return;
+      }
+    }
+
+    this.paymentStatus = now.getDate() <= 10
+      ? PaymentStatus.PENDING
+      : PaymentStatus.OVERDUE;
+  }
 }

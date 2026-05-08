@@ -35,11 +35,7 @@ android/app/build/
 # Artifacts/Temporary
 brain/
 scratch/
-# Artifacts / Temporary
-brain/
-scratch/
 
-# Backend build artifacts
 # Backend build artifacts
 backend_service/dist/
 dist/
@@ -60,11 +56,8 @@ frontend/*.py
 # Local dev tooling (Chrome profile for --disable-web-security)
 .chrome-dev-profile/
 
-# Local DB scripts (not for version control)
-reset_passwords.sql
-reset_superadmin.sql
-test_color.sql
-*.sql
+# Ops scripts (credenciales/datos sensibles, solo uso local)
+backend_service/scripts/ops/
 
 # User uploads (runtime files, not source code)
 backend_service/uploads/

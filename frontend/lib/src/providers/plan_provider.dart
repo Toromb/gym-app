@@ -15,6 +15,7 @@ import '../services/plan_service.dart';
 import '../services/exercise_api_service.dart';
 import '../services/local_storage_service.dart';
 import '../services/sync_service.dart';
+import '../utils/app_date_utils.dart';
 
 class PlanProvider with ChangeNotifier {
   final PlanService _planService = PlanService();
@@ -280,9 +281,7 @@ class PlanProvider with ChangeNotifier {
         return;
       }
 
-      final now = DateTime.now();
-      final dateStr =
-          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+      final dateStr = AppDateUtils.toIsoDate(DateTime.now());
       final String? effectivePlanId =
           (planId == 'FREE_SESSION') ? null : planId;
 
@@ -533,10 +532,8 @@ class PlanProvider with ChangeNotifier {
   Future<List<TrainingSession>> fetchCalendar(
       DateTime from, DateTime to) async {
     try {
-      final fromStr =
-          "${from.year}-${from.month.toString().padLeft(2, '0')}-${from.day.toString().padLeft(2, '0')}";
-      final toStr =
-          "${to.year}-${to.month.toString().padLeft(2, '0')}-${to.day.toString().padLeft(2, '0')}";
+      final fromStr = AppDateUtils.toIsoDate(from);
+      final toStr = AppDateUtils.toIsoDate(to);
       return await _planService.getCalendarHistory(fromStr, toStr);
     } catch (e) {
       debugPrint('Error fetching calendar: $e');
@@ -545,12 +542,9 @@ class PlanProvider with ChangeNotifier {
   }
 
   Future<void> computeWeeklyStats({bool notify = true}) async {
-    final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    final endOfWeek = startOfWeek.add(const Duration(days: 6));
-
+    final week = AppDateUtils.currentWeekRange();
     try {
-      final executions = await fetchCalendar(startOfWeek, endOfWeek);
+      final executions = await fetchCalendar(week.start, week.end);
       // Count unique days by date string
       final uniqueDays = executions
           .where((e) => e.status == 'COMPLETED')

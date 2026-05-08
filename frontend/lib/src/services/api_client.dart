@@ -24,7 +24,10 @@ class ApiClient {
   // Callbacks for global 401 handling
   static Future<bool> Function()? onTokenExpired;
   static void Function()? onSessionTerminated;
-  static bool _isRefreshing = false;
+  // Completer para manejar refreshes concurrentes: todos los requests que
+  // reciben 401 simultáneamente esperan el mismo Future en lugar de cada uno
+  // intentar desloguear o lanzar un refresh redundante.
+  static Completer<bool>? _refreshCompleter;
 
   Future<String?> _getToken() async {
     try {
@@ -149,18 +152,27 @@ class ApiClient {
         rethrow;
       }
 
-      // Prevent concurrent refreshes (a robust app would queue them, MVP just blocks)
-      if (_isRefreshing) {
-        // Optionally wait or just fail
-        onSessionTerminated?.call();
-        rethrow;
+      // Si ya hay un refresh en curso, esperar su resultado
+      // en lugar de intentar un segundo refresh o desloguear prematuramente.
+      if (_refreshCompleter != null) {
+        final refreshed = await _refreshCompleter!.future;
+        if (refreshed) {
+          final retryResponse = await makeRequest();
+          return _processResponse(retryResponse, url);
+        } else {
+          throw UnauthorizedException();
+        }
       }
 
-      _isRefreshing = true;
+      // Iniciar el refresh. El finally garantiza que _refreshCompleter se libera
+      // siempre, incluso ante excepciones inesperadas (SocketException, etc.),
+      // evitando que requests futuros queden bloqueados indefinidamente.
+      _refreshCompleter = Completer<bool>();
       try {
         final refreshed = await onTokenExpired!();
+        _refreshCompleter!.complete(refreshed);
         if (refreshed) {
-          // Retry original request with fresh token
+          // Retry original request con el token nuevo
           final retryResponse = await makeRequest();
           return _processResponse(retryResponse, url);
         } else {
@@ -168,10 +180,13 @@ class ApiClient {
           throw UnauthorizedException();
         }
       } catch (e) {
+        if (!_refreshCompleter!.isCompleted) {
+          _refreshCompleter!.complete(false);
+        }
         onSessionTerminated?.call();
         throw UnauthorizedException();
       } finally {
-        _isRefreshing = false;
+        _refreshCompleter = null;
       }
     } catch (e) {
       if (e is ApiException) rethrow;
