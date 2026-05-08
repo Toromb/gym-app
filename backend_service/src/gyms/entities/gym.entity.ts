@@ -93,6 +93,16 @@ export class Gym {
   @Column({ type: 'text', nullable: true })
   paymentNotes: string;
 
+  // Social Media / Contact
+  @Column({ nullable: true })
+  whatsapp: string;
+
+  @Column({ nullable: true })
+  instagram: string;
+
+  @Column({ nullable: true })
+  facebook: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

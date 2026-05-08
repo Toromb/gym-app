@@ -62,3 +62,9 @@ frontend/*.py
 
 # Local DB scripts (not for version control)
 reset_passwords.sql
+reset_superadmin.sql
+test_color.sql
+*.sql
+
+# User uploads (runtime files, not source code)
+backend_service/uploads/

@@ -83,4 +83,16 @@ export class CreateGymDto {
   @IsOptional()
   @IsString()
   paymentNotes?: string;
+
+  @IsOptional()
+  @IsString()
+  whatsapp?: string;
+
+  @IsOptional()
+  @IsString()
+  instagram?: string;
+
+  @IsOptional()
+  @IsString()
+  facebook?: string;
 }
