@@ -12,7 +12,6 @@ import '../../models/gym_schedule_model.dart';
 import '../student/free_training/free_training_selector_screen.dart';
 import '../../widgets/dashboard_header.dart';
 import '../../widgets/background_page_wrapper.dart';
-import '../../utils/app_colors.dart';
 import '../../utils/constants.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {

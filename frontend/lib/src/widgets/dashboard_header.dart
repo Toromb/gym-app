@@ -185,7 +185,7 @@ class GymDashboardHeader extends StatelessWidget {
                       icon: Icons.chat_bubble_outline,
                       color: const Color(0xFF25D366),
                       url:
-                          'https://wa.me/${gym!.whatsapp!.replaceAll(RegExp(r'[^\d]'), '')}',
+                          'https://wa.me/${gym.whatsapp!.replaceAll(RegExp(r'[^\d]'), '')}',
                       tooltip: 'Enviar comprobante por WhatsApp',
                     ),
                   ),
@@ -197,7 +197,7 @@ class GymDashboardHeader extends StatelessWidget {
                       icon: Icons.camera_alt_outlined,
                       color: const Color(0xFFE1306C),
                       url:
-                          'https://instagram.com/${gym!.instagram!.replaceAll('@', '')}',
+                          'https://instagram.com/${gym.instagram!.replaceAll('@', '')}',
                       tooltip: 'Ir a Instagram',
                     ),
                   ),
@@ -208,7 +208,7 @@ class GymDashboardHeader extends StatelessWidget {
                       context: context,
                       icon: Icons.facebook,
                       color: const Color(0xFF1877F2),
-                      url: gym!.facebook!.startsWith('http')
+                      url: gym.facebook!.startsWith('http')
                           ? gym.facebook!
                           : 'https://facebook.com/${gym.facebook}',
                       tooltip: 'Ir a Facebook',

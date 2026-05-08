@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../utils/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/stats_provider.dart';
 import '../../../providers/user_provider.dart';

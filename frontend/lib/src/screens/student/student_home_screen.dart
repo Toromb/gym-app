@@ -6,7 +6,6 @@ import '../../providers/stats_provider.dart';
 import '../../models/user_model.dart' as app_models;
 import '../../models/stats_model.dart';
 import '../../localization/app_localizations.dart';
-import '../../utils/app_colors.dart';
 import '../../models/plan_model.dart';
 import '../../models/student_assignment_model.dart';
 import '../shared/day_detail_screen.dart';

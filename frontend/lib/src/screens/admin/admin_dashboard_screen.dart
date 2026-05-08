@@ -14,7 +14,6 @@ import 'free_training/manage_free_trainings_screen.dart';
 import '../../widgets/dashboard_header.dart';
 import 'collection_dashboard_screen.dart';
 import '../../widgets/background_page_wrapper.dart';
-import '../../utils/app_colors.dart';
 import '../../utils/constants.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
