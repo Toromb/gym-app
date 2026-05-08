@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/gym_schedule_provider.dart';
 import '../../models/gym_schedule_model.dart';
 import '../../localization/app_localizations.dart';
+import '../../utils/constants.dart';
 import '../../widgets/background_page_wrapper.dart';
 
 class GymScheduleScreen extends StatefulWidget {
@@ -31,9 +32,13 @@ class _GymScheduleScreenState extends State<GymScheduleScreen> {
     final authProvider = context.watch<AuthProvider>();
     final scheduleProvider = context.watch<GymScheduleProvider>();
     final isAdmin = authProvider.user?.role == AppRoles.admin;
+    final bgUrl = authProvider.currentGymBackgroundImage != null
+        ? resolveImageUrl(authProvider.currentGymBackgroundImage!)
+        : null;
 
     return BackgroundPageWrapper(
-      overlayOpacity: 0.85, // Very dark so text remains 100% legible
+      overlayOpacity: 0.85,
+      backgroundNetworkUrl: bgUrl,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: ConstrainedAppBar(

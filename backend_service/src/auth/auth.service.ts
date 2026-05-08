@@ -618,12 +618,14 @@ export class AuthService {
   }
 
   private async generateRandomToken(): Promise<string> {
-    const { randomBytes } = await import('crypto');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { randomBytes } = require('crypto');
     return randomBytes(32).toString('hex');
   }
 
   private async hashToken(token: string): Promise<string> {
-    const { createHash } = await import('crypto');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { createHash } = require('crypto');
     return createHash('sha256').update(token).digest('hex');
   }
 }

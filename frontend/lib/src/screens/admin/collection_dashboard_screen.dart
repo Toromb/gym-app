@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/user_model.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../utils/constants.dart';
 import '../../widgets/constrained_app_bar.dart';
 import '../../widgets/payment_status_badge.dart';
+import '../../widgets/background_page_wrapper.dart';
 import 'payment_history_screen.dart';
 import 'edit_user_screen.dart';
 
@@ -49,226 +52,237 @@ class _CollectionDashboardScreenState extends State<CollectionDashboardScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final authProvider = context.watch<AuthProvider>();
+    final bgUrl = authProvider.currentGymBackgroundImage != null
+        ? resolveImageUrl(authProvider.currentGymBackgroundImage!)
+        : null;
 
-    return Scaffold(
-      appBar: ConstrainedAppBar(
-        title: const Text('Cobranza'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Actualizar',
-            onPressed: () =>
-                context.read<UserProvider>().fetchUsers(forceRefresh: true),
-          ),
-        ],
-      ),
-      body: Consumer<UserProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.88,
+      backgroundNetworkUrl: bgUrl,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: ConstrainedAppBar(
+          title: const Text('Cobranza'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Actualizar',
+              onPressed: () =>
+                  context.read<UserProvider>().fetchUsers(forceRefresh: true),
+            ),
+          ],
+        ),
+        body: Consumer<UserProvider>(
+          builder: (context, provider, _) {
+            if (provider.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          // ── Aplicar filtro de rol ──────────────────────────────
-          // Los que pagan membresía (alumnos normalmente, pero pueden
-          // existir profes con membresía también).
-          final allByRole = provider.students
-              .where((u) {
-                if (_roleFilter == 'alumno') return u.role == UserRoles.alumno;
-                if (_roleFilter == 'profe') return u.role == UserRoles.profe;
-                return u.role == UserRoles.alumno || u.role == UserRoles.profe;
-              })
-              .where((u) => u.paysMembership ?? true)
-              .where((u) {
-                if (_searchQuery.isEmpty) return true;
-                final q = _searchQuery.toLowerCase();
-                return ('${u.firstName} ${u.lastName}')
-                        .toLowerCase()
-                        .contains(q) ||
-                    u.email.toLowerCase().contains(q);
-              })
-              .toList();
+            // ── Aplicar filtro de rol ──────────────────────────────
+            // Los que pagan membresía (alumnos normalmente, pero pueden
+            // existir profes con membresía también).
+            final allByRole = provider.students
+                .where((u) {
+                  if (_roleFilter == 'alumno')
+                    return u.role == UserRoles.alumno;
+                  if (_roleFilter == 'profe') return u.role == UserRoles.profe;
+                  return u.role == UserRoles.alumno ||
+                      u.role == UserRoles.profe;
+                })
+                .where((u) => u.paysMembership ?? true)
+                .where((u) {
+                  if (_searchQuery.isEmpty) return true;
+                  final q = _searchQuery.toLowerCase();
+                  return ('${u.firstName} ${u.lastName}')
+                          .toLowerCase()
+                          .contains(q) ||
+                      u.email.toLowerCase().contains(q);
+                })
+                .toList();
 
-          // ── Contadores por estado (siempre sobre el rol filtrado) ──
-          final paid =
-              allByRole.where((u) => u.paymentStatus == 'paid').toList();
-          final pending =
-              allByRole.where((u) => u.paymentStatus == 'pending').toList();
-          final overdue =
-              allByRole.where((u) => u.paymentStatus == 'overdue').toList();
+            // ── Contadores por estado (siempre sobre el rol filtrado) ──
+            final paid =
+                allByRole.where((u) => u.paymentStatus == 'paid').toList();
+            final pending =
+                allByRole.where((u) => u.paymentStatus == 'pending').toList();
+            final overdue =
+                allByRole.where((u) => u.paymentStatus == 'overdue').toList();
 
-          // ── Aplicar filtro de estado ───────────────────────────
-          List<User> filtered;
-          switch (_statusFilter) {
-            case 'paid':
-              filtered = paid;
-              break;
-            case 'pending':
-              filtered = pending;
-              break;
-            case 'overdue':
-              filtered = overdue;
-              break;
-            default:
-              filtered = allByRole;
-          }
+            // ── Aplicar filtro de estado ───────────────────────────
+            List<User> filtered;
+            switch (_statusFilter) {
+              case 'paid':
+                filtered = paid;
+                break;
+              case 'pending':
+                filtered = pending;
+                break;
+              case 'overdue':
+                filtered = overdue;
+                break;
+              default:
+                filtered = allByRole;
+            }
 
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 700),
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  // ── Resumen ──────────────────────────────────────
-                  Text(
-                    'RESUMEN',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      color: colorScheme.primary,
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 700),
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    // ── Resumen ──────────────────────────────────────
+                    Text(
+                      'RESUMEN',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                        color: colorScheme.primary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _buildSummaryCard(
-                        context,
-                        label: 'Al día',
-                        count: paid.length,
-                        color: Colors.green,
-                        icon: Icons.check_circle_outline,
-                        filterValue: 'paid',
-                      ),
-                      const SizedBox(width: 8),
-                      _buildSummaryCard(
-                        context,
-                        label: 'Por vencer',
-                        count: pending.length,
-                        color: Colors.orange,
-                        icon: Icons.access_time,
-                        filterValue: 'pending',
-                      ),
-                      const SizedBox(width: 8),
-                      _buildSummaryCard(
-                        context,
-                        label: 'Vencidos',
-                        count: overdue.length,
-                        color: Colors.red,
-                        icon: Icons.warning_amber_outlined,
-                        filterValue: 'overdue',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // ── Buscador ──────────────────────────────────────
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Buscar por nombre o email...',
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: colorScheme.onSurfaceVariant,
-                        size: 20,
-                      ),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 0),
-                      filled: true,
-                      fillColor: colorScheme.surfaceContainerHighest
-                          .withValues(alpha: 0.5),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
-                              onPressed: () =>
-                                  setState(() => _searchQuery = ''),
-                            )
-                          : null,
-                    ),
-                    onChanged: (val) => setState(() => _searchQuery = val),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // ── Filtro de rol ─────────────────────────────────
-                  Text(
-                    'TIPO DE USUARIO',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
+                    const SizedBox(height: 12),
+                    Row(
                       children: [
-                        _roleChip(
-                            context, 'Todos', 'all', Icons.people_outline),
+                        _buildSummaryCard(
+                          context,
+                          label: 'Al día',
+                          count: paid.length,
+                          color: Colors.green,
+                          icon: Icons.check_circle_outline,
+                          filterValue: 'paid',
+                        ),
                         const SizedBox(width: 8),
-                        _roleChip(context, 'Alumnos', UserRoles.alumno,
-                            Icons.school_outlined),
+                        _buildSummaryCard(
+                          context,
+                          label: 'Por vencer',
+                          count: pending.length,
+                          color: Colors.orange,
+                          icon: Icons.access_time,
+                          filterValue: 'pending',
+                        ),
                         const SizedBox(width: 8),
-                        _roleChip(context, 'Profesores', UserRoles.profe,
-                            Icons.fitness_center_outlined),
+                        _buildSummaryCard(
+                          context,
+                          label: 'Vencidos',
+                          count: overdue.length,
+                          color: Colors.red,
+                          icon: Icons.warning_amber_outlined,
+                          filterValue: 'overdue',
+                        ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
-                  // ── Filtro de estado ──────────────────────────────
-                  Text(
-                    'ESTADO DE CUOTA',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      color: colorScheme.primary,
+                    // ── Buscador ──────────────────────────────────────
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por nombre o email...',
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: colorScheme.onSurfaceVariant,
+                          size: 20,
+                        ),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 0),
+                        filled: true,
+                        fillColor: colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.5),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () =>
+                                    setState(() => _searchQuery = ''),
+                              )
+                            : null,
+                      ),
+                      onChanged: (val) => setState(() => _searchQuery = val),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _statusChip('Todos', 'all', allByRole.length,
-                            colorScheme.primary),
-                        const SizedBox(width: 8),
-                        _statusChip(
-                            'Vencidos', 'overdue', overdue.length, Colors.red),
-                        const SizedBox(width: 8),
-                        _statusChip('Por vencer', 'pending', pending.length,
-                            Colors.orange),
-                        const SizedBox(width: 8),
-                        _statusChip(
-                            'Al día', 'paid', paid.length, Colors.green),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  // ── Lista ─────────────────────────────────────────
-                  if (filtered.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(48),
-                        child: Text(
-                          'Sin usuarios en este estado',
-                          style: textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
+                    // ── Filtro de rol ─────────────────────────────────
+                    Text(
+                      'TIPO DE USUARIO',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _roleChip(
+                              context, 'Todos', 'all', Icons.people_outline),
+                          const SizedBox(width: 8),
+                          _roleChip(context, 'Alumnos', UserRoles.alumno,
+                              Icons.school_outlined),
+                          const SizedBox(width: 8),
+                          _roleChip(context, 'Profesores', UserRoles.profe,
+                              Icons.fitness_center_outlined),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Filtro de estado ──────────────────────────────
+                    Text(
+                      'ESTADO DE CUOTA',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _statusChip('Todos', 'all', allByRole.length,
+                              colorScheme.primary),
+                          const SizedBox(width: 8),
+                          _statusChip('Vencidos', 'overdue', overdue.length,
+                              Colors.red),
+                          const SizedBox(width: 8),
+                          _statusChip('Por vencer', 'pending', pending.length,
+                              Colors.orange),
+                          const SizedBox(width: 8),
+                          _statusChip(
+                              'Al día', 'paid', paid.length, Colors.green),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ── Lista ─────────────────────────────────────────
+                    if (filtered.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(48),
+                          child: Text(
+                            'Sin usuarios en este estado',
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ),
-                      ),
-                    )
-                  else
-                    ...filtered.map((u) => _buildUserTile(context, u)),
-                  const SizedBox(height: 32),
-                ],
+                      )
+                    else
+                      ...filtered.map((u) => _buildUserTile(context, u)),
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

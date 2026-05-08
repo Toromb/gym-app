@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import '../../models/plan_model.dart';
 import '../../models/student_assignment_model.dart';
 import '../../providers/plan_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../localization/app_localizations.dart';
-import '../../utils/app_colors.dart'; // Added
+import '../../utils/app_colors.dart';
 import '../../models/logic/plan_traversal_logic.dart';
+import '../../utils/constants.dart';
 import 'day_detail_screen.dart';
 import '../teacher/create_plan_screen.dart';
 import '../../widgets/background_page_wrapper.dart';
@@ -45,10 +47,14 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // If canEdit is false, we assume it might be a student view.
-    // However, widget.assignment is the source of truth for tracking.
+    final bgUrl =
+        context.watch<AuthProvider>().currentGymBackgroundImage != null
+            ? resolveImageUrl(
+                context.watch<AuthProvider>().currentGymBackgroundImage!)
+            : null;
     return BackgroundPageWrapper(
       overlayOpacity: 0.82,
+      backgroundNetworkUrl: bgUrl,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: ConstrainedAppBar(

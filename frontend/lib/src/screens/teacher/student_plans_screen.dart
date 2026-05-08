@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
 import '../../models/completed_plan_model.dart';
 import '../../models/user_model.dart';
@@ -8,8 +9,10 @@ import '../../models/student_assignment_model.dart';
 import '../../models/execution_model.dart';
 import '../../models/plan_model.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/constants.dart';
 import '../shared/plan_details_screen.dart';
 import 'package:intl/intl.dart';
+import '../../widgets/background_page_wrapper.dart';
 
 class StudentPlansScreen extends StatefulWidget {
   final User student;
@@ -80,31 +83,41 @@ class _StudentPlansScreenState extends State<StudentPlansScreen> {
     final allAssignments = _assignments ?? [];
     final historyList = _history ?? [];
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: ConstrainedAppBar(
-          title: Text('Planes: ${widget.student.firstName}'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Planes Asignados'),
-              Tab(text: 'Historial'),
-            ],
+    final bgUrl =
+        context.watch<AuthProvider>().currentGymBackgroundImage != null
+            ? resolveImageUrl(
+                context.watch<AuthProvider>().currentGymBackgroundImage!)
+            : null;
+
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.88,
+      backgroundNetworkUrl: bgUrl,
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: ConstrainedAppBar(
+            title: Text('Planes: ${widget.student.firstName}'),
+            bottom: const TabBar(
+              tabs: [
+                Tab(text: 'Planes Asignados'),
+                Tab(text: 'Historial'),
+              ],
+            ),
           ),
-        ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 900),
-                  child: TabBarView(
-                    children: [
-                      _buildAssignmentsList(allAssignments),
-                      _buildHistoryList(historyList),
-                    ],
+          body: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 900),
+                    child: TabBarView(
+                      children: [
+                        _buildAssignmentsList(allAssignments),
+                        _buildHistoryList(historyList),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+        ),
       ),
     );
   }

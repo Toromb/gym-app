@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../models/completed_plan_model.dart';
 import '../../widgets/background_page_wrapper.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/constants.dart';
 import '../../models/execution_model.dart';
 
 class StudentHistoryScreen extends StatefulWidget {
@@ -47,8 +49,14 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bgUrl =
+        context.watch<AuthProvider>().currentGymBackgroundImage != null
+            ? resolveImageUrl(
+                context.watch<AuthProvider>().currentGymBackgroundImage!)
+            : null;
     return BackgroundPageWrapper(
       overlayOpacity: 0.85,
+      backgroundNetworkUrl: bgUrl,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: ConstrainedAppBar(

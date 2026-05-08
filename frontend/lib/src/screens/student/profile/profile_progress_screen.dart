@@ -15,6 +15,7 @@ import '../calendar_screen.dart';
 import 'package:intl/intl.dart';
 import '../muscle_flow_screen.dart';
 import '../../../widgets/background_page_wrapper.dart';
+import '../../../utils/constants.dart';
 import '../../../utils/app_logger.dart';
 
 class ProfileProgressScreen extends StatefulWidget {
@@ -133,8 +134,13 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
       );
     }
 
+    final bgUrl = authProvider.currentGymBackgroundImage != null
+        ? resolveImageUrl(authProvider.currentGymBackgroundImage!)
+        : null;
+
     return BackgroundPageWrapper(
       overlayOpacity: 0.85,
+      backgroundNetworkUrl: bgUrl,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
@@ -150,7 +156,16 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                  color: Colors.black54,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 2))
+                            ],
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                           tooltip: 'Volver',
                         ),
@@ -160,11 +175,27 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                    color: Colors.black54,
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2))
+                              ],
                             ),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.refresh),
+                          icon: const Icon(
+                            Icons.refresh,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                  color: Colors.black54,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 2))
+                            ],
+                          ),
                           onPressed: _loadData,
                           tooltip: 'Actualizar',
                         ),
@@ -411,7 +442,7 @@ class _ProfileProgressScreenState extends State<ProfileProgressScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.light
-            ? AppColors.cardSurface
+            ? Theme.of(context).cardTheme.color
             : Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [

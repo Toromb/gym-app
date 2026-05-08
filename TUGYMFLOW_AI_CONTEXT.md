@@ -1,6 +1,6 @@
 # 🏋️ TuGymFlow — AI Context Document
 
-> **Versión:** 2026-04-24 | **Proyecto:** TuGymFlow (Gym App)  
+> **Versión:** 2026-05-06 | **Proyecto:** TuGymFlow (Gym App)  
 > **Propósito:** Contexto completo para desarrollo colaborativo con IA (Claude / Gemini).  
 > Usar este archivo al inicio de cada sesión para que el AI entienda el proyecto desde cero.
 
@@ -390,19 +390,39 @@ Plantilla (Plan) → [Asignación] → StudentPlan (activo/pendiente)
 - **CompletedPlan es inmutable** — registro histórico permanente
 
 ### Membresías y Pagos
-```
-membershipStartDate → base del cálculo mensual
-paymentStatus: 'paid' | 'pending' | 'overdue'
-paysMembership: boolean → exención total de pago
 
-Lógica de ventana mensual:
-  - Días 1-10: 'pending' (gracia, acceso total)
-  - Día 11+: 'overdue' (sin pago confirmado)
-  - Con pago registrado por ADMIN → 'paid'
+**Regla fundamental:** Los períodos de membresía van siempre del **1ro al 1ro del mes siguiente**.
+
+```
+membershipExpirationDate  → siempre es el 1ro de algún mes
+lastPaymentDate           → fecha del último pago registrado por el ADMIN
+paysMembership: boolean   → exención total de pago (profes, personal interno)
+
+Cálculo de paymentStatus (runtime, no persiste en BD):
+  Si paysMembership = false          → 'paid' (exento)
+  Si membershipExpirationDate >= hoy → 'paid'
+  Si día del mes <= 10              → 'pending' (período de gracia: días 1-10)
+  Si día del mes > 10               → 'overdue' (mora)
 ```
 
-- No hay acumulación de deuda histórica en MVP
-- PaymentRecord entity guarda historial de pagos registrados manualmente
+**Cómo se generan los períodos al registrar N meses:**
+- Si la expiración actual es **futura** → el nuevo período arranca desde esa fecha.
+- Si la expiración es **pasada o nula** → el nuevo período arranca desde el 1ro del mes actual.
+- Cada mes adicional extiende del 1ro al 1ro del siguiente mes.
+- El `membershipExpirationDate` siempre queda en el **1ro del mes posterior** al último período pagado.
+
+**PaymentRecord entity** (tabla `payment_records`):
+- Cada mes pagado genera 1 registro con `periodFrom` y `periodTo` (ambos siempre día 1ro).
+- Guarda: monto, método de pago, notas, quién lo registró (`registeredBy`).
+- Inmutables — errores se corrigen con `PATCH /users/:id` ajustando `membershipExpirationDate`.
+
+**Permisos sobre pagos:**
+- `ADMIN`/`SUPER_ADMIN`: registran pagos y corrigen fechas.
+- `ALUMNO`: puede ver su propio historial.
+- `PROFE`: puede ver `paymentStatus` de sus alumnos (lectura), NO puede registrar ni ver historial.
+
+- No hay acumulación de deuda histórica en MVP.
+- Al inicio de cada mes el estado vuelve a `pending` automáticamente (sin intervención del ADMIN).
 
 ### Onboarding (Alumno)
 - `OnboardingProfile` entity en DB → datos físicos del alumno
@@ -428,7 +448,7 @@ Backend corre en puerto `3001` en desarrollo local, `3000` en producción (el ng
 
 ## 14. Deuda Técnica Conocida (Implementation Risks)
 
-1. **Multi-gym:** `gymId`, `membershipStartDate`, `paymentStatus` en `User` entity → no escala a multi-gym. Solución futura: tabla bridge `UserGymSubscription`.
+1. **Multi-gym:** `gymId` en `User` entity → no escala a multi-gym. Solución futura: tabla bridge `UserGymSubscription`. Nota: `membershipStartDate` ya no se usa para el cálculo de períodos (reemplazado por lógica del 1ro de mes fija), pero persiste en DB como campo legacy.
 
 2. **Plan Snapshot falso:** `StudentPlan` apunta por FK al plan maestro → editar el plan afecta alumnos activos. Solución: clonar árbol completo con `isTemplate: false`.
 
@@ -506,10 +526,19 @@ Backend corre en puerto `3001` en desarrollo local, `3000` en producción (el ng
 - Consumir state via `Provider.of<XProvider>(context, listen: false)` para acciones, `Consumer<X>` para UI reactiva
 - Todo acceso a API va por el servicio correspondiente, nunca llamar `ApiClient` directo desde pantallas
 
-### Testing (objetivo nuevo proyecto)
-- Backend: Jest (`npm run test`, `npm run test:e2e`)
-- Archivos spec existen en `auth/`, `users/`, `plans/`
-- Objetivo: cubrir servicios críticos antes de cada deploy
+### Testing
+- Backend: Jest (`npm run test`, `npm run test:e2e:clean`)
+- **Cobertura E2E actual: 108 tests en 6 suites** — todas verdes:
+  | Suite | Tests | Cubre |
+  |---|---|---|
+  | `auth.e2e-spec.ts` | ~26 | Login, QR/invite, activación, reset/cambio de password |
+  | `users.e2e-spec.ts` | ~20 | CRUD usuarios, permisos por rol |
+  | `plans.e2e-spec.ts` | ~20 | Ciclo completo de planes: creación, asignación, ejecución, completar |
+  | `exercises.e2e-spec.ts` | ~14 | Equipamiento + ejercicios con métricas |
+  | `payments.e2e-spec.ts` | ~32 | Ciclo de membresía, estado de cuota, morosos, correcciones |
+  | `gyms.e2e-spec.ts` | ~8 | Config del gym, aislamiento multi-tenant |
+- Comando: `npm run test:e2e:clean` (limpia DB de test antes de correr)
+- Archivo de setup: `test/setup/test-app.factory.ts` + `test/setup/db-cleanup.helper.ts`
 
 ---
 
@@ -554,4 +583,4 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 ---
 
-*Generado automáticamente por Antigravity AI el 2026-04-24. Actualizar ante cambios estructurales significativos.*
+*Generado por Antigravity AI. Última actualización: 2026-05-06. Actualizar ante cambios estructurales significativos.*

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../models/user_model.dart';
 import '../../services/user_service.dart';
+import '../../utils/constants.dart';
 import '../../utils/app_logger.dart';
+import '../../widgets/background_page_wrapper.dart';
 
 class EditUserScreen extends StatefulWidget {
   final User user;
@@ -107,284 +110,302 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: ConstrainedAppBar(title: const Text('Editar Usuario')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Role is usually not editable easily due to permission complexity, but let's allow it for Admin.
-                    // If Profe, they arguably shouldn't change role of student to Admin.
-                    // For MVP simplicity, we keep it disabled or read-only if desired, or allow if we trust backend validation.
-                    // Let's assume for this screen we just show it read-only to avoid complexity.
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: TextFormField(
-                        initialValue: _selectedRole.toUpperCase(),
-                        readOnly: true,
-                        decoration: const InputDecoration(labelText: 'Rol'),
-                      ),
-                    ),
-
-                    // Assign Professor Dropdown (Visible only if Student)
-                    if (_selectedRole.toLowerCase() ==
-                        UserRoles.alumno.toLowerCase()) ...[
-                      if (_isLoadingProfessors)
-                        const LinearProgressIndicator()
-                      else
-                        DropdownButtonFormField<String>(
-                          initialValue: _professors
-                                  .any((p) => p.id == _selectedProfessorId)
-                              ? _selectedProfessorId
-                              : null,
-                          decoration: const InputDecoration(
-                            labelText: 'Profesor Asignado',
-                            helperText:
-                                'Selecciona un profesor para supervisar a este alumno',
-                          ),
-                          items: [
-                            const DropdownMenuItem<String>(
-                              value: null,
-                              child: Text('Sin Profesor'),
-                            ),
-                            ..._professors.map((p) => DropdownMenuItem(
-                                  value: p.id,
-                                  child: Text(p.name),
-                                )),
-                          ],
-                          onChanged: (val) =>
-                              setState(() => _selectedProfessorId = val),
+    final bgUrl =
+        context.watch<AuthProvider>().currentGymBackgroundImage != null
+            ? resolveImageUrl(
+                context.watch<AuthProvider>().currentGymBackgroundImage!)
+            : null;
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.88,
+      backgroundNetworkUrl: bgUrl,
+      child: Scaffold(
+        appBar: ConstrainedAppBar(title: const Text('Editar Usuario')),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Role is usually not editable easily due to permission complexity, but let's allow it for Admin.
+                      // If Profe, they arguably shouldn't change role of student to Admin.
+                      // For MVP simplicity, we keep it disabled or read-only if desired, or allow if we trust backend validation.
+                      // Let's assume for this screen we just show it read-only to avoid complexity.
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: TextFormField(
+                          initialValue: _selectedRole.toUpperCase(),
+                          readOnly: true,
+                          decoration: const InputDecoration(labelText: 'Rol'),
                         ),
-                      const SizedBox(height: 16),
-                    ],
-
-                    // Membership options for Professor
-                    if (_selectedRole.toLowerCase() ==
-                        UserRoles.profe.toLowerCase()) ...[
-                      SwitchListTile(
-                        title: const Text('¿Paga Membresía?'),
-                        subtitle: const Text(
-                            'Define si este profesor abona membresía del sistema'),
-                        value: _paysMembership,
-                        onChanged: (val) =>
-                            setState(() => _paysMembership = val),
                       ),
-                      const SizedBox(height: 16),
-                    ],
 
-                    if (_paysMembership) ...[
+                      // Assign Professor Dropdown (Visible only if Student)
+                      if (_selectedRole.toLowerCase() ==
+                          UserRoles.alumno.toLowerCase()) ...[
+                        if (_isLoadingProfessors)
+                          const LinearProgressIndicator()
+                        else
+                          DropdownButtonFormField<String>(
+                            initialValue: _professors
+                                    .any((p) => p.id == _selectedProfessorId)
+                                ? _selectedProfessorId
+                                : null,
+                            decoration: const InputDecoration(
+                              labelText: 'Profesor Asignado',
+                              helperText:
+                                  'Selecciona un profesor para supervisar a este alumno',
+                            ),
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: null,
+                                child: Text('Sin Profesor'),
+                              ),
+                              ..._professors.map((p) => DropdownMenuItem(
+                                    value: p.id,
+                                    child: Text(p.name),
+                                  )),
+                            ],
+                            onChanged: (val) =>
+                                setState(() => _selectedProfessorId = val),
+                          ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Membership options for Professor
+                      if (_selectedRole.toLowerCase() ==
+                          UserRoles.profe.toLowerCase()) ...[
+                        SwitchListTile(
+                          title: const Text('¿Paga Membresía?'),
+                          subtitle: const Text(
+                              'Define si este profesor abona membresía del sistema'),
+                          value: _paysMembership,
+                          onChanged: (val) =>
+                              setState(() => _paysMembership = val),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      if (_paysMembership) ...[
+                        TextFormField(
+                          controller: _membershipDateController,
+                          decoration: const InputDecoration(
+                            labelText: 'Fecha Inicio Membresía (YYYY-MM-DD)',
+                            hintText: 'Selecciona la fecha',
+                            suffixIcon: Icon(Icons.calendar_today),
+                          ),
+                          readOnly: true,
+                          onTap: () async {
+                            final DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2101),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _membershipDateController.text =
+                                    picked.toIso8601String().split('T')[0];
+                              });
+                            }
+                          },
+                          validator: (value) {
+                            if (_paysMembership) {
+                              return value == null || value.isEmpty
+                                  ? 'Requerido si paga membresía'
+                                  : null;
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
                       TextFormField(
-                        controller: _membershipDateController,
+                        controller: _firstNameController,
+                        decoration: const InputDecoration(labelText: 'Nombre'),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Requerido' : null,
+                      ),
+                      TextFormField(
+                        controller: _lastNameController,
+                        decoration:
+                            const InputDecoration(labelText: 'Apellido'),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Requerido' : null,
+                      ),
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(labelText: 'Email'),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Requerido' : null,
+                      ),
+                      // Password Field - One instance only
+                      TextFormField(
+                        controller: _phoneController,
+                        decoration:
+                            const InputDecoration(labelText: 'Teléfono'),
+                      ),
+                      TextFormField(
+                        controller: _birthDateController,
                         decoration: const InputDecoration(
-                          labelText: 'Fecha Inicio Membresía (YYYY-MM-DD)',
-                          hintText: 'Selecciona la fecha',
+                          labelText: 'Fecha de Nacimiento',
+                          hintText: 'YYYY-MM-DD',
                           suffixIcon: Icon(Icons.calendar_today),
                         ),
                         readOnly: true,
                         onTap: () async {
                           final DateTime? picked = await showDatePicker(
                             context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2101),
+                            initialDate: DateTime(2000),
+                            firstDate: DateTime(1900),
+                            lastDate: DateTime.now(),
                           );
                           if (picked != null) {
                             setState(() {
-                              _membershipDateController.text =
+                              _birthDateController.text =
                                   picked.toIso8601String().split('T')[0];
                             });
                           }
                         },
-                        validator: (value) {
-                          if (_paysMembership) {
-                            return value == null || value.isEmpty
-                                ? 'Requerido si paga membresía'
-                                : null;
-                          }
-                          return null;
-                        },
                       ),
-                      const SizedBox(height: 16),
-                    ],
-
-                    TextFormField(
-                      controller: _firstNameController,
-                      decoration: const InputDecoration(labelText: 'Nombre'),
-                      validator: (value) => value!.isEmpty ? 'Requerido' : null,
-                    ),
-                    TextFormField(
-                      controller: _lastNameController,
-                      decoration: const InputDecoration(labelText: 'Apellido'),
-                      validator: (value) => value!.isEmpty ? 'Requerido' : null,
-                    ),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(labelText: 'Email'),
-                      validator: (value) => value!.isEmpty ? 'Requerido' : null,
-                    ),
-                    // Password Field - One instance only
-                    TextFormField(
-                      controller: _phoneController,
-                      decoration: const InputDecoration(labelText: 'Teléfono'),
-                    ),
-                    TextFormField(
-                      controller: _birthDateController,
-                      decoration: const InputDecoration(
-                        labelText: 'Fecha de Nacimiento',
-                        hintText: 'YYYY-MM-DD',
-                        suffixIcon: Icon(Icons.calendar_today),
-                      ),
-                      readOnly: true,
-                      onTap: () async {
-                        final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime(2000),
-                          firstDate: DateTime(1900),
-                          lastDate: DateTime.now(),
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            _birthDateController.text =
-                                picked.toIso8601String().split('T')[0];
-                          });
-                        }
-                      },
-                    ),
-                    if (widget.user.age != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text("Edad actual: ${widget.user.age} años",
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                    DropdownButtonFormField<String>(
-                      initialValue: ['M', 'F', 'O'].contains(_selectedGender)
-                          ? _selectedGender
-                          : 'M',
-                      decoration: const InputDecoration(labelText: 'Sexo'),
-                      items: const [
-                        DropdownMenuItem(value: 'M', child: Text('Masculino')),
-                        DropdownMenuItem(value: 'F', child: Text('Femenino')),
-                        DropdownMenuItem(value: 'O', child: Text('Otro')),
-                      ],
-                      onChanged: (value) =>
-                          setState(() => _selectedGender = value!),
-                    ),
-                    if (_paysMembership) ...[
-                      // Estado de cuota: solo lectura — calculado automáticamente
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Theme.of(context).colorScheme.outlineVariant,
+                      if (widget.user.age != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text("Edad actual: ${widget.user.age} años",
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 16,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
+                      DropdownButtonFormField<String>(
+                        initialValue: ['M', 'F', 'O'].contains(_selectedGender)
+                            ? _selectedGender
+                            : 'M',
+                        decoration: const InputDecoration(labelText: 'Sexo'),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'M', child: Text('Masculino')),
+                          DropdownMenuItem(value: 'F', child: Text('Femenino')),
+                          DropdownMenuItem(value: 'O', child: Text('Otro')),
+                        ],
+                        onChanged: (value) =>
+                            setState(() => _selectedGender = value!),
+                      ),
+                      if (_paysMembership) ...[
+                        // Estado de cuota: solo lectura — calculado automáticamente
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color:
+                                  Theme.of(context).colorScheme.outlineVariant,
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'El estado de cuota se calcula automáticamente. '
-                                'Para registrar un pago, usá el botón "Marcar como pagado" '
-                                'en la lista de usuarios.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'El estado de cuota se calcula automáticamente. '
+                                  'Para registrar un pago, usá el botón "Marcar como pagado" '
+                                  'en la lista de usuarios.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
+                        const SizedBox(height: 8),
+                      ],
+                      TextFormField(
+                        controller: _notesController,
+                        decoration: const InputDecoration(labelText: 'Notas'),
+                        maxLines: 3,
                       ),
-                      const SizedBox(height: 8),
-                    ],
-                    TextFormField(
-                      controller: _notesController,
-                      decoration: const InputDecoration(labelText: 'Notas'),
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () async {
-                              if (_formKey.currentState!.validate()) {
-                                setState(() => _isLoading = true);
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                if (_formKey.currentState!.validate()) {
+                                  setState(() => _isLoading = true);
 
-                                final updateData = {
-                                  'email': _emailController.text,
-                                  'firstName': _firstNameController.text,
-                                  'lastName': _lastNameController.text,
-                                  'phone': _phoneController.text,
-                                  'birthDate': _birthDateController.text.isEmpty
-                                      ? null
-                                      : _birthDateController.text,
-                                  'gender': _selectedGender,
-                                  'notes': _notesController.text,
-                                  'membershipStartDate':
-                                      _membershipDateController.text.isNotEmpty
-                                          ? _membershipDateController.text
-                                          : null,
-                                  // Send professorId (null if explicitly unassigned)
-                                  'professorId': _selectedProfessorId,
-                                  'paysMembership': _paysMembership,
-                                };
+                                  final updateData = {
+                                    'email': _emailController.text,
+                                    'firstName': _firstNameController.text,
+                                    'lastName': _lastNameController.text,
+                                    'phone': _phoneController.text,
+                                    'birthDate':
+                                        _birthDateController.text.isEmpty
+                                            ? null
+                                            : _birthDateController.text,
+                                    'gender': _selectedGender,
+                                    'notes': _notesController.text,
+                                    'membershipStartDate':
+                                        _membershipDateController
+                                                .text.isNotEmpty
+                                            ? _membershipDateController.text
+                                            : null,
+                                    // Send professorId (null if explicitly unassigned)
+                                    'professorId': _selectedProfessorId,
+                                    'paysMembership': _paysMembership,
+                                  };
 
-                                final success = await context
-                                    .read<UserProvider>()
-                                    .updateUser(widget.user.id, updateData);
-
-                                if (!mounted) return;
-                                setState(() => _isLoading = false);
-
-                                if (success) {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            'Usuario actualizado exitosamente')),
-                                  );
-                                  // Refresh list
-                                  context
+                                  final success = await context
                                       .read<UserProvider>()
-                                      .fetchUsers(forceRefresh: true);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            'Error al actualizar usuario')),
-                                  );
+                                      .updateUser(widget.user.id, updateData);
+
+                                  if (!mounted) return;
+                                  setState(() => _isLoading = false);
+
+                                  if (success) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'Usuario actualizado exitosamente')),
+                                    );
+                                    // Refresh list
+                                    context
+                                        .read<UserProvider>()
+                                        .fetchUsers(forceRefresh: true);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'Error al actualizar usuario')),
+                                    );
+                                  }
                                 }
-                              }
-                            },
-                      child: _isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text('Guardar Cambios'),
-                    ),
-                  ],
+                              },
+                        child: _isLoading
+                            ? const CircularProgressIndicator()
+                            : const Text('Guardar Cambios'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

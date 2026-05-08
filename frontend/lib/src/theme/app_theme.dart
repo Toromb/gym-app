@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
 
 class AppTheme {
   static ThemeData createTheme({
@@ -11,10 +10,8 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         brightness: brightness,
-        primary: brightness == Brightness.light
-            ? primaryColor
-            : null, // Only force in Light Mode
-        secondary: brightness == Brightness.light ? secondaryColor : null,
+        primary: primaryColor, // Always force gym primary color in both modes
+        secondary: secondaryColor,
       ),
       useMaterial3: true,
       appBarTheme: const AppBarTheme(
@@ -31,13 +28,21 @@ class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        // Pastel teal-green in light mode; keep Material3 surface in dark mode
-        color: brightness == Brightness.light ? AppColors.cardSurface : null,
-        elevation: brightness == Brightness.light ? 0 : 1,
+        // Tinte suave del color primario del gym para ambos modos.
+        color: brightness == Brightness.light
+            ? Color.alphaBlend(
+                primaryColor.withValues(alpha: 0.30),
+                Colors.white,
+              )
+            : Color.alphaBlend(
+                primaryColor.withValues(alpha: 0.45),
+                const Color(0xFF1E1E2A),
+              ).withValues(alpha: 0.78),
+        elevation: brightness == Brightness.light ? 0 : 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         shadowColor: brightness == Brightness.light
-            ? const Color(0xFF5B8C98).withValues(alpha: 0.15)
-            : null,
+            ? primaryColor.withValues(alpha: 0.15)
+            : Colors.black54,
       ),
     );
   }

@@ -141,35 +141,23 @@ export class MuscleLoadService {
                     currentState = undefined;
                 }
 
-                // Default Initial State
-                let currentLoad = currentState ? currentState.currentLoad : 0;
-                let lastDate = currentState ? new Date(currentState.lastComputedDate) : new Date(targetDateIso);
+                // Simulation starting point:
+                // - If there's a valid prior state: start from its load + date so the loop
+                //   applies recovery naturally from that point forward (no pre-recovery needed).
+                // - If no state (first time, or today's state was discarded): replay from 2020.
+                // All dates use UTC midnight strings to avoid timezone drift.
+                let simLoad = currentState ? currentState.currentLoad : 0;
+                let simDate = currentState
+                    ? new Date(currentState.lastComputedDate) // UTC midnight from YYYY-MM-DD string
+                    : new Date('2020-01-01');
 
-                // RECOVERY ALGORITHM
-                if (currentState) {
-                    // Calculate days passed since last computation
-                    const diffTime = Math.abs(targetDate.getTime() - lastDate.getTime());
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                    if (lastDate < targetDate) {
-                        // Apply Recovery
-                        const recovery = diffDays * this.RECOVERY_PER_DAY;
-                        currentLoad = Math.max(0, currentLoad - recovery);
-                    }
-                }
-
-                // 3. Apply Ledger Delta (New Workouts since last compute)
-                // Query needs to be strictly AFTER lastComputedDate to avoid double counting?
-                // Actually, ledger saves EXACT date. User might work out multiple times a day or backfill.
-                // Safe logic: From (lastComputed + 1 day) TILL targetDate.
-                // BUT if lastComputed is today (and we ignored it), we start from 2020.
-                const queryDateStart = currentState ? new Date(currentState.lastComputedDate) : new Date('2020-01-01');
-                // If currentState exists, we want NEXT day. If not, from beginning.
-                if (currentState) queryDateStart.setDate(queryDateStart.getDate() + 1);
+                // 3. Query ledger events since last computed date (inclusive start for new state, +1 day for existing)
+                const queryDateStart = currentState
+                    ? (() => { const d = new Date(currentState.lastComputedDate); d.setUTCDate(d.getUTCDate() + 1); return d; })()
+                    : new Date('2020-01-01');
 
                 const startStr = queryDateStart.toISOString().split('T')[0];
 
-                // Only log for a specific muscle to reduce noise?
                 if (muscle.name === 'Biceps' || muscle.name === 'Pecho') {
                     this.logger.log(`[DEBUG] Querying ${muscle.name} (${muscle.id}): ${startStr} to ${targetDateIso}`);
                 }
@@ -187,18 +175,11 @@ export class MuscleLoadService {
                     this.logger.log(`[DEBUG] ${muscle.name}: Found ${ledgerEvents.length} events!`);
                 }
 
-                // SIMULATION LOGIC:
-                // We must apply recovery between events to avoid massive accumulation from history.
-                // Start simulation from: 'currentLoad' (from state) at 'lastDate' (from state)
-
-                let simLoad = currentLoad;
-                let simDate = lastDate; // This is either 'lastComputedDate' or '2020-01-01'
-
-                // If starting from scratch (no state), ensure we don't carry garbage
-                if (!currentState) {
-                    simLoad = 0;
-                    simDate = new Date('2020-01-01');
-                }
+                // SIMULATION LOOP:
+                // For each ledger event, first apply recovery since the last point in time,
+                // then add the load delta. This handles all recovery in one unified pass,
+                // preventing the double-counting that occurred when a separate pre-loop
+                // recovery block was also present.
 
                 for (const ev of ledgerEvents) {
                     const eventDate = new Date(ev.date); // This is a string YYYY-MM-DD from DB usually, or Date object?
@@ -214,8 +195,8 @@ export class MuscleLoadService {
                         simLoad = Math.max(0, simLoad - recovery);
                     }
 
-                    // Apply Load
-                    simLoad += ev.deltaLoad;
+                    // Apply Load (cap immediately so hidden excess never accumulates)
+                    simLoad = Math.min(this.MAX_LOAD, simLoad + ev.deltaLoad);
 
                     // Update simulation pointer
                     simDate = eventDate;
@@ -231,10 +212,10 @@ export class MuscleLoadService {
                     simLoad = Math.max(0, simLoad - recovery);
                 }
 
-                currentLoad = Math.min(this.MAX_LOAD, Math.max(0, simLoad));
+                simLoad = Math.min(this.MAX_LOAD, Math.max(0, simLoad));
 
-                if (currentLoad > 0) {
-                    this.logger.log(`[DEBUG] ${muscle.name}: FinalLoad=${currentLoad} (Simulated)`);
+                if (simLoad > 0) {
+                    this.logger.log(`[DEBUG] ${muscle.name}: FinalLoad=${simLoad} (Simulated)`);
                 }
 
                 // 6. Update State (Materialize)
@@ -246,7 +227,7 @@ export class MuscleLoadService {
                 // if (currentState) newState.id = currentState.id; // Removed: Composite Key used instead
                 newState.student = { id: studentId } as any;
                 newState.muscle = { id: muscle.id } as any;
-                newState.currentLoad = currentLoad;
+                newState.currentLoad = simLoad;
                 newState.lastComputedDate = targetDateIso;
 
                 newStates.push(newState);
@@ -254,8 +235,8 @@ export class MuscleLoadService {
                 result.push({
                     muscleId: muscle.id,
                     muscleName: muscle.name,
-                    load: currentLoad,
-                    status: this.getStatus(currentLoad),
+                    load: simLoad,
+                    status: this.getStatus(simLoad),
                     lastComputedDate: targetDateIso
                 });
             } // End loop

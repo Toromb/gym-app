@@ -236,8 +236,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     return Container(
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.08)
-            : AppColors.cardSurface.withValues(alpha: 0.92),
+            ? Color.alphaBlend(colorScheme.primary.withValues(alpha: 0.35),
+                Colors.white.withValues(alpha: 0.12))
+            : (Theme.of(context).cardTheme.color ?? Colors.white)
+                .withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
             color:

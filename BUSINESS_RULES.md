@@ -92,33 +92,63 @@ Roles habilitados en arquitectura:
 
 ### 6.1. Modelo Actual (MVP)
 * La membresía es un atributo directo ligado a la ficha base del usuario.
-* Ciclo de vida del estado de flujo económico:
-  * **Pagado**: Transcurrido y salvado mediante abono.
-  * **Por vencer**: Zona buffer/gracia latente.
-  * **Vencido**: Agotamiento de ventana y omisión sin pago.
-* En su etapa MVP temprana, el sistema no acumula el lastre transaccional crónico mes a mes (No Deuda Acumulativa).
-* La mecánica orbital mensual está cimentada y atada de forma íntegra al día oficial de inscripción (`membershipStartDate`).
-* Lógica práctica de ventana (Ej: mes iniciando un día 1):
-  * Días 1 al 10 en calendario: Refleja inercia del estado "Por vencer" sin coartar accesibilidad plena.
-  * Día 11 en adelante en calendario: Conmuta al semáforo de bloqueo o advertencia "Vencido" en tanto el staff no concilie.
-* Transición inter-mes (Roll-over temporal): El vencimiento anterior se evapora puramente visual en la IU al inicio de otra fecha 1 natural, recayendo en la zona "Por vencer" (días 1 al 10).
-* Un alumno persistente en morosidad mantendrá de manera plana y rígida la entidad visual del "Vencido" tras la ventana de diez días sin salvamentos técnicos sistémicos.
-* Con la liquidación acreditada por la gerencia, el flanco permuta y solidifica al flag "Pagado".
+* **Ciclo de vida del estado de pago:**
+  * **`paid`**: El alumno tiene un `membershipExpirationDate` en el futuro. Acceso total al sistema.
+  * **`pending`**: La membresía venció (o nunca se pagó) pero estamos en los primeros **10 días del mes** (período de gracia). Acceso total al sistema.
+  * **`overdue`**: La membresía está vencida y ya pasó el día 10 del mes. El alumno está en mora.
 
-### 6.2. Lógica de Pagos
-* El cálculo aritmético de periodo y estados se desprende puramente de evaluar la distancia respecto a la fecha `membershipStartDate`.
-* Controles base para deducción determinística de la ecuación contable: `membershipStartDate`, `membershipExpirationDate` y la constante de bypass (`paysMembership`).
-* Excepcionalidad de negocio: El mandato real actual descansa íntegramente sobre la *fotografía mensual presente* contigua, sin recaer sobre auditorías de deuda vieja para propósitos de viabilidad de pase o puerta.
+* **Período estándar de membresía:**
+  * Todos los períodos van **del día 1ro al día 1ro del mes siguiente**, sin excepción.
+  * No importa en qué día del mes se inscribe o paga el alumno: el período siempre es mensual completo del 1ro al 1ro.
+
+* **Período de gracia (días 1 al 10 de cada mes):**
+  * Del 1 al 10: estado `pending` — el alumno aún puede pagar sin consecuencias, acceso pleno.
+  * Día 11 en adelante sin pago: estado `overdue`.
+  * Al inicio de cada mes, el estado vuelve a `pending` automáticamente (sin intervención del admin).
+
+* **No deuda acumulativa**: El sistema no acumula meses impagos. Sólo importa el estado actual (`membershipExpirationDate` vs. hoy + ventana de gracia).
+
+* **Usuarios exentos** (`paysMembership = false`): Siempre muestran `paid`, sin importar las fechas. Aplica a profes internos y otros roles exentos.
+
+### 6.2. Lógica de Cálculo de Períodos
+
+**Al registrar un pago (N meses):**
+1. Si el `membershipExpirationDate` actual es **futuro** → el nuevo período arranca desde esa fecha (que ya es el 1ro de algún mes).
+2. Si el `membershipExpirationDate` es **pasado o nulo** → el nuevo período arranca desde el **1ro del mes actual**.
+3. Cada mes adicional extiende desde el 1ro al 1ro del siguiente mes.
+4. `membershipExpirationDate` siempre queda apuntando al **1ro del mes posterior** al último período pagado.
+
+**Cálculo del `paymentStatus` (en tiempo real, no se persiste):**
+```
+Si paysMembership = false          → 'paid' (exento)
+Si membershipExpirationDate >= hoy → 'paid'
+Si día del mes <= 10               → 'pending' (gracia)
+Si día del mes > 10               → 'overdue'
+```
+
+**Campos involucrados en la entidad `User`:**
+- `membershipExpirationDate`: fecha hasta la que está pagado (siempre día 1ro).
+- `lastPaymentDate`: fecha en que se registró el último pago.
+- `paysMembership`: boolean — exención total de pago.
+- `paymentStatus`: campo virtual calculado en runtime, no persiste en BD.
+
+**`PaymentRecord` entity:**
+- Cada mes pagado genera 1 `PaymentRecord` con `periodFrom` y `periodTo` (ambos día 1ro).
+- Guarda también monto, método y quién registró el pago (`registeredBy`).
+- Los registros son inmutables — si hay error, el ADMIN corrige `membershipExpirationDate` directamente vía `PATCH /users/:id`.
 
 ### 6.3. Privilegios Financieros
-* La facultad técnica para imputar, mutar o blanquear las flags de pago recae exclusivametnte en la credencial funcional `ADMIN`.
+* **Registro de pagos**: Solo `ADMIN` y `SUPER_ADMIN` pueden registrar pagos (`POST /payments/user/:userId`) o usar el toggle rápido (`PATCH /users/:id/payment-status`).
+* **Consulta de historial**: El propio alumno puede ver su historial. `PROFE` NO puede ver historial de pagos. `ADMIN` ve el historial de todos los alumnos de su gym.
+* **Estado de cuota (lectura)**: El `PROFE` puede ver el `paymentStatus` de sus alumnos asignados (en el listado `GET /users`), pero no puede modificarlo.
+* **Corrección manual**: Solo el `ADMIN` puede corregir `membershipExpirationDate` directamente vía `PATCH /users/:id`.
 
 ### 6.4. Evolución de Pagos
-* La meta expansiva es la injerencia holística y real de terceras terminales (p.ej., pasarelas on-ramp Stripe o MercadoPago).
-* Vertices a solventar obligatoriamente en iteración posterior:
-  * Consolidación estructurada en una base de datos tabular del historial robusto de cajas y pagos.
-  * Ponderación matemática de moratorias compuestas intermensuales y saldos de deuda en remanente.
-  * Orquestación programada de debitos cíclicos o suscripciones nativas.
+* La meta expansiva es la integración con pasarelas de pago (Stripe, MercadoPago).
+* Póximos hitos:
+  * Orquestación de cobros automáticos mensuales.
+  * Generación de comprobantes/facturas digitales.
+  * Notificaciones automáticas al acercarse el vencimiento.
 
 ## 7. Onboarding
 * Experiencia de apertura curada direccionalmente. Separación de ecosistemas de ingreso:

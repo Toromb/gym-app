@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../models/free_training_model.dart';
 import '../../../services/free_training_service.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../utils/constants.dart';
 import '../../shared/day_detail_screen.dart';
 import '../../../widgets/background_page_wrapper.dart';
 import '../../../theme/background_styles.dart';
@@ -200,8 +203,15 @@ class _FreeTrainingSelectorScreenState
         break;
     }
 
+    final bgUrl =
+        context.watch<AuthProvider>().currentGymBackgroundImage != null
+            ? resolveImageUrl(
+                context.watch<AuthProvider>().currentGymBackgroundImage!)
+            : null;
+
     return BackgroundPageWrapper(
       overlayOpacity: 0.85,
+      backgroundNetworkUrl: bgUrl,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(

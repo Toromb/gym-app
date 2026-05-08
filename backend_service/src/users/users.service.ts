@@ -98,7 +98,7 @@ export class UsersService {
 
     const users = await this.usersRepository.find({
       where,
-      relations: ['studentPlans', 'professor', 'gym'],
+      relations: ['professor', 'gym'],
     });
 
     // Inject computed status
@@ -205,121 +205,72 @@ export class UsersService {
     const user = await this.findOne(id);
     if (!user) throw new Error('User not found');
 
-    // Anchor Date: The day of the month the membership started.
-    // If not set, use today as the start date anchor.
-    const anchorDate = user.membershipStartDate
-      ? new Date(user.membershipStartDate)
-      : new Date();
-    // If user had no start date, save this anchor
-    if (!user.membershipStartDate) {
-      user.membershipStartDate = anchorDate;
-    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    const anchorDay = anchorDate.getDate(); // e.g. 5
-    const now = new Date();
-    let targetMonth: Date;
-
+    // Si la expiración actual es futura, extender desde ese 1ro de mes
+    // Si está vencida o sin pagar, usar el 1ro del mes actual
     const validExpiration = user.membershipExpirationDate
       ? new Date(user.membershipExpirationDate)
       : null;
 
-    if (validExpiration && validExpiration > now) {
-      // Case A: Not expired yet. Extend from current expiration.
-      targetMonth = new Date(validExpiration);
-      targetMonth.setMonth(targetMonth.getMonth() + 1);
+    let targetMonth: Date;
+
+    if (validExpiration && validExpiration > today) {
+      // Extender: el próximo 1ro desde la expiración futura
+      targetMonth = new Date(
+        validExpiration.getFullYear(),
+        validExpiration.getMonth() + 1,
+        1,
+      );
     } else {
-      // Case B: Expired or First Time.
-      targetMonth = new Date(now);
-      targetMonth.setMonth(targetMonth.getMonth() + 1);
-      targetMonth.setDate(anchorDay);
+      // Vencida o sin pagar: 1ro del mes siguiente al actual
+      targetMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
     }
 
-    const year = targetMonth.getFullYear();
-    const month = targetMonth.getMonth();
-    // Get last day of that month
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const finalDay = Math.min(anchorDay, daysInMonth);
-
-    targetMonth.setDate(finalDay); // Set strict day
-
     user.membershipExpirationDate = targetMonth;
-    user.lastPaymentDate = new Date().toISOString().split('T')[0];
+    user.lastPaymentDate = today.toISOString().split('T')[0];
 
     await this.usersRepository.save(user);
     return this.findOne(id) as Promise<User>;
   }
 
-  // Helper to compute status on the fly
+  // Helper: calcula el estado de pago del alumno en tiempo real.
+  //
+  // Regla de negocio:
+  //   - Los períodos de membresía van siempre del 1ro al 1ro del siguiente mes.
+  //   - Hay 10 días de gracia: del 1 al 10 de cada mes el estado es "pending"
+  //     (el alumno aún puede pagar sin consecuencias).
+  //   - Después del día 10 sin pagar → "overdue".
   calculatePaymentStatus(user: User): 'paid' | 'overdue' | 'pending' {
-    // 1. Exempt users always show as paid
+    // 1. Usuarios exentos (paysMembership = false) siempre muestran "paid"
     if (user.paysMembership === false) {
       return 'paid';
-    }
-
-    // 2. If there is a valid future expiration date → paid
-    if (user.membershipExpirationDate) {
-      const now = new Date();
-      const exp = new Date(user.membershipExpirationDate);
-      now.setHours(0, 0, 0, 0);
-      exp.setHours(0, 0, 0, 0);
-
-      if (exp >= now) {
-        return 'paid';
-      }
-      // Expiration date exists but is in the past → fall through to anchor check
-    }
-
-    // 3. Fallback: no expirationDate (user never paid) or expiration is past.
-    //    Determine status using real elapsed days from the last theoretical anchor.
-    if (!user.membershipStartDate) {
-      return 'pending'; // No anchor data at all → show as pending (new user)
     }
 
     const now = new Date();
     now.setHours(0, 0, 0, 0);
 
-    const startDate = new Date(user.membershipStartDate);
-    startDate.setHours(0, 0, 0, 0);
-
-    const anchorDay = startDate.getDate();
-
-    // Build the last theoretical anchor date:
-    //   - Try the anchor day in the CURRENT calendar month
-    //   - If that date is in the future (anchor hasn't arrived yet this month),
-    //     use the anchor day in the PREVIOUS calendar month instead.
-    const year = now.getFullYear();
-    const month = now.getMonth(); // 0-indexed
-
-    // Clamp anchorDay to the last day of the target month (e.g. anchor=31 in Feb → 28/29)
-    const clampToMonth = (y: number, m: number, d: number): Date => {
-      const lastDay = new Date(y, m + 1, 0).getDate();
-      return new Date(y, m, Math.min(d, lastDay));
-    };
-
-    let lastAnchor = clampToMonth(year, month, anchorDay);
-
-    if (lastAnchor > now) {
-      // Anchor day of this month is still in the future → last anchor was previous month
-      const prevMonth = month === 0 ? 11 : month - 1;
-      const prevYear = month === 0 ? year - 1 : year;
-      lastAnchor = clampToMonth(prevYear, prevMonth, anchorDay);
+    // 2. Si tiene una fecha de expiración válida en el futuro → "paid"
+    if (user.membershipExpirationDate) {
+      const exp = new Date(user.membershipExpirationDate);
+      exp.setHours(0, 0, 0, 0);
+      if (exp >= now) {
+        return 'paid';
+      }
     }
 
-    // Also ensure lastAnchor is not before membershipStartDate
-    // (edge case: user was created after the anchor day of the current month)
-    if (lastAnchor < startDate) {
-      lastAnchor = startDate;
+    // 3. Membresía vencida o nunca pagada.
+    //    Aplicar la regla de los 10 días de gracia del 1 al 10 de cada mes.
+    //    Si hoy es día 1..10 → "pending" (en período de gracia).
+    //    Si hoy es día 11 en adelante → "overdue".
+    const dayOfMonth = now.getDate();
+
+    if (dayOfMonth <= 10) {
+      return 'pending'; // Dentro del período de gracia
     }
 
-    // Days elapsed since the last anchor
-    const msPerDay = 1000 * 60 * 60 * 24;
-    const daysElapsed = Math.floor((now.getTime() - lastAnchor.getTime()) / msPerDay);
-
-    if (daysElapsed <= 10) {
-      return 'pending'; // Within grace period
-    }
-
-    return 'overdue'; // Grace period exhausted
+    return 'overdue'; // Vencido y sin pagar tras el día 10
   }
 
   async findOneByActivationTokenHash(hash: string): Promise<User | null> {

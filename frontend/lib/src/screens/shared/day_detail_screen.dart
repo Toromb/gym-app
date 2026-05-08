@@ -4,11 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../models/plan_model.dart';
 import '../../providers/plan_provider.dart';
-import '../../models/execution_model.dart'; // Import Execution Model
+import '../../providers/auth_provider.dart';
+import '../../models/execution_model.dart';
 import '../../localization/app_localizations.dart';
+import '../../utils/constants.dart';
 import 'exercise_execution_card.dart';
 import 'exercise_selection_dialog.dart';
-import 'training_timer_card.dart'; // NEW
+import 'training_timer_card.dart';
 import '../../widgets/background_page_wrapper.dart';
 
 class DayDetailScreen extends StatefulWidget {
@@ -222,9 +224,15 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       status = session.status;
     }
 
+    final bgUrl =
+        context.watch<AuthProvider>().currentGymBackgroundImage != null
+            ? resolveImageUrl(
+                context.watch<AuthProvider>().currentGymBackgroundImage!)
+            : null;
+
     return BackgroundPageWrapper(
-      overlayOpacity:
-          0.9, // Alta opacidad priorizando la legibilidad (funcionalidad)
+      overlayOpacity: 0.9,
+      backgroundNetworkUrl: bgUrl,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: ConstrainedAppBar(

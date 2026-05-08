@@ -584,20 +584,22 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
     return Container(
       decoration: BoxDecoration(
-          color: isDark
-              ? colorScheme.surfaceContainer
-              : AppColors.cardSurface, // Pastel teal-green in light mode
-          borderRadius: BorderRadius.circular(20),
-          border:
-              Border.all(color: isDark ? Colors.white10 : Colors.grey.shade100),
-          boxShadow: [
-            BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.3)
-                    : Colors.black.withValues(alpha: 0.1),
-                blurRadius: 15,
-                offset: const Offset(0, 5))
-          ]),
+        color: isDark
+            ? Color.alphaBlend(colorScheme.primary.withValues(alpha: 0.35),
+                Colors.white.withValues(alpha: 0.12))
+            : (Theme.of(context).cardTheme.color ?? Colors.white)
+                .withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+            color:
+                isDark ? Colors.white12 : Colors.white.withValues(alpha: 0.6)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 12,
+              offset: const Offset(0, 4))
+        ],
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(

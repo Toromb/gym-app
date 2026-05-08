@@ -37,6 +37,9 @@ class AuthProvider with ChangeNotifier {
 
   // Gym Customization
   String? get currentGymLogo => _user?.gym?.logoUrl;
+  // The gym background image configured by the admin. Always scoped to the
+  // authenticated user's gym — changing it in one gym never affects another.
+  String? get currentGymBackgroundImage => _user?.gym?.backgroundImageUrl;
   String? get currentGymPrimaryColor => _user?.gym?.primaryColor;
   String? get currentGymSecondaryColor => _user?.gym?.secondaryColor;
   String? get currentGymWelcomeMessage => _user?.gym?.welcomeMessage;

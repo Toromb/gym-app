@@ -137,7 +137,7 @@ class GymsProvider with ChangeNotifier {
           body: json.encode({
             'businessName': gym.businessName,
             'address': gym.address,
-            'phone': gym.phone, // Added missing phone field
+            'phone': gym.phone,
             'email': gym.email,
             'maxProfiles': gym.maxProfiles,
             'status': gym.status,
@@ -151,6 +151,9 @@ class GymsProvider with ChangeNotifier {
             'paymentAccountName': gym.paymentAccountName,
             'paymentBankName': gym.paymentBankName,
             'paymentNotes': gym.paymentNotes,
+            'whatsapp': gym.whatsapp,
+            'instagram': gym.instagram,
+            'facebook': gym.facebook,
           }));
       if (response.statusCode == 200) {
         final updatedGym = Gym.fromJson(json.decode(response.body));

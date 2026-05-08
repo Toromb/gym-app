@@ -9,10 +9,21 @@
 #   flutter-ci  → dart format check + flutter analyze
 #
 # Neither job builds the app or runs e2e tests (those are slow
-# and require secrets). This pipeline is intentionally fast
-# (~2-4 min) so developers get feedback before review.
+# and require a live Postgres instance with secrets). This pipeline
+# is intentionally fast (~2-4 min) so developers get feedback before review.
 #
-# If either job fails, GitHub blocks the merge. This prevents
+# ── E2E Tests (local only) ───────────────────────────────────
+# The full automated test suite lives in backend_service/test/.
+# To run it locally:
+#
+#   cd backend_service
+#   cp .env.test.example .env.test   # only first time
+#   npm run test:e2e:clean           # runs all 5 suites, 57 tests
+#
+# See backend_service/test/README.md for full documentation.
+# ─────────────────────────────────────────────────────────────
+#
+# If either CI job fails, GitHub blocks the merge. This prevents
 # the most common class of bugs: type errors and static analysis
 # warnings that slip through during fast-paced development.
 

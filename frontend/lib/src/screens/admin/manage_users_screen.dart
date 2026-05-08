@@ -6,8 +6,10 @@ import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/plan_provider.dart';
 import '../../services/auth_service.dart';
+import '../../utils/constants.dart';
 import 'package:flutter/services.dart';
-import '../../models/user_model.dart'; // Import User model for type checking
+import '../../models/user_model.dart';
+import '../../widgets/background_page_wrapper.dart';
 import 'add_user_screen.dart';
 import 'edit_user_screen.dart';
 import '../teacher/student_plans_screen.dart';
@@ -37,135 +39,147 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
   Widget build(BuildContext context) {
     final userRole = context.read<AuthProvider>().role;
     final isAdmin = userRole == AppRoles.admin;
+    final bgUrl =
+        context.watch<AuthProvider>().currentGymBackgroundImage != null
+            ? resolveImageUrl(
+                context.watch<AuthProvider>().currentGymBackgroundImage!)
+            : null;
 
-    return Scaffold(
-      appBar: ConstrainedAppBar(
-        title: const Text('Gestionar Usuarios'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Actualizar lista',
-            onPressed: () {
-              context.read<UserProvider>().fetchUsers(forceRefresh: true);
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: isAdmin
-          ? Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FloatingActionButton(
-                  heroTag: 'invite_link',
-                  onPressed: () => _showInviteLinkDialog(context),
-                  backgroundColor: Theme.of(context).colorScheme.tertiary,
-                  tooltip: 'Link de Invitación',
-                  child: Icon(Icons.qr_code_2,
-                      color: Theme.of(context).colorScheme.onTertiary),
-                ),
-                const SizedBox(height: 16),
-                FloatingActionButton(
-                  heroTag: 'add_user',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const AddUserScreen()),
-                    );
-                  },
-                  tooltip: 'Crear Usuario',
-                  child: const Icon(Icons.person_add),
-                ),
-              ],
-            )
-          : null,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Consumer<UserProvider>(
-            builder: (context, userProvider, _) {
-              if (userProvider.isLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+    return BackgroundPageWrapper(
+      overlayOpacity: 0.88,
+      backgroundNetworkUrl: bgUrl,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: ConstrainedAppBar(
+          title: const Text('Gestionar Usuarios'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Actualizar lista',
+              onPressed: () {
+                context.read<UserProvider>().fetchUsers(forceRefresh: true);
+              },
+            ),
+          ],
+        ),
+        floatingActionButton: isAdmin
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FloatingActionButton(
+                    heroTag: 'invite_link',
+                    onPressed: () => _showInviteLinkDialog(context),
+                    backgroundColor: Theme.of(context).colorScheme.tertiary,
+                    tooltip: 'Link de Invitación',
+                    child: Icon(Icons.qr_code_2,
+                        color: Theme.of(context).colorScheme.onTertiary),
+                  ),
+                  const SizedBox(height: 16),
+                  FloatingActionButton(
+                    heroTag: 'add_user',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const AddUserScreen()),
+                      );
+                    },
+                    tooltip: 'Crear Usuario',
+                    child: const Icon(Icons.person_add),
+                  ),
+                ],
+              )
+            : null,
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: Consumer<UserProvider>(
+              builder: (context, userProvider, _) {
+                if (userProvider.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-              final users =
-                  userProvider.students; // 'students' contains all users
+                final users =
+                    userProvider.students; // 'students' contains all users
 
-              // Filter Logic
-              final filteredUsers = users.where((u) {
-                final matchesSearch = ('${u.firstName} ${u.lastName}')
-                        .toLowerCase()
-                        .contains(_searchQuery.toLowerCase()) ||
-                    u.email.toLowerCase().contains(_searchQuery.toLowerCase());
+                // Filter Logic
+                final filteredUsers = users.where((u) {
+                  final matchesSearch = ('${u.firstName} ${u.lastName}')
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase()) ||
+                      u.email
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase());
 
-                if (!matchesSearch) return false;
+                  if (!matchesSearch) return false;
 
-                if (_filterRole == 'all') return true;
-                return u.role == _filterRole;
-              }).toList();
+                  if (_filterRole == 'all') return true;
+                  return u.role == _filterRole;
+                }).toList();
 
-              if (isAdmin) {
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    await context
-                        .read<UserProvider>()
-                        .fetchUsers(forceRefresh: true);
-                  },
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSearchAndFilter(),
-                        // Conteo de resultados
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                          child: Text(
-                            '${filteredUsers.length} usuario${filteredUsers.length != 1 ? 's' : ''}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
+                if (isAdmin) {
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      await context
+                          .read<UserProvider>()
+                          .fetchUsers(forceRefresh: true);
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSearchAndFilter(),
+                          // Conteo de resultados
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                            child: Text(
+                              '${filteredUsers.length} usuario${filteredUsers.length != 1 ? 's' : ''}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
                             ),
                           ),
-                        ),
-                        ..._buildUserListWidgets(
-                            context, filteredUsers, isAdmin, false),
-                        const SizedBox(height: 80),
-                      ],
-                    ),
-                  ),
-                );
-              } else {
-                // Profe View: Show only Alumnos
-                // Also apply search for Profe view? Yes.
-                final students = filteredUsers
-                    .where((u) => u.role == AppRoles.alumno)
-                    .toList();
-                return Column(
-                  children: [
-                    _buildSearchAndFilter(), // Reuse
-                    _buildSectionHeader(context, 'Alumnos', students.length),
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: () async {
-                          await context
-                              .read<UserProvider>()
-                              .fetchUsers(forceRefresh: true);
-                        },
-                        child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.only(bottom: 100),
-                          children: _buildUserListWidgets(
-                              context, students, false, true),
-                        ),
+                          ..._buildUserListWidgets(
+                              context, filteredUsers, isAdmin, false),
+                          const SizedBox(height: 80),
+                        ],
                       ),
                     ),
-                  ],
-                );
-              }
-            },
+                  );
+                } else {
+                  // Profe View: Show only Alumnos
+                  // Also apply search for Profe view? Yes.
+                  final students = filteredUsers
+                      .where((u) => u.role == AppRoles.alumno)
+                      .toList();
+                  return Column(
+                    children: [
+                      _buildSearchAndFilter(), // Reuse
+                      _buildSectionHeader(context, 'Alumnos', students.length),
+                      Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: () async {
+                            await context
+                                .read<UserProvider>()
+                                .fetchUsers(forceRefresh: true);
+                          },
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.only(bottom: 100),
+                            children: _buildUserListWidgets(
+                                context, students, false, true),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+              },
+            ),
           ),
         ),
       ),

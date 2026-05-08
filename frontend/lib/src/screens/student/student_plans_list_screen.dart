@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import '../../providers/plan_provider.dart';
-// Keep for Plan refs if needed
+import '../../providers/auth_provider.dart';
 import '../../models/student_assignment_model.dart';
-import '../../utils/app_colors.dart'; // Corrected path
+import '../../utils/app_colors.dart';
+import '../../utils/constants.dart';
 import 'package:intl/intl.dart';
 import '../../localization/app_localizations.dart';
 import '../shared/plan_details_screen.dart';
@@ -40,8 +41,14 @@ class _StudentPlansListScreenState extends State<StudentPlansListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bgUrl =
+        context.watch<AuthProvider>().currentGymBackgroundImage != null
+            ? resolveImageUrl(
+                context.watch<AuthProvider>().currentGymBackgroundImage!)
+            : null;
     return BackgroundPageWrapper(
       overlayOpacity: 0.85,
+      backgroundNetworkUrl: bgUrl,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: ConstrainedAppBar(

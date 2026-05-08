@@ -472,6 +472,7 @@ export class PlansService {
   async activateAssignment(assignmentId: string, studentId: string): Promise<void> {
     const assignment = await this.studentPlanRepository.findOne({
       where: { id: assignmentId, student: { id: studentId } },
+      relations: ['assignedPlan', 'plan'], // BUGFIX: relaciones necesarias para el chequeo de integridad debajo
     });
     
     if (!assignment) {
@@ -921,10 +922,10 @@ export class PlansService {
         );
 
         assignment.isActive = false;
-        // Reiniciamos explícitamente el progreso y la fecha de inicio para que la asignación
-        // base quede limpia y lista para ser reutilizada por el estudiante en un nuevo ciclo.
+        // Reset progress para que la asignación quede limpia y lista para un nuevo ciclo.
+        // NOTA: startDate se preserva intencionalmente — es un dato histórico que indica
+        // cuándo comenzó este ciclo de entrenamiento. Nullearlo viola el constraint NOT NULL.
         assignment.progress = { exercises: {}, days: {} };
-        assignment.startDate = null as any; 
 
         await transactionalEntityManager.save(assignment);
       },
