@@ -161,12 +161,12 @@ class GymDashboardHeader extends StatelessWidget {
         // ── SOCIAL ICONS (horizontal, derecha) — arriba del badge ────
         Builder(builder: (context) {
           final gym = user?.gym;
-          final hasWhatsapp =
-              gym?.whatsapp != null && gym!.whatsapp!.isNotEmpty;
-          final hasInstagram =
-              gym?.instagram != null && gym!.instagram!.isNotEmpty;
-          final hasFacebook =
-              gym?.facebook != null && gym!.facebook!.isNotEmpty;
+          // Early return si no hay gym → smart-cast: de aquí en adelante gym != null
+          if (gym == null) return const SizedBox.shrink();
+
+          final hasWhatsapp = gym.whatsapp?.isNotEmpty == true;
+          final hasInstagram = gym.instagram?.isNotEmpty == true;
+          final hasFacebook = gym.facebook?.isNotEmpty == true;
 
           if (!hasWhatsapp && !hasInstagram && !hasFacebook) {
             return const SizedBox.shrink();
