@@ -18,7 +18,7 @@ async function bootstrap() {
   app.use(helmet());
   const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:3000,http://localhost:3001').split(',').map(o => o.trim());
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Permitir requests sin origin (mobile apps, curl, Swagger)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
