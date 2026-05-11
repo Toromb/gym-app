@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../widgets/constrained_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -449,22 +449,21 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
       appBar: ConstrainedAppBar(
           title:
               Text(widget.planToEdit == null ? 'Crear Plan' : 'Editar Plan')),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-              child: Text(
-                "Definí una estructura de entrenamiento reutilizable.",
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                textAlign: TextAlign.center,
-              ),
+      body: Column(
+        children: [
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+            child: Text(
+              "Definí una estructura de entrenamiento reutilizable.",
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              textAlign: TextAlign.center,
             ),
-            Form(
+          ),
+          Expanded(
+            child: Form(
               key: _formKey,
               child: Stepper(
-                physics: const NeverScrollableScrollPhysics(),
                 type: StepperType.vertical,
                 currentStep: _currentStep,
                 onStepTapped: (index) => setState(() => _currentStep = index),
@@ -881,66 +880,57 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                 ],
               ),
             ),
-          ], // closes Column.children
-        ), // closes Column
-      ), // closes SingleChildScrollView / body
-      bottomNavigationBar: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              style:
-                  ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
-              onPressed: () async {
-                if (_formKey.currentState!.validate()) {
-                  setState(() => _isLoading = true);
-                  final plan = Plan(
-                    id: widget.planToEdit?.id, // Keep ID if editing
-                    name: _nameController.text,
-                    objective: _objectiveController.text,
-                    durationWeeks: int.tryParse(_durationController.text) ?? 4,
-                    generalNotes: _notesController.text,
-                    weeks: _weeks,
-                  );
-
-                  bool success;
-                  if (widget.planToEdit != null) {
-                    success = await context
-                        .read<PlanProvider>()
-                        .updatePlan(widget.planToEdit!.id!, plan);
-                  } else {
-                    success =
-                        await context.read<PlanProvider>().createPlan(plan);
-                  }
-
-                  if (!mounted) return;
-                  setState(() => _isLoading = false);
-
-                  if (success) {
-                    Navigator.pop(context, true);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(widget.planToEdit != null
-                              ? 'Plan actualizado'
-                              : 'Plan creado')),
-                    );
-                  }
-                }
-              },
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : Text(
-                      widget.planToEdit != null
-                          ? 'Actualizar Plan'
-                          : 'Crear Plan',
-                      style: const TextStyle(fontSize: 18)),
-            ),
           ),
+        ],
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
+          onPressed: () async {
+            if (_formKey.currentState!.validate()) {
+              setState(() => _isLoading = true);
+              final plan = Plan(
+                id: widget.planToEdit?.id, // Keep ID if editing
+                name: _nameController.text,
+                objective: _objectiveController.text,
+                durationWeeks: int.tryParse(_durationController.text) ?? 4,
+                generalNotes: _notesController.text,
+                weeks: _weeks,
+              );
+
+              bool success;
+              if (widget.planToEdit != null) {
+                success = await context
+                    .read<PlanProvider>()
+                    .updatePlan(widget.planToEdit!.id!, plan);
+              } else {
+                success = await context.read<PlanProvider>().createPlan(plan);
+              }
+
+              if (!mounted) return;
+              setState(() => _isLoading = false);
+
+              if (success) {
+                Navigator.pop(context, true);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text(widget.planToEdit != null
+                          ? 'Plan actualizado'
+                          : 'Plan creado')),
+                );
+              }
+            }
+          },
+          child: _isLoading
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white))
+              : Text(
+                  widget.planToEdit != null ? 'Actualizar Plan' : 'Crear Plan',
+                  style: const TextStyle(fontSize: 18)),
         ),
       ),
     );
