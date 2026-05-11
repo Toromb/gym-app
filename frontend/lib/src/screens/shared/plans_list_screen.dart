@@ -269,10 +269,21 @@ class _PlansListScreenState extends State<PlansListScreen> {
   }
 
   Future<void> _navigateToEdit(BuildContext context, Plan plan) async {
+    // El endpoint de lista no devuelve semanas completas → fetch por ID primero
+    final fullPlan = await context.read<PlanProvider>().getPlanById(plan.id!);
+    if (!context.mounted) return;
+
+    if (fullPlan == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo cargar el plan para editar')),
+      );
+      return;
+    }
+
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CreatePlanScreen(planToEdit: plan),
+        builder: (context) => CreatePlanScreen(planToEdit: fullPlan),
       ),
     );
     if (result == true && context.mounted) {
