@@ -221,16 +221,27 @@ class _PlansListScreenState extends State<PlansListScreen> {
               children: [
                 OutlinedButton.icon(
                   onPressed: () => _showPlanDetails(context, plan),
-                  icon: const Icon(Icons.visibility, size: 16), // Smaller icon
+                  icon: const Icon(Icons.visibility, size: 16),
                   label: Text(AppLocalizations.of(context)!.get('viewDetails'),
                       style: const TextStyle(fontSize: 12)),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 4), // Compact layout
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     visualDensity: VisualDensity.compact,
                   ),
                 ),
                 const SizedBox(width: 8),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  iconSize: 20,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: Icon(Icons.edit_outlined,
+                      color: Theme.of(context).colorScheme.primary),
+                  onPressed: () => _navigateToEdit(context, plan),
+                  tooltip: 'Editar plan',
+                ),
+                const SizedBox(width: 4),
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   iconSize: 20,
@@ -255,6 +266,18 @@ class _PlansListScreenState extends State<PlansListScreen> {
         builder: (context) => PlanDetailsScreen(plan: plan, readOnly: true),
       ),
     );
+  }
+
+  Future<void> _navigateToEdit(BuildContext context, Plan plan) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreatePlanScreen(planToEdit: plan),
+      ),
+    );
+    if (result == true && context.mounted) {
+      context.read<PlanProvider>().fetchPlans(forceRefresh: true);
+    }
   }
 
   void _confirmDeletePlan(BuildContext context, Plan plan) {
