@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../models/plan_model.dart';
 import '../models/student_assignment_model.dart';
 import '../models/execution_model.dart';
@@ -25,8 +26,8 @@ class PlanService {
     try {
       final response = await _api.get('/plans/$id');
       return Plan.fromJson(response);
-    } catch (_) {
-      // 404 handled by ApiClient? ApiClient throws NotFoundException.
+    } catch (e) {
+      debugPrint('❌ getPlan($id) error: $e');
       return null;
     }
   }
