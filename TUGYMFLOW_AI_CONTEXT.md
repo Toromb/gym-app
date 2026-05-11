@@ -429,6 +429,51 @@ Cálculo de paymentStatus (runtime, no persiste en BD):
 - `checkOnboardingStatus()` se llama al login
 - Solo alumnos pasan por onboarding; profes/admins = `isOnboarded: true`
 
+### 🏋️ Sistema de Peso Corporal en Ejercicios (Bodyweight)
+
+> **IMPORTANTE**: Leer antes de modificar cualquier cosa relacionada con peso en ejercicios.
+
+#### Entidades clave
+| Campo | Entidad | Descripción |
+|---|---|---|
+| `Equipment.isBodyWeight` | `equipments` table | `true` solo para "Peso Corporal" (no editable, no eliminable) |
+| `SessionExercise.weightUsed` | `session_exercises` | **Carga total efectiva** = pesoCorporal + lastre (string) |
+| `SessionExercise.addedWeight` | `session_exercises` | **Solo el lastre** en kg (float, útil para analytics y swap logic) |
+| `User.currentWeight` | `users` table | Peso corporal actual del alumno (actualizable) |
+| `User.initialWeight` | `users` table | Peso corporal inicial registrado en onboarding |
+
+#### Flujo completo
+```
+1. Profe crea ejercicio con equipment "Peso Corporal" (isBodyWeight=true)
+2. Se asigna a alumno → genera SessionExercise con equipmentsSnapshot incluyendo "Peso Corporal"
+3. Alumno abre la sesión → ExerciseExecutionCard detecta isBodyWeight=true
+4. UI muestra:
+     [Peso Corp.: 80 kg] (read-only, de auth.user.currentWeight ?? initialWeight)
+     [Lastre (kg):  5  ] (editable, es el peso extra)
+5. Al guardar (_buildUpdateData):
+     addedWeight = 5 (solo el lastre)
+     weightUsed  = 80 + 5 = "85" (total efectivo)
+6. Si el alumno no tiene peso corporal en su perfil:
+     weightUsed = addedWeight (solo lastre, sin suma de corporal)
+```
+
+#### Archivos involucrados
+| Archivo | Rol |
+|---|---|
+| `frontend/lib/src/screens/shared/exercise_execution_card.dart` | UI + lógica de cálculo (campo `_isBodyWeight`, `_userBodyWeight`, `_buildUpdateData`) |
+| `frontend/lib/src/utils/swap_exercise_logic.dart` | Usa `addedWeight` y `isBodyWeight` para calcular carga de referencia al hacer swap |
+| `frontend/lib/src/screens/student/student_history_screen.dart` | Muestra diferente el peso en historial si `isBodyWeight=true` |
+| `backend_service/src/exercises/entities/equipment.entity.ts` | Flag `isBodyWeight` en entidad |
+| `backend_service/src/plans/entities/session-exercise.entity.ts` | Campos `weightUsed` y `addedWeight` |
+| `backend_service/src/exercises/equipments.service.ts` | Crea "Peso Corporal" con `isEditable: false` al inicializar cada gym |
+
+#### Reglas críticas — NO romper
+- `_weightController` **NO se usa** en modo bodyweight (no se muestra en UI)
+- `weightUsed` en modo bodyweight **siempre** se calcula: `pesoCorporal + lastre`
+- `addedWeight` **siempre** es solo el lastre (nunca el total)
+- El equipment "Peso Corporal" tiene `isEditable: false` → el backend lo rechaza si intentan borrarlo
+- El `_userBodyWeight` se carga en `didChangeDependencies()` desde `AuthProvider`, NO desde el widget tree al momento de guardar
+
 ---
 
 ## 13. URL del Backend por Entorno

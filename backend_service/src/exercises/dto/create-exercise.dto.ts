@@ -109,4 +109,9 @@ export class CreateExerciseDto {
   @IsOptional()
   @IsNumber()
   maxReps?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  equipments?: string[];
 }

@@ -51,7 +51,28 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   late TextEditingController _addedWeightController;
   late FocusNode _addedWeightFocusNode;
 
+  // ─── BODY WEIGHT SYSTEM ──────────────────────────────────────────────────
+  // Si el ejercicio tiene un Equipment con isBodyWeight=true ("Peso Corporal"),
+  // el modo de peso cambia completamente:
+  //
+  //   _weightController      → NO se usa en la UI (oculto en bodyweight mode)
+  //   _userBodyWeight        → peso corporal del alumno (currentWeight ?? initialWeight)
+  //                            leído desde AuthProvider en didChangeDependencies()
+  //   _addedWeightController → "Lastre": peso extra que el alumno agrega encima
+  //
+  //   Al guardar (_buildUpdateData):
+  //     addedWeight = lastre ingresado por el alumno
+  //     weightUsed  = _userBodyWeight + addedWeight  ← carga total efectiva
+  //
+  //   Si el alumno no tiene peso corporal en su perfil (OnboardingProfile),
+  //   weightUsed = solo el lastre (no hay suma de corporal).
+  //
+  //   En la DB (SessionExercise):
+  //     weightUsed  STRING  → carga total (bodyWeight + lastre) o peso normal
+  //     addedWeight FLOAT   → solo el lastre (útil para analytics y swap logic)
+  // ─────────────────────────────────────────────────────────────────────────
   bool _isBodyWeight = false;
+  double? _userBodyWeight;
 
   late String _metricType;
 
@@ -61,6 +82,8 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _planProvider = context.read<PlanProvider>();
+    final auth = context.read<AuthProvider>();
+    _userBodyWeight = auth.user?.currentWeight ?? auth.user?.initialWeight;
   }
 
   @override
@@ -260,17 +283,44 @@ class _ExerciseExecutionCardState extends State<ExerciseExecutionCard> {
   }
 
   Map<String, dynamic> _buildUpdateData() {
+    // ── BODY WEIGHT LOGIC ────────────────────────────────────────────────────
+    // Cuando _isBodyWeight=true, weightUsed se calcula como:
+    //   weightUsed = pesoCorporal (_userBodyWeight) + lastre (_addedWeightController)
+    // El resultado se guarda como string en weightUsed (ej: "85", "80.5").
+    // Si el alumno no tiene peso corporal definido, se guarda solo el lastre.
+    // Nunca usar _weightController.text en modo bodyweight: ese campo no se muestra.
+    // ─────────────────────────────────────────────────────────────────────────
+    String weightUsedValue;
+    double? addedWeightValue;
+
+    if (_isBodyWeight) {
+      addedWeightValue = double.tryParse(_addedWeightController.text) ?? 0;
+      if (_userBodyWeight != null) {
+        final total = _userBodyWeight! + addedWeightValue;
+        weightUsedValue = total % 1 == 0
+            ? total.toInt().toString()
+            : total.toStringAsFixed(1);
+      } else {
+        // Body weight not defined in profile — save only lastre
+        weightUsedValue =
+            addedWeightValue > 0 ? addedWeightValue.toString() : '';
+      }
+    } else {
+      weightUsedValue = _weightController.text;
+      addedWeightValue = double.tryParse(_addedWeightController.text);
+    }
+
     return {
       'setsDone': _setsController.text,
       // REPS
       'repsDone': _repsController.text,
-      'weightUsed': _weightController.text,
+      'weightUsed': weightUsedValue,
       // TIME
       'timeSpent': _timeController.text,
       // DISTANCE
       'distanceCovered': double.tryParse(_distanceController.text),
       // BODY WEIGHT
-      'addedWeight': double.tryParse(_addedWeightController.text),
+      'addedWeight': addedWeightValue,
     };
   }
 

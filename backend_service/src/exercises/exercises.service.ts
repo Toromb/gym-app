@@ -106,9 +106,9 @@ export class ExercisesService {
     createExerciseDto: CreateExerciseDto,
     gym: any,
   ): Promise<Exercise> {
-    // Simplifying to avoid build errors for now
+    const { muscles: _muscles, equipments: _equipments, ...exerciseData } = createExerciseDto;
     const exercise = this.exercisesRepository.create({
-      ...createExerciseDto,
+      ...exerciseData,
       gym: gym,
       createdBy: null as any,
       muscleGroup: createExerciseDto.muscleGroup,
