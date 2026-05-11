@@ -449,475 +449,440 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
       appBar: ConstrainedAppBar(
           title:
               Text(widget.planToEdit == null ? 'Crear Plan' : 'Editar Plan')),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final double w =
-              constraints.maxWidth > 900 ? 900.0 : constraints.maxWidth;
-          return Center(
-            child: SizedBox(
-              width: w,
-              height: constraints.maxHeight,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12.0, horizontal: 16.0),
-                    child: Text(
-                      "Definí una estructura de entrenamiento reutilizable.",
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  Expanded(
-                    child: Form(
-                      key: _formKey,
-                      child: Stepper(
-                        type: StepperType.vertical,
-                        currentStep: _currentStep,
-                        onStepTapped: (index) =>
-                            setState(() => _currentStep = index),
-                        onStepContinue: () {
-                          if (_currentStep < 1)
-                            setState(() => _currentStep += 1);
-                        },
-                        onStepCancel: () {
-                          if (_currentStep > 0)
-                            setState(() => _currentStep -= 1);
-                        },
-                        controlsBuilder: (context, details) {
-                          if (_currentStep == 0) {
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 16.0),
-                              child: Row(
-                                children: [
-                                  ElevatedButton(
-                                    onPressed: details.onStepContinue,
-                                    child: const Text('Siguiente'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                          // On last step, we hide default controls because we have the main Save button
-                          return const SizedBox.shrink();
-                        },
-                        steps: [
-                          Step(
-                            title: const Text('Datos del Plan'),
-                            content: Column(
-                              children: [
-                                TextFormField(
-                                  controller: _nameController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Nombre del Plan',
-                                    hintText: 'Ej: Fuerza Inicial · Adaptación',
-                                  ),
-                                  validator: (value) =>
-                                      value!.isEmpty ? 'Requerido' : null,
-                                ),
-                                TextFormField(
-                                  controller: _objectiveController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Objetivo',
-                                    hintText:
-                                        'Ej: Fuerza · Hipertrofia · Volver a entrenar',
-                                  ),
-                                ),
-                                TextFormField(
-                                  controller: _durationController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Duración (semanas)',
-                                    hintText: 'Ej: 4',
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                ),
-                                TextFormField(
-                                  controller: _notesController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Notas',
-                                    hintText:
-                                        'Indicaciones o recomendaciones generales',
-                                  ),
-                                  maxLines: 3,
-                                ),
-                              ],
-                            ),
-                            isActive: _currentStep >= 0,
-                            state: _currentStep > 0
-                                ? StepState.complete
-                                : StepState.editing,
+      body: Column(
+        children: [
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+            child: Text(
+              "Definí una estructura de entrenamiento reutilizable.",
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Expanded(
+            child: Form(
+              key: _formKey,
+              child: Stepper(
+                type: StepperType.vertical,
+                currentStep: _currentStep,
+                onStepTapped: (index) => setState(() => _currentStep = index),
+                onStepContinue: () {
+                  if (_currentStep < 1) setState(() => _currentStep += 1);
+                },
+                onStepCancel: () {
+                  if (_currentStep > 0) setState(() => _currentStep -= 1);
+                },
+                controlsBuilder: (context, details) {
+                  if (_currentStep == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Row(
+                        children: [
+                          ElevatedButton(
+                            onPressed: details.onStepContinue,
+                            child: const Text('Siguiente'),
                           ),
-                          Step(
-                            title: const Text('Estructura del Plan'),
-                            content: Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 16.0),
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      "Organizá semanas y días de entrenamiento.",
-                                      style: TextStyle(
-                                          color: Colors.grey[600],
-                                          fontSize: 13),
-                                    ),
+                        ],
+                      ),
+                    );
+                  }
+                  // On last step, we hide default controls because we have the main Save button
+                  return const SizedBox.shrink();
+                },
+                steps: [
+                  Step(
+                    title: const Text('Datos del Plan'),
+                    content: Column(
+                      children: [
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nombre del Plan',
+                            hintText: 'Ej: Fuerza Inicial · Adaptación',
+                          ),
+                          validator: (value) =>
+                              value!.isEmpty ? 'Requerido' : null,
+                        ),
+                        TextFormField(
+                          controller: _objectiveController,
+                          decoration: const InputDecoration(
+                            labelText: 'Objetivo',
+                            hintText:
+                                'Ej: Fuerza · Hipertrofia · Volver a entrenar',
+                          ),
+                        ),
+                        TextFormField(
+                          controller: _durationController,
+                          decoration: const InputDecoration(
+                            labelText: 'Duración (semanas)',
+                            hintText: 'Ej: 4',
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        TextFormField(
+                          controller: _notesController,
+                          decoration: const InputDecoration(
+                            labelText: 'Notas',
+                            hintText:
+                                'Indicaciones o recomendaciones generales',
+                          ),
+                          maxLines: 3,
+                        ),
+                      ],
+                    ),
+                    isActive: _currentStep >= 0,
+                    state: _currentStep > 0
+                        ? StepState.complete
+                        : StepState.editing,
+                  ),
+                  Step(
+                    title: const Text('Estructura del Plan'),
+                    content: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              "Organizá semanas y días de entrenamiento.",
+                              style: TextStyle(
+                                  color: Colors.grey[600], fontSize: 13),
+                            ),
+                          ),
+                        ),
+                        ..._weeks.asMap().entries.map((entry) {
+                          final weekIndex = entry.key;
+                          final week = entry.value;
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            // color: Colors.grey[50], // Removed to respect Theme
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('Semana ${week.weekNumber}',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16)),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline,
+                                            color: Colors.red),
+                                        onPressed: () => _removeWeek(weekIndex),
+                                        tooltip: 'Eliminar Semana',
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                ..._weeks.asMap().entries.map((entry) {
-                                  final weekIndex = entry.key;
-                                  final week = entry.value;
-                                  return Card(
-                                    margin:
-                                        const EdgeInsets.symmetric(vertical: 8),
-                                    // color: Colors.grey[50], // Removed to respect Theme
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text('Semana ${week.weekNumber}',
+                                  const Divider(),
+                                  ...week.days.asMap().entries.map((dayEntry) {
+                                    final dayIndex = dayEntry.key;
+                                    final day = dayEntry.value;
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            // Day Header Row: Title + Actions
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  day.title ??
+                                                      'Día ${day.dayOfWeek}',
                                                   style: const TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      fontSize: 16)),
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.delete_outline,
-                                                    color: Colors.red),
-                                                onPressed: () =>
-                                                    _removeWeek(weekIndex),
-                                                tooltip: 'Eliminar Semana',
-                                              ),
-                                            ],
-                                          ),
-                                          const Divider(),
-                                          ...week.days
-                                              .asMap()
-                                              .entries
-                                              .map((dayEntry) {
-                                            final dayIndex = dayEntry.key;
-                                            final day = dayEntry.value;
-                                            return Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
+                                                      fontSize: 16),
+                                                ),
+                                                Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
                                                   children: [
-                                                    // Day Header Row: Title + Actions
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        Text(
-                                                          day.title ??
-                                                              'Día ${day.dayOfWeek}',
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontSize: 16),
-                                                        ),
-                                                        Row(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            IconButton(
-                                                              icon: const Icon(
-                                                                  Icons
-                                                                      .add_circle,
-                                                                  color: Colors
-                                                                      .blue),
-                                                              onPressed: () =>
-                                                                  _addOrEditExercise(
-                                                                      weekIndex,
-                                                                      dayIndex),
-                                                              tooltip:
-                                                                  'Agregar Ejercicio',
-                                                            ),
-                                                            IconButton(
-                                                              icon: const Icon(
-                                                                  Icons.delete,
-                                                                  color: Colors
-                                                                      .redAccent),
-                                                              onPressed: () =>
-                                                                  _removeDay(
-                                                                      weekIndex,
-                                                                      dayIndex),
-                                                              tooltip:
-                                                                  'Eliminar Día',
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ],
+                                                    IconButton(
+                                                      icon: const Icon(
+                                                          Icons.add_circle,
+                                                          color: Colors.blue),
+                                                      onPressed: () =>
+                                                          _addOrEditExercise(
+                                                              weekIndex,
+                                                              dayIndex),
+                                                      tooltip:
+                                                          'Agregar Ejercicio',
                                                     ),
+                                                    IconButton(
+                                                      icon: const Icon(
+                                                          Icons.delete,
+                                                          color:
+                                                              Colors.redAccent),
+                                                      onPressed: () =>
+                                                          _removeDay(weekIndex,
+                                                              dayIndex),
+                                                      tooltip: 'Eliminar Día',
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
 
-                                                    // Objective Row (Independent line)
-                                                    Padding(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                          vertical:
-                                                              8.0), // Spacing asked by user
+                                            // Objective Row (Independent line)
+                                            Padding(
+                                              padding: const EdgeInsets
+                                                  .symmetric(
+                                                  vertical:
+                                                      8.0), // Spacing asked by user
+                                              child: Row(
+                                                children: [
+                                                  const Text("Objetivo: ",
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                  const SizedBox(width: 8),
+                                                  DropdownButton<
+                                                      TrainingIntent>(
+                                                    value: day.trainingIntent,
+                                                    isDense: true,
+                                                    underline: Container(
+                                                        height: 1,
+                                                        color: Colors.grey),
+                                                    items: TrainingIntent.values
+                                                        .map((intent) {
+                                                      return DropdownMenuItem(
+                                                        value: intent,
+                                                        child:
+                                                            Text(intent.label),
+                                                      );
+                                                    }).toList(),
+                                                    onChanged: (newIntent) {
+                                                      if (newIntent != null) {
+                                                        setState(() {
+                                                          _weeks[weekIndex]
+                                                                      .days[
+                                                                  dayIndex] =
+                                                              PlanDay(
+                                                            id: day.id,
+                                                            title: day.title,
+                                                            dayOfWeek:
+                                                                day.dayOfWeek,
+                                                            order: day.order,
+                                                            dayNotes:
+                                                                day.dayNotes,
+                                                            exercises:
+                                                                day.exercises,
+                                                            trainingIntent:
+                                                                newIntent,
+                                                          );
+                                                        });
+                                                      }
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+
+                                            // Exercises List
+                                            if (day.exercises.isNotEmpty)
+                                              Column(
+                                                children: day.exercises
+                                                    .asMap()
+                                                    .entries
+                                                    .map((exEntry) {
+                                                  final exIndex = exEntry.key;
+                                                  final ex = exEntry.value;
+                                                  return Card(
+                                                    margin: const EdgeInsets
+                                                        .symmetric(vertical: 4),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              12.0),
                                                       child: Row(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start, // Align to top
                                                         children: [
-                                                          const Text(
-                                                              "Objetivo: ",
-                                                              style: TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold)),
-                                                          const SizedBox(
-                                                              width: 8),
-                                                          DropdownButton<
-                                                              TrainingIntent>(
-                                                            value: day
-                                                                .trainingIntent,
-                                                            isDense: true,
-                                                            underline: Container(
-                                                                height: 1,
-                                                                color: Colors
-                                                                    .grey),
-                                                            items: TrainingIntent
-                                                                .values
-                                                                .map((intent) {
-                                                              return DropdownMenuItem(
-                                                                value: intent,
-                                                                child: Text(
-                                                                    intent
-                                                                        .label),
-                                                              );
-                                                            }).toList(),
-                                                            onChanged:
-                                                                (newIntent) {
-                                                              if (newIntent !=
-                                                                  null) {
-                                                                setState(() {
-                                                                  _weeks[weekIndex]
-                                                                              .days[
-                                                                          dayIndex] =
-                                                                      PlanDay(
-                                                                    id: day.id,
-                                                                    title: day
-                                                                        .title,
-                                                                    dayOfWeek: day
-                                                                        .dayOfWeek,
-                                                                    order: day
-                                                                        .order,
-                                                                    dayNotes: day
-                                                                        .dayNotes,
-                                                                    exercises: day
-                                                                        .exercises,
-                                                                    trainingIntent:
-                                                                        newIntent,
-                                                                  );
-                                                                });
-                                                              }
-                                                            },
+                                                          // Content Section (Expanded to force wrapping)
+                                                          Expanded(
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Text(
+                                                                  ex.exercise?.metricType ==
+                                                                          'TIME'
+                                                                      ? '${ex.exercise?.name ?? "Unknown"}: ${ex.sets} x ${ex.targetTime ?? "-"}s'
+                                                                      : ex.exercise?.metricType ==
+                                                                              'DISTANCE'
+                                                                          ? '${ex.exercise?.name ?? "Unknown"}: ${ex.sets} x ${ex.targetDistance ?? "-"}m'
+                                                                          : '${ex.exercise?.name ?? "Unknown"}: ${ex.sets}x${ex.reps}',
+                                                                  style: const TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      fontSize:
+                                                                          15),
+                                                                ),
+                                                                const SizedBox(
+                                                                    height: 4),
+                                                                Text(
+                                                                  '${ex.exercise?.metricType == 'REPS' && ex.suggestedLoad != null ? " ${ex.suggestedLoad}kg |" : ""}'
+                                                                  '${ex.rest != null ? " Rest: ${ex.rest}" : ""}'
+                                                                  '${ex.notes != null && ex.notes!.isNotEmpty ? "\n📝 ${ex.notes}" : ""}',
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                              .grey[
+                                                                          600],
+                                                                      fontSize:
+                                                                          13),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+
+                                                          // Actions Section (Fixed width, no Wrap)
+                                                          Row(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              if (ex.videoUrl !=
+                                                                      null &&
+                                                                  ex.videoUrl!
+                                                                      .isNotEmpty)
+                                                                IconButton(
+                                                                  constraints:
+                                                                      const BoxConstraints(), // Compact
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          4),
+                                                                  icon: const Icon(
+                                                                      Icons
+                                                                          .play_circle_fill,
+                                                                      size: 24,
+                                                                      color: Colors
+                                                                          .red),
+                                                                  tooltip:
+                                                                      'Ver Video',
+                                                                  onPressed:
+                                                                      () async {
+                                                                    final url =
+                                                                        Uri.parse(
+                                                                            ex.videoUrl!);
+                                                                    if (await canLaunchUrl(
+                                                                        url)) {
+                                                                      await launchUrl(
+                                                                          url);
+                                                                    } else {
+                                                                      ScaffoldMessenger.of(
+                                                                              context)
+                                                                          .showSnackBar(
+                                                                        const SnackBar(
+                                                                            content:
+                                                                                Text('No se pudo abrir la URL del video')),
+                                                                      );
+                                                                    }
+                                                                  },
+                                                                ),
+                                                              IconButton(
+                                                                constraints:
+                                                                    const BoxConstraints(),
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(4),
+                                                                icon: const Icon(
+                                                                    Icons.edit,
+                                                                    size: 20,
+                                                                    color: Colors
+                                                                        .blue),
+                                                                onPressed: () =>
+                                                                    _addOrEditExercise(
+                                                                        weekIndex,
+                                                                        dayIndex,
+                                                                        ex,
+                                                                        exIndex),
+                                                              ),
+                                                              IconButton(
+                                                                constraints:
+                                                                    const BoxConstraints(),
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(4),
+                                                                icon: const Icon(
+                                                                    Icons.close,
+                                                                    size: 20,
+                                                                    color: Colors
+                                                                        .red),
+                                                                onPressed: () =>
+                                                                    _removeExercise(
+                                                                        weekIndex,
+                                                                        dayIndex,
+                                                                        exIndex),
+                                                              ),
+                                                            ],
                                                           ),
                                                         ],
                                                       ),
                                                     ),
-
-                                                    // Exercises List
-                                                    if (day
-                                                        .exercises.isNotEmpty)
-                                                      Column(
-                                                        children: day.exercises
-                                                            .asMap()
-                                                            .entries
-                                                            .map((exEntry) {
-                                                          final exIndex =
-                                                              exEntry.key;
-                                                          final ex =
-                                                              exEntry.value;
-                                                          return Card(
-                                                            margin:
-                                                                const EdgeInsets
-                                                                    .symmetric(
-                                                                    vertical:
-                                                                        4),
-                                                            child: Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .all(
-                                                                      12.0),
-                                                              child: Row(
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .start, // Align to top
-                                                                children: [
-                                                                  // Content Section (Expanded to force wrapping)
-                                                                  Expanded(
-                                                                    child:
-                                                                        Column(
-                                                                      crossAxisAlignment:
-                                                                          CrossAxisAlignment
-                                                                              .start,
-                                                                      children: [
-                                                                        Text(
-                                                                          ex.exercise?.metricType == 'TIME'
-                                                                              ? '${ex.exercise?.name ?? "Unknown"}: ${ex.sets} x ${ex.targetTime ?? "-"}s'
-                                                                              : ex.exercise?.metricType == 'DISTANCE'
-                                                                                  ? '${ex.exercise?.name ?? "Unknown"}: ${ex.sets} x ${ex.targetDistance ?? "-"}m'
-                                                                                  : '${ex.exercise?.name ?? "Unknown"}: ${ex.sets}x${ex.reps}',
-                                                                          style: const TextStyle(
-                                                                              fontWeight: FontWeight.bold,
-                                                                              fontSize: 15),
-                                                                        ),
-                                                                        const SizedBox(
-                                                                            height:
-                                                                                4),
-                                                                        Text(
-                                                                          '${ex.exercise?.metricType == 'REPS' && ex.suggestedLoad != null ? " ${ex.suggestedLoad}kg |" : ""}'
-                                                                          '${ex.rest != null ? " Rest: ${ex.rest}" : ""}'
-                                                                          '${ex.notes != null && ex.notes!.isNotEmpty ? "\n📝 ${ex.notes}" : ""}',
-                                                                          style: TextStyle(
-                                                                              color: Colors.grey[600],
-                                                                              fontSize: 13),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-
-                                                                  // Actions Section (Fixed width, no Wrap)
-                                                                  Row(
-                                                                    mainAxisSize:
-                                                                        MainAxisSize
-                                                                            .min,
-                                                                    children: [
-                                                                      if (ex.videoUrl !=
-                                                                              null &&
-                                                                          ex.videoUrl!
-                                                                              .isNotEmpty)
-                                                                        IconButton(
-                                                                          constraints:
-                                                                              const BoxConstraints(), // Compact
-                                                                          padding: const EdgeInsets
-                                                                              .all(
-                                                                              4),
-                                                                          icon: const Icon(
-                                                                              Icons.play_circle_fill,
-                                                                              size: 24,
-                                                                              color: Colors.red),
-                                                                          tooltip:
-                                                                              'Ver Video',
-                                                                          onPressed:
-                                                                              () async {
-                                                                            final url =
-                                                                                Uri.parse(ex.videoUrl!);
-                                                                            if (await canLaunchUrl(url)) {
-                                                                              await launchUrl(url);
-                                                                            } else {
-                                                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                                                const SnackBar(content: Text('No se pudo abrir la URL del video')),
-                                                                              );
-                                                                            }
-                                                                          },
-                                                                        ),
-                                                                      IconButton(
-                                                                        constraints:
-                                                                            const BoxConstraints(),
-                                                                        padding: const EdgeInsets
-                                                                            .all(
-                                                                            4),
-                                                                        icon: const Icon(
-                                                                            Icons
-                                                                                .edit,
-                                                                            size:
-                                                                                20,
-                                                                            color:
-                                                                                Colors.blue),
-                                                                        onPressed: () => _addOrEditExercise(
-                                                                            weekIndex,
-                                                                            dayIndex,
-                                                                            ex,
-                                                                            exIndex),
-                                                                      ),
-                                                                      IconButton(
-                                                                        constraints:
-                                                                            const BoxConstraints(),
-                                                                        padding: const EdgeInsets
-                                                                            .all(
-                                                                            4),
-                                                                        icon: const Icon(
-                                                                            Icons
-                                                                                .close,
-                                                                            size:
-                                                                                20,
-                                                                            color:
-                                                                                Colors.red),
-                                                                        onPressed: () => _removeExercise(
-                                                                            weekIndex,
-                                                                            dayIndex,
-                                                                            exIndex),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          );
-                                                        }).toList(),
-                                                      ),
-                                                  ],
-                                                ),
-                                              ],
-                                            );
-                                          }),
-                                          TextButton.icon(
-                                            icon: const Icon(Icons.add),
-                                            label: const Text('Agregar Día'),
-                                            onPressed: () => _addDay(weekIndex),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }),
-                                const SizedBox(height: 10),
-                                ElevatedButton.icon(
-                                  onPressed: _addWeek,
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Agregar Semana'),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      top: 24.0, bottom: 8.0),
-                                  child: Center(
-                                    child: Text(
-                                      "Este plan luego podrá asignarse o adaptarse.",
-                                      style: TextStyle(
-                                          color: Colors.grey[500],
-                                          fontSize: 12,
-                                          fontStyle: FontStyle.italic),
-                                    ),
+                                                  );
+                                                }).toList(),
+                                              ),
+                                          ],
+                                        ),
+                                      ],
+                                    );
+                                  }),
+                                  TextButton.icon(
+                                    icon: const Icon(Icons.add),
+                                    label: const Text('Agregar Día'),
+                                    onPressed: () => _addDay(weekIndex),
                                   ),
-                                ),
-                                const SizedBox(
-                                    height:
-                                        100), // Bottom padding for scrolling
-                              ],
+                                ],
+                              ),
                             ),
-                            isActive: _currentStep >= 1,
+                          );
+                        }),
+                        const SizedBox(height: 10),
+                        ElevatedButton.icon(
+                          onPressed: _addWeek,
+                          icon: const Icon(Icons.add),
+                          label: const Text('Agregar Semana'),
+                        ),
+                        Padding(
+                          padding:
+                              const EdgeInsets.only(top: 24.0, bottom: 8.0),
+                          child: Center(
+                            child: Text(
+                              "Este plan luego podrá asignarse o adaptarse.",
+                              style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic),
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(
+                            height: 100), // Bottom padding for scrolling
+                      ],
                     ),
+                    isActive: _currentStep >= 1,
                   ),
-                ], // closes Column.children
-              ), // closes Column
-            ), // closes SizedBox
-          ); // closes return Center(...)
-        }, // closes LayoutBuilder builder
-      ), // closes LayoutBuilder / body
+                ],
+              ),
+            ),
+          ),
+        ], // closes Column.children
+      ), // closes Column / body
       bottomNavigationBar: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
