@@ -64,11 +64,22 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
               IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: () async {
+                  // Fetch plan completo antes de editar (datos de semanas/ejercicios)
+                  final fullPlan =
+                      await context.read<PlanProvider>().getPlanById(_plan.id!);
+                  if (!context.mounted) return;
+                  if (fullPlan == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('No se pudo cargar el plan')),
+                    );
+                    return;
+                  }
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            CreatePlanScreen(planToEdit: _plan)),
+                            CreatePlanScreen(planToEdit: fullPlan)),
                   );
                   if (result == true && mounted) {
                     if (_plan.id != null) {

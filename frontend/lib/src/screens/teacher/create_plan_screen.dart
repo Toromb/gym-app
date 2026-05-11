@@ -449,21 +449,22 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
       appBar: ConstrainedAppBar(
           title:
               Text(widget.planToEdit == null ? 'Crear Plan' : 'Editar Plan')),
-      body: Column(
-        children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-            child: Text(
-              "Definí una estructura de entrenamiento reutilizable.",
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
-              textAlign: TextAlign.center,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+              child: Text(
+                "Definí una estructura de entrenamiento reutilizable.",
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
             ),
-          ),
-          Expanded(
-            child: Form(
+            Form(
               key: _formKey,
               child: Stepper(
+                physics: const NeverScrollableScrollPhysics(),
                 type: StepperType.vertical,
                 currentStep: _currentStep,
                 onStepTapped: (index) => setState(() => _currentStep = index),
@@ -880,9 +881,9 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                 ],
               ),
             ),
-          ),
-        ], // closes Column.children
-      ), // closes Column / body
+          ], // closes Column.children
+        ), // closes Column
+      ), // closes SingleChildScrollView / body
       bottomNavigationBar: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
